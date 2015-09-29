@@ -1,49 +1,40 @@
-## _spray_ Template Project
+## 9Cards Backend
 
-This projects provides a starting point for your own _spray-routing_ endeavors.
-There are 8 branches, providing templates for _spray-routing_ on
+### Summary
 
-* _spray-can_, Scala 2.9 + Akka 2.0 + spray 1.0 (the `on_spray-can_1.0` branch)
-* _spray-can_, Scala 2.10 + Akka 2.1 + spray 1.1 (the `on_spray-can_1.1` branch)
-* _spray-can_, Scala 2.10 + Akka 2.2 + spray 1.2 (the `on_spray-can_1.2` branch)
-* _spray-can_, Scala 2.10 + Akka 2.3 + spray 1.3 (the `on_spray-can_1.3` branch)
-* _spray-can_, Scala 2.11 + Akka 2.3 + spray 1.3 (the `on_spray-can_1.3_scala-2.11` branch)
-* _Jetty_, Scala 2.9 + Akka 2.0 + spray 1.0 (the `on_jetty_1.0` branch)
-* _Jetty_, Scala 2.10 + Akka 2.1 + spray 1.1 (the `on_jetty_1.1` branch)
-* _Jetty_, Scala 2.10 + Akka 2.2 + spray 1.2 (the `on_jetty_1.2` branch)
-* _Jetty_, Scala 2.10 + Akka 2.3 + spray 1.3 (the `on_jetty_1.3` branch)
-* _Jetty_, Scala 2.11 + Akka 2.3 + spray 1.3 (the `on_jetty_1.3_scala-2.11` branch)
+  This backend app contains all our public work. It's splitted in 3 different modules:
 
-You are currently on the `on_spray-can_1.3_scala-2.11` branch.
+    * app: Contains all the stuff related to the app, collections, apps, settings, user config, ...
+    * user: Contains all the stuff related to sign in & log in
+    * api: Contains all the public api but no biz logic. It's going to work as a composition layer.
 
-Follow these steps to get started:
+  Current endpoints that will be placed in this app are:
 
-1. Git-clone this repository.
+    ```
+    GET           /api/ninecards/userconfig
+    PUT           /api/ninecards/userconfig/checkpoint/purchase/:product
+    PUT           /api/ninecards/userconfig/checkpoint/collection
+    PUT           /api/ninecards/userconfig/checkpoint/joined/:otherConfigId
+    PUT           /api/ninecards/userconfig/geoInfo
+    PUT           /api/ninecards/userconfig/device
+    PUT           /api/ninecards/userconfig/theme
+    DELETE        /api/ninecards/userconfig/device/:deviceId
+    PUT           /api/ninecards/userconfig/tester
 
-        $ git clone git://github.com/spray/spray-template.git my-project
+    GET           /api/ninecards/collections/items/sponsored
+    GET           /api/ninecards/collections/search/:keywords/:offset/:limit
+    GET           /api/ninecards/collections/:filter/:category/:offset/:limit
+    GET           /api/ninecards/collections/:filter/:offset/:limit
+    POST          /api/ninecards/collections
+    PUT           /api/ninecards/collections/:sharedCollectionId/subscribe
+    DELETE        /api/ninecards/collections/:sharedCollectionId/subscribe
+    POST          /api/ninecards/collections/:sharedCollectionId/rate/:stars
+    POST          /api/ninecards/collections/:sharedCollectionId/notifyPlusOne
+    POST          /api/ninecards/collections/:sharedCollectionId/notifyViews
+    POST          /api/ninecards/collections/:sharedCollectionId/notifyInstall
+    GET           /api/ninecards/collections/:sharedCollectionId
+    ```
 
-2. Change directory into your clone:
+### Technologies to use
 
-        $ cd my-project
-
-3. Launch SBT:
-
-        $ sbt
-
-4. Compile everything and run all tests:
-
-        > test
-
-5. Start the application:
-
-        > re-start
-
-6. Browse to [http://localhost:8080](http://localhost:8080/)
-
-7. Stop the application:
-
-        > re-stop
-
-8. Learn more at http://www.spray.io/
-
-9. Start hacking on `src/main/scala/com/example/MyService.scala`
+  The backend will be implemented over Spray and MongoBD(or Cassandra, it has to be discussed).
