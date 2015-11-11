@@ -10,6 +10,7 @@ trait Dependencies {
   val akkaActor = "com.typesafe.akka" %% "akka-actor" % Versions.akka
   val akkaTestKit = "com.typesafe.akka" %% "akka-testkit" % Versions.akka
   val specs2Core = "org.specs2" %% "specs2-core" % Versions.specs2
+  val sprayJson = "io.spray" %%  "spray-json" % Versions.sprayJson
 
   val baseDepts = Seq(specs2Core % "test")
 
@@ -17,7 +18,8 @@ trait Dependencies {
 
   val appDeps = Seq(libraryDependencies ++= baseDepts ++ Seq(
     sprayHttp,
-    sprayRouting))
+    sprayRouting,
+    sprayJson))
 
   val userDeps = Seq(libraryDependencies ++= baseDepts ++ Seq(
     akkaTestKit % "test"))
