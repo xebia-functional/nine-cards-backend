@@ -1,6 +1,6 @@
 import sbt._
 
-object Build extends Build with Settings with Dependencies {
+object NineCardsBuild extends Build with Settings with Dependencies {
 
   lazy val root = project.in(file(".")) aggregate(api, user, app)
 
@@ -9,6 +9,7 @@ object Build extends Build with Settings with Dependencies {
   lazy val app = project.in(file("modules/app")) settings projectSettings ++ appDeps
 
   lazy val api = project.in(file("modules/api"))
+    .aggregate(user, app)
     .dependsOn(user, app)
     .settings(apiSettings ++ apiDeps)
 }

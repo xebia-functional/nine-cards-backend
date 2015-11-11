@@ -6,7 +6,7 @@ object Versions {
   // Core Libs
   val spray = "1.3.3"
   val akka = "2.3.12"
-  val scala = "2.11.6"
+  val scala = "2.11.7"
 
   // Testing libs
   val specs2 = "3.6.2"

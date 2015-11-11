@@ -7,7 +7,6 @@ trait Settings {
 
   lazy val projectSettings: Seq[Def.Setting[_]] = Seq(
     scalaVersion := Versions.scala,
-    scalaVersion in ThisBuild := Versions.scala,
     organization := "com.fortysevendeg",
     organizationName := "47 Degrees",
     organizationHomepage := Some(new URL("http://47deg.com")),
@@ -26,12 +25,10 @@ trait Settings {
       Resolver.bintrayRepo("scalaz", "releases"),
       DefaultMavenRepository
     ),
-    doc in Compile <<= target.map(_ / "none"),
-    unmanagedResourceDirectories in Compile <+= baseDirectory(_ / "src/main/scala")
+    doc in Compile <<= target.map(_ / "none")
   )
 
   lazy val apiSettings = projectSettings ++ Seq(
-    scalaVersion in ThisBuild := Versions.scala,
     publishArtifact in(Test, packageBin) := false
   ) ++ Revolver.settings
 }
