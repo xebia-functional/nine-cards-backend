@@ -16,7 +16,7 @@ case class SharedCollection(
   name: String,
   shareLink: Option[String] = None,
   packages: Seq[String] = Nil,
-  resolvedPackages: Option[Seq[SharedCollectionPackage]],
+  resolvedPackages: Seq[SharedCollectionPackage],
   occurrence: Seq[UserConfigTimeSlot] = Nil,
   lat: Option[Double] = None,
   lng: Option[Double] = None,

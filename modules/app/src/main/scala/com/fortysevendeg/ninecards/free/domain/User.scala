@@ -50,4 +50,4 @@ case class Installation(
   deviceType: String,
   deviceToken: Option[String] = None,
   userId: Option[String] = None,
-  channels: Option[List[String]] = Option(Nil))
+  channels:List[String] = Nil)

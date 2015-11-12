@@ -13,14 +13,14 @@ case class UserConfig(
 
 //TODO:This case class should be implemented in the module of GooglePlay. (Now is implementing in Appsly-Server-Apps-Markets-Proxy  generated.models.GooglePlay)
 case class UserConfigPlusProfile(
-  `displayName`: Option[String] = None,
-  `profileImage`: Option[UserConfigProfileImage] = None)
+  displayName: Option[String] = None,
+  profileImage: Option[UserConfigProfileImage] = None)
 
 //TODO:This case class should be implemented in the module of GooglePlay. (Now is implementing in Appsly-Server-Apps-Markets-Proxy  generated.models.GooglePlay)
 case class UserConfigProfileImage(
-  `imageType`: Option[Int] = None,
-  `imageUrl`: Option[String] = None,
-  `secureUrl`: Option[String] = None)
+  imageType: Option[Int] = None,
+  imageUrl: Option[String] = None,
+  secureUrl: Option[String] = None)
 
 case class UserConfigDevice(
   deviceId: String,
