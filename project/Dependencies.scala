@@ -20,7 +20,8 @@ trait Dependencies {
   val appDeps = Seq(libraryDependencies ++= baseDepts ++ Seq(
     scalaz,
     sprayHttp,
-    sprayRouting))
+    sprayRouting,
+    sprayJson))
 
   val servicesDeps = Seq(libraryDependencies ++= baseDepts ++ Seq(scalaz))
 
