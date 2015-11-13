@@ -2,14 +2,15 @@ import sbt._
 
 object NineCardsBuild extends Build with Settings with Dependencies {
 
-  lazy val root = project.in(file(".")) aggregate(api, user, app)
+  lazy val root = project.in(file(".")) aggregate(api, processes, services)
 
-  lazy val user = project.in(file("modules/user")) settings projectSettings ++ commonDeps
+  lazy val services = project.in(file("modules/services")) settings projectSettings ++ servicesDeps
 
-  lazy val app = project.in(file("modules/app")) settings projectSettings ++ appDeps
+  lazy val processes = project.in(file("modules/processes"))
+    .settings(projectSettings)
+    .dependsOn(services)
 
   lazy val api = project.in(file("modules/api"))
-    .aggregate(user, app)
-    .dependsOn(user, app)
+    .dependsOn(processes)
     .settings(apiSettings ++ apiDeps)
 }
