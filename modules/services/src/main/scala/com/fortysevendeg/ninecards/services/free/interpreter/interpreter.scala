@@ -25,7 +25,6 @@ object interpreters {
   object AppGooglePlayInterpreter extends (AppGooglePlayOps ~> Id.Id) {
     def apply[A](fa: AppGooglePlayOps[A]) = fa match {
       case GetCategoriesFromGooglePlay(packageNames: Seq[String]) =>
-        println("Running GetCategoriesFromGooglePlay ...")
         CategorizeResponse(
           categorizedApps = Seq(GooglePlayApp(
             packageName = "com.android.chrome",
@@ -42,7 +41,6 @@ object interpreters {
   object AppPersistenceInterpreter extends (AppPersistenceOps ~> Id.Id) {
     def apply[A](fa: AppPersistenceOps[A]) = fa match {
       case GetCategories(packageNames: Seq[String]) =>
-        println("Running GetCategories ...")
         CategorizeResponse(
           categorizedApps = Seq(GooglePlayApp(
             packageName = "com.whatsapp",

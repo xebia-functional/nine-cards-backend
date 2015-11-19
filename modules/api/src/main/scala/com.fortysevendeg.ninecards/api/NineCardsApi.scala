@@ -1,6 +1,7 @@
 package com.fortysevendeg.ninecards.api
 
 import akka.actor.Actor
+import com.fortysevendeg.ninecards.processes.AppProcesses._
 import com.fortysevendeg.ninecards.processes.domain.GooglePlayApp
 import spray.httpx.SprayJsonSupport
 import spray.routing._
@@ -18,7 +19,6 @@ class NineCardsApiActor extends Actor with NineCardsApi {
 
 trait NineCardsApi extends HttpService with SprayJsonSupport {
 
-  import DependencyInjector._
   import FreeUtils._
   import JsonFormats._
 

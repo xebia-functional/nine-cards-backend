@@ -19,3 +19,8 @@ class AppProcesses[F[_]](
     } yield (persistenceApps.categorizedApps ++ googlePlayApps.categorizedApps) map toGooglePlayApp
   }
 }
+
+object AppProcesses {
+
+  implicit def appProcesses[F[_]](implicit AP: AppPersistenceServices[NineCardsServices], AG: AppGooglePlayServices[NineCardsServices]) = new AppProcesses[F]
+}

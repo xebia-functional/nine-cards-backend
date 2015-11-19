@@ -7,7 +7,6 @@ import com.fortysevendeg.ninecards.services.free.algebra.sharedCollections.Share
 import com.fortysevendeg.ninecards.services.free.algebra.user.UserOps
 import com.fortysevendeg.ninecards.services.free.interpreter.interpreters._
 
-import scalaz.Free._
 import scalaz._
 
 object NineCardsServices {
@@ -21,12 +20,4 @@ object NineCardsServices {
   val interpretersCO2: ServicesCO2 ~> Id.Id = or(AppPersistenceInterpreter, interpretersCO3)
   val interpretersCO1: ServicesCO1 ~> Id.Id = or(AppGooglePlayInterpreter, interpretersCO2)
   val interpreters: NineCardsServices ~> Id.Id = or(UserInterpreter, interpretersCO1)
-
-  def point[A](a: => A): FreeC[NineCardsServices, A] = Monad[AFree].point(a)
-
-  type ACoyo[A] = Coyoneda[NineCardsServices, A]
-
-  type AFree[A] = Free[ACoyo, A]
-
-  val coyoint = Coyoneda.liftTF(interpreters)
 }
