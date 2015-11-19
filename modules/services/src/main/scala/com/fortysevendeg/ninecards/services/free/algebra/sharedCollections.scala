@@ -1,6 +1,6 @@
-package com.fortysevendeg.ninecards.free.algebra
+package com.fortysevendeg.ninecards.services.free.algebra
 
-import com.fortysevendeg.ninecards.free.domain.{SharedCollectionSubscription, SharedCollection}
+import com.fortysevendeg.ninecards.services.free.domain.{SharedCollectionSubscription, SharedCollection}
 
 import scalaz.Free._
 import scalaz.{Free, Inject}

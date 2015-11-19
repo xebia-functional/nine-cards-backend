@@ -1,6 +1,6 @@
 package com.fortysevendeg.ninecards.api
 
-import com.fortysevendeg.ninecards.NineCardsServices
+import com.fortysevendeg.ninecards.processes.NineCardsServices
 
 import scalaz._
 

@@ -1,11 +1,11 @@
-package com.fortysevendeg.ninecards.free.interpreter
+package com.fortysevendeg.ninecards.services.free.interpreter
 
-import com.fortysevendeg.ninecards.free.algebra.appsGooglePlay._
-import com.fortysevendeg.ninecards.free.algebra.appsPersistence._
-import com.fortysevendeg.ninecards.free.algebra.sharedCollectionSubscriptions._
-import com.fortysevendeg.ninecards.free.algebra.sharedCollections._
-import com.fortysevendeg.ninecards.free.algebra.user._
-import com.fortysevendeg.ninecards.free.domain.{User, SharedCollectionSubscription, SharedCollection}
+import com.fortysevendeg.ninecards.services.free.algebra.appsGooglePlay._
+import com.fortysevendeg.ninecards.services.free.algebra.appsPersistence._
+import com.fortysevendeg.ninecards.services.free.algebra.sharedCollectionSubscriptions._
+import com.fortysevendeg.ninecards.services.free.algebra.sharedCollections._
+import com.fortysevendeg.ninecards.services.free.algebra.user._
+import com.fortysevendeg.ninecards.services.free.domain._
 
 import scalaz._
 
@@ -24,19 +24,35 @@ object interpreters {
 
   object AppGooglePlayInterpreter extends (AppGooglePlayOps ~> Id.Id) {
     def apply[A](fa: AppGooglePlayOps[A]) = fa match {
-      case GetCategoriesFromGooglePlay(packageNames: Seq[String]) => {
+      case GetCategoriesFromGooglePlay(packageNames: Seq[String]) =>
         println("Running GetCategoriesFromGooglePlay ...")
-        Seq("SOCIAL")
-      }
+        CategorizeResponse(
+          categorizedApps = Seq(GooglePlayApp(
+            packageName = "com.android.chrome",
+            appType = "",
+            appCategory = "COMMUNICATION",
+            numDownloads = "1,000,000,000 - 5,000,000,000",
+            starRating = 4.235081672668457,
+            ratingCount = 3715846,
+            commentCount = 0)),
+          notFoundApps = Seq("com.facebook.orca"))
     }
   }
 
   object AppPersistenceInterpreter extends (AppPersistenceOps ~> Id.Id) {
     def apply[A](fa: AppPersistenceOps[A]) = fa match {
-      case GetCategories(packageNames: Seq[String]) => {
+      case GetCategories(packageNames: Seq[String]) =>
         println("Running GetCategories ...")
-        Seq("COMMUNICATION")
-      }
+        CategorizeResponse(
+          categorizedApps = Seq(GooglePlayApp(
+            packageName = "com.whatsapp",
+            appType = "",
+            appCategory = "COMMUNICATION",
+            numDownloads = "1,000,000,000 - 5,000,000,000",
+            starRating = 4.433322429656982,
+            ratingCount = 31677777,
+            commentCount = 0)),
+          notFoundApps = Seq("com.skype.raider"))
       case SaveCategories(packageNames: Seq[String]) => Seq("GAMES")
     }
   }
@@ -67,4 +83,5 @@ object interpreters {
       case CheckPassword(pass: String) => true
     }
   }
+
 }

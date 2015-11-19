@@ -1,4 +1,6 @@
-package com.fortysevendeg.ninecards.free.algebra
+package com.fortysevendeg.ninecards.services.free.algebra
+
+import com.fortysevendeg.ninecards.services.free.domain.CategorizeResponse
 
 import scalaz.Free._
 import scalaz.{Monad, Free, Inject}
@@ -9,11 +11,13 @@ object appsGooglePlay {
 
   sealed trait AppGooglePlayOps[A]
 
-  case class GetCategoriesFromGooglePlay(packageNames: Seq[String]) extends AppGooglePlayOps[Seq[String]]
+  case class GetCategoriesFromGooglePlay(packageNames: Seq[String]) extends AppGooglePlayOps[CategorizeResponse]
 
   class AppGooglePlayServices[F[_]](implicit I: Inject[AppGooglePlayOps, F]) {
 
-    def getCategoriesFromGooglePlay(packageNames: Seq[String]): Free.FreeC[F, Seq[String]] = lift[AppGooglePlayOps, F, Seq[String]](GetCategoriesFromGooglePlay(packageNames))
+    def getCategoriesFromGooglePlay(
+      packageNames: Seq[String]): Free.FreeC[F, CategorizeResponse] =
+      lift[AppGooglePlayOps, F, CategorizeResponse](GetCategoriesFromGooglePlay(packageNames))
 
   }
 
@@ -22,4 +26,5 @@ object appsGooglePlay {
     implicit def appGooglePlay[F[_]](implicit I: Inject[AppGooglePlayOps, F]): AppGooglePlayServices[F] = new AppGooglePlayServices[F]
 
   }
+
 }

@@ -1,7 +1,7 @@
 package com.fortysevendeg.ninecards.api
 
-import com.fortysevendeg.ninecards.{UserProcesses, AppProcesses}
-import com.fortysevendeg.ninecards.NineCardsServices._
+import com.fortysevendeg.ninecards.processes.{UserProcesses, NineCardsServices, AppProcesses}
+import NineCardsServices._
 
 object DependencyInjector {
 

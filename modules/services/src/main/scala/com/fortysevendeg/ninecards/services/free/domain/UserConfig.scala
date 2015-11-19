@@ -1,4 +1,4 @@
-package com.fortysevendeg.ninecards.free.domain
+package com.fortysevendeg.ninecards.services.free.domain
 
 import spray.json.JsObject
 
