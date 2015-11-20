@@ -1,8 +1,8 @@
 package com.fortysevendeg.ninecards.processes
 
 import NineCardsServices.NineCardsServices
-import com.fortysevendeg.ninecards.services.free.algebra.appsGooglePlay.AppGooglePlayServices
-import com.fortysevendeg.ninecards.services.free.algebra.appsPersistence.AppPersistenceServices
+import com.fortysevendeg.ninecards.services.free.algebra.AppGooglePlay.AppGooglePlayServices
+import com.fortysevendeg.ninecards.services.free.algebra.AppPersistence.AppPersistenceServices
 import com.fortysevendeg.ninecards.processes.converters.Converters._
 
 class AppProcesses[F[_]](

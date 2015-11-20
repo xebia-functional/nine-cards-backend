@@ -1,11 +1,11 @@
 package com.fortysevendeg.ninecards.processes
 
-import com.fortysevendeg.ninecards.services.free.algebra.appsGooglePlay.AppGooglePlayOps
-import com.fortysevendeg.ninecards.services.free.algebra.appsPersistence.AppPersistenceOps
-import com.fortysevendeg.ninecards.services.free.algebra.sharedCollectionSubscriptions.SharedCollectionSubscriptionOps
-import com.fortysevendeg.ninecards.services.free.algebra.sharedCollections.SharedCollectionOps
-import com.fortysevendeg.ninecards.services.free.algebra.user.UserOps
-import com.fortysevendeg.ninecards.services.free.interpreter.interpreters._
+import com.fortysevendeg.ninecards.services.free.algebra.AppGooglePlay.AppGooglePlayOps
+import com.fortysevendeg.ninecards.services.free.algebra.AppPersistence.AppPersistenceOps
+import com.fortysevendeg.ninecards.services.free.algebra.SharedCollection.SharedCollectionOps
+import com.fortysevendeg.ninecards.services.free.algebra.SharedCollectionSubscription.SharedCollectionSubscriptionOps
+import com.fortysevendeg.ninecards.services.free.algebra.User.UserOps
+import com.fortysevendeg.ninecards.services.free.interpreter.Interpreters._
 
 import scalaz._
 

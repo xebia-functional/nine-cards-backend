@@ -1,13 +1,11 @@
 package com.fortysevendeg.ninecards.services.free.algebra
 
+import com.fortysevendeg.ninecards.services.free.algebra.Utils._
 import com.fortysevendeg.ninecards.services.free.domain.CategorizeResponse
 
-import scalaz.Free._
-import scalaz.{Monad, Free, Inject}
+import scalaz.{Free, Inject}
 
-object appsGooglePlay {
-
-  def lift[F[_], G[_], A](fa: F[A])(implicit I: Inject[F, G]): FreeC[G, A] = Free.liftFC(I.inj(fa))
+object AppGooglePlay {
 
   sealed trait AppGooglePlayOps[A]
 

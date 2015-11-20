@@ -1,13 +1,11 @@
 package com.fortysevendeg.ninecards.services.free.algebra
 
-import com.fortysevendeg.ninecards.services.free.domain.{SharedCollectionSubscription, SharedCollection}
+import com.fortysevendeg.ninecards.services.free.algebra.Utils._
+import com.fortysevendeg.ninecards.services.free.domain.{SharedCollection, SharedCollectionSubscription}
 
-import scalaz.Free._
 import scalaz.{Free, Inject}
 
-object sharedCollections {
-
-  def lift[F[_], G[_], A](fa: F[A])(implicit I: Inject[F, G]): FreeC[G, A] = Free.liftFC(I.inj(fa))
+object SharedCollection {
 
   sealed trait SharedCollectionOps[A]
 
@@ -38,9 +36,7 @@ object sharedCollections {
 
 }
 
-object sharedCollectionSubscriptions {
-
-  def lift[F[_], G[_], A](fa: F[A])(implicit I: Inject[F, G]): FreeC[G, A] = Free.liftFC(I.inj(fa))
+object SharedCollectionSubscription {
 
   sealed trait SharedCollectionSubscriptionOps[A]
 

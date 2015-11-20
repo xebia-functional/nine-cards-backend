@@ -1,15 +1,15 @@
 package com.fortysevendeg.ninecards.services.free.interpreter
 
-import com.fortysevendeg.ninecards.services.free.algebra.appsGooglePlay._
-import com.fortysevendeg.ninecards.services.free.algebra.appsPersistence._
-import com.fortysevendeg.ninecards.services.free.algebra.sharedCollectionSubscriptions._
-import com.fortysevendeg.ninecards.services.free.algebra.sharedCollections._
-import com.fortysevendeg.ninecards.services.free.algebra.user._
+import com.fortysevendeg.ninecards.services.free.algebra.AppGooglePlay._
+import com.fortysevendeg.ninecards.services.free.algebra.AppPersistence._
+import com.fortysevendeg.ninecards.services.free.algebra.SharedCollection._
+import com.fortysevendeg.ninecards.services.free.algebra.SharedCollectionSubscription._
+import com.fortysevendeg.ninecards.services.free.algebra.User._
 import com.fortysevendeg.ninecards.services.free.domain._
 
 import scalaz._
 
-object interpreters {
+object Interpreters {
 
   def or[F[_], G[_], H[_]](f: F ~> H, g: G ~> H): ({type cp[α] = Coproduct[F, G, α]})#cp ~> H = {
     new NaturalTransformation[({type cp[α] = Coproduct[F, G, α]})#cp, H] {
