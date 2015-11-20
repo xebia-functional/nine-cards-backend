@@ -1,0 +1,2153 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "title": "NineCards",
+        "description": "Backend services for NineCards",
+        "version": "2.0.0"
+    },
+    "host": "localhost:8080",
+    "schemes": [
+        "http"
+    ],
+    "basePath": "/",
+    "produces": [
+        "application/json"
+    ],
+    "paths": {
+        "/users": {
+            "post": {
+                "summary": "Starts a session with an specific user.",
+                "description": "Sends authorization data to log in an specific user.",
+                "tags": [
+                    "Login"
+                ],
+                "parameters": [
+                    {
+                        "$ref": "#/parameters/appId"
+                    },
+                    {
+                        "$ref": "#/parameters/restApiKey"
+                    },
+                    {
+                        "name": "authData",
+                        "in": "body",
+                        "description": "Authorization data to start the login process.",
+                        "schema": {
+                            "$ref": "#/definitions/AuthData"
+                        },
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User info.",
+                        "schema": {
+                            "$ref": "#/definitions/User"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/{userId}": {
+            "get": {
+                "summary": "Gets information about an specific user.",
+                "tags": [
+                    "Login"
+                ],
+                "parameters": [
+                    {
+                        "$ref": "#/parameters/appId"
+                    },
+                    {
+                        "$ref": "#/parameters/restApiKey"
+                    },
+                    {
+                        "name": "userId",
+                        "in": "path",
+                        "description": "ID of the user to get.",
+                        "type": "string",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User info.",
+                        "schema": {
+                            "$ref": "#/definitions/User"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "summary": "Updates information about an specific user.",
+                "tags": [
+                    "Login"
+                ],
+                "parameters": [
+                    {
+                        "$ref": "#/parameters/appId"
+                    },
+                    {
+                        "$ref": "#/parameters/restApiKey"
+                    },
+                    {
+                        "name": "userId",
+                        "in": "path",
+                        "description": "ID of the user to update.",
+                        "type": "string",
+                        "required": true
+                    },
+                    {
+                        "name": "userData",
+                        "in": "body",
+                        "description": "User data to update",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/User"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success confirmation."
+                    }
+                }
+            }
+        },
+        "/users/link": {
+            "put": {
+                "summary": "Links a new account with an specific user.",
+                "description": "Updates authorization data to log in an specific user.",
+                "tags": [
+                    "Login"
+                ],
+                "parameters": [
+                    {
+                        "$ref": "#/parameters/appId"
+                    },
+                    {
+                        "$ref": "#/parameters/restApiKey"
+                    },
+                    {
+                        "$ref": "#/parameters/sessionToken"
+                    },
+                    {
+                        "$ref": "#/parameters/androidId"
+                    },
+                    {
+                        "$ref": "#/parameters/androidMarketLocalization"
+                    },
+                    {
+                        "name": "authData",
+                        "in": "body",
+                        "description": "Authorization data to start the login process.",
+                        "schema": {
+                            "$ref": "#/definitions/AuthData"
+                        },
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Auth data.",
+                        "schema": {
+                            "$ref": "#/definitions/User"
+                        }
+                    }
+                }
+            }
+        },
+        "/installations": {
+            "post": {
+                "summary": "Creates an installation.",
+                "description": "Creates a new installation to be associated with an specific user ID.",
+                "tags": [
+                    "Login"
+                ],
+                "parameters": [
+                    {
+                        "$ref": "#/parameters/appId"
+                    },
+                    {
+                        "$ref": "#/parameters/restApiKey"
+                    },
+                    {
+                        "name": "installationData",
+                        "in": "body",
+                        "description": "Installation data to be added to the user.",
+                        "schema": {
+                            "$ref": "#/definitions/Installation"
+                        },
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Installation identifier if successful.",
+                        "schema": {
+                            "title": "responseData",
+                            "type": "object",
+                            "properties": {
+                                "_id": {
+                                    "type": "string",
+                                    "description": "Unique ID of the new installation."
+                                },
+                                "userId": {
+                                    "type": "string",
+                                    "description": "User ID of the owner of this installation."
+                                },
+                                "deviceType": {
+                                    "type": "string",
+                                    "description": "Device type of the installation. i.e. \"ANDROID\"."
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/installations/{installationId}": {
+            "put": {
+                "summary": "Updates an installation.",
+                "description": "Updates an installation with the provided data.",
+                "tags": [
+                    "Login"
+                ],
+                "parameters": [
+                    {
+                        "$ref": "#/parameters/appId"
+                    },
+                    {
+                        "$ref": "#/parameters/restApiKey"
+                    },
+                    {
+                        "name": "installationData",
+                        "in": "body",
+                        "description": "Installation data to be added to the user.",
+                        "schema": {
+                            "$ref": "#/definitions/Installation"
+                        },
+                        "required": true
+                    },
+                    {
+                        "name": "installationId",
+                        "in": "path",
+                        "description": "Id of the installation to update.",
+                        "required": true,
+                        "type": "string"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success confirmation."
+                    }
+                }
+            }
+        },
+        "/userconfig": {
+            "get": {
+                "summary": "Fetches the configurations settings of the current user.",
+                "description": "Fetches the configurations settings of the current user.",
+                "tags": [
+                    "User config"
+                ],
+                "parameters": [
+                    {
+                        "$ref": "#/parameters/appId"
+                    },
+                    {
+                        "$ref": "#/parameters/restApiKey"
+                    },
+                    {
+                        "$ref": "#/parameters/sessionToken"
+                    },
+                    {
+                        "$ref": "#/parameters/androidId"
+                    },
+                    {
+                        "$ref": "#/parameters/androidMarketLocalization"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Configuration settings of the current user.",
+                        "schema": {
+                            "$ref": "#/definitions/UserConfig"
+                        }
+                    }
+                }
+            }
+        },
+        "/userconfig/device": {
+            "put": {
+                "summary": "Syncs a device with the configuration settings of the current user.",
+                "description": "Syncs a device with the configuration settings of the current user.",
+                "tags": [
+                    "User config"
+                ],
+                "parameters": [
+                    {
+                        "$ref": "#/parameters/appId"
+                    },
+                    {
+                        "$ref": "#/parameters/restApiKey"
+                    },
+                    {
+                        "$ref": "#/parameters/sessionToken"
+                    },
+                    {
+                        "$ref": "#/parameters/androidId"
+                    },
+                    {
+                        "$ref": "#/parameters/androidMarketLocalization"
+                    },
+                    {
+                        "name": "deviceConfig",
+                        "in": "body",
+                        "description": "Information about the device to be synced.",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/DeviceConfig"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Updated configuration settings of the current user.",
+                        "schema": {
+                            "$ref": "#/definitions/UserConfig"
+                        }
+                    }
+                }
+            }
+        },
+        "/userconfig/geoInfo": {
+            "put": {
+                "summary": "Updates the geolocation info of the configuration settings of the current user.",
+                "description": "Updates the geolocation info of the configuration settings of the current user.",
+                "tags": [
+                    "User config"
+                ],
+                "parameters": [
+                    {
+                        "$ref": "#/parameters/appId"
+                    },
+                    {
+                        "$ref": "#/parameters/restApiKey"
+                    },
+                    {
+                        "$ref": "#/parameters/sessionToken"
+                    },
+                    {
+                        "$ref": "#/parameters/androidId"
+                    },
+                    {
+                        "$ref": "#/parameters/androidMarketLocalization"
+                    },
+                    {
+                        "name": "geoInfo",
+                        "in": "body",
+                        "description": "Geolocation information to update.",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/GeoInfo"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Updated configuration settings of the current user.",
+                        "schema": {
+                            "$ref": "#/definitions/UserConfig"
+                        }
+                    }
+                }
+            }
+        },
+        "/userconfig/device/{deviceId}": {
+            "delete": {
+                "summary": "Unlinks a device from the settings of the current user.",
+                "description": "Unlinks a device from the settings of the current user.",
+                "tags": [
+                    "User config"
+                ],
+                "parameters": [
+                    {
+                        "$ref": "#/parameters/appId"
+                    },
+                    {
+                        "$ref": "#/parameters/restApiKey"
+                    },
+                    {
+                        "$ref": "#/parameters/sessionToken"
+                    },
+                    {
+                        "$ref": "#/parameters/androidId"
+                    },
+                    {
+                        "$ref": "#/parameters/androidMarketLocalization"
+                    },
+                    {
+                        "name": "deviceId",
+                        "in": "path",
+                        "description": "Id of the device to delete.",
+                        "required": true,
+                        "type": "string"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Updated configuration settings of the current user.",
+                        "schema": {
+                            "$ref": "#/definitions/UserConfig"
+                        }
+                    }
+                }
+            }
+        },
+        "/collections": {
+            "post": {
+                "summary": "Share a collection.",
+                "description": "Share a collection.\n",
+                "tags": [
+                    "Collections"
+                ],
+                "parameters": [
+                    {
+                        "$ref": "#/parameters/appId"
+                    },
+                    {
+                        "$ref": "#/parameters/restApiKey"
+                    },
+                    {
+                        "$ref": "#/parameters/sessionToken"
+                    },
+                    {
+                        "$ref": "#/parameters/androidId"
+                    },
+                    {
+                        "$ref": "#/parameters/androidMarketLocalization"
+                    },
+                    {
+                        "name": "collection",
+                        "description": "Collection to share",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/SharedCollection"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Shared collection",
+                        "schema": {
+                            "title": "Collections",
+                            "$ref": "#/definitions/Collection"
+                        }
+                    }
+                }
+            }
+        },
+        "/collections/{collectionId}": {
+            "get": {
+                "summary": "Fetch details of an specific shared collection by ID.",
+                "description": "Fetch details of an specific shared collection by ID.\n",
+                "tags": [
+                    "Collections"
+                ],
+                "parameters": [
+                    {
+                        "$ref": "#/parameters/appId"
+                    },
+                    {
+                        "$ref": "#/parameters/restApiKey"
+                    },
+                    {
+                        "$ref": "#/parameters/sessionToken"
+                    },
+                    {
+                        "$ref": "#/parameters/androidId"
+                    },
+                    {
+                        "$ref": "#/parameters/androidMarketLocalization"
+                    },
+                    {
+                        "name": "collectionId",
+                        "in": "path",
+                        "description": "ID of the shared collection to get the details.",
+                        "type": "string",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Details of the shared collection.",
+                        "schema": {
+                            "$ref": "#/definitions/SharedCollection"
+                        }
+                    }
+                }
+            }
+        },
+        "/collections/{collectionId}/subscribe": {
+            "put": {
+                "description": "Subscribe to an specific shared collection.\n",
+                "tags": [
+                    "Collections"
+                ],
+                "parameters": [
+                    {
+                        "$ref": "#/parameters/appId"
+                    },
+                    {
+                        "$ref": "#/parameters/restApiKey"
+                    },
+                    {
+                        "$ref": "#/parameters/sessionToken"
+                    },
+                    {
+                        "$ref": "#/parameters/androidId"
+                    },
+                    {
+                        "$ref": "#/parameters/androidMarketLocalization"
+                    },
+                    {
+                        "name": "collectionId",
+                        "in": "path",
+                        "description": "ID of the shared collection to subscribe to.",
+                        "type": "string",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Details of the shared collection.",
+                        "schema": {
+                            "title": "Shared collection subscription confirmation.",
+                            "$ref": "#/definitions/SharedCollectionSubscription"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Unsubscribe from an specific shared collection.\n",
+                "tags": [
+                    "Collections"
+                ],
+                "parameters": [
+                    {
+                        "$ref": "#/parameters/appId"
+                    },
+                    {
+                        "$ref": "#/parameters/restApiKey"
+                    },
+                    {
+                        "$ref": "#/parameters/sessionToken"
+                    },
+                    {
+                        "$ref": "#/parameters/androidId"
+                    },
+                    {
+                        "$ref": "#/parameters/androidMarketLocalization"
+                    },
+                    {
+                        "name": "collectionId",
+                        "in": "path",
+                        "description": "ID of the shared collection to unsubscribe from.",
+                        "type": "string",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Subscription cancellation confirmation."
+                    }
+                }
+            }
+        },
+        "/collections/search/{keyword}/{offset}/{limit}": {
+            "get": {
+                "summary": "Performs a search among the shared collections.",
+                "description": "Performs a search among the shared collections based on a keyword. It also allows paging based on an offset and limit.\n",
+                "tags": [
+                    "Collections"
+                ],
+                "parameters": [
+                    {
+                        "$ref": "#/parameters/appId"
+                    },
+                    {
+                        "$ref": "#/parameters/restApiKey"
+                    },
+                    {
+                        "$ref": "#/parameters/sessionToken"
+                    },
+                    {
+                        "$ref": "#/parameters/androidId"
+                    },
+                    {
+                        "$ref": "#/parameters/androidMarketLocalization"
+                    },
+                    {
+                        "name": "keyword",
+                        "in": "path",
+                        "description": "Search keyword.",
+                        "type": "string",
+                        "required": true
+                    },
+                    {
+                        "name": "offset",
+                        "in": "path",
+                        "description": "Paging offset.",
+                        "type": "integer",
+                        "required": true
+                    },
+                    {
+                        "name": "limit",
+                        "in": "path",
+                        "description": "Number of results to return.",
+                        "type": "integer",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of shared collections conforming to the search parameters.",
+                        "schema": {
+                            "title": "Shared collections",
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/SharedCollection"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/collections/{collectionId}/notifyViews": {
+            "post": {
+                "summary": "Adds a number of views to this shared collection and notify its suscribers.",
+                "description": "Adds a number of views to this shared collection and notify its suscribers.\n",
+                "tags": [
+                    "Collections"
+                ],
+                "parameters": [
+                    {
+                        "$ref": "#/parameters/appId"
+                    },
+                    {
+                        "$ref": "#/parameters/restApiKey"
+                    },
+                    {
+                        "$ref": "#/parameters/sessionToken"
+                    },
+                    {
+                        "$ref": "#/parameters/androidId"
+                    },
+                    {
+                        "$ref": "#/parameters/androidMarketLocalization"
+                    },
+                    {
+                        "name": "collectionId",
+                        "in": "path",
+                        "description": "ID of the shared collection to notify.",
+                        "type": "string",
+                        "required": true
+                    },
+                    {
+                        "name": "views",
+                        "in": "body",
+                        "description": "Number of views to add to the shared collection.",
+                        "schema": {
+                            "$ref": "#/definitions/Views"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Details of the updated shared collection.",
+                        "schema": {
+                            "title": "Updated shared collection subscription.",
+                            "$ref": "#/definitions/SharedCollection"
+                        }
+                    }
+                }
+            }
+        },
+        "/collections/{collectionId}/notifyInstall": {
+            "post": {
+                "summary": "Adds a number of installs to this shared collection and notify its suscribers.",
+                "description": "Adds a number of installs to this shared collection and notify its suscribers.\n",
+                "tags": [
+                    "Collections"
+                ],
+                "parameters": [
+                    {
+                        "$ref": "#/parameters/appId"
+                    },
+                    {
+                        "$ref": "#/parameters/restApiKey"
+                    },
+                    {
+                        "$ref": "#/parameters/sessionToken"
+                    },
+                    {
+                        "$ref": "#/parameters/androidId"
+                    },
+                    {
+                        "$ref": "#/parameters/androidMarketLocalization"
+                    },
+                    {
+                        "name": "collectionId",
+                        "in": "path",
+                        "description": "ID of the shared collection to notify.",
+                        "type": "string",
+                        "required": true
+                    },
+                    {
+                        "name": "installs",
+                        "in": "body",
+                        "description": "Number of installs to add to the shared collection.",
+                        "schema": {
+                            "$ref": "#/definitions/Installs"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Details of the updated shared collection.",
+                        "schema": {
+                            "title": "Updated shared collection subscription.",
+                            "$ref": "#/definitions/SharedCollection"
+                        }
+                    }
+                }
+            }
+        },
+        "/collections/{collectionId}/notifyPlusOne": {
+            "post": {
+                "summary": "Notify to this shared collection's suscribers.",
+                "description": "Notify to this shared collection's suscribers.\n",
+                "tags": [
+                    "Collections"
+                ],
+                "parameters": [
+                    {
+                        "$ref": "#/parameters/appId"
+                    },
+                    {
+                        "$ref": "#/parameters/restApiKey"
+                    },
+                    {
+                        "$ref": "#/parameters/sessionToken"
+                    },
+                    {
+                        "$ref": "#/parameters/androidId"
+                    },
+                    {
+                        "$ref": "#/parameters/androidMarketLocalization"
+                    },
+                    {
+                        "name": "collectionId",
+                        "in": "path",
+                        "description": "ID of the shared collection to notify.",
+                        "type": "string",
+                        "required": true
+                    },
+                    {
+                        "name": "Data",
+                        "description": "(this should be changed in v2, currently the request needs a JSON object inside the body, but doesn't do anything with it, at least it seems like it)",
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/OnePlusRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Details of the updated shared collection.",
+                        "schema": {
+                            "title": "Updated shared collection subscription.",
+                            "$ref": "#/definitions/SharedCollection"
+                        }
+                    }
+                }
+            }
+        },
+        "/collections/{collectionId}/rate/{rating}": {
+            "post": {
+                "summary": "Rate this collection with an specific number of stars (1-5).",
+                "description": "Rate this collection with an specific number of stars (1-5).\n",
+                "tags": [
+                    "Collections"
+                ],
+                "parameters": [
+                    {
+                        "$ref": "#/parameters/appId"
+                    },
+                    {
+                        "$ref": "#/parameters/restApiKey"
+                    },
+                    {
+                        "$ref": "#/parameters/sessionToken"
+                    },
+                    {
+                        "$ref": "#/parameters/androidId"
+                    },
+                    {
+                        "$ref": "#/parameters/androidMarketLocalization"
+                    },
+                    {
+                        "name": "collectionId",
+                        "in": "path",
+                        "description": "ID of the shared collection to rate.",
+                        "type": "string",
+                        "required": true
+                    },
+                    {
+                        "name": "rating",
+                        "description": "Rating value (1-5)",
+                        "in": "path",
+                        "required": true,
+                        "type": "integer"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Details of the rated shared collection.",
+                        "schema": {
+                            "title": "Updated shared collection subscription.",
+                            "$ref": "#/definitions/SharedCollection"
+                        }
+                    }
+                }
+            }
+        },
+        "/collections/{filter}/{category}/{offset}/{limit}": {
+            "post": {
+                "summary": "Returns a list of collections that match the provided filters/categories.",
+                "description": "Returns a list of collections that match the provided filters/categories.\n",
+                "tags": [
+                    "Collections"
+                ],
+                "parameters": [
+                    {
+                        "$ref": "#/parameters/appId"
+                    },
+                    {
+                        "$ref": "#/parameters/restApiKey"
+                    },
+                    {
+                        "$ref": "#/parameters/sessionToken"
+                    },
+                    {
+                        "$ref": "#/parameters/androidId"
+                    },
+                    {
+                        "$ref": "#/parameters/androidMarketLocalization"
+                    },
+                    {
+                        "name": "filter",
+                        "in": "path",
+                        "description": "One filter [top | latest], to get the top ranked collections or the latest ones.",
+                        "type": "string",
+                        "required": true
+                    },
+                    {
+                        "name": "category",
+                        "description": "An app category between the following - ALL_APPS, ALL_CATEGORIES, CUSTOM, MISC, GAME, BOOKS_AND_REFERENCE, BUSINESS, COMICS, COMMUNICATION, EDUCATION, ENTERTAINMENT, FINANCE, HEALTH_AND_FITNESS, LIBRARIES_AND_DEMO, LIFESTYLE, APP_WALLPAPER, MEDIA_AND_VIDEO, MEDICAL, MUSIC_AND_AUDIO, NEWS_AND_MAGAZINES, PERSONALIZATION, PHOTOGRAPHY, PRODUCTIVITY, SHOPPING, SOCIAL, SPORTS, TOOLS, TRANSPORTATION, TRAVEL_AND_LOCAL, WEATHER, APP_WIDGETS, GAME_ACTION, GAME_ADVENTURE, GAME_RACING, GAME_CARD, GAME_CASINO, GAME_CASUAL, GAME_FAMILY, GAME_SPORTS, GAME_EDUCATIONAL, GAME_STRATEGY, GAME_WALLPAPER, GAME_TRIVIA, GAME_BOARD, GAME_ROLE_PLAYING, GAME_MUSIC, GAME_WORD, GAME_PUZZLE, GAME_ARCADE, GAME_SIMULATION, GAME_WIDGETS.",
+                        "in": "path",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "name": "offset",
+                        "in": "path",
+                        "description": "Paging offset.",
+                        "type": "integer",
+                        "required": true
+                    },
+                    {
+                        "name": "limit",
+                        "in": "path",
+                        "description": "Number of results to return.",
+                        "type": "integer",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of shared collections conforming to the search parameters.",
+                        "schema": {
+                            "title": "Recommendations",
+                            "type": "object",
+                            "properties": {
+                                "items": {
+                                    "type": "array",
+                                    "description": "List of recommendations",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "appId": {
+                                                "type": "string",
+                                                "description": "Unique identifier of the app."
+                                            },
+                                            "app": {
+                                                "$ref": "#/definitions/SharedCollection"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/collections/{filter}/{offset}/{limit}": {
+            "post": {
+                "summary": "Returns a list of collections that match the provided filter.",
+                "description": "Returns a list of collections that match the provided filter.\n",
+                "tags": [
+                    "Collections"
+                ],
+                "parameters": [
+                    {
+                        "$ref": "#/parameters/appId"
+                    },
+                    {
+                        "$ref": "#/parameters/restApiKey"
+                    },
+                    {
+                        "$ref": "#/parameters/sessionToken"
+                    },
+                    {
+                        "$ref": "#/parameters/androidId"
+                    },
+                    {
+                        "$ref": "#/parameters/androidMarketLocalization"
+                    },
+                    {
+                        "name": "filter",
+                        "in": "path",
+                        "description": "One filter [top | latest], to get the top ranked collections or the latest ones.",
+                        "type": "string",
+                        "required": true
+                    },
+                    {
+                        "name": "offset",
+                        "in": "path",
+                        "description": "Paging offset.",
+                        "type": "integer",
+                        "required": true
+                    },
+                    {
+                        "name": "limit",
+                        "in": "path",
+                        "description": "Number of results to return.",
+                        "type": "integer",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of shared collections conforming to the search parameters.",
+                        "schema": {
+                            "title": "Recommendations",
+                            "type": "object",
+                            "properties": {
+                                "items": {
+                                    "type": "array",
+                                    "description": "List of recommendations",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "appId": {
+                                                "type": "string",
+                                                "description": "Unique identifier of the app."
+                                            },
+                                            "app": {
+                                                "$ref": "#/definitions/SharedCollection"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/collections/recommendations/apps": {
+            "get": {
+                "summary": "Fetch a list of recommended apps.",
+                "description": "Fetch a list of recommended apps.\n",
+                "tags": [
+                    "Recommendations"
+                ],
+                "parameters": [
+                    {
+                        "$ref": "#/parameters/appId"
+                    },
+                    {
+                        "$ref": "#/parameters/restApiKey"
+                    },
+                    {
+                        "$ref": "#/parameters/sessionToken"
+                    },
+                    {
+                        "$ref": "#/parameters/androidId"
+                    },
+                    {
+                        "$ref": "#/parameters/androidMarketLocalization"
+                    },
+                    {
+                        "name": "params",
+                        "in": "body",
+                        "description": "Info to help the backend to choose recommendations for the user.",
+                        "schema": {
+                            "$ref": "#/definitions/AppsRecommendationsRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "An array of collections",
+                        "schema": {
+                            "title": "Recommendations",
+                            "type": "object",
+                            "properties": {
+                                "count": {
+                                    "type": "integer",
+                                    "description": "Number of results."
+                                },
+                                "items": {
+                                    "type": "array",
+                                    "description": "List of recommendations",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "appId": {
+                                                "type": "string",
+                                                "description": "Unique identifier of the app."
+                                            },
+                                            "app": {
+                                                "$ref": "#/definitions/AppInformation"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "Collection": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "Unique identifier for a collection."
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Name of collection."
+                },
+                "description": {
+                    "type": "string",
+                    "description": "Description of collection."
+                },
+                "packages": {
+                    "type": "array",
+                    "description": "Array containing Google Play packages corresponding to this collection.",
+                    "items": {
+                        "$ref": "#/definitions/Package"
+                    }
+                }
+            }
+        },
+        "UserCollection": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "Name of the collection."
+                },
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/CollectionItem"
+                    }
+                },
+                "collectionType": {
+                    "type": "string",
+                    "description": "Type of the collection. (\"apps\" | \"contacts\" | \"free\")"
+                },
+                "constrains": {
+                    "type": "array",
+                    "description": "Constraints of the collection (\"home_morning\", \"home_night\", \"work\", \"transit\", \"geo\", \"time\").",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "wifi": {
+                    "type": "array",
+                    "description": "SSID of WiFi networks associated with the collection.",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "ocurrence": {
+                    "$ref": "#/definitions/TimeSlot"
+                },
+                "radius": {
+                    "type": "number",
+                    "description": "Geolocation radius associated with the collection. (nullable)."
+                },
+                "lat": {
+                    "type": "number",
+                    "description": "Geolocation latitude associated with the collection. (nullable)."
+                },
+                "lng": {
+                    "type": "number",
+                    "description": "Geolocation longitude associated with the collection. (nullable)."
+                },
+                "alt": {
+                    "type": "number",
+                    "description": "Geolocation altitude associated with the collection. (nullable)."
+                },
+                "category": {
+                    "type": "string",
+                    "description": "Category associated with the collection."
+                },
+                "icon": {
+                    "type": "string",
+                    "description": "Predefined icon of the collection."
+                }
+            }
+        },
+        "CollectionItem": {
+            "type": "object",
+            "properties": {
+                "itemType": {
+                    "type": "string",
+                    "description": "Type of item."
+                },
+                "title": {
+                    "type": "string",
+                    "description": "Title of item."
+                },
+                "metadata": {
+                    "description": "Metadata associated with the collection. (nullable)",
+                    "$ref": "#/definitions/CollectionItemMetaData"
+                }
+            }
+        },
+        "CollectionItemMetaData": {
+            "type": "object",
+            "properties": {
+                "intentExtras": {
+                    "type": "object",
+                    "properties": {
+                        "class_name": {
+                            "type": "string",
+                            "description": "Class name."
+                        },
+                        "package_name": {
+                            "type": "string",
+                            "description": "Package name."
+                        }
+                    }
+                },
+                "action": {
+                    "type": "string",
+                    "description": "Identifier of the action to perform."
+                },
+                "extras": {
+                    "type": "object",
+                    "properties": {
+                        "classLoader": {
+                            "type": "object",
+                            "properties": {
+                                "parent": {
+                                    "type": "string",
+                                    "description": "Parent class. (nullable)"
+                                }
+                            }
+                        },
+                        "pairValue": {
+                            "type": "string",
+                            "description": "Pair value."
+                        },
+                        "empty": {
+                            "type": "boolean",
+                            "description": "true if empty."
+                        },
+                        "parcelled": {
+                            "type": "boolean",
+                            "description": "true if parcelled."
+                        }
+                    }
+                }
+            }
+        },
+        "SharedCollection": {
+            "type": "object",
+            "properties": {
+                "_id": {
+                    "type": "string",
+                    "description": "Identifier for this collection. (nullable)."
+                },
+                "sharedCollectionId": {
+                    "type": "string",
+                    "description": "Identifier for this shared collection. (nullable)."
+                },
+                "publishedOn": {
+                    "type": "number",
+                    "description": "Publish date of this shared collection in UNIX format. (nullable)."
+                },
+                "userConfigId": {
+                    "type": "string",
+                    "description": "Unique identifier for the user config associated with this shared collection."
+                },
+                "description": {
+                    "type": "string",
+                    "description": "Description of this collection. (nullable)."
+                },
+                "screenshots": {
+                    "type": "array",
+                    "description": "List of screenshots of the apps included in this collection. (nullable).",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "author": {
+                    "type": "string",
+                    "description": "Author of this collection. (nullable)."
+                },
+                "tags": {
+                    "type": "array",
+                    "description": "List of tags associated with this collection.",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Name of this collection."
+                },
+                "shareLink": {
+                    "type": "string",
+                    "description": "Shareable URL of this collection. (nullable)."
+                },
+                "packages": {
+                    "type": "array",
+                    "description": "List of packages included in this collection.",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "resolvedPackages": {
+                    "type": "array",
+                    "description": "List of detailed info about the packages included in this collection. (nullable).",
+                    "items": {
+                        "$ref": "#/definitions/SharedPackage"
+                    }
+                },
+                "ocurrence": {
+                    "type": "array",
+                    "description": "???",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "lat": {
+                    "type": "number",
+                    "description": "Latitude coordinate associated with this collection. (nullable)."
+                },
+                "lng": {
+                    "type": "number",
+                    "description": "Longitude coordinate associated with this collection. (nullable)."
+                },
+                "alt": {
+                    "type": "number",
+                    "description": "Altitude coordinate associated with this collection. (nullable)."
+                },
+                "views": {
+                    "type": "integer",
+                    "description": "Number of views of this collection. (nullable)."
+                },
+                "installs": {
+                    "type": "integer",
+                    "description": "Number of installs of this collection. (nullable)."
+                },
+                "category": {
+                    "type": "string",
+                    "description": "Category tag of this collection. (nullable)."
+                },
+                "icon": {
+                    "type": "string",
+                    "description": "Predefined icon identifier associated with this collection. (nullable)."
+                },
+                "community": {
+                    "type": "boolean",
+                    "description": "true if this is a community collection. (nullable)."
+                }
+            }
+        },
+        "SharedCollectionSubscription": {
+            "type": "object",
+            "description": "Information describing a subscription to a shared collection.",
+            "properties": {
+                "_id": {
+                    "type": "string",
+                    "description": "Response ID. (nullable)"
+                },
+                "userId": {
+                    "type": "string",
+                    "description": "Unique ID of the user (???)"
+                },
+                "sharedCollectionId": {
+                    "type": "string",
+                    "description": "Unique ID of the collection the user has just subscribed to."
+                }
+            }
+        },
+        "GoogleAuthDataDeviceInfo": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "Name of device."
+                },
+                "deviceId": {
+                    "type": "string",
+                    "description": "Unique identifier of device."
+                },
+                "secretToken": {
+                    "type": "string",
+                    "description": "Secret token that identifies this account."
+                },
+                "permissions": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "List of permissions to ask to Google when identifying this user."
+                }
+            }
+        },
+        "Installation": {
+            "type": "object",
+            "properties": {
+                "userId": {
+                    "type": "string",
+                    "description": "User ID of the owner of this installation. (nullable)."
+                },
+                "deviceType": {
+                    "type": "string",
+                    "description": "Device type of the installation. i.e. \"ANDROID\". (nullable)."
+                }
+            }
+        },
+        "AuthData": {
+            "type": "object",
+            "properties": {
+                "google": {
+                    "$ref": "#/definitions/GoogleAuthData"
+                }
+            }
+        },
+        "User": {
+            "type": "object",
+            "properties": {
+                "_id": {
+                    "type": "string",
+                    "description": "Unique ID of the user (?). (nullable)"
+                },
+                "sessionToken": {
+                    "type": "string",
+                    "description": "Authorized session token. (nullable)"
+                },
+                "authData": {
+                    "$ref": "#/definitions/AuthData"
+                }
+            }
+        },
+        "GoogleAuthData": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "description": "User email for this Google account."
+                },
+                "devices": {
+                    "type": "array",
+                    "description": "List of logged in devices for this account.",
+                    "items": {
+                        "$ref": "#/definitions/GoogleAuthDataDeviceInfo"
+                    }
+                }
+            }
+        },
+        "AppsRecommendationsRequest": {
+            "type": "object",
+            "properties": {
+                "categories": {
+                    "type": "array",
+                    "description": "Google Play categories of the app recommendations we're requesting.",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "likePackages": {
+                    "type": "array",
+                    "description": "Packages of apps similar to the recommendations we're requesting.",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "excludePackages": {
+                    "type": "array",
+                    "description": "Packages of apps that shouldn't be included in the recommendations we're requesting.",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "limit": {
+                    "type": "integer",
+                    "description": "Maximum number of recommendations."
+                }
+            }
+        },
+        "Package": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "Unique identifier for a package."
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Name of package."
+                },
+                "url": {
+                    "type": "string",
+                    "description": "Download URL for package."
+                }
+            }
+        },
+        "SharedPackage": {
+            "type": "object",
+            "properties": {
+                "packageName": {
+                    "type": "string",
+                    "description": "Google Play name of this package."
+                },
+                "title": {
+                    "type": "string",
+                    "description": "Title of the app included in this package."
+                },
+                "description": {
+                    "type": "string",
+                    "description": "Description of the app included in this package."
+                },
+                "free": {
+                    "type": "boolean",
+                    "description": "true if the app in this package is free."
+                },
+                "icon": {
+                    "type": "string",
+                    "description": "Image URL of the icon of this package."
+                },
+                "stars": {
+                    "type": "number",
+                    "description": "Float representation of the ratings based in stars (1-5)."
+                },
+                "downloads": {
+                    "type": "string",
+                    "description": "Formatted figure for the number of downloads of the app included in this package."
+                }
+            }
+        },
+        "AppInformation": {
+            "type": "object",
+            "description": "Information describing an app in Google Play.",
+            "properties": {
+                "docid": {
+                    "type": "string",
+                    "description": "Unique ID of this app."
+                },
+                "backendDocid": {
+                    "type": "string",
+                    "description": "Unique backend ID of this app."
+                },
+                "docType": {
+                    "type": "integer",
+                    "description": "???"
+                },
+                "backendId": {
+                    "type": "integer",
+                    "description": "???"
+                },
+                "title": {
+                    "type": "string",
+                    "description": "Title of this app."
+                },
+                "creator": {
+                    "type": "string",
+                    "description": "Name of the developer/company."
+                },
+                "descriptionHtml": {
+                    "type": "string",
+                    "description": "HTML string containing the description of this app."
+                },
+                "offer": {
+                    "type": "array",
+                    "description": "List of app purchases available in this app.",
+                    "items": {
+                        "$ref": "#/definitions/AppOfferInfo"
+                    }
+                },
+                "availability": {
+                    "$ref": "#/definitions/AppAvailabilityInfo"
+                },
+                "image": {
+                    "type": "array",
+                    "description": "List of images associated with this app.",
+                    "items": {
+                        "$ref": "#/definitions/AppImageInfo"
+                    }
+                },
+                "child": {
+                    "type": "array",
+                    "description": "???",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "containerMetadata": {
+                    "type": "string",
+                    "description": "??? (nullable)"
+                },
+                "details": {
+                    "type": "object",
+                    "description": "Detailed info about this app.",
+                    "properties": {
+                        "appDetails": {
+                            "$ref": "#/definitions/AppDetail"
+                        },
+                        "albumDetails": {
+                            "type": "object",
+                            "description": "Details for this album content. (nullable)"
+                        },
+                        "artistDetails": {
+                            "type": "object",
+                            "description": "Details for this artist content. (nullable)"
+                        },
+                        "songDetails": {
+                            "type": "object",
+                            "description": "Details for this song content. (nullable)"
+                        },
+                        "bookDetails": {
+                            "type": "object",
+                            "description": "Details for this book content. (nullable)"
+                        },
+                        "videoDetails": {
+                            "type": "object",
+                            "description": "Details for this video content. (nullable)"
+                        },
+                        "subscriptionDetails": {
+                            "type": "object",
+                            "description": "Details for this subscription content. (nullable)"
+                        },
+                        "magazineDetails": {
+                            "type": "object",
+                            "description": "Details for this magazine content. (nullable)"
+                        },
+                        "tvShowDetails": {
+                            "type": "object",
+                            "description": "Details for this TV Show content. (nullable)"
+                        },
+                        "tvSeasonDetails": {
+                            "type": "object",
+                            "description": "Details for this TV Season content. (nullable)"
+                        },
+                        "tvEpisodeDetails": {
+                            "type": "object",
+                            "description": "Details for this TV Episode content. (nullable)"
+                        }
+                    }
+                },
+                "aggregateRating": {
+                    "$ref": "#/definitions/AppRatingInfo"
+                },
+                "detailsUrl": {
+                    "type": "string",
+                    "description": "URL to get the details of this app."
+                },
+                "shareUrl": {
+                    "type": "string",
+                    "description": "Shareable URL to access the app in Google Play."
+                },
+                "reviewsUrl": {
+                    "type": "string",
+                    "description": "URL to get the reviews and ratings of this app."
+                },
+                "backendUrl": {
+                    "type": "string",
+                    "description": "URL to access the backend of this app. (???) (nullable)"
+                },
+                "purchaseDetailsUrl": {
+                    "type": "string",
+                    "description": "Url to access the details of the purchase of this app."
+                },
+                "detailsReusable": {
+                    "type": "boolean",
+                    "description": "true if the details are reusable."
+                },
+                "subtitle": {
+                    "type": "string",
+                    "description": "??? (nullable)"
+                }
+            }
+        },
+        "AppOfferInfo": {
+            "type": "object",
+            "description": "Information describing an specific purchase/subscription inside an app of Google Play.",
+            "properties": {
+                "micros": {
+                    "type": "integer",
+                    "description": "Price expressed in millionth of the base currency."
+                },
+                "currencyCode": {
+                    "type": "string",
+                    "description": "Base currency expressed in 3 letter currency code (ISO 4217)"
+                },
+                "formattedAmount": {
+                    "type": "string",
+                    "description": "Formatted representation of the price."
+                },
+                "convertedPrice": {
+                    "type": "array",
+                    "description": "Price converted to other currencies (???)",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "fullPriceMicros": {
+                    "type": "integer",
+                    "description": "Full price of purchase expressed in millionth of the base currency. (nullable)"
+                },
+                "formattedFullAmount": {
+                    "type": "string",
+                    "description": "Formatted representation of the full price. (nullable)"
+                },
+                "offerType": {
+                    "type": "integer",
+                    "description": "Identifier of offer type (rental/purchase?)"
+                },
+                "rentalTerms": {
+                    "type": "string",
+                    "description": "Terms for the rental if available. (nullable)"
+                },
+                "promotionLabel": {
+                    "type": "array",
+                    "description": "List of available promotion labels (???)",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "subscriptionTerms": {
+                    "type": "string",
+                    "description": "Terms for the subscription if available. (nullable)"
+                },
+                "formattedName": {
+                    "type": "string",
+                    "description": "Formatted name for this purchase. (nullable)"
+                },
+                "formattedDescription": {
+                    "type": "string",
+                    "description": "Formatted description for this purchase. (nullable)"
+                }
+            }
+        },
+        "AppAvailabilityInfo": {
+            "type": "object",
+            "description": "Information describing the availability of an app/content in Google Play.",
+            "properties": {
+                "restriction": {
+                    "type": "integer",
+                    "description": "???"
+                },
+                "offerType": {
+                    "type": "integer",
+                    "description": "??? (nullable)"
+                },
+                "rule": {
+                    "type": "integer",
+                    "description": "??? (nullable)"
+                },
+                "availableIfOwned": {
+                    "type": "boolean",
+                    "description": "true if this content is available if purchased."
+                },
+                "install": {
+                    "type": "array",
+                    "description": "???",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "filterInfo": {
+                    "type": "integer",
+                    "description": "???"
+                },
+                "ownershipInfo": {
+                    "type": "integer",
+                    "description": "???"
+                }
+            }
+        },
+        "AppImageInfo": {
+            "type": "object",
+            "description": "Information describing an image associated with an app/content in Google Play.",
+            "properties": {
+                "imageType": {
+                    "type": "integer",
+                    "description": "Identifier for the type of this image."
+                },
+                "imageUrl": {
+                    "type": "string",
+                    "description": "URL of this image."
+                },
+                "altTextLocalized": {
+                    "type": "string",
+                    "description": "Localized alternative text of this image. (nullable)"
+                },
+                "secureUrl": {
+                    "type": "string",
+                    "description": "Secure URL of this image. (nullable)"
+                },
+                "positionInSequence": {
+                    "type": "integer",
+                    "description": "If the image is part of a sequence, the index representing its position. (nullable)"
+                },
+                "supportsFifeUrlOptions": {
+                    "type": "boolean",
+                    "description": "???"
+                }
+            }
+        },
+        "AppDetail": {
+            "type": "object",
+            "description": "Detailed info about an app/content in Google Play.",
+            "properties": {
+                "developerName": {
+                    "type": "string",
+                    "description": "Name of the developer person/company of the app."
+                },
+                "majorVersionNumber": {
+                    "type": "integer",
+                    "description": "Major version number."
+                },
+                "versionCode": {
+                    "type": "integer",
+                    "description": "Version code."
+                },
+                "title": {
+                    "type": "string",
+                    "description": "Title of the app."
+                },
+                "appCategory": {
+                    "type": "array",
+                    "description": "List of Google Play categories associated with this app.",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "contentRating": {
+                    "type": "integer",
+                    "description": "Rating for the content of this app."
+                },
+                "installationSize": {
+                    "type": "integer",
+                    "description": "Size of the installed app in bytes."
+                },
+                "permission": {
+                    "type": "array",
+                    "description": "List of permissions needed to run this app.",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "developerEmail": {
+                    "type": "string",
+                    "description": "Email address of the developer of this app."
+                },
+                "developerWebsite": {
+                    "type": "string",
+                    "description": "URL of the site"
+                },
+                "numDownloads": {
+                    "type": "string",
+                    "description": "Formatted figure for downloads of this app."
+                },
+                "packageName": {
+                    "type": "string",
+                    "description": "Package name of this app."
+                },
+                "recentChangesHtml": {
+                    "type": "string",
+                    "description": "Html string describing the changes in the latest version of this app."
+                },
+                "uploadDate": {
+                    "type": "string",
+                    "description": "Formatted upload date of the latest version of this app."
+                },
+                "file": {
+                    "$ref": "#/definitions/AppFileInfo"
+                },
+                "appType": {
+                    "type": "string",
+                    "description": "String describing the type of this app."
+                }
+            }
+        },
+        "AppFileInfo": {
+            "type": "object",
+            "description": "Information describing an app file.",
+            "properties": {
+                "fileType": {
+                    "type": "integer",
+                    "description": "Code describing the type of this file (???)."
+                },
+                "versionCode": {
+                    "type": "integer",
+                    "description": "Code describing the version of this file."
+                },
+                "size": {
+                    "type": "integer",
+                    "description": "File size in bytes."
+                }
+            }
+        },
+        "AppRatingInfo": {
+            "type": "object",
+            "description": "Information describing an app rating.",
+            "properties": {
+                "type": {
+                    "type": "integer",
+                    "description": "Type of rating (???)"
+                },
+                "starRating": {
+                    "type": "number",
+                    "description": "Float representation of the ratings based in stars (1-5)"
+                },
+                "ratingsCount": {
+                    "type": "integer",
+                    "description": "Total number of ratings of this app."
+                },
+                "oneStarRatings": {
+                    "type": "integer",
+                    "description": "Total number of 1-star ratings of this app."
+                },
+                "twoStarRatings": {
+                    "type": "integer",
+                    "description": "Total number of 2-star ratings of this app."
+                },
+                "threeStarRatings": {
+                    "type": "integer",
+                    "description": "Total number of 3-star ratings of this app."
+                },
+                "fourStarRatings": {
+                    "type": "integer",
+                    "description": "Total number of 4-star ratings of this app."
+                },
+                "fiveStarRatings": {
+                    "type": "integer",
+                    "description": "Total number of 5-star ratings of this app."
+                },
+                "thumbsUpCount": {
+                    "type": "integer",
+                    "description": "Total number of thumbs up ratings. (nullable)"
+                },
+                "thumbsDownCount": {
+                    "type": "integer",
+                    "description": "Total number of thumbs down of this app. (nullable)"
+                },
+                "commentCount": {
+                    "type": "integer",
+                    "description": "Total number of comments of this app."
+                },
+                "bayesianMeanRating": {
+                    "type": "integer",
+                    "description": "Rating of this app expressed as the Bayesian mean of its ratings. (nullable)"
+                }
+            }
+        },
+        "PlusProfileImage": {
+            "type": "object",
+            "description": "Description of an user's image in Google Plus.",
+            "properties": {
+                "imageType": {
+                    "type": "integer",
+                    "description": "Identifier for the type of this image"
+                },
+                "imageUrl": {
+                    "type": "string",
+                    "description": "URL of the image."
+                },
+                "secureUrl": {
+                    "type": "string",
+                    "description": "Secure URL of the image."
+                }
+            }
+        },
+        "PlusData": {
+            "type": "object",
+            "description": "Information about an user's Google Plus account.",
+            "properties": {
+                "displayName": {
+                    "type": "string",
+                    "description": "Display name of the user in Google Plus."
+                },
+                "profileImage": {
+                    "$ref": "#/definitions/PlusProfileImage"
+                }
+            }
+        },
+        "DeviceConfig": {
+            "type": "object",
+            "description": "Information describing an user's device configuration settings.",
+            "properties": {
+                "deviceId": {
+                    "type": "string",
+                    "description": "Unique ID of the device."
+                },
+                "deviceName": {
+                    "type": "string",
+                    "description": "Name of the device."
+                },
+                "collections": {
+                    "type": "array",
+                    "description": "Collections contained in the current configuration settings.",
+                    "items": {
+                        "$ref": "#/definitions/UserCollection"
+                    }
+                },
+                "lastSynced": {
+                    "type": "number",
+                    "description": "Date of the last syncronization with the device. (nullable)"
+                }
+            }
+        },
+        "UserStatusInfo": {
+            "type": "object",
+            "description": "Information about the current status of an user.",
+            "properties": {
+                "products": {
+                    "type": "array",
+                    "description": "List containing the unique codes of the user's purchased products (i.e. \"pro.upgrade\").",
+                    "items": {
+                        "type": "string",
+                        "description": "Unique code of a purchasable product (i.e. \"pro.upgrade\")."
+                    }
+                },
+                "friendsReferred": {
+                    "type": "integer",
+                    "description": "Number of referred friends."
+                },
+                "collectionsShared": {
+                    "type": "integer",
+                    "description": "Number of shared collections."
+                },
+                "customCollections": {
+                    "type": "integer",
+                    "description": "Number of custom collections."
+                },
+                "earlyAdopter": {
+                    "type": "boolean",
+                    "description": "true if user is an early adopter."
+                },
+                "communityMember": {
+                    "type": "boolean",
+                    "description": "true if user is a community member."
+                },
+                "tester": {
+                    "type": "boolean",
+                    "description": "true if user is a tester."
+                }
+            }
+        },
+        "GeoInfo": {
+            "type": "object",
+            "properties": {
+                "homeMorning": {
+                    "description": "Geolocation associated with moments at home in the morning.",
+                    "$ref": "#/definitions/UserLocation"
+                },
+                "homeNight": {
+                    "description": "Geolocation associated with moments at home at night.",
+                    "$ref": "#/definitions/UserLocation"
+                },
+                "work": {
+                    "description": "Geolocation associated with moments at work.",
+                    "$ref": "#/definitions/UserLocation"
+                },
+                "current": {
+                    "description": "Geolocation associated with the current moment.",
+                    "$ref": "#/definitions/UserLocation"
+                }
+            }
+        },
+        "UserLocation": {
+            "type": "object",
+            "properties": {
+                "wifi": {
+                    "type": "string",
+                    "description": "SSID of a WiFi network. (nullable)"
+                },
+                "lat": {
+                    "type": "number",
+                    "description": "Geolocation latitude. (nullable)"
+                },
+                "lng": {
+                    "type": "number",
+                    "description": "Geolocation longitude. (nullable)"
+                },
+                "occurrence": {
+                    "type": "array",
+                    "description": "List of moments in time associated with this geolocation.",
+                    "items": {
+                        "$ref": "#/definitions/TimeSlot"
+                    }
+                }
+            }
+        },
+        "TimeSlot": {
+            "type": "object",
+            "description": "Information about the times associated with the collection.",
+            "properties": {
+                "from": {
+                    "type": "string",
+                    "description": "Initial time. i.e. \"00:00\". (nullable)"
+                },
+                "to": {
+                    "type": "string",
+                    "description": "End time. i.e. \"23:59\". (nullable)"
+                },
+                "days": {
+                    "type": "array",
+                    "description": "List of days of the week associated with the collection. i.e. (0-6).",
+                    "items": {
+                        "type": "integer"
+                    }
+                }
+            }
+        },
+        "UserConfig": {
+            "type": "object",
+            "description": "Information describing an user's configuration settings.",
+            "properties": {
+                "_id": {
+                    "type": "string",
+                    "description": "Unique user's ID."
+                },
+                "plusProfile": {
+                    "$ref": "#/definitions/PlusData"
+                },
+                "email": {
+                    "type": "string",
+                    "description": "Email address of the user."
+                },
+                "devices": {
+                    "type": "array",
+                    "description": "Devices linked with this user.",
+                    "items": {
+                        "$ref": "#/definitions/DeviceConfig"
+                    }
+                },
+                "geoInfo": {
+                    "description": "Information about geolocation associated with the user.",
+                    "$ref": "#/definitions/GeoInfo"
+                },
+                "status": {
+                    "$ref": "#/definitions/UserStatusInfo"
+                },
+                "emailCampaigns": {
+                    "type": "boolean",
+                    "description": "true if subscribed to email campaigns. (nullable)."
+                }
+            }
+        },
+        "OnePlusRequest": {
+            "type": "object",
+            "description": "Data needed for notifyPlusOne to work",
+            "properties": {
+                "onePlus": {
+                    "type": "integer"
+                }
+            }
+        },
+        "Installs": {
+            "type": "object",
+            "description": "Number of installs to notify a shared collection.",
+            "properties": {
+                "installs": {
+                    "type": "integer"
+                }
+            }
+        },
+        "Views": {
+            "type": "object",
+            "description": "Number of views to notify a shared collection.",
+            "properties": {
+                "views": {
+                    "type": "integer"
+                }
+            }
+        }
+    },
+    "parameters": {
+        "appId": {
+            "name": "X-Appsly-Application-Id",
+            "description": "Application ID needed for authentication in appsly.",
+            "in": "header",
+            "type": "string",
+            "required": true
+        },
+        "restApiKey": {
+            "name": "X-Appsly-REST-API-Key",
+            "description": "REST API Key in appsly.",
+            "in": "header",
+            "type": "string",
+            "required": true
+        },
+        "sessionToken": {
+            "name": "X-Appsly-Session-Token",
+            "description": "Appsly session token obtained from a valid login request.",
+            "in": "header",
+            "type": "string",
+            "required": true
+        },
+        "androidId": {
+            "name": "X-Android-ID",
+            "description": "Android ID.",
+            "in": "header",
+            "type": "string",
+            "required": true
+        },
+        "androidMarketLocalization": {
+            "name": "X-Android-Market-Localization",
+            "description": "Android Market Localization code.",
+            "in": "header",
+            "type": "string",
+            "required": true
+        }
+    }
+}
