@@ -8,7 +8,6 @@ object FreeUtils {
 
   implicit val interpreters = NineCardsServices.interpreters
 
-  implicit def runProcess[S[_], M[_], A](sa: Free.FreeC[S, A])(implicit int: S ~> M, M: Monad[M]): M[A] = {
-    Free.runFC(sa)(int)
-  }
+  implicit def runProcess[S[_], M[_], A](
+    sa: Free.FreeC[S, A])(implicit int: S ~> M, M: Monad[M]): M[A] = Free.runFC(sa)(int)
 }
