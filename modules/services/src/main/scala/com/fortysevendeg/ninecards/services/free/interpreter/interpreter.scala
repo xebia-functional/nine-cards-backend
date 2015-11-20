@@ -1,15 +1,15 @@
 package com.fortysevendeg.ninecards.services.free.interpreter
 
-import com.fortysevendeg.ninecards.services.free.algebra.appsGooglePlay._
-import com.fortysevendeg.ninecards.services.free.algebra.appsPersistence._
-import com.fortysevendeg.ninecards.services.free.algebra.sharedCollectionSubscriptions._
-import com.fortysevendeg.ninecards.services.free.algebra.sharedCollections._
-import com.fortysevendeg.ninecards.services.free.algebra.user._
+import com.fortysevendeg.ninecards.services.free.algebra.AppGooglePlay._
+import com.fortysevendeg.ninecards.services.free.algebra.AppPersistence._
+import com.fortysevendeg.ninecards.services.free.algebra.SharedCollection._
+import com.fortysevendeg.ninecards.services.free.algebra.SharedCollectionSubscription._
+import com.fortysevendeg.ninecards.services.free.algebra.User._
 import com.fortysevendeg.ninecards.services.free.domain._
 
 import scalaz._
 
-object interpreters {
+object Interpreters {
 
   def or[F[_], G[_], H[_]](f: F ~> H, g: G ~> H): ({type cp[α] = Coproduct[F, G, α]})#cp ~> H = {
     new NaturalTransformation[({type cp[α] = Coproduct[F, G, α]})#cp, H] {
@@ -25,7 +25,6 @@ object interpreters {
   object AppGooglePlayInterpreter extends (AppGooglePlayOps ~> Id.Id) {
     def apply[A](fa: AppGooglePlayOps[A]) = fa match {
       case GetCategoriesFromGooglePlay(packageNames: Seq[String]) =>
-        println("Running GetCategoriesFromGooglePlay ...")
         CategorizeResponse(
           categorizedApps = Seq(GooglePlayApp(
             packageName = "com.android.chrome",
@@ -42,7 +41,6 @@ object interpreters {
   object AppPersistenceInterpreter extends (AppPersistenceOps ~> Id.Id) {
     def apply[A](fa: AppPersistenceOps[A]) = fa match {
       case GetCategories(packageNames: Seq[String]) =>
-        println("Running GetCategories ...")
         CategorizeResponse(
           categorizedApps = Seq(GooglePlayApp(
             packageName = "com.whatsapp",

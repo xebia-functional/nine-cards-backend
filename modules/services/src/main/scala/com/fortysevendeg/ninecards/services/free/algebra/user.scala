@@ -1,13 +1,11 @@
 package com.fortysevendeg.ninecards.services.free.algebra
 
+import com.fortysevendeg.ninecards.services.free.algebra.Utils._
 import com.fortysevendeg.ninecards.services.free.domain.User
 
-import scalaz.Free._
 import scalaz.{Free, Inject}
 
-object user {
-
-  def lift[F[_], G[_], A](fa: F[A])(implicit I: Inject[F, G]): FreeC[G, A] = Free.liftFC(I.inj(fa))
+object User {
 
   sealed trait UserOps[A]
 
@@ -31,4 +29,5 @@ object user {
     implicit def dataSource[F[_]](implicit I: Inject[UserOps, F]): UserServices[F] = new UserServices[F]
 
   }
+
 }

@@ -18,17 +18,6 @@ trait Dependencies {
 
   val commonDeps = Seq(libraryDependencies ++= baseDepts)
 
-  val appDeps = Seq(libraryDependencies ++= baseDepts ++ Seq(
-    scalaz,
-    sprayHttp,
-    sprayRouting,
-    sprayJson))
-
-  val servicesDeps = Seq(libraryDependencies ++= baseDepts ++ Seq(jodaTime, scalaz, sprayJson))
-
-  val userDeps = Seq(libraryDependencies ++= baseDepts ++ Seq(
-    akkaTestKit % "test"))
-
   val apiDeps = Seq(libraryDependencies ++= baseDepts ++ Seq(
     sprayHttp,
     sprayJson,
@@ -36,4 +25,11 @@ trait Dependencies {
     sprayTestKit,
     akkaActor,
     akkaTestKit % "test"))
+
+  val servicesDeps = Seq(libraryDependencies ++= baseDepts ++ Seq(
+    jodaTime,
+    scalaz,
+    sprayJson))
+
+  val systemDeps = Seq(libraryDependencies ++= baseDepts ++ Seq(scalaz))
 }

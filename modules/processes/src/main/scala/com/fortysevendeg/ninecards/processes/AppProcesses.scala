@@ -1,8 +1,8 @@
 package com.fortysevendeg.ninecards.processes
 
 import NineCardsServices.NineCardsServices
-import com.fortysevendeg.ninecards.services.free.algebra.appsGooglePlay.AppGooglePlayServices
-import com.fortysevendeg.ninecards.services.free.algebra.appsPersistence.AppPersistenceServices
+import com.fortysevendeg.ninecards.services.free.algebra.AppGooglePlay.AppGooglePlayServices
+import com.fortysevendeg.ninecards.services.free.algebra.AppPersistence.AppPersistenceServices
 import com.fortysevendeg.ninecards.processes.converters.Converters._
 
 class AppProcesses[F[_]](
@@ -18,4 +18,9 @@ class AppProcesses[F[_]](
       googlePlayApps <- getCategoriesFromGooglePlay(persistenceApps.notFoundApps)
     } yield (persistenceApps.categorizedApps ++ googlePlayApps.categorizedApps) map toGooglePlayApp
   }
+}
+
+object AppProcesses {
+
+  implicit def appProcesses[F[_]](implicit AP: AppPersistenceServices[NineCardsServices], AG: AppGooglePlayServices[NineCardsServices]) = new AppProcesses[F]
 }
