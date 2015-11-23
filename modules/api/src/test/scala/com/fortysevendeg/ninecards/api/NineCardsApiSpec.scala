@@ -4,6 +4,7 @@ import akka.actor.ActorRefFactory
 import org.specs2.mutable.Specification
 import org.specs2.matcher.Matchers
 import org.specs2.specification.Scope
+import spray.http.MediaTypes
 import spray.routing.HttpService
 import spray.testkit.Specs2RouteTest
 
@@ -20,7 +21,7 @@ trait NineCardsApiSpecification
 
   implicit def actorRefFactory = system
 
-  val apiDocsPath = "/apiDocs"
+  val apiDocsPath = "/apiDocs/index.html"
 
   val spec = this
   val nineCardsApi = new NineCardsApi {
@@ -32,11 +33,11 @@ class NineCardsApiSpec
   extends NineCardsApiSpecification {
   "nineCardsApi" should {
     "grant access to Swagger documentation" in new NineCardsScope {
-      true must_==(true)
-//      Get(apiDocsPath) ~> nineCardsApi ~> check {
-//        mediaType === MediaTypes.`text/html`
-//        responseAs[String] must contain("Swagger")
-//      }
+      Get(apiDocsPath) ~> sealRoute(nineCardsApi) ~> check {
+        status should be equalTo 200
+        mediaType === MediaTypes.`text/html`
+        responseAs[String] must contain("Swagger")
+      }
     }
   }
 }
