@@ -1,11 +1,12 @@
 package com.fortysevendeg.ninecards.services.free.algebra
 
+import cats.free.{Free, Inject}
 import com.fortysevendeg.ninecards.services.free.algebra.Utils._
 import com.fortysevendeg.ninecards.services.free.domain.{SharedCollection, SharedCollectionSubscription}
 
-import scalaz.{Free, Inject}
+import scala.language.higherKinds
 
-object SharedCollection {
+object SharedCollections {
 
   sealed trait SharedCollectionOps[A]
 
@@ -19,13 +20,13 @@ object SharedCollection {
 
   class SharedCollectionServices[F[_]](implicit I: Inject[SharedCollectionOps, F]) {
 
-    def addSharedCollection(collection: SharedCollection): Free.FreeC[F, SharedCollection] = lift[SharedCollectionOps, F, SharedCollection](AddSharedCollection(collection))
+    def addSharedCollection(collection: SharedCollection): Free[F, SharedCollection] = lift[SharedCollectionOps, F, SharedCollection](AddSharedCollection(collection))
 
-    def getSharedCollectionById(sharedCollectionId: String): Free.FreeC[F, Option[SharedCollection]] = lift[SharedCollectionOps, F, Option[SharedCollection]](GetSharedCollectionById(sharedCollectionId))
+    def getSharedCollectionById(sharedCollectionId: String): Free[F, Option[SharedCollection]] = lift[SharedCollectionOps, F, Option[SharedCollection]](GetSharedCollectionById(sharedCollectionId))
 
-    def updateInstallNotification(sharedCollectionId: String): Free.FreeC[F, SharedCollection] = lift[SharedCollectionOps, F, SharedCollection](UpdateInstallNotification(sharedCollectionId))
+    def updateInstallNotification(sharedCollectionId: String): Free[F, SharedCollection] = lift[SharedCollectionOps, F, SharedCollection](UpdateInstallNotification(sharedCollectionId))
 
-    def updateViewNotification(sharedCollectionId: String): Free.FreeC[F, SharedCollection] = lift[SharedCollectionOps, F, SharedCollection](UpdateViewNotification(sharedCollectionId))
+    def updateViewNotification(sharedCollectionId: String): Free[F, SharedCollection] = lift[SharedCollectionOps, F, SharedCollection](UpdateViewNotification(sharedCollectionId))
   }
 
   object SharedCollectionServices {
@@ -36,7 +37,7 @@ object SharedCollection {
 
 }
 
-object SharedCollectionSubscription {
+object SharedCollectionSubscriptions {
 
   sealed trait SharedCollectionSubscriptionOps[A]
 
@@ -46,9 +47,9 @@ object SharedCollectionSubscription {
 
   class SharedCollectionSubscriptionServices[F[_]](implicit I: Inject[SharedCollectionSubscriptionOps, F]) {
 
-    def addSharedCollectionSubscription(sharedCollectionId: String): Free.FreeC[F, SharedCollectionSubscription] = lift[SharedCollectionSubscriptionOps, F, SharedCollectionSubscription](AddSharedCollectionSubscription(sharedCollectionId))
+    def addSharedCollectionSubscription(sharedCollectionId: String): Free[F, SharedCollectionSubscription] = lift[SharedCollectionSubscriptionOps, F, SharedCollectionSubscription](AddSharedCollectionSubscription(sharedCollectionId))
 
-    def deleteSharedCollectionSubscription(sharedCollectionId: String): Free.FreeC[F, Unit] = lift[SharedCollectionSubscriptionOps, F, Unit](DeleteSharedCollectionSubscription(sharedCollectionId))
+    def deleteSharedCollectionSubscription(sharedCollectionId: String): Free[F, Unit] = lift[SharedCollectionSubscriptionOps, F, Unit](DeleteSharedCollectionSubscription(sharedCollectionId))
   }
 
   object SharedCollectionSubscriptionServices {

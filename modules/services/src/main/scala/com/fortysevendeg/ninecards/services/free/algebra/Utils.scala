@@ -1,10 +1,11 @@
 package com.fortysevendeg.ninecards.services.free.algebra
 
-import scalaz.Free._
-import scalaz.{Free, Inject}
+import cats.free.{Free, Inject}
+
+import scala.language.higherKinds
 
 object Utils {
 
-  def lift[F[_], G[_], A](fa: F[A])(implicit I: Inject[F, G]): FreeC[G, A] = Free.liftFC(I.inj(fa))
+  def lift[F[_], G[_], A](fa: F[A])(implicit I: Inject[F, G]): Free[G, A] = Free.liftF(I.inj(fa))
 
 }

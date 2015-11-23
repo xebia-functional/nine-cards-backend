@@ -23,7 +23,8 @@ trait Settings {
       Resolver.defaultLocal,
       Classpaths.typesafeReleases,
       Resolver.bintrayRepo("scalaz", "releases"),
-      DefaultMavenRepository
+      DefaultMavenRepository,
+      "Sonatype Snapshots"  at "https://oss.sonatype.org/content/repositories/snapshots"
     ),
     doc in Compile <<= target.map(_ / "none")
   )

@@ -1,13 +1,16 @@
 package com.fortysevendeg.ninecards.processes
 
+import cats.arrow.NaturalTransformation._
+import cats.data.Coproduct
+import cats.~>
 import com.fortysevendeg.ninecards.services.free.algebra.AppGooglePlay.AppGooglePlayOps
 import com.fortysevendeg.ninecards.services.free.algebra.AppPersistence.AppPersistenceOps
-import com.fortysevendeg.ninecards.services.free.algebra.SharedCollection.SharedCollectionOps
-import com.fortysevendeg.ninecards.services.free.algebra.SharedCollectionSubscription.SharedCollectionSubscriptionOps
-import com.fortysevendeg.ninecards.services.free.algebra.User.UserOps
+import com.fortysevendeg.ninecards.services.free.algebra.SharedCollections.SharedCollectionOps
+import com.fortysevendeg.ninecards.services.free.algebra.SharedCollectionSubscriptions.SharedCollectionSubscriptionOps
+import com.fortysevendeg.ninecards.services.free.algebra.Users.UserOps
 import com.fortysevendeg.ninecards.services.free.interpreter.Interpreters._
 
-import scalaz._
+import scalaz.concurrent.Task
 
 object NineCardsServices {
 
@@ -16,8 +19,8 @@ object NineCardsServices {
   type ServicesCO2[A] = Coproduct[AppPersistenceOps, ServicesCO3, A]
   type ServicesCO3[A] = Coproduct[SharedCollectionOps, SharedCollectionSubscriptionOps, A]
 
-  val interpretersCO3: ServicesCO3 ~> Id.Id = or(SharedCollectionInterpreter, SharedCollectionSubscriptionInterpreter)
-  val interpretersCO2: ServicesCO2 ~> Id.Id = or(AppPersistenceInterpreter, interpretersCO3)
-  val interpretersCO1: ServicesCO1 ~> Id.Id = or(AppGooglePlayInterpreter, interpretersCO2)
-  val interpreters: NineCardsServices ~> Id.Id = or(UserInterpreter, interpretersCO1)
+  val interpretersCO3: ServicesCO3 ~> Task = or(SharedCollectionInterpreter, SharedCollectionSubscriptionInterpreter)
+  val interpretersCO2: ServicesCO2 ~> Task = or(AppPersistenceInterpreter, interpretersCO3)
+  val interpretersCO1: ServicesCO1 ~> Task = or(AppGooglePlayInterpreter, interpretersCO2)
+  val interpreters: NineCardsServices ~> Task = or(UserInterpreter, interpretersCO1)
 }

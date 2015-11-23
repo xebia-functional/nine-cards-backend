@@ -1,11 +1,12 @@
 package com.fortysevendeg.ninecards.services.free.algebra
 
+import cats.free.{Free, Inject}
 import com.fortysevendeg.ninecards.services.free.algebra.Utils._
 import com.fortysevendeg.ninecards.services.free.domain.User
 
-import scalaz.{Free, Inject}
+import scala.language.higherKinds
 
-object User {
+object Users {
 
   sealed trait UserOps[A]
 
@@ -17,11 +18,11 @@ object User {
 
   class UserServices[F[_]](implicit I: Inject[UserOps, F]) {
 
-    def addUser(user: User): Free.FreeC[F, User] = lift[UserOps, F, User](AddUser(user))
+    def addUser(user: User): Free[F, User] = lift[UserOps, F, User](AddUser(user))
 
-    def getUserByUserName(username: String): Free.FreeC[F, Option[User]] = lift[UserOps, F, Option[User]](GetUserByUserName(username))
+    def getUserByUserName(username: String): Free[F, Option[User]] = lift[UserOps, F, Option[User]](GetUserByUserName(username))
 
-    def checkPassword(password: String): Free.FreeC[F, Boolean] = lift[UserOps, F, Boolean](CheckPassword(password))
+    def checkPassword(password: String): Free[F, Boolean] = lift[UserOps, F, Boolean](CheckPassword(password))
   }
 
   object UserServices {

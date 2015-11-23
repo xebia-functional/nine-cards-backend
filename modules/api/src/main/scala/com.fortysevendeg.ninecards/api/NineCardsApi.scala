@@ -7,7 +7,7 @@ import spray.httpx.SprayJsonSupport
 import spray.routing._
 
 import scala.language.{higherKinds, implicitConversions}
-import scalaz.Id
+import scalaz.concurrent.Task
 
 class NineCardsApiActor extends Actor with NineCardsApi {
 
@@ -60,7 +60,8 @@ trait NineCardsApi extends HttpService with SprayJsonSupport {
       path("categorize") {
         get {
           complete {
-            val result: Id.Id[Seq[GooglePlayApp]] = appProcesses.categorizeApps(Seq("com.fortysevendeg.ninecards"))
+            val result: Task[Seq[GooglePlayApp]] = appProcesses.categorizeApps(Seq("com.fortysevendeg.ninecards"))
+
             result
           }
         }
