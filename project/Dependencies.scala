@@ -10,6 +10,7 @@ trait Dependencies {
   val sprayTestKit = "io.spray" %% "spray-testkit" % Versions.spray
   val akkaActor = "com.typesafe.akka" %% "akka-actor" % Versions.akka
   val akkaTestKit = "com.typesafe.akka" %% "akka-testkit" % Versions.akka
+  val cats = "org.spire-math" %% "cats" % Versions.cats
   val specs2Core = "org.specs2" %% "specs2-core" % Versions.specs2
   val scalaz = "org.scalaz" %% "scalaz-core" % Versions.scalaz
   val scalazConcurrent = "org.scalaz" %% "scalaz-concurrent" % Versions.scalaz
@@ -35,6 +36,7 @@ trait Dependencies {
 
   val servicesDeps = Seq(libraryDependencies ++= baseDepts ++ Seq(
     jodaTime,
+    cats,
     scalaz,
     scalazConcurrent,
     sprayJson))

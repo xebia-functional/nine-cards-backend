@@ -1,9 +1,10 @@
 package com.fortysevendeg.ninecards.services.free.algebra
 
+import cats.free.{Free, Inject}
 import com.fortysevendeg.ninecards.services.free.algebra.Utils._
 import com.fortysevendeg.ninecards.services.free.domain.CategorizeResponse
 
-import scalaz.{Free, Inject}
+import scala.language.higherKinds
 
 object AppPersistence {
 
@@ -16,11 +17,11 @@ object AppPersistence {
   class AppPersistenceServices[F[_]](implicit I: Inject[AppPersistenceOps, F]) {
 
     def getCategories(
-      packageNames: Seq[String]): Free.FreeC[F, CategorizeResponse] =
+      packageNames: Seq[String]): Free[F, CategorizeResponse] =
       lift[AppPersistenceOps, F, CategorizeResponse](GetCategories(packageNames))
 
     def saveCategories(
-      packageNames: Seq[String]): Free.FreeC[F, Seq[String]] =
+      packageNames: Seq[String]): Free[F, Seq[String]] =
       lift[AppPersistenceOps, F, Seq[String]](SaveCategories(packageNames))
   }
 

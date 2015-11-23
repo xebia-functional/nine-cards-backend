@@ -5,6 +5,8 @@ import com.fortysevendeg.ninecards.processes.converters.Converters._
 import com.fortysevendeg.ninecards.services.free.algebra.AppGooglePlay.AppGooglePlayServices
 import com.fortysevendeg.ninecards.services.free.algebra.AppPersistence.AppPersistenceServices
 
+import scala.language.higherKinds
+
 class AppProcesses[F[_]](
   implicit AP: AppPersistenceServices[NineCardsServices],
   AG: AppGooglePlayServices[NineCardsServices]) {

@@ -1,9 +1,10 @@
 package com.fortysevendeg.ninecards.services.free.algebra
 
+import cats.free.{Free, Inject}
 import com.fortysevendeg.ninecards.services.free.algebra.Utils._
 import com.fortysevendeg.ninecards.services.free.domain.CategorizeResponse
 
-import scalaz.{Free, Inject}
+import scala.language.higherKinds
 
 object AppGooglePlay {
 
@@ -14,7 +15,7 @@ object AppGooglePlay {
   class AppGooglePlayServices[F[_]](implicit I: Inject[AppGooglePlayOps, F]) {
 
     def getCategoriesFromGooglePlay(
-      packageNames: Seq[String]): Free.FreeC[F, CategorizeResponse] =
+      packageNames: Seq[String]): Free[F, CategorizeResponse] =
       lift[AppGooglePlayOps, F, CategorizeResponse](GetCategoriesFromGooglePlay(packageNames))
 
   }

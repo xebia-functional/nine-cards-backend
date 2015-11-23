@@ -1,27 +1,16 @@
 package com.fortysevendeg.ninecards.services.free.interpreter
 
+import cats.~>
 import com.fortysevendeg.ninecards.services.free.algebra.AppGooglePlay._
 import com.fortysevendeg.ninecards.services.free.algebra.AppPersistence._
-import com.fortysevendeg.ninecards.services.free.algebra.SharedCollection._
-import com.fortysevendeg.ninecards.services.free.algebra.SharedCollectionSubscription._
-import com.fortysevendeg.ninecards.services.free.algebra.User._
+import com.fortysevendeg.ninecards.services.free.algebra.SharedCollections._
+import com.fortysevendeg.ninecards.services.free.algebra.SharedCollectionSubscriptions._
+import com.fortysevendeg.ninecards.services.free.algebra.Users._
 import com.fortysevendeg.ninecards.services.free.domain._
 
-import scalaz._
 import scalaz.concurrent.Task
 
 object Interpreters {
-
-  def or[F[_], G[_], H[_]](f: F ~> H, g: G ~> H): ({type cp[α] = Coproduct[F, G, α]})#cp ~> H = {
-    new NaturalTransformation[({type cp[α] = Coproduct[F, G, α]})#cp, H] {
-      def apply[A](fa: Coproduct[F, G, A]): H[A] = {
-        fa.run match {
-          case -\/(ff) => f(ff)
-          case \/-(gg) => g(gg)
-        }
-      }
-    }
-  }
 
   object AppGooglePlayInterpreter extends (AppGooglePlayOps ~> Task) {
     def apply[A](fa: AppGooglePlayOps[A]) = fa match {

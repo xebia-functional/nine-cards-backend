@@ -1,13 +1,15 @@
 package com.fortysevendeg.ninecards.processes
 
+import cats.arrow.NaturalTransformation._
+import cats.data.Coproduct
+import cats.~>
 import com.fortysevendeg.ninecards.services.free.algebra.AppGooglePlay.AppGooglePlayOps
 import com.fortysevendeg.ninecards.services.free.algebra.AppPersistence.AppPersistenceOps
-import com.fortysevendeg.ninecards.services.free.algebra.SharedCollection.SharedCollectionOps
-import com.fortysevendeg.ninecards.services.free.algebra.SharedCollectionSubscription.SharedCollectionSubscriptionOps
-import com.fortysevendeg.ninecards.services.free.algebra.User.UserOps
+import com.fortysevendeg.ninecards.services.free.algebra.SharedCollections.SharedCollectionOps
+import com.fortysevendeg.ninecards.services.free.algebra.SharedCollectionSubscriptions.SharedCollectionSubscriptionOps
+import com.fortysevendeg.ninecards.services.free.algebra.Users.UserOps
 import com.fortysevendeg.ninecards.services.free.interpreter.Interpreters._
 
-import scalaz._
 import scalaz.concurrent.Task
 
 object NineCardsServices {
