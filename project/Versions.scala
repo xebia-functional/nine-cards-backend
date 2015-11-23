@@ -7,7 +7,7 @@ object Versions {
   val akka = "2.3.12"
   val jodaTime = "2.9.1"
   val scala = "2.11.7"
-  val scalaz = "7.1.4"
+  val scalaz = "7.1.5"
   val spray = "1.3.3"
   val sprayJson = "1.3.2"
 
