@@ -14,10 +14,10 @@ import scalaz.concurrent.Task
 
 object NineCardsServices {
 
-  type NineCardsServices[A] = Coproduct[UserOps, ServicesCO1, A]
-  type ServicesCO1[A] = Coproduct[AppGooglePlayOps, ServicesCO2, A]
-  type ServicesCO2[A] = Coproduct[AppPersistenceOps, ServicesCO3, A]
   type ServicesCO3[A] = Coproduct[SharedCollectionOps, SharedCollectionSubscriptionOps, A]
+  type ServicesCO2[A] = Coproduct[AppPersistenceOps, ServicesCO3, A]
+  type ServicesCO1[A] = Coproduct[AppGooglePlayOps, ServicesCO2, A]
+  type NineCardsServices[A] = Coproduct[UserOps, ServicesCO1, A]
 
   val interpretersCO3: ServicesCO3 ~> Task = or(SharedCollectionInterpreter, SharedCollectionSubscriptionInterpreter)
   val interpretersCO2: ServicesCO2 ~> Task = or(AppPersistenceInterpreter, interpretersCO3)
