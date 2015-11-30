@@ -1,7 +1,6 @@
 package com.fortysevendeg.ninecards.services.free.algebra
 
 import cats.free.{Free, Inject}
-import com.fortysevendeg.ninecards.services.free.algebra.Utils._
 import com.fortysevendeg.ninecards.services.free.domain.CategorizeResponse
 
 import scala.language.higherKinds
@@ -18,16 +17,18 @@ object AppPersistence {
 
     def getCategories(
       packageNames: Seq[String]): Free[F, CategorizeResponse] =
-      lift[AppPersistenceOps, F, CategorizeResponse](GetCategories(packageNames))
+      Free.inject[AppPersistenceOps, F](GetCategories(packageNames))
 
     def saveCategories(
       packageNames: Seq[String]): Free[F, Seq[String]] =
-      lift[AppPersistenceOps, F, Seq[String]](SaveCategories(packageNames))
+      Free.inject[AppPersistenceOps, F](SaveCategories(packageNames))
   }
 
   object AppPersistenceServices {
 
-    implicit def appPersistence[F[_]](implicit I: Inject[AppPersistenceOps, F]): AppPersistenceServices[F] = new AppPersistenceServices[F]
+    implicit def appPersistence[F[_]](
+      implicit I: Inject[AppPersistenceOps, F]): AppPersistenceServices[F] =
+      new AppPersistenceServices[F]
 
   }
 

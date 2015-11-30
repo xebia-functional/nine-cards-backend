@@ -1,7 +1,7 @@
 package com.fortysevendeg.ninecards.api
 
 import akka.actor.Actor
-import com.fortysevendeg.ninecards.processes.AppProcesses._
+import com.fortysevendeg.ninecards.processes.AppProcesses
 import com.fortysevendeg.ninecards.processes.domain.GooglePlayApp
 import spray.httpx.SprayJsonSupport
 import spray.routing._
@@ -17,13 +17,18 @@ class NineCardsApiActor extends Actor with NineCardsApi with AuthHeadersRejectio
 
 }
 
-trait NineCardsApi extends HttpService with SprayJsonSupport {
+trait NineCardsApi
+  extends HttpService
+  with SprayJsonSupport
+  with JsonFormats {
 
   import FreeUtils._
-  import JsonFormats._
   import NineCardsApiHeaderCommons._
 
-  val nineCardsApiRoute =
+  def nineCardsApiRoute(implicit AP: AppProcesses) = {
+
+    import AP._
+
     pathPrefix("users") {
       pathEndOrSingleSlash {
         post {
@@ -59,11 +64,12 @@ trait NineCardsApi extends HttpService with SprayJsonSupport {
       path("categorize") {
         get {
           complete {
-            val result: Task[Seq[GooglePlayApp]] = appProcesses.categorizeApps(Seq("com.fortysevendeg.ninecards"))
+            val result: Task[Seq[GooglePlayApp]] = categorizeApps(Seq("com.fortysevendeg.ninecards"))
 
             result
           }
         }
       }
     }
+  }
 }
