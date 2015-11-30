@@ -13,7 +13,8 @@ trait NineCardsApiSpecification
   extends Specification
   with Matchers
   with Specs2RouteTest
-  with HttpService {
+  with HttpService
+  with AuthHeadersRejectionHandler {
 
   trait NineCardsScope
     extends Scope {

@@ -14,7 +14,7 @@ trait Settings {
     conflictWarning := ConflictWarning.disable,
     scalacOptions ++= Seq("-deprecation", "-unchecked", "-feature"),
     javaOptions in Test ++= Seq("-XX:MaxPermSize=128m", "-Xms512m", "-Xmx512m"),
-    sbt.Keys.fork in Test := true,
+    sbt.Keys.fork in Test := false,
     publishMavenStyle := true,
     publishArtifact in(Test, packageSrc) := true,
     logLevel := Level.Info,
