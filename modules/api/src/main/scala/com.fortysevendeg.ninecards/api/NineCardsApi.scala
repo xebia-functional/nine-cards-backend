@@ -9,7 +9,7 @@ import spray.routing._
 import scala.language.{higherKinds, implicitConversions}
 import scalaz.concurrent.Task
 
-class NineCardsApiActor extends Actor with NineCardsApi {
+class NineCardsApiActor extends Actor with NineCardsApi with AuthHeadersRejectionHandler {
 
   def actorRefFactory = context
 
@@ -21,6 +21,7 @@ trait NineCardsApi extends HttpService with SprayJsonSupport {
 
   import FreeUtils._
   import JsonFormats._
+  import NineCardsApiHeaderCommons._
 
   val nineCardsApiRoute =
     pathPrefix("users") {
@@ -30,33 +31,39 @@ trait NineCardsApi extends HttpService with SprayJsonSupport {
         }
       } ~
         path(Segment) { userId =>
-          get {
-            complete(s"Gets user info: $userId")
-          } ~
+          requestLoginHeaders() {
+            (appId, apiKey) =>
+            get {
+              complete(s"Gets user info: $userId. apiKey: $apiKey, appId: $appId")
+            } ~
             put {
               complete(s"Updates user info: $userId")
             }
+          }
         } ~
         path("link") {
-          put {
-            complete(s"Links new account with specific user")
-          }
-        } ~
-        path("installations") {
-          post {
-            complete(s"Creates new installation")
-          }
-        }
-    } ~
-      pathPrefix("apps") {
-        path("categorize") {
-          get {
-            complete {
-              val result: Task[Seq[GooglePlayApp]] = appProcesses.categorizeApps(Seq("com.fortysevendeg.ninecards"))
-
-              result
+          requestFullHeaders() {
+            (appId, apiKey, sessionToken, androidId, localization) =>
+            put {
+              complete(s"Links new account with specific user")
             }
           }
         }
+    } ~
+    path("installations") {
+      post {
+        complete(s"Creates new installation")
       }
+    } ~
+    pathPrefix("apps") {
+      path("categorize") {
+        get {
+          complete {
+            val result: Task[Seq[GooglePlayApp]] = appProcesses.categorizeApps(Seq("com.fortysevendeg.ninecards"))
+
+            result
+          }
+        }
+      }
+    }
 }
