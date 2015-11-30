@@ -36,33 +36,50 @@ trait NineCardsApi
       } ~
         path(Segment) { userId =>
           get {
-            complete(s"Gets user info: $userId")
+            complete(
+              Map("result" -> s"Gets user info: $userId")
+            )
           } ~
             put {
-              complete(s"Updates user info: $userId")
+              complete(
+                Map("result" -> s"Updates user info: $userId")
+              )
             }
         } ~
         path("link") {
           put {
-            complete(s"Links new account with specific user")
-          }
-        } ~
-        path("installations") {
-          post {
-            complete(s"Creates new installation")
+            complete(
+              Map("result" -> s"Links new account with specific user")
+            )
           }
         }
     } ~
-      pathPrefix("apps") {
-        path("categorize") {
-          get {
-            complete {
-              val result: Task[Seq[GooglePlayApp]] = categorizeApps(Seq("com.fortysevendeg.ninecards"))
+    path("installations") {
+      post {
+        complete(
+          Map("result" -> s"Creates new installation")
+        )
+      }
+    } ~
+    pathPrefix("apps") {
+      path("categorize") {
+        get {
+          complete {
+            val result: Task[Seq[GooglePlayApp]] = categorizeApps(Seq("com.fortysevendeg.ninecards"))
 
-              result
-            }
+            result
           }
         }
       }
+    } ~
+    // This path prefix grants access to the Swagger documentation.
+    // Both /apiDocs/ and /apiDocs/index.html are valid paths to load Swagger-UI.
+    pathPrefix("apiDocs") {
+      path("") {
+        getFromResource("apiDocs/index.html")
+      } ~ {
+        getFromResourceDirectory("apiDocs")
+      }
+    }
   }
 }

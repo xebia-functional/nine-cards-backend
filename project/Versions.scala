@@ -13,5 +13,5 @@ object Versions {
   val sprayJson = "1.3.2"
 
   // Testing libs
-  val specs2 = "3.6.2"
+  val specs2 = "3.6.4"
 }
