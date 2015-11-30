@@ -1,6 +1,5 @@
 package com.fortysevendeg.ninecards.processes
 
-import cats.arrow.NaturalTransformation._
 import cats.data.Coproduct
 import cats.~>
 import com.fortysevendeg.ninecards.services.free.algebra.AppGooglePlay.AppGooglePlayOps
@@ -14,13 +13,14 @@ import scalaz.concurrent.Task
 
 object NineCardsServices {
 
-  type NineCardsServices[A] = Coproduct[UserOps, ServicesCO1, A]
-  type ServicesCO1[A] = Coproduct[AppGooglePlayOps, ServicesCO2, A]
-  type ServicesCO2[A] = Coproduct[AppPersistenceOps, ServicesCO3, A]
   type ServicesCO3[A] = Coproduct[SharedCollectionOps, SharedCollectionSubscriptionOps, A]
+  type ServicesCO2[A] = Coproduct[AppPersistenceOps, ServicesCO3, A]
+  type ServicesCO1[A] = Coproduct[AppGooglePlayOps, ServicesCO2, A]
+  type NineCardsServices[A] = Coproduct[UserOps, ServicesCO1, A]
 
-  val interpretersCO3: ServicesCO3 ~> Task = or(SharedCollectionInterpreter, SharedCollectionSubscriptionInterpreter)
-  val interpretersCO2: ServicesCO2 ~> Task = or(AppPersistenceInterpreter, interpretersCO3)
-  val interpretersCO1: ServicesCO1 ~> Task = or(AppGooglePlayInterpreter, interpretersCO2)
-  val interpreters: NineCardsServices ~> Task = or(UserInterpreter, interpretersCO1)
+  val interpretersCO3: ServicesCO3 ~> Task = SharedCollectionInterpreter or SharedCollectionSubscriptionInterpreter
+  val interpretersCO2: ServicesCO2 ~> Task = AppPersistenceInterpreter or interpretersCO3
+  val interpretersCO1: ServicesCO1 ~> Task = AppGooglePlayInterpreter or interpretersCO2
+  val interpreters: NineCardsServices ~> Task = UserInterpreter or interpretersCO1
+
 }

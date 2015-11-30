@@ -4,7 +4,7 @@ import com.fortysevendeg.ninecards.processes.domain.GooglePlayApp
 import spray.httpx.SprayJsonSupport
 import spray.json.DefaultJsonProtocol
 
-object JsonFormats
+trait JsonFormats
   extends DefaultJsonProtocol
   with SprayJsonSupport {
 

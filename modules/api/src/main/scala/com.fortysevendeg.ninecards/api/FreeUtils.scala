@@ -16,7 +16,7 @@ object FreeUtils {
     override def flatMap[A, B](fa: Task[A])(f: A => Task[B]): Task[B] =
       fa.flatMap(f)
 
-    override def pure[A](a: A): Task[A] = Task(a)
+    override def pure[A](a: A): Task[A] = Task.now(a)
   }
 
   implicit def runProcess[S[_], M[_], A](
