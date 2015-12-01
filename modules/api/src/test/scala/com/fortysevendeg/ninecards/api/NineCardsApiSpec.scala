@@ -5,8 +5,8 @@ import org.specs2.mutable.Specification
 import org.specs2.matcher.Matchers
 import org.specs2.specification.Scope
 import spray.http.HttpHeaders.RawHeader
-import spray.http.StatusCodes
-import spray.routing.{Route, HttpService}
+import spray.http.MediaTypes
+import spray.routing.HttpService
 import spray.testkit.Specs2RouteTest
 
 trait NineCardsApiSpecification
@@ -16,14 +16,12 @@ trait NineCardsApiSpecification
   with HttpService
   with AuthHeadersRejectionHandler {
 
-  trait NineCardsScope
-    extends Scope {
-
-  }
+  trait NineCardsScope extends Scope
 
   implicit def actorRefFactory = system
 
   val usersPath = "/users"
+  val apiDocsPath = "/apiDocs/index.html"
 
   val spec = this
   val nineCardsApi = new NineCardsApi {
@@ -36,6 +34,14 @@ class NineCardsApiSpec
   import NineCardsApiHeaderCommons._
 
   "nineCardsApi" should {
+    "grant access to Swagger documentation" in new NineCardsScope {
+      Get(apiDocsPath) ~> sealRoute(nineCardsApi) ~> check {
+        status should be equalTo 200
+        mediaType === MediaTypes.`text/html`
+        responseAs[String] must contain("Swagger")
+      }
+    }
+
     "require basic login headers for GET users" in new NineCardsScope {
       Get(usersPath + "/1111")  ~> sealRoute(nineCardsApi) ~> check {
         status.intValue shouldEqual 401

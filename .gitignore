@@ -7,3 +7,4 @@ src_managed/
 test-output/
 *.iml
 .classpath_nb
+.DS_Store
