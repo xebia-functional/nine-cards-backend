@@ -7,7 +7,7 @@ trait Dependencies {
   val sprayHttp = "io.spray" %% "spray-can" % Versions.spray
   val sprayJson = "io.spray" %%  "spray-json" % Versions.sprayJson
   val sprayRouting = "io.spray" %% "spray-routing" % Versions.spray
-  val sprayTestKit = "io.spray" %% "spray-testkit" % Versions.spray
+  val sprayTestKit = "io.spray" %% "spray-testkit" % Versions.spray % "test" exclude("org.specs2", "specs2_2.11")
   val akkaActor = "com.typesafe.akka" %% "akka-actor" % Versions.akka
   val akkaTestKit = "com.typesafe.akka" %% "akka-testkit" % Versions.akka
   val cats = "org.spire-math" %% "cats" % Versions.cats
