@@ -1,6 +1,6 @@
-package com.fortysevendeg.ninecards.free.domain
+package com.fortysevendeg.ninecards.services.free.domain
 
-import spray.http.DateTime
+import org.joda.time.DateTime
 
 
 case class SharedCollectionList(items: Seq[SharedCollection])
