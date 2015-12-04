@@ -15,12 +15,12 @@ object NineCardsApiHeaderCommons {
   val headerAndroidId = "X-Android-ID"
   val headerMarketLocalization = "X-Android-Market-Localization"
 
-  def requestLoginHeaders() = for {
+  def requestLoginHeaders = for {
     appId <- headerValueByName(headerAppslyAppId)
     apiKey <- headerValueByName(headerAppslyAPIKey)
   } yield appId :: apiKey :: HNil
 
-  def requestFullHeaders() = requestLoginHeaders() & (for {
+  def requestFullHeaders = requestLoginHeaders & (for {
     sessionToken <- headerValueByName(headerAppslySessionToken)
     androidId <- headerValueByName(headerAndroidId)
     marketLocalization <- headerValueByName(headerMarketLocalization)
