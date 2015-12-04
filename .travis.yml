@@ -1,0 +1,19 @@
+sudo: false
+language: scala
+scala:
+  - 2.11.7
+addons:
+  apt:
+    packages:
+      - libc6-i386
+      - lib32z1
+      - lib32stdc++6
+before_install:
+  - export GIT_BRANCH=${TRAVIS_BRANCH}
+  - export GIT_PR=${TRAVIS_PULL_REQUEST}
+script:
+  - sbt ++$TRAVIS_SCALA_VERSION "project api" coverage test
+  - sbt ++$TRAVIS_SCALA_VERSION "project processes" coverage test
+  - sbt ++$TRAVIS_SCALA_VERSION "project services" coverage test
+after_success:
+  - sbt ++$TRAVIS_SCALA_VERSION "project tests" test:coverageAggregate

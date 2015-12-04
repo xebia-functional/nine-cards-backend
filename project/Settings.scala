@@ -1,6 +1,6 @@
 import sbt.Keys._
 import sbt._
-import spray.revolver.RevolverPlugin.Revolver
+import spray.revolver.RevolverPlugin
 
 trait Settings {
   this: Build =>
@@ -31,5 +31,5 @@ trait Settings {
 
   lazy val apiSettings = projectSettings ++ Seq(
     publishArtifact in(Test, packageBin) := false
-  ) ++ Revolver.settings
+  ) ++ RevolverPlugin.settings
 }
