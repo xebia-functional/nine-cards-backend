@@ -9,7 +9,10 @@ import spray.routing._
 import scala.language.{higherKinds, implicitConversions}
 import scalaz.concurrent.Task
 
-class NineCardsApiActor extends Actor with NineCardsApi {
+class NineCardsApiActor
+  extends Actor
+  with NineCardsApi
+  with AuthHeadersRejectionHandler {
 
   def actorRefFactory = context
 
@@ -23,6 +26,7 @@ trait NineCardsApi
   with JsonFormats {
 
   import FreeUtils._
+  import NineCardsApiHeaderCommons._
 
   def nineCardsApiRoute(implicit AP: AppProcesses) = {
 
@@ -35,22 +39,28 @@ trait NineCardsApi
         }
       } ~
         path(Segment) { userId =>
-          get {
-            complete(
-              Map("result" -> s"Gets user info: $userId")
-            )
-          } ~
+          requestLoginHeaders {
+            (appId, apiKey) =>
+            get {
+              complete(
+                Map("result" -> s"Gets user info: $userId")
+              )
+            } ~
             put {
               complete(
                 Map("result" -> s"Updates user info: $userId")
               )
             }
+          }
         } ~
         path("link") {
-          put {
-            complete(
-              Map("result" -> s"Links new account with specific user")
-            )
+          requestFullHeaders {
+            (appId, apiKey, sessionToken, androidId, localization) =>
+            put {
+              complete(
+                Map("result" -> s"Links new account with specific user")
+              )
+            }
           }
         }
     } ~
@@ -75,7 +85,7 @@ trait NineCardsApi
     // This path prefix grants access to the Swagger documentation.
     // Both /apiDocs/ and /apiDocs/index.html are valid paths to load Swagger-UI.
     pathPrefix("apiDocs") {
-      path("") {
+      pathEndOrSingleSlash {
         getFromResource("apiDocs/index.html")
       } ~ {
         getFromResourceDirectory("apiDocs")
