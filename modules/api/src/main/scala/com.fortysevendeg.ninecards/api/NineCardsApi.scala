@@ -39,7 +39,7 @@ trait NineCardsApi
         }
       } ~
         path(Segment) { userId =>
-          requestLoginHeaders() {
+          requestLoginHeaders {
             (appId, apiKey) =>
             get {
               complete(
@@ -54,7 +54,7 @@ trait NineCardsApi
           }
         } ~
         path("link") {
-          requestFullHeaders() {
+          requestFullHeaders {
             (appId, apiKey, sessionToken, androidId, localization) =>
             put {
               complete(
