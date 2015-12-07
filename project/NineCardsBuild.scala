@@ -14,4 +14,8 @@ object NineCardsBuild extends Build with Settings with Dependencies {
   lazy val api = project.in(file("modules/api"))
     .dependsOn(processes)
     .settings(apiSettings ++ apiDeps)
+
+  lazy val tests = Project(id = "tests", base = file("modules/tests"))
+    .settings(projectSettings: _*)
+    .aggregate(api, processes, services, api)
 }
