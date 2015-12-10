@@ -42,27 +42,27 @@ trait NineCardsApi
         path(Segment) { userId =>
           requestLoginHeaders {
             (appId, apiKey) =>
-            get {
-              complete {
-                val result: Task[User] = userbyIdUser(userId)
-                result
-              }
-            } ~
-            put {
-              complete(
-                Map("result" -> s"Updates user info: $userId")
-              )
-            }
+              get {
+                complete {
+                  val result: Task[User] = userbyIdUser(userId)
+                  result
+                }
+              } ~
+                put {
+                  complete(
+                    Map("result" -> s"Updates user info: $userId")
+                  )
+                }
           }
         } ~
         path("link") {
           requestFullHeaders {
             (appId, apiKey, sessionToken, androidId, localization) =>
-            put {
-              complete(
-                Map("result" -> s"Links new account with specific user")
-              )
-            }
+              put {
+                complete(
+                  Map("result" -> s"Links new account with specific user")
+                )
+              }
           }
         }
     } ~
@@ -93,7 +93,7 @@ trait NineCardsApi
           getFromResourceDirectory("apiDocs")
         }
       }
-    } ~
+  } ~
     // This path prefix grants access to the Swagger documentation.
     // Both /apiDocs/ and /apiDocs/index.html are valid paths to load Swagger-UI.
     pathPrefix("apiDocs") {
@@ -103,5 +103,4 @@ trait NineCardsApi
         getFromResourceDirectory("apiDocs")
       }
     }
-  }
 }

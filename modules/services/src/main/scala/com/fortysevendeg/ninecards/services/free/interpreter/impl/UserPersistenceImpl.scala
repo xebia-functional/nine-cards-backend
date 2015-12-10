@@ -13,7 +13,7 @@ class UserPersistenceImpl {
   def getUserByUserId(userId: String) =
     Option(
       User(
-        _id = Option("123"),
+        _id = Option(userId),
         username = Option("Ana"),
         email = Option("ana@47deg.com"),
         sessionToken = Option("asjdfoaijerña"),
