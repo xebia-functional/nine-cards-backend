@@ -1,8 +1,9 @@
 package com.fortysevendeg.ninecards.api
 
 import akka.actor.Actor
+import cats.free.Free
 import com.fortysevendeg.ninecards.processes.AppProcesses
-import com.fortysevendeg.ninecards.processes.domain.GooglePlayApp
+import com.fortysevendeg.ninecards.processes.domain._
 import spray.httpx.SprayJsonSupport
 import spray.routing._
 
@@ -36,9 +37,10 @@ trait NineCardsApi
       } ~
         path(Segment) { userId =>
           get {
-            complete(
-              Map("result" -> s"Gets user info: $userId")
-            )
+            complete {
+              val result: Task[User] = userbyIdUser(userId)
+              result
+            }
           } ~
             put {
               complete(
@@ -54,32 +56,32 @@ trait NineCardsApi
           }
         }
     } ~
-    path("installations") {
-      post {
-        complete(
-          Map("result" -> s"Creates new installation")
-        )
-      }
-    } ~
-    pathPrefix("apps") {
-      path("categorize") {
-        get {
-          complete {
-            val result: Task[Seq[GooglePlayApp]] = categorizeApps(Seq("com.fortysevendeg.ninecards"))
+      path("installations") {
+        post {
+          complete(
+            Map("result" -> s"Creates new installation")
+          )
+        }
+      } ~
+      pathPrefix("apps") {
+        path("categorize") {
+          get {
+            complete {
+              val result: Task[Seq[GooglePlayApp]] = categorizeApps(Seq("com.fortysevendeg.ninecards"))
 
-            result
+              result
+            }
           }
         }
+      } ~
+      // This path prefix grants access to the Swagger documentation.
+      // Both /apiDocs/ and /apiDocs/index.html are valid paths to load Swagger-UI.
+      pathPrefix("apiDocs") {
+        path("") {
+          getFromResource("apiDocs/index.html")
+        } ~ {
+          getFromResourceDirectory("apiDocs")
+        }
       }
-    } ~
-    // This path prefix grants access to the Swagger documentation.
-    // Both /apiDocs/ and /apiDocs/index.html are valid paths to load Swagger-UI.
-    pathPrefix("apiDocs") {
-      path("") {
-        getFromResource("apiDocs/index.html")
-      } ~ {
-        getFromResourceDirectory("apiDocs")
-      }
-    }
   }
 }
