@@ -3,6 +3,7 @@ package com.fortysevendeg.ninecards.api
 import akka.actor.Actor
 import com.fortysevendeg.ninecards.processes.AppProcesses
 import com.fortysevendeg.ninecards.processes.domain.GooglePlayApp
+import com.fortysevendeg.ninecards.processes.messages._
 import spray.httpx.SprayJsonSupport
 import spray.routing._
 
@@ -34,62 +35,69 @@ trait NineCardsApi
 
     pathPrefix("users") {
       pathEndOrSingleSlash {
-        post {
-          complete("Starts a session")
+        requestLoginHeaders {
+          (appId, apiKey) =>
+            post {
+              entity(as[AddUserRequest]){
+                request =>
+                  complete(Map("result" -> s"Gets user info: ${request.authData.google.email}"))
+
+              }
+            }
         }
       } ~
         path(Segment) { userId =>
           requestLoginHeaders {
             (appId, apiKey) =>
-            get {
-              complete(
-                Map("result" -> s"Gets user info: $userId")
-              )
-            } ~
-            put {
-              complete(
-                Map("result" -> s"Updates user info: $userId")
-              )
-            }
+              get {
+                complete(
+                  Map("result" -> s"Gets user info: $userId")
+                )
+              } ~
+                put {
+                  complete(
+                    Map("result" -> s"Updates user info: $userId")
+                  )
+                }
           }
         } ~
         path("link") {
           requestFullHeaders {
             (appId, apiKey, sessionToken, androidId, localization) =>
-            put {
-              complete(
-                Map("result" -> s"Links new account with specific user")
-              )
+              put {
+                complete(
+                  Map("result" -> s"Links new account with specific user")
+                )
+              }
+          }
+        }
+    } ~
+      path("installations") {
+        post {
+          complete(
+            Map("result" -> s"Creates new installation")
+          )
+        }
+      } ~
+      pathPrefix("apps") {
+        path("categorize") {
+          get {
+            complete {
+              val result: Task[Seq[GooglePlayApp]] = categorizeApps(Seq("com.fortysevendeg.ninecards"))
+
+              result
             }
           }
         }
-    } ~
-    path("installations") {
-      post {
-        complete(
-          Map("result" -> s"Creates new installation")
-        )
-      }
-    } ~
-    pathPrefix("apps") {
-      path("categorize") {
-        get {
-          complete {
-            val result: Task[Seq[GooglePlayApp]] = categorizeApps(Seq("com.fortysevendeg.ninecards"))
-
-            result
-          }
+      } ~
+      // This path prefix grants access to the Swagger documentation.
+      // Both /apiDocs/ and /apiDocs/index.html are valid paths to load Swagger-UI.
+      pathPrefix("apiDocs") {
+        pathEndOrSingleSlash {
+          getFromResource("apiDocs/index.html")
+        } ~ {
+          getFromResourceDirectory("apiDocs")
         }
       }
-    } ~
-    // This path prefix grants access to the Swagger documentation.
-    // Both /apiDocs/ and /apiDocs/index.html are valid paths to load Swagger-UI.
-    pathPrefix("apiDocs") {
-      pathEndOrSingleSlash {
-        getFromResource("apiDocs/index.html")
-      } ~ {
-        getFromResourceDirectory("apiDocs")
-      }
-    }
   }
 }
