@@ -1,15 +1,8 @@
 package com.fortysevendeg.ninecards.processes.converters
 
 import com.fortysevendeg.ninecards.processes.domain._
-import com.fortysevendeg.ninecards.services.free.domain.{GooglePlayApp => GooglePlayAppServices}
-import com.fortysevendeg.ninecards.services.free.domain.{User => UserAppServices}
-import com.fortysevendeg.ninecards.services.free.domain.{AuthData => AuthDataSevices}
-import com.fortysevendeg.ninecards.services.free.domain.{TwitterAuthData => TwitterAuthDataApp}
-import com.fortysevendeg.ninecards.services.free.domain.{FacebookAuthData => FacebookAuthDataApp}
-import com.fortysevendeg.ninecards.services.free.domain.{AnonymousAuthData => AnonymousAuthDataApp}
-import com.fortysevendeg.ninecards.services.free.domain.{GoogleAuthData => GoogleAuthDataApp}
-import com.fortysevendeg.ninecards.services.free.domain.{GoogleAuthDataDeviceInfo => GoogleAuthDataDeviceInfoApp}
-import com.fortysevendeg.ninecards.services.free.domain.{GoogleOAuth2Data => GoogleOAuth2DataApp}
+import com.fortysevendeg.ninecards.services.free.domain.{GooglePlayApp => GooglePlayAppServices, User => UserAppServices, AuthData => AuthDataSevices, TwitterAuthData => TwitterAuthDataApp}
+import com.fortysevendeg.ninecards.services.free.domain.{FacebookAuthData => FacebookAuthDataApp, AnonymousAuthData => AnonymousAuthDataApp, GoogleAuthData => GoogleAuthDataApp, GoogleAuthDataDeviceInfo => GoogleAuthDataDeviceInfoApp, GoogleOAuth2Data => GoogleOAuth2DataApp}
 
 object Converters {
 
@@ -25,7 +18,7 @@ object Converters {
 
   def toUserApp(app: UserAppServices): User =
     User(
-      _id = app._id,
+      id = app.id,
       username = app.username,
       password = app.password,
       email = app.email,

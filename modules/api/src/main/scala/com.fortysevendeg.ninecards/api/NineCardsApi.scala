@@ -1,14 +1,15 @@
 package com.fortysevendeg.ninecards.api
 
 import akka.actor.Actor
-import cats.free.Free
-import com.fortysevendeg.ninecards.processes.AppProcesses
+import com.fortysevendeg.ninecards.processes.NineCardsServices.NineCardsServices
+import com.fortysevendeg.ninecards.processes.{AppProcesses,UserProcesses}
 import com.fortysevendeg.ninecards.processes.domain._
 import spray.httpx.SprayJsonSupport
 import spray.routing._
-
 import scala.language.{higherKinds, implicitConversions}
 import scalaz.concurrent.Task
+import FreeUtils._
+import NineCardsApiHeaderCommons._
 
 class NineCardsApiActor
   extends Actor
@@ -26,12 +27,11 @@ trait NineCardsApi
   with SprayJsonSupport
   with JsonFormats {
 
-  import FreeUtils._
-  import NineCardsApiHeaderCommons._
 
-  def nineCardsApiRoute(implicit AP: AppProcesses) = {
+  def nineCardsApiRoute(implicit appProcesses: AppProcesses[NineCardsServices], userProcesses: UserProcesses[NineCardsServices]) = {
 
-    import AP._
+    import appProcesses._
+    import userProcesses._
 
     pathPrefix("users") {
       pathEndOrSingleSlash {
@@ -44,7 +44,7 @@ trait NineCardsApi
             (appId, apiKey) =>
               get {
                 complete {
-                  val result: Task[User] = userbyIdUser(userId)
+                  val result: Task[User] = getUserById(userId)
                   result
                 }
               } ~

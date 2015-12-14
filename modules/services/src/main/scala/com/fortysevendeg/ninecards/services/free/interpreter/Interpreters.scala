@@ -81,7 +81,7 @@ object Interpreters {
   object UserInterpreter extends (UserOps ~> Task) {
 
     def apply[A](fa: UserOps[A]) = fa match {
-      case GetUserByIdUser(userId: String) =>
+      case GetUserById(userId: String) =>
         Task {
           userPersistenceImpl.getUserByUserId(userId)
         }

@@ -38,7 +38,7 @@ case class TwitterAuthData(
 case class AnonymousAuthData(id: String)
 
 case class User(
-  _id: Option[String] = None,
+  id: Option[String] = None,
   username: Option[String] = None,
   password: Option[String] = None,
   email: Option[String] = None,
@@ -46,7 +46,7 @@ case class User(
   authData: Option[AuthData] = None)
 
 case class Installation(
-  _id: Option[String] = None,
+  id: Option[String] = None,
   deviceType: String,
   deviceToken: Option[String] = None,
   userId: Option[String] = None,
