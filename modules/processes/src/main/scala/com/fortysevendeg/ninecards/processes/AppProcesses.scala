@@ -12,17 +12,14 @@ class AppProcesses[F[_]](
   implicit appPersistenceServices: AppPersistenceServices[F],
   appGooglePlayServices: AppGooglePlayServices[F]) {
 
-  import appGooglePlayServices._
-  import appPersistenceServices._
-
   def categorizeApps(packageNames: Seq[String]): Free[F, Seq[GooglePlayApp]] = for {
-    persistenceApps <- getCategories(packageNames)
-    googlePlayApps <- getCategoriesFromGooglePlay(persistenceApps.notFoundApps)
+    persistenceApps <- appPersistenceServices.getCategories(packageNames)
+    googlePlayApps <- appGooglePlayServices.getCategoriesFromGooglePlay(persistenceApps.notFoundApps)
   } yield (persistenceApps.categorizedApps ++ googlePlayApps.categorizedApps) map toGooglePlayApp
 
 }
 
 object AppProcesses {
 
-  implicit def appProcesses[F[_]](implicit AP: AppPersistenceServices[F], AG: AppGooglePlayServices[F]) = new AppProcesses()
+  implicit def appProcesses[F[_]](implicit appPersistenceServices: AppPersistenceServices[F], appGooglePlayServices: AppGooglePlayServices[F]) = new AppProcesses()
 }
