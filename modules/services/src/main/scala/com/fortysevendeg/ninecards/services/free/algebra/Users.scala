@@ -2,7 +2,6 @@ package com.fortysevendeg.ninecards.services.free.algebra
 
 import cats.free.{Free, Inject}
 import com.fortysevendeg.ninecards.services.free.domain.User
-
 import scala.language.higherKinds
 
 object Users {
@@ -31,7 +30,7 @@ object Users {
 
   object UserServices {
 
-    implicit def dataSource[F[_]](implicit I: Inject[UserOps, F]): UserServices[F] = new UserServices[F]
+    implicit def dataSource[F[_]](implicit inject: Inject[UserOps, F]): UserServices[F] = new UserServices[F]
 
   }
 

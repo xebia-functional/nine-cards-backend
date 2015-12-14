@@ -27,9 +27,13 @@ trait NineCardsApi
   with SprayJsonSupport
   with JsonFormats {
 
+  def nineCardsApiRoute(implicit appProcesses: AppProcesses[NineCardsServices], userProcesses: UserProcesses[NineCardsServices]): Route =
+    userApiRoute() ~
+      installationsApiRoute ~
+      appsApiRoute() ~
+      swaggerApiRoute
 
-  def nineCardsApiRoute(implicit appProcesses: AppProcesses[NineCardsServices], userProcesses: UserProcesses[NineCardsServices]) = {
-
+  private[this] def userApiRoute()(implicit userProcesses: UserProcesses[NineCardsServices]) =
     pathPrefix("users") {
       pathEndOrSingleSlash {
         post {
@@ -62,37 +66,32 @@ trait NineCardsApi
               }
           }
         }
-    } ~
-      path("installations") {
-        post {
-          complete(
-            Map("result" -> s"Creates new installation")
-          )
-        }
-      } ~
-      pathPrefix("apps") {
-        path("categorize") {
-          get {
-            complete {
-              val result: Task[Seq[GooglePlayApp]] = appProcesses.categorizeApps(Seq("com.fortysevendeg.ninecards"))
+    }
 
-              result
-            }
+  private[this] def installationsApiRoute =
+    path("installations") {
+      post {
+        complete(
+          Map("result" -> s"Creates new installation")
+        )
+      }
+    }
+
+  private[this] def appsApiRoute()(implicit appProcesses: AppProcesses[NineCardsServices]) =
+    pathPrefix("apps") {
+      path("categorize") {
+        get {
+          complete {
+            val result: Task[Seq[GooglePlayApp]] = appProcesses.categorizeApps(Seq("com.fortysevendeg.ninecards"))
+            result
           }
         }
-      } ~
-      // This path prefix grants access to the Swagger documentation.
-      // Both /apiDocs/ and /apiDocs/index.html are valid paths to load Swagger-UI.
-      pathPrefix("apiDocs") {
-        path("") {
-          getFromResource("apiDocs/index.html")
-        } ~ {
-          getFromResourceDirectory("apiDocs")
-        }
       }
-  } ~
-    // This path prefix grants access to the Swagger documentation.
-    // Both /apiDocs/ and /apiDocs/index.html are valid paths to load Swagger-UI.
+    }
+
+  private[this] def swaggerApiRoute =
+  // This path prefix grants access to the Swagger documentation.
+  // Both /apiDocs/ and /apiDocs/index.html are valid paths to load Swagger-UI.
     pathPrefix("apiDocs") {
       pathEndOrSingleSlash {
         getFromResource("apiDocs/index.html")
