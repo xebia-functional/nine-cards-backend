@@ -1,16 +1,17 @@
 package com.fortysevendeg.ninecards.processes
 
-import com.fortysevendeg.ninecards.processes.NineCardsServices.NineCardsServices
-import com.fortysevendeg.ninecards.services.free.algebra.SharedCollections.SharedCollectionServices
-import com.fortysevendeg.ninecards.services.free.algebra.SharedCollectionSubscriptions.SharedCollectionSubscriptionServices
+import com.fortysevendeg.ninecards.processes.messages.AddUserRequest
 import com.fortysevendeg.ninecards.services.free.algebra.Users.UserServices
+import com.fortysevendeg.ninecards.services.free.domain.User
 
 import scala.language.higherKinds
+import scalaz.Free
 
 class UserProcesses[F[_]](
-  implicit
-  U: UserServices[NineCardsServices],
-  SC: SharedCollectionServices[NineCardsServices],
-  SCS: SharedCollectionSubscriptionServices[NineCardsServices]) {
+  implicit userServices: UserServices[F]) {
+
+  def addUser(user: AddUserRequest): Free[F, User] = for {
+    persistenceApps <- userServices.addUser(user)
+  } yield (persistenceApps map toUserApp).getOrElse(throw new RuntimeException(""))
 
 }

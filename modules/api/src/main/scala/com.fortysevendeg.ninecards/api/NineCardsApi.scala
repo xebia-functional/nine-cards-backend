@@ -1,9 +1,10 @@
 package com.fortysevendeg.ninecards.api
 
 import akka.actor.Actor
-import com.fortysevendeg.ninecards.processes.AppProcesses
+import com.fortysevendeg.ninecards.processes.{UserProcesses, AppProcesses}
 import com.fortysevendeg.ninecards.processes.domain.GooglePlayApp
 import com.fortysevendeg.ninecards.processes.messages._
+import com.fortysevendeg.ninecards.services.free.domain.User
 import spray.httpx.SprayJsonSupport
 import spray.routing._
 
@@ -29,7 +30,7 @@ trait NineCardsApi
   import FreeUtils._
   import NineCardsApiHeaderCommons._
 
-  def nineCardsApiRoute(implicit AP: AppProcesses) = {
+  def nineCardsApiRoute(implicit AP: AppProcesses, userProcesses: UserProcesses) = {
 
     import AP._
 
@@ -40,8 +41,11 @@ trait NineCardsApi
             post {
               entity(as[AddUserRequest]){
                 request =>
-                  complete(Map("result" -> s"Gets user info: ${request.authData.google.email}"))
-
+//                  complete(Map("result" -> s"Gets user info: ${request.authData.google.email}"))
+                    complete{
+                      val result: Task[User] = userProcesses.addUser(request)
+                      result
+                    }
               }
             }
         }
