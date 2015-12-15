@@ -1,4 +1,4 @@
-package com.fortysevendeg.ninecards.services.free.domain
+package com.fortysevendeg.ninecards.processes.domain
 
 case class AuthData(
   twitter: Option[TwitterAuthData] = None,

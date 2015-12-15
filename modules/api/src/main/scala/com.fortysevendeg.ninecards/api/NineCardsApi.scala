@@ -1,13 +1,15 @@
 package com.fortysevendeg.ninecards.api
 
 import akka.actor.Actor
-import com.fortysevendeg.ninecards.processes.AppProcesses
-import com.fortysevendeg.ninecards.processes.domain.GooglePlayApp
+import com.fortysevendeg.ninecards.processes.NineCardsServices.NineCardsServices
+import com.fortysevendeg.ninecards.processes.{AppProcesses, UserProcesses}
+import com.fortysevendeg.ninecards.processes.domain._
 import spray.httpx.SprayJsonSupport
 import spray.routing._
-
 import scala.language.{higherKinds, implicitConversions}
 import scalaz.concurrent.Task
+import FreeUtils._
+import NineCardsApiHeaderCommons._
 
 class NineCardsApiActor
   extends Actor
@@ -25,13 +27,13 @@ trait NineCardsApi
   with SprayJsonSupport
   with JsonFormats {
 
-  import FreeUtils._
-  import NineCardsApiHeaderCommons._
+  def nineCardsApiRoute(implicit appProcesses: AppProcesses[NineCardsServices], userProcesses: UserProcesses[NineCardsServices]): Route =
+    userApiRoute() ~
+      installationsApiRoute ~
+      appsApiRoute() ~
+      swaggerApiRoute
 
-  def nineCardsApiRoute(implicit AP: AppProcesses) = {
-
-    import AP._
-
+  private[this] def userApiRoute()(implicit userProcesses: UserProcesses[NineCardsServices]) =
     pathPrefix("users") {
       pathEndOrSingleSlash {
         post {
@@ -41,49 +43,55 @@ trait NineCardsApi
         path(Segment) { userId =>
           requestLoginHeaders {
             (appId, apiKey) =>
-            get {
-              complete(
-                Map("result" -> s"Gets user info: $userId")
-              )
-            } ~
-            put {
-              complete(
-                Map("result" -> s"Updates user info: $userId")
-              )
-            }
+              get {
+                complete {
+                  val result: Task[User] = userProcesses.getUserById(userId)
+                  result
+                }
+              } ~
+                put {
+                  complete(
+                    Map("result" -> s"Updates user info: $userId")
+                  )
+                }
           }
         } ~
         path("link") {
           requestFullHeaders {
             (appId, apiKey, sessionToken, androidId, localization) =>
-            put {
-              complete(
-                Map("result" -> s"Links new account with specific user")
-              )
-            }
+              put {
+                complete(
+                  Map("result" -> s"Links new account with specific user")
+                )
+              }
           }
         }
-    } ~
+    }
+
+  private[this] def installationsApiRoute =
     path("installations") {
       post {
         complete(
           Map("result" -> s"Creates new installation")
         )
       }
-    } ~
+    }
+
+  private[this] def appsApiRoute()(implicit appProcesses: AppProcesses[NineCardsServices]) =
     pathPrefix("apps") {
       path("categorize") {
         get {
           complete {
-            val result: Task[Seq[GooglePlayApp]] = categorizeApps(Seq("com.fortysevendeg.ninecards"))
-
+            val result: Task[Seq[GooglePlayApp]] = appProcesses.categorizeApps(Seq("com.fortysevendeg.ninecards"))
             result
           }
         }
       }
-    } ~
-    // This path prefix grants access to the Swagger documentation.
-    // Both /apiDocs/ and /apiDocs/index.html are valid paths to load Swagger-UI.
+    }
+
+  private[this] def swaggerApiRoute =
+  // This path prefix grants access to the Swagger documentation.
+  // Both /apiDocs/ and /apiDocs/index.html are valid paths to load Swagger-UI.
     pathPrefix("apiDocs") {
       pathEndOrSingleSlash {
         getFromResource("apiDocs/index.html")
@@ -91,5 +99,4 @@ trait NineCardsApi
         getFromResourceDirectory("apiDocs")
       }
     }
-  }
 }
