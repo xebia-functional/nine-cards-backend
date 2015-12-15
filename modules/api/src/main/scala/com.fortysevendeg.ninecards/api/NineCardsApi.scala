@@ -2,14 +2,16 @@ package com.fortysevendeg.ninecards.api
 
 import akka.actor.Actor
 import com.fortysevendeg.ninecards.processes.{UserProcesses, AppProcesses}
-import com.fortysevendeg.ninecards.processes.domain.GooglePlayApp
 import com.fortysevendeg.ninecards.processes.messages._
 import com.fortysevendeg.ninecards.services.free.domain.User
+import com.fortysevendeg.ninecards.processes.NineCardsServices.NineCardsServices
+import com.fortysevendeg.ninecards.processes.domain._
 import spray.httpx.SprayJsonSupport
 import spray.routing._
-
 import scala.language.{higherKinds, implicitConversions}
 import scalaz.concurrent.Task
+import FreeUtils._
+import NineCardsApiHeaderCommons._
 
 class NineCardsApiActor
   extends Actor
@@ -27,13 +29,13 @@ trait NineCardsApi
   with SprayJsonSupport
   with JsonFormats {
 
-  import FreeUtils._
-  import NineCardsApiHeaderCommons._
+  def nineCardsApiRoute(implicit appProcesses: AppProcesses[NineCardsServices], userProcesses: UserProcesses[NineCardsServices]): Route =
+    userApiRoute() ~
+      installationsApiRoute ~
+      appsApiRoute() ~
+      swaggerApiRoute
 
-  def nineCardsApiRoute(implicit AP: AppProcesses, userProcesses: UserProcesses) = {
-
-    import AP._
-
+  private[this] def userApiRoute()(implicit userProcesses: UserProcesses[NineCardsServices]) =
     pathPrefix("users") {
       pathEndOrSingleSlash {
         requestLoginHeaders {
@@ -41,11 +43,11 @@ trait NineCardsApi
             post {
               entity(as[AddUserRequest]){
                 request =>
-//                  complete(Map("result" -> s"Gets user info: ${request.authData.google.email}"))
-                    complete{
-                      val result: Task[User] = userProcesses.addUser(request)
-                      result
-                    }
+                  //                  complete(Map("result" -> s"Gets user info: ${request.authData.google.email}"))
+                  complete{
+                    val result: Task[User] = userProcesses.addUser(request)
+                    result
+                  }
               }
             }
         }
@@ -54,9 +56,10 @@ trait NineCardsApi
           requestLoginHeaders {
             (appId, apiKey) =>
               get {
-                complete(
-                  Map("result" -> s"Gets user info: $userId")
-                )
+                complete {
+                  val result: Task[User] = userProcesses.getUserById(userId)
+                  result
+                }
               } ~
                 put {
                   complete(
@@ -75,33 +78,37 @@ trait NineCardsApi
               }
           }
         }
-    } ~
-      path("installations") {
-        post {
-          complete(
-            Map("result" -> s"Creates new installation")
-          )
-        }
-      } ~
-      pathPrefix("apps") {
-        path("categorize") {
-          get {
-            complete {
-              val result: Task[Seq[GooglePlayApp]] = categorizeApps(Seq("com.fortysevendeg.ninecards"))
+    }
 
-              result
-            }
+  private[this] def installationsApiRoute =
+    path("installations") {
+      post {
+        complete(
+          Map("result" -> s"Creates new installation")
+        )
+      }
+    }
+
+  private[this] def appsApiRoute()(implicit appProcesses: AppProcesses[NineCardsServices]) =
+    pathPrefix("apps") {
+      path("categorize") {
+        get {
+          complete {
+            val result: Task[Seq[GooglePlayApp]] = appProcesses.categorizeApps(Seq("com.fortysevendeg.ninecards"))
+            result
           }
         }
-      } ~
-      // This path prefix grants access to the Swagger documentation.
-      // Both /apiDocs/ and /apiDocs/index.html are valid paths to load Swagger-UI.
-      pathPrefix("apiDocs") {
-        pathEndOrSingleSlash {
-          getFromResource("apiDocs/index.html")
-        } ~ {
-          getFromResourceDirectory("apiDocs")
-        }
       }
-  }
+    }
+
+  private[this] def swaggerApiRoute =
+  // This path prefix grants access to the Swagger documentation.
+  // Both /apiDocs/ and /apiDocs/index.html are valid paths to load Swagger-UI.
+    pathPrefix("apiDocs") {
+      pathEndOrSingleSlash {
+        getFromResource("apiDocs/index.html")
+      } ~ {
+        getFromResourceDirectory("apiDocs")
+      }
+    }
 }
