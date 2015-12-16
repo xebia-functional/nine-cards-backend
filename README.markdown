@@ -1,3 +1,7 @@
+[![Codacy Badge](https://api.codacy.com/project/badge/grade/34b25607022243aeb44910745ac6f21b)](https://www.codacy.com)
+[![Codacy
+Badge Coverage](https://api.codacy.com/project/badge/coverage/34b25607022243aeb44910745ac6f21b)](https://www.codacy.com)
+
 ## 9Cards Backend
 
 ### Summary
