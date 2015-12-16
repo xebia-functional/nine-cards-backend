@@ -2,7 +2,6 @@ package com.fortysevendeg.ninecards.services.free.algebra
 
 import cats.free.{Free, Inject}
 import com.fortysevendeg.ninecards.services.free.domain.User
-
 import scala.language.higherKinds
 
 object Users {
@@ -15,6 +14,8 @@ object Users {
 
   case class CheckPassword(password: String) extends UserOps[Boolean]
 
+  case class GetUserById(userId: String) extends UserOps[Option[User]]
+
   class UserServices[F[_]](implicit I: Inject[UserOps, F]) {
 
     def addUser(user: User): Free[F, User] = Free.inject[UserOps, F](AddUser(user))
@@ -22,13 +23,14 @@ object Users {
     def getUserByUserName(username: String): Free[F, Option[User]] = Free.inject[UserOps, F](GetUserByUserName(username))
 
     def checkPassword(password: String): Free[F, Boolean] = Free.inject[UserOps, F](CheckPassword(password))
+
+    def getUserById(userId: String): Free[F, Option[User]] = Free.inject[UserOps, F](GetUserById(userId))
+
   }
 
   object UserServices {
 
-    implicit def dataSource[F[_]](
-      implicit I: Inject[UserOps, F]): UserServices[F] =
-      new UserServices[F]
+    implicit def dataSource[F[_]](implicit inject: Inject[UserOps, F]): UserServices[F] = new UserServices[F]
 
   }
 

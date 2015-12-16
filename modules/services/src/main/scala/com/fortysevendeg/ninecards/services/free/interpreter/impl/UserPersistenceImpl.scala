@@ -1,6 +1,6 @@
 package com.fortysevendeg.ninecards.services.free.interpreter.impl
 
-import com.fortysevendeg.ninecards.services.free.domain.User
+import com.fortysevendeg.ninecards.services.free.domain.{GoogleAuthDataDeviceInfo, GoogleAuthData, AuthData, User}
 
 class UserPersistenceImpl {
 
@@ -10,6 +10,28 @@ class UserPersistenceImpl {
 
   def checkPassword(pass: String) = true
 
+  def getUserByUserId(userId: String) =
+    Option(
+      User(
+        id = Option(userId),
+        username = Option("Ana"),
+        email = Option("ana@47deg.com"),
+        sessionToken = Option("asjdfoaijera"),
+        authData = Option(AuthData(
+          google = Option(GoogleAuthData(
+            email = "ana@47deg.com",
+            devices = List(
+              GoogleAuthDataDeviceInfo(
+                name = "aldfa",
+                deviceId = "ladf",
+                secretToken = "lakjdsflkadf",
+                permissions = Nil
+              )
+            ))
+          ))
+        )
+      )
+    )
 }
 
 object UserPersistenceImpl {
