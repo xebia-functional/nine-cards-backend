@@ -85,9 +85,17 @@ object Interpreters {
         Task {
           userPersistenceImpl.getUserByUserId(userId)
         }
+      case GetUserByEmail(email: String) =>
+        Task {
+          userPersistenceImpl.getUserByEmail(email)
+        }
       case AddUser(user: User) =>
         Task {
           userPersistenceImpl.addUser(user)
+        }
+      case InsertUserDB(user: User) =>
+        Task {
+          userPersistenceImpl.insertUserDB(user)
         }
       case GetUserByUserName(username: String) =>
         Task {

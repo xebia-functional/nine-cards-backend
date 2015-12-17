@@ -3,15 +3,14 @@ package com.fortysevendeg.ninecards.api
 import akka.actor.Actor
 import com.fortysevendeg.ninecards.processes.{UserProcesses, AppProcesses}
 import com.fortysevendeg.ninecards.processes.messages._
-import com.fortysevendeg.ninecards.services.free.domain.User
 import com.fortysevendeg.ninecards.processes.NineCardsServices.NineCardsServices
 import com.fortysevendeg.ninecards.processes.domain._
 import spray.httpx.SprayJsonSupport
 import spray.routing._
 import scala.language.{higherKinds, implicitConversions}
-import scalaz.concurrent.Task
 import FreeUtils._
 import NineCardsApiHeaderCommons._
+import scalaz.concurrent.Task
 
 class NineCardsApiActor
   extends Actor
@@ -41,11 +40,10 @@ trait NineCardsApi
         requestLoginHeaders {
           (appId, apiKey) =>
             post {
-              entity(as[AddUserRequest]){
+              entity(as[AddUserRequest]) {
                 request =>
-                  //                  complete(Map("result" -> s"Gets user info: ${request.authData.google.email}"))
-                  complete{
-                    val result: Task[User] = userProcesses.addUser(request)
+                  complete {
+                    val result: Task[User] = userProcesses.signUpUser(request)
                     result
                   }
               }
