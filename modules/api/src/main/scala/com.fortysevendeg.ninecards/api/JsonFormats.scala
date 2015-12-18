@@ -1,5 +1,6 @@
 package com.fortysevendeg.ninecards.api
 
+import com.fortysevendeg.ninecards.processes.InstallationRequest
 import com.fortysevendeg.ninecards.processes.domain._
 import spray.httpx.SprayJsonSupport
 import spray.json.DefaultJsonProtocol
@@ -25,4 +26,8 @@ trait JsonFormats
   implicit val authDataFormat = jsonFormat5(AuthData)
 
   implicit val userFormat = jsonFormat6(User)
+
+  implicit val installationFormat = jsonFormat5(Installation)
+
+  implicit val installationRequestFormat = jsonFormat5(InstallationRequest)
 }
