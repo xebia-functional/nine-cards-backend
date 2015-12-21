@@ -56,9 +56,6 @@ class UserPersistenceImpl {
       )
     )
 
-  //For QA, when not exist user in DB.
-  //def getUserByEmail(email: String) = None
-
   def insertUserDB(user: User) = user
 
 }

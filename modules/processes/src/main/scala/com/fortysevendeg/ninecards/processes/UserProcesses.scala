@@ -4,10 +4,11 @@ package com.fortysevendeg.ninecards.processes
 import java.util.UUID
 
 import cats.free.Free
-import com.fortysevendeg.ninecards.processes.domain.{AuthData, User}
+import com.fortysevendeg.ninecards.processes.domain.User
 import com.fortysevendeg.ninecards.processes.messages.AddUserRequest
 import com.fortysevendeg.ninecards.services.free.algebra.Users.UserServices
 import com.fortysevendeg.ninecards.processes.converters.Converters._
+import com.fortysevendeg.ninecards.services.free.domain.{User => UserAppServices, AuthData => AuthDataServices}
 import scala.language.higherKinds
 
 class UserProcesses[F[_]](
@@ -19,19 +20,19 @@ class UserProcesses[F[_]](
 
   def signUpUser(userRequest: AddUserRequest): Free[F, User] = for {
     maybeUser <- userServices.getUserByEmail(userRequest.authData.google.email)
-    user <- createOrReturnUser(maybeUser map toUserApp, userRequest)
-  } yield user
+    user <- createOrReturnUser(maybeUser, userRequest)
+  } yield toUserApp(user)
 
-  def createOrReturnUser(maybeUser: Option[User], data: AddUserRequest): Free[F, User] =
+  private def createOrReturnUser(maybeUser: Option[UserAppServices], data: AddUserRequest): Free[F, UserAppServices] =
     maybeUser match {
-      case Some(user) => userServices.addUser(fromUserApp(user)) map toUserApp
-      case None => userServices.insertUser(fromUserApp(createFromGoogle(data))) map toUserApp
+      case Some(user) => userServices.addUser(user)
+      case None => userServices.insertUser(createFromGoogle(data))
     }
 
-  def createFromGoogle(addUserRequest: AddUserRequest): User =
-    User(
+  private def createFromGoogle(addUserRequest: AddUserRequest): UserAppServices =
+    UserAppServices(
       sessionToken = Option(UUID.randomUUID().toString),
-      authData = Option(AuthData(google = Option(toGoogleAuthDataRequestProcess(addUserRequest.authData.google)))))
+      authData = Option(AuthDataServices(google = Option(toGoogleAuthDataRequestProcess(addUserRequest.authData.google)))))
 
 }
 

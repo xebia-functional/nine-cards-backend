@@ -154,13 +154,13 @@ object Converters {
       secretToken = app.secretToken,
       permissions = app.permissions)
 
-  def toGoogleAuthDataRequestProcess(app: GoogleAuthDataRequest): GoogleAuthData =
-    GoogleAuthData(
+  def toGoogleAuthDataRequestProcess(app: GoogleAuthDataRequest): GoogleAuthDataApp =
+    GoogleAuthDataApp(
       email = app.email,
       devices = app.devices map toGoogleAuthDataDeviceInfoRequestProcess)
 
-  def toGoogleAuthDataDeviceInfoRequestProcess(app: GoogleAuthDataDeviceInfoRequest): GoogleAuthDataDeviceInfo =
-    GoogleAuthDataDeviceInfo(
+  def toGoogleAuthDataDeviceInfoRequestProcess(app: GoogleAuthDataDeviceInfoRequest): GoogleAuthDataDeviceInfoApp =
+    GoogleAuthDataDeviceInfoApp(
       name = app.name,
       deviceId = app.deviceId,
       secretToken = app.secretToken,
