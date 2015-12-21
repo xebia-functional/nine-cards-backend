@@ -15,8 +15,8 @@ class UserProcesses[F[_]](
   } yield (persistenceApps map toUserApp).getOrElse(throw new RuntimeException(""))
 
   def createInstallation(request: InstallationRequest): Free[F, Installation] = for {
-    persistenceApps <- userSevices.createInstallation(toInstallationRequest(request))
-  } yield fromInstallationProcesses(persistenceApps)
+    newInstallation <- userSevices.createInstallation(toInstallationRequestProcess(request))
+  } yield fromInstallationProcesses(newInstallation)
 
 }
 

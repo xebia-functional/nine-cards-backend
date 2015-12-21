@@ -82,7 +82,7 @@ object Converters {
       expirationDate = app.expirationDate)
 
 
-  def toInstallationRequest(app: InstallationRequest): InstallationServices =
+  def toInstallationRequestProcess(app: InstallationRequest): InstallationServices =
     InstallationServices(
       id = app.id,
       deviceType = app.deviceType,
