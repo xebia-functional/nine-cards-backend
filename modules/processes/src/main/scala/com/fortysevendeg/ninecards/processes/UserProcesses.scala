@@ -1,7 +1,7 @@
 package com.fortysevendeg.ninecards.processes
 
 import cats.free.Free
-import com.fortysevendeg.ninecards.processes.domain.User
+import com.fortysevendeg.ninecards.processes.domain.{Installation, User}
 import com.fortysevendeg.ninecards.processes.converters.Converters._
 import com.fortysevendeg.ninecards.services.free.algebra.Users._
 
@@ -13,6 +13,10 @@ class UserProcesses[F[_]](
   def getUserById(userId: String): Free[F, User] = for {
     persistenceApps <- userSevices.getUserById(userId)
   } yield (persistenceApps map toUserApp).getOrElse(throw new RuntimeException(""))
+
+  def createInstallation(request: InstallationRequest): Free[F, Installation] = for {
+    newInstallation <- userSevices.createInstallation(toInstallationRequestProcess(request))
+  } yield fromInstallationProcesses(newInstallation)
 
 //  def updateInstallation(installation: InstallationRequest): Free[F, User] = for {
 //    updateInstallation <- userSevices.updateInstallation(installation)

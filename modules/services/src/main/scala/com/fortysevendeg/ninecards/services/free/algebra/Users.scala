@@ -16,6 +16,8 @@ object Users {
 
   case class GetUserById(userId: String) extends UserOps[Option[User]]
 
+  case class CreateInstallation(installation: Installation) extends UserOps[Installation]
+
   case class UpdateInstallation(installation: Installation) extends UserOps[Installation]
 
   class UserServices[F[_]](implicit I: Inject[UserOps, F]) {
@@ -27,6 +29,8 @@ object Users {
     def checkPassword(password: String): Free[F, Boolean] = Free.inject[UserOps, F](CheckPassword(password))
 
     def getUserById(userId: String): Free[F, Option[User]] = Free.inject[UserOps, F](GetUserById(userId))
+
+    def createInstallation(installation: Installation): Free[F, Installation] = Free.inject[UserOps, F](CreateInstallation(installation))
 
     def updateInstallation(installation: Installation): Free[F, Installation] = Free.inject[UserOps, F](UpdateInstallation(installation))
 

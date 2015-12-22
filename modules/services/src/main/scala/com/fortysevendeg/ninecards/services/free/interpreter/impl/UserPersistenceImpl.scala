@@ -33,6 +33,13 @@ class UserPersistenceImpl {
       )
     )
 
+  def createInstallation(installation: Installation) =
+    Installation(
+      userId = installation.userId,
+      deviceType = installation.deviceType,
+      id = Option("340520945234109234527345")
+    )
+
   def updateInstallation(installation: Installation) =
     Option(
       Installation(

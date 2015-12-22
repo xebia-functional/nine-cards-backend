@@ -1,16 +1,18 @@
 package com.fortysevendeg.ninecards.processes.converters
 
+import com.fortysevendeg.ninecards.processes.InstallationRequest
 import com.fortysevendeg.ninecards.processes.domain._
 import com.fortysevendeg.ninecards.services.free.domain.{
-  GooglePlayApp => GooglePlayAppServices,
-  User => UserAppServices,
-  AuthData => AuthDataSevices,
-  TwitterAuthData => TwitterAuthDataApp,
-  FacebookAuthData => FacebookAuthDataApp,
-  AnonymousAuthData => AnonymousAuthDataApp,
-  GoogleAuthData => GoogleAuthDataApp,
-  GoogleAuthDataDeviceInfo => GoogleAuthDataDeviceInfoApp,
-  GoogleOAuth2Data => GoogleOAuth2DataApp
+GooglePlayApp => GooglePlayAppServices,
+User => UserAppServices,
+AuthData => AuthDataSevices,
+TwitterAuthData => TwitterAuthDataApp,
+FacebookAuthData => FacebookAuthDataApp,
+AnonymousAuthData => AnonymousAuthDataApp,
+GoogleAuthData => GoogleAuthDataApp,
+GoogleAuthDataDeviceInfo => GoogleAuthDataDeviceInfoApp,
+GoogleOAuth2Data => GoogleOAuth2DataApp,
+Installation => InstallationServices
 }
 
 object Converters {
@@ -78,5 +80,24 @@ object Converters {
       id = app.id,
       accessToken = app.accessToken,
       expirationDate = app.expirationDate)
+
+
+  def toInstallationRequestProcess(app: InstallationRequest): InstallationServices =
+    InstallationServices(
+      id = app.id,
+      deviceType = app.deviceType,
+      deviceToken = app.deviceToken,
+      userId = app.userId,
+      channels = app.channels
+    )
+  def fromInstallationProcesses(app: InstallationServices): Installation =
+    Installation(
+      id = app.id,
+      deviceType = app.deviceType,
+      deviceToken = app.deviceToken,
+      userId = app.userId,
+      channels = app.channels
+    )
 }
+
 

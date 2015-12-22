@@ -2,7 +2,7 @@ package com.fortysevendeg.ninecards.api
 
 import akka.actor.Actor
 import com.fortysevendeg.ninecards.processes.NineCardsServices.NineCardsServices
-import com.fortysevendeg.ninecards.processes.{AppProcesses, UserProcesses}
+import com.fortysevendeg.ninecards.processes.{InstallationRequest, AppProcesses, UserProcesses}
 import com.fortysevendeg.ninecards.processes.domain._
 import spray.httpx.SprayJsonSupport
 import spray.routing._
@@ -70,22 +70,30 @@ trait NineCardsApi
 
   private[this] def installationsApiRoute()(implicit userProcesses: UserProcesses[NineCardsServices]) =
     path("installations") {
-      post {
-        complete(
-          Map("result" -> s"Creates new installation")
-        )
-        //      } ~
-        //        put {
-        //          entity(as[InstallationRequest]) {
-        //            request =>
-        //              complete {
-        //                val result: Task[Installation] = userProcesses.updateInstallation(request)
-        //                result
-        //              }
-        //          }
+      pathEndOrSingleSlash {
+        requestLoginHeaders {
+          (appId, apiKey) =>
+            post {
+              entity(as[InstallationRequest]) {
+                request =>
+                  complete {
+                    val result: Task[Installation] = userProcesses.createInstallation(request)
+                    result
+                  }
+              }
+            }
+          //~
+          //        put {
+          //          entity(as[InstallationRequest]) {
+          //            request =>
+          //              complete {
+          //                val result: Task[Installation] = userProcesses.updateInstallation(request)
+          //                result
+          //              }
+          //          }
+        }
       }
     }
-
 
   private[this] def appsApiRoute()(implicit appProcesses: AppProcesses[NineCardsServices]) =
     pathPrefix("apps") {
