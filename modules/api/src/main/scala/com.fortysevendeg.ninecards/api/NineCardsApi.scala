@@ -29,7 +29,7 @@ trait NineCardsApi
 
   def nineCardsApiRoute(implicit appProcesses: AppProcesses[NineCardsServices], userProcesses: UserProcesses[NineCardsServices]): Route =
     userApiRoute() ~
-      installationsApiRoute ~
+      installationsApiRoute() ~
       appsApiRoute() ~
       swaggerApiRoute
 
@@ -68,14 +68,24 @@ trait NineCardsApi
         }
     }
 
-  private[this] def installationsApiRoute =
+  private[this] def installationsApiRoute()(implicit userProcesses: UserProcesses[NineCardsServices]) =
     path("installations") {
       post {
         complete(
           Map("result" -> s"Creates new installation")
         )
+        //      } ~
+        //        put {
+        //          entity(as[InstallationRequest]) {
+        //            request =>
+        //              complete {
+        //                val result: Task[Installation] = userProcesses.updateInstallation(request)
+        //                result
+        //              }
+        //          }
       }
     }
+
 
   private[this] def appsApiRoute()(implicit appProcesses: AppProcesses[NineCardsServices]) =
     pathPrefix("apps") {

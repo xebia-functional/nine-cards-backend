@@ -14,6 +14,10 @@ class UserProcesses[F[_]](
     persistenceApps <- userSevices.getUserById(userId)
   } yield (persistenceApps map toUserApp).getOrElse(throw new RuntimeException(""))
 
+//  def updateInstallation(installation: InstallationRequest): Free[F, User] = for {
+//    updateInstallation <- userSevices.updateInstallation(installation)
+//  } yield (updateInstallation map toUserApp).getOrElse(throw new RuntimeException(""))
+
 }
 
 object UserProcesses {

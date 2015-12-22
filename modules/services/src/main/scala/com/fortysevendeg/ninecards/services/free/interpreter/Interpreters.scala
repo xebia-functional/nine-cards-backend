@@ -97,6 +97,10 @@ object Interpreters {
         Task {
           userPersistenceImpl.checkPassword(pass)
         }
+      case UpdateInstallation(installation: Installation) =>
+        Task {
+          userPersistenceImpl.updateInstallation(installation)
+        }
 
     }
   }

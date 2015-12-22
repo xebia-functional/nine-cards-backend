@@ -1,6 +1,6 @@
 package com.fortysevendeg.ninecards.services.free.interpreter.impl
 
-import com.fortysevendeg.ninecards.services.free.domain.{GoogleAuthDataDeviceInfo, GoogleAuthData, AuthData, User}
+import com.fortysevendeg.ninecards.services.free.domain._
 
 class UserPersistenceImpl {
 
@@ -32,6 +32,14 @@ class UserPersistenceImpl {
         )
       )
     )
+
+  def updateInstallation(installation: Installation) =
+    Option(
+      Installation(
+        deviceType = installation.deviceType,
+        userId = installation.userId
+      ))
+
 }
 
 object UserPersistenceImpl {
