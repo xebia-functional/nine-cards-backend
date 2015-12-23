@@ -40,12 +40,14 @@ class UserPersistenceImpl {
       id = Option("340520945234109234527345")
     )
 
-  def updateInstallation(installation: Installation) =
-    Option(
-      Installation(
-        deviceType = installation.deviceType,
-        userId = installation.userId
-      ))
+  def updateInstallation(installation: Installation, installationId: String) =
+    Installation(
+      id = Option(installationId),
+      deviceType = installation.deviceType,
+      userId = installation.userId,
+      deviceToken = installation.deviceToken,
+      channels = installation.channels
+    )
 
 }
 

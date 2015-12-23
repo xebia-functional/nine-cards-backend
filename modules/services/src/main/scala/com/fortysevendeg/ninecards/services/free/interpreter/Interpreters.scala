@@ -101,11 +101,10 @@ object Interpreters {
         Task {
           userPersistenceImpl.createInstallation(installation)
         }
-      case UpdateInstallation(installation: Installation) =>
+      case UpdateInstallation(installation: Installation, installationId: String) =>
         Task {
-          userPersistenceImpl.updateInstallation(installation)
+          userPersistenceImpl.updateInstallation(installation, installationId)
         }
-
     }
   }
 

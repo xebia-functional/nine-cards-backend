@@ -18,7 +18,7 @@ object Users {
 
   case class CreateInstallation(installation: Installation) extends UserOps[Installation]
 
-  case class UpdateInstallation(installation: Installation) extends UserOps[Installation]
+  case class UpdateInstallation(installation: Installation, installationId: String) extends UserOps[Installation]
 
   class UserServices[F[_]](implicit I: Inject[UserOps, F]) {
 
@@ -32,7 +32,7 @@ object Users {
 
     def createInstallation(installation: Installation): Free[F, Installation] = Free.inject[UserOps, F](CreateInstallation(installation))
 
-    def updateInstallation(installation: Installation): Free[F, Installation] = Free.inject[UserOps, F](UpdateInstallation(installation))
+    def updateInstallation(installation: Installation, installationId: String): Free[F, Installation] = Free.inject[UserOps, F](UpdateInstallation(installation, installationId))
 
   }
 

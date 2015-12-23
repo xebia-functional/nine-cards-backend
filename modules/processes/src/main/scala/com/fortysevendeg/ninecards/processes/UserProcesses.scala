@@ -18,9 +18,9 @@ class UserProcesses[F[_]](
     newInstallation <- userSevices.createInstallation(toInstallationRequestProcess(request))
   } yield fromInstallationProcesses(newInstallation)
 
-//  def updateInstallation(installation: InstallationRequest): Free[F, User] = for {
-//    updateInstallation <- userSevices.updateInstallation(installation)
-//  } yield (updateInstallation map toUserApp).getOrElse(throw new RuntimeException(""))
+  def updateInstallation(installationId: String, request: InstallationRequest): Free[F, Installation] = for {
+    updateInstallation <- userSevices.updateInstallation(toInstallationRequestProcess(request), installationId)
+  } yield fromInstallationProcesses(updateInstallation)
 
 }
 

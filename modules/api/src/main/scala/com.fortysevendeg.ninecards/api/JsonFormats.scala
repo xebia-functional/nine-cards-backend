@@ -29,5 +29,5 @@ trait JsonFormats
 
   implicit val installationFormat = jsonFormat5(Installation)
 
-  implicit val installationRequestFormat = jsonFormat5(InstallationRequest)
+  implicit val installationRequestFormat = jsonFormat4(InstallationRequest)
 }
