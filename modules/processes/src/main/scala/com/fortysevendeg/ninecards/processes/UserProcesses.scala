@@ -1,6 +1,5 @@
 package com.fortysevendeg.ninecards.processes
 
-
 import java.util.UUID
 
 import cats.free.Free
@@ -36,7 +35,7 @@ class UserProcesses[F[_]](
       authData = Option(AuthDataServices(google = Option(toGoogleAuthDataRequestProcess(addUserRequest.authData.google)))))
 
   def createInstallation(request: InstallationRequest): Free[F, Installation] = for {
-    newInstallation <- userSevices.createInstallation(toInstallationRequestProcess(request))
+    newInstallation <- userServices.createInstallation(toInstallationRequestProcess(request))
   } yield fromInstallationProcesses(newInstallation)
   
 }
