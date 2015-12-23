@@ -3,7 +3,6 @@ package com.fortysevendeg.ninecards.processes
 import java.util.UUID
 
 import cats.free.Free
-import com.fortysevendeg.ninecards.processes.domain.User
 import com.fortysevendeg.ninecards.processes.messages.AddUserRequest
 import com.fortysevendeg.ninecards.services.free.algebra.Users.UserServices
 import com.fortysevendeg.ninecards.processes.domain.{Installation, User}

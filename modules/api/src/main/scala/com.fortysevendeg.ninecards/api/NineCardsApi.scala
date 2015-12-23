@@ -1,7 +1,6 @@
 package com.fortysevendeg.ninecards.api
 
 import akka.actor.Actor
-import com.fortysevendeg.ninecards.processes.{UserProcesses, AppProcesses}
 import com.fortysevendeg.ninecards.processes.messages._
 import com.fortysevendeg.ninecards.processes.NineCardsServices.NineCardsServices
 import com.fortysevendeg.ninecards.processes.{InstallationRequest, AppProcesses, UserProcesses}
