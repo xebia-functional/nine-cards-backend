@@ -11,7 +11,8 @@ FacebookAuthData => FacebookAuthDataApp,
 AnonymousAuthData => AnonymousAuthDataApp,
 GoogleAuthData => GoogleAuthDataApp,
 GoogleAuthDataDeviceInfo => GoogleAuthDataDeviceInfoApp,
-GoogleOAuth2Data => GoogleOAuth2DataApp
+GoogleOAuth2Data => GoogleOAuth2DataApp,
+Installation => InstallationServices
 }
 
 object Converters {
@@ -127,6 +128,23 @@ object Converters {
       id = app.id,
       accessToken = app.accessToken,
       expirationDate = app.expirationDate)
+
+  def toInstallationRequestProcess(app: InstallationRequest): InstallationServices =
+    InstallationServices(
+      id = app.id,
+      deviceType = app.deviceType,
+      deviceToken = app.deviceToken,
+      userId = app.userId,
+      channels = app.channels
+    )
+  def fromInstallationProcesses(app: InstallationServices): Installation =
+    Installation(
+      id = app.id,
+      deviceType = app.deviceType,
+      deviceToken = app.deviceToken,
+      userId = app.userId,
+      channels = app.channels
+    )
 
   def fromGoogleOAuth2DataApp(app: GoogleOAuth2Data): GoogleOAuth2DataApp =
     GoogleOAuth2DataApp(

@@ -1,7 +1,7 @@
 package com.fortysevendeg.ninecards.services.free.algebra
 
 import cats.free.{Free, Inject}
-import com.fortysevendeg.ninecards.services.free.domain.User
+import com.fortysevendeg.ninecards.services.free.domain.{Installation, User}
 import scala.language.higherKinds
 
 object Users {
@@ -20,6 +20,8 @@ object Users {
 
   case class InsertUserDB(user: User) extends UserOps[User]
 
+  case class CreateInstallation(installation: Installation) extends UserOps[Installation]
+
   class UserServices[F[_]](implicit I: Inject[UserOps, F]) {
 
     def addUser(user: User): Free[F, User] = Free.inject[UserOps, F](AddUser(user))
@@ -33,6 +35,8 @@ object Users {
     def getUserByEmail(email: String): Free[F, Option[User]] = Free.inject[UserOps, F](GetUserByEmail(email))
 
     def insertUser(user: User): Free[F, User] = Free.inject[UserOps, F](InsertUserDB(user))
+
+    def createInstallation(installation: Installation): Free[F, Installation] = Free.inject[UserOps, F](CreateInstallation(installation))
 
   }
 

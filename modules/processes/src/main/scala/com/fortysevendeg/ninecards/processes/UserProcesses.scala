@@ -7,6 +7,7 @@ import cats.free.Free
 import com.fortysevendeg.ninecards.processes.domain.User
 import com.fortysevendeg.ninecards.processes.messages.AddUserRequest
 import com.fortysevendeg.ninecards.services.free.algebra.Users.UserServices
+import com.fortysevendeg.ninecards.processes.domain.{Installation, User}
 import com.fortysevendeg.ninecards.processes.converters.Converters._
 import com.fortysevendeg.ninecards.services.free.domain.{User => UserAppServices, AuthData => AuthDataServices}
 import scala.language.higherKinds
@@ -34,11 +35,14 @@ class UserProcesses[F[_]](
       sessionToken = Option(UUID.randomUUID().toString),
       authData = Option(AuthDataServices(google = Option(toGoogleAuthDataRequestProcess(addUserRequest.authData.google)))))
 
+  def createInstallation(request: InstallationRequest): Free[F, Installation] = for {
+    newInstallation <- userSevices.createInstallation(toInstallationRequestProcess(request))
+  } yield fromInstallationProcesses(newInstallation)
+  
 }
 
 object UserProcesses {
 
-  implicit def userProcesses[F[_]](implicit userServices: UserServices[F]) = new UserProcesses()
+  implicit def userProcesses[F[_]](implicit userSevices: UserServices[F]) = new UserProcesses()
 
 }
-
