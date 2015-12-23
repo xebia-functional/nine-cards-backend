@@ -39,6 +39,32 @@ class UserPersistenceImpl {
       deviceType = installation.deviceType,
       id = Option("340520945234109234527345")
     )
+
+  def getUserByEmail(email: String) =
+    Option(
+      User(
+        id = Option("32132165"),
+        username = Option("Ana"),
+        email = Option(email),
+        sessionToken = Option("asjdfoaijera"),
+        authData = Option(AuthData(
+          google = Option(GoogleAuthData(
+            email = "ana@47deg.com",
+            devices = List(
+              GoogleAuthDataDeviceInfo(
+                name = "aldfa",
+                deviceId = "ladf",
+                secretToken = "lakjdsflkadf",
+                permissions = Nil
+              )
+            ))
+          ))
+        )
+      )
+    )
+
+  def insertUserDB(user: User) = user
+
 }
 
 object UserPersistenceImpl {

@@ -1,15 +1,16 @@
 package com.fortysevendeg.ninecards.api
 
 import akka.actor.Actor
+import com.fortysevendeg.ninecards.processes.messages._
 import com.fortysevendeg.ninecards.processes.NineCardsServices.NineCardsServices
 import com.fortysevendeg.ninecards.processes.{InstallationRequest, AppProcesses, UserProcesses}
 import com.fortysevendeg.ninecards.processes.domain._
 import spray.httpx.SprayJsonSupport
 import spray.routing._
 import scala.language.{higherKinds, implicitConversions}
-import scalaz.concurrent.Task
 import FreeUtils._
 import NineCardsApiHeaderCommons._
+import scalaz.concurrent.Task
 
 class NineCardsApiActor
   extends Actor
@@ -36,8 +37,17 @@ trait NineCardsApi
   private[this] def userApiRoute()(implicit userProcesses: UserProcesses[NineCardsServices]) =
     pathPrefix("users") {
       pathEndOrSingleSlash {
-        post {
-          complete("Starts a session")
+        requestLoginHeaders {
+          (appId, apiKey) =>
+            post {
+              entity(as[AddUserRequest]) {
+                request =>
+                  complete {
+                    val result: Task[User] = userProcesses.signUpUser(request)
+                    result
+                  }
+              }
+            }
         }
       } ~
         path(Segment) { userId =>
