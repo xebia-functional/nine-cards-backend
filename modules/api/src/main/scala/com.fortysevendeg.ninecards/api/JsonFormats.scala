@@ -1,6 +1,5 @@
 package com.fortysevendeg.ninecards.api
 
-import com.fortysevendeg.ninecards.processes.InstallationRequest
 import com.fortysevendeg.ninecards.processes.messages._
 import com.fortysevendeg.ninecards.processes.domain._
 import spray.httpx.SprayJsonSupport
