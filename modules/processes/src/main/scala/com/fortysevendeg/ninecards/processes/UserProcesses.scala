@@ -8,24 +8,24 @@ import com.fortysevendeg.ninecards.services.free.algebra.Users._
 import scala.language.higherKinds
 
 class UserProcesses[F[_]](
-  implicit userSevices: UserServices[F]) {
+  implicit userServices: UserServices[F]) {
 
   def getUserById(userId: String): Free[F, User] = for {
-    persistenceApps <- userSevices.getUserById(userId)
+    persistenceApps <- userServices.getUserById(userId)
   } yield (persistenceApps map toUserApp).getOrElse(throw new RuntimeException(""))
 
   def createInstallation(request: InstallationRequest): Free[F, Installation] = for {
-    newInstallation <- userSevices.createInstallation(toInstallationRequestProcess(request))
+    newInstallation <- userServices.createInstallation(toInstallationRequestProcess(request))
   } yield fromInstallationProcesses(newInstallation)
 
   def updateInstallation(installationId: String, request: InstallationRequest): Free[F, Installation] = for {
-    updateInstallation <- userSevices.updateInstallation(toInstallationRequestProcess(request), installationId)
+    updateInstallation <- userServices.updateInstallation(toInstallationRequestProcess(request), installationId)
   } yield fromInstallationProcesses(updateInstallation)
 
 }
 
 object UserProcesses {
 
-  implicit def userProcesses[F[_]](implicit userSevices: UserServices[F]) = new UserProcesses()
+  implicit def userProcesses[F[_]](implicit userServices: UserServices[F]) = new UserProcesses()
 
 }

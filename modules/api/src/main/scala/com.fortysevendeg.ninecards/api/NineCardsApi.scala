@@ -99,7 +99,6 @@ trait NineCardsApi
       }
     }
 
-
   private[this] def appsApiRoute()(implicit appProcesses: AppProcesses[NineCardsServices]) =
     pathPrefix("apps") {
       path("categorize") {
