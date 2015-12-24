@@ -3,7 +3,7 @@ package com.fortysevendeg.ninecards.api
 import akka.actor.Actor
 import com.fortysevendeg.ninecards.processes.messages._
 import com.fortysevendeg.ninecards.processes.NineCardsServices.NineCardsServices
-import com.fortysevendeg.ninecards.processes.{InstallationRequest, AppProcesses, UserProcesses}
+import com.fortysevendeg.ninecards.processes.{AppProcesses, UserProcesses}
 import com.fortysevendeg.ninecards.processes.domain._
 import spray.httpx.SprayJsonSupport
 import spray.routing._
@@ -58,21 +58,20 @@ trait NineCardsApi
                   val result: Task[User] = userProcesses.getUserById(userId)
                   result
                 }
-              } ~
-                put {
-                  complete(
-                    Map("result" -> s"Updates user info: $userId")
-                  )
-                }
+              }
           }
         } ~
-        path("link") {
-          requestFullHeaders {
-            (appId, apiKey, sessionToken, androidId, localization) =>
+        path(Segment /"device"/ Segment) { (userId, deviceId) =>
+          requestLoginHeaders {
+            (appId, apiKey) =>
               put {
-                complete(
-                  Map("result" -> s"Links new account with specific user")
-                )
+                entity(as[UpdateGoogleAuthDataDeviceInfoRequest]) {
+                  request =>
+                    complete {
+                      val result: Task[User] = userProcesses.updateUserDevice(userId, deviceId, request)
+                      result
+                    }
+                }
               }
           }
         }
