@@ -41,7 +41,6 @@ class UserProcesses[F[_]](
     newInstallation <- userServices.createInstallation(toInstallationRequestProcess(request))
   } yield fromInstallationProcesses(newInstallation)
 
-
   def updateInstallation(installationId: String, request: InstallationRequest): Free[F, Installation] = for {
     updateInstallation <- userServices.updateInstallation(toInstallationRequestProcess(request), installationId)
   } yield fromInstallationProcesses(updateInstallation)
