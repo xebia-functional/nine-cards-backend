@@ -83,6 +83,15 @@ class UserPersistenceImpl {
       )
     )
 
+  def updateInstallation(installation: Installation, installationId: String) =
+    Installation(
+      id = Option(installationId),
+      deviceType = installation.deviceType,
+      userId = installation.userId,
+      deviceToken = installation.deviceToken,
+      channels = installation.channels
+    )
+
 }
 
 object UserPersistenceImpl {

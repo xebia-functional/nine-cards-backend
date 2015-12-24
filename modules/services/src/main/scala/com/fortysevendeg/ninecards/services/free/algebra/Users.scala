@@ -24,6 +24,8 @@ object Users {
 
   case class CreateInstallation(installation: Installation) extends UserOps[Installation]
 
+  case class UpdateInstallation(installation: Installation, installationId: String) extends UserOps[Installation]
+
   class UserServices[F[_]](implicit I: Inject[UserOps, F]) {
 
     def addUser(user: User): Free[F, User] = Free.inject[UserOps, F](AddUser(user))
@@ -41,6 +43,8 @@ object Users {
     def updateUserDevice(userId: String, deviceId: String, device: GoogleAuthDataDeviceInfo): Free[F, User] = Free.inject[UserOps, F](UpdateUserDevice(userId, deviceId, device))
 
     def createInstallation(installation: Installation): Free[F, Installation] = Free.inject[UserOps, F](CreateInstallation(installation))
+
+    def updateInstallation(installation: Installation, installationId: String): Free[F, Installation] = Free.inject[UserOps, F](UpdateInstallation(installation, installationId))
 
   }
 

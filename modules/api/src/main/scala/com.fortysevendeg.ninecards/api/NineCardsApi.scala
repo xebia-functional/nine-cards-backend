@@ -78,7 +78,7 @@ trait NineCardsApi
     }
 
   private[this] def installationsApiRoute()(implicit userProcesses: UserProcesses[NineCardsServices]) =
-    path("installations") {
+    pathPrefix("installations") {
       pathEndOrSingleSlash {
         requestLoginHeaders {
           (appId, apiKey) =>
@@ -87,6 +87,19 @@ trait NineCardsApi
                 request =>
                   complete {
                     val result: Task[Installation] = userProcesses.createInstallation(request)
+                    result
+                  }
+              }
+            }
+        }
+      } ~ path(Segment) { installationId =>
+        requestLoginHeaders {
+          (appId, apiKey) =>
+            put {
+              entity(as[InstallationRequest]) {
+                request =>
+                  complete {
+                    val result: Task[Installation] = userProcesses.updateInstallation(installationId, request)
                     result
                   }
               }

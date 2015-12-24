@@ -131,7 +131,6 @@ object Converters {
 
   def toInstallationRequestProcess(app: InstallationRequest): InstallationServices =
     InstallationServices(
-      id = app.id,
       deviceType = app.deviceType,
       deviceToken = app.deviceToken,
       userId = app.userId,
