@@ -1,6 +1,7 @@
 package com.fortysevendeg.ninecards.api
 
 import com.fortysevendeg.ninecards.processes.InstallationRequest
+import com.fortysevendeg.ninecards.processes.messages.{AuthDataRequest, GoogleAuthDataDeviceInfoRequest, GoogleAuthDataRequest, AddUserRequest}
 import com.fortysevendeg.ninecards.processes.domain._
 import spray.httpx.SprayJsonSupport
 import spray.json.DefaultJsonProtocol
@@ -26,6 +27,14 @@ trait JsonFormats
   implicit val authDataFormat = jsonFormat5(AuthData)
 
   implicit val userFormat = jsonFormat6(User)
+
+  implicit val googleAuthDataDeviceInfoRequest = jsonFormat4(GoogleAuthDataDeviceInfoRequest)
+
+  implicit val googleAuthDataRequest = jsonFormat2(GoogleAuthDataRequest)
+
+  implicit val authDataRequest = jsonFormat1(AuthDataRequest)
+
+  implicit val addUserRequest = jsonFormat1(AddUserRequest)
 
   implicit val installationFormat = jsonFormat5(Installation)
 
