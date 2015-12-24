@@ -3,16 +3,16 @@ package com.fortysevendeg.ninecards.processes.converters
 import com.fortysevendeg.ninecards.processes.domain._
 import com.fortysevendeg.ninecards.processes.messages._
 import com.fortysevendeg.ninecards.services.free.domain.{
-  GooglePlayApp => GooglePlayAppServices,
-  User => UserAppServices,
-  AuthData => AuthDataSevices,
-  TwitterAuthData => TwitterAuthDataApp,
-  FacebookAuthData => FacebookAuthDataApp,
-  AnonymousAuthData => AnonymousAuthDataApp,
-  GoogleAuthData => GoogleAuthDataApp,
-  GoogleAuthDataDeviceInfo => GoogleAuthDataDeviceInfoApp,
-  GoogleOAuth2Data => GoogleOAuth2DataApp,
-  Installation => InstallationServices
+GooglePlayApp => GooglePlayAppServices,
+User => UserAppServices,
+AuthData => AuthDataSevices,
+TwitterAuthData => TwitterAuthDataApp,
+FacebookAuthData => FacebookAuthDataApp,
+AnonymousAuthData => AnonymousAuthDataApp,
+GoogleAuthData => GoogleAuthDataApp,
+GoogleAuthDataDeviceInfo => GoogleAuthDataDeviceInfoApp,
+GoogleOAuth2Data => GoogleOAuth2DataApp,
+Installation => InstallationServices
 }
 
 object Converters {
@@ -137,6 +137,7 @@ object Converters {
       userId = app.userId,
       channels = app.channels
     )
+
   def fromInstallationProcesses(app: InstallationServices): Installation =
     Installation(
       id = app.id,
@@ -181,6 +182,13 @@ object Converters {
     GoogleAuthDataDeviceInfoApp(
       name = app.name,
       deviceId = app.deviceId,
+      secretToken = app.secretToken,
+      permissions = app.permissions)
+
+  def toUpdateGoogleAuthDataDeviceInfoRequest(app: UpdateGoogleAuthDataDeviceInfoRequest, deviceId: String): GoogleAuthDataDeviceInfoApp =
+    GoogleAuthDataDeviceInfoApp(
+      name = app.name,
+      deviceId = deviceId,
       secretToken = app.secretToken,
       permissions = app.permissions)
 

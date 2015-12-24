@@ -58,16 +58,21 @@ trait NineCardsApi
                   val result: Task[User] = userProcesses.getUserById(userId)
                   result
                 }
-              } ~
-                put {
-                  entity(as[AddUserRequest]) {
-                    request =>
-                      complete {
-                        val result: Task[User] = userProcesses.updateUser(userId, request)
-                        result
-                      }
-                  }
+              }
+          }
+        } ~
+        path(Segment / Segment) { (userId, deviceId) =>
+          requestLoginHeaders {
+            (appId, apiKey) =>
+              put {
+                entity(as[UpdateGoogleAuthDataDeviceInfoRequest]) {
+                  request =>
+                    complete {
+                      val result: Task[User] = userProcesses.updateUserDevice(userId, deviceId, request)
+                      result
+                    }
                 }
+              }
           }
         }
     }

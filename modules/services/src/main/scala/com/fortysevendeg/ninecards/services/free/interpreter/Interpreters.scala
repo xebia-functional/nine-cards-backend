@@ -97,9 +97,9 @@ object Interpreters {
         Task {
           userPersistenceImpl.insertUserDB(user)
         }
-      case UpdateUser(userId: String,user: User) =>
+      case UpdateUserDevice(userId: String, deviceId: String, device: GoogleAuthDataDeviceInfo) =>
         Task {
-          userPersistenceImpl.updateUser(userId,user)
+          userPersistenceImpl.updateUser(userId, deviceId, device)
         }
       case GetUserByUserName(username: String) =>
         Task {

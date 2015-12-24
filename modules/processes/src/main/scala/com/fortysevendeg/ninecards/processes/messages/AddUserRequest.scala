@@ -15,3 +15,8 @@ case class GoogleAuthDataDeviceInfoRequest(
   deviceId: String,
   secretToken: String,
   permissions: List[String])
+
+case class UpdateGoogleAuthDataDeviceInfoRequest(
+  name: String,
+  secretToken: String,
+  permissions: List[String])

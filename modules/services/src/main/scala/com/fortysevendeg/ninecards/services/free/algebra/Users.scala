@@ -1,7 +1,7 @@
 package com.fortysevendeg.ninecards.services.free.algebra
 
 import cats.free.{Free, Inject}
-import com.fortysevendeg.ninecards.services.free.domain.{Installation, User}
+import com.fortysevendeg.ninecards.services.free.domain.{GoogleAuthDataDeviceInfo, Installation, User}
 import scala.language.higherKinds
 
 object Users {
@@ -20,7 +20,7 @@ object Users {
 
   case class InsertUserDB(user: User) extends UserOps[User]
 
-  case class UpdateUser(userId: String,user: User) extends UserOps[User]
+  case class UpdateUserDevice(userId: String, deviceId: String, device: GoogleAuthDataDeviceInfo) extends UserOps[User]
 
   case class CreateInstallation(installation: Installation) extends UserOps[Installation]
 
@@ -38,7 +38,7 @@ object Users {
 
     def insertUser(user: User): Free[F, User] = Free.inject[UserOps, F](InsertUserDB(user))
 
-    def updateUser(userId: String, user: User): Free[F, User] = Free.inject[UserOps, F](UpdateUser(userId, user))
+    def updateUserDevice(userId: String, deviceId: String, device: GoogleAuthDataDeviceInfo): Free[F, User] = Free.inject[UserOps, F](UpdateUserDevice(userId, deviceId, device))
 
     def createInstallation(installation: Installation): Free[F, Installation] = Free.inject[UserOps, F](CreateInstallation(installation))
 

@@ -38,4 +38,6 @@ trait JsonFormats
   implicit val installationFormat = jsonFormat5(Installation)
 
   implicit val installationRequestFormat = jsonFormat5(InstallationRequest)
+
+  implicit val updateGoogleAuthDataDeviceInfoRequest = jsonFormat3(UpdateGoogleAuthDataDeviceInfoRequest)
 }
