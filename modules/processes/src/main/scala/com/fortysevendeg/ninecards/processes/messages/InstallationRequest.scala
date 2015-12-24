@@ -1,4 +1,4 @@
-package com.fortysevendeg.ninecards.processes
+package com.fortysevendeg.ninecards.processes.messages
 
 case class InstallationRequest(
   id: Option[String] = None,

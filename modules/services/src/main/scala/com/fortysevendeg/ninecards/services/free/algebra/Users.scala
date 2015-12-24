@@ -20,6 +20,8 @@ object Users {
 
   case class InsertUserDB(user: User) extends UserOps[User]
 
+  case class UpdateUser(userId: String,user: User) extends UserOps[User]
+
   case class CreateInstallation(installation: Installation) extends UserOps[Installation]
 
   class UserServices[F[_]](implicit I: Inject[UserOps, F]) {
@@ -35,6 +37,8 @@ object Users {
     def getUserByEmail(email: String): Free[F, Option[User]] = Free.inject[UserOps, F](GetUserByEmail(email))
 
     def insertUser(user: User): Free[F, User] = Free.inject[UserOps, F](InsertUserDB(user))
+
+    def updateUser(userId: String, user: User): Free[F, User] = Free.inject[UserOps, F](UpdateUser(userId, user))
 
     def createInstallation(installation: Installation): Free[F, Installation] = Free.inject[UserOps, F](CreateInstallation(installation))
 

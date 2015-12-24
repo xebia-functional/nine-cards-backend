@@ -1,7 +1,6 @@
 package com.fortysevendeg.ninecards.api
 
-import com.fortysevendeg.ninecards.processes.InstallationRequest
-import com.fortysevendeg.ninecards.processes.messages.{AuthDataRequest, GoogleAuthDataDeviceInfoRequest, GoogleAuthDataRequest, AddUserRequest}
+import com.fortysevendeg.ninecards.processes.messages._
 import com.fortysevendeg.ninecards.processes.domain._
 import spray.httpx.SprayJsonSupport
 import spray.json.DefaultJsonProtocol

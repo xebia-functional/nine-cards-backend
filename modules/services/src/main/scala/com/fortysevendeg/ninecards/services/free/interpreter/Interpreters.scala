@@ -97,6 +97,10 @@ object Interpreters {
         Task {
           userPersistenceImpl.insertUserDB(user)
         }
+      case UpdateUser(userId: String,user: User) =>
+        Task {
+          userPersistenceImpl.updateUser(userId,user)
+        }
       case GetUserByUserName(username: String) =>
         Task {
           userPersistenceImpl.getUserByUserName(username)

@@ -1,8 +1,7 @@
 package com.fortysevendeg.ninecards.processes.converters
 
-import com.fortysevendeg.ninecards.processes.InstallationRequest
 import com.fortysevendeg.ninecards.processes.domain._
-import com.fortysevendeg.ninecards.processes.messages.{GoogleAuthDataDeviceInfoRequest, GoogleAuthDataRequest, AuthDataRequest, AddUserRequest}
+import com.fortysevendeg.ninecards.processes.messages._
 import com.fortysevendeg.ninecards.services.free.domain.{
   GooglePlayApp => GooglePlayAppServices,
   User => UserAppServices,

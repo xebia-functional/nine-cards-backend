@@ -65,6 +65,29 @@ class UserPersistenceImpl {
 
   def insertUserDB(user: User) = user
 
+  def updateUser(userId: String, user: User) =
+    User(
+      id = Option(userId),
+      username = user.username,
+      email = user.email,
+      sessionToken = user.sessionToken,
+      authData = Option(AuthData(
+        google = Option(GoogleAuthData(
+          email = "ana@47deg.com",
+          devices = List(
+            GoogleAuthDataDeviceInfo(
+              name = "adsfadf",
+              deviceId = "ladf",
+              secretToken = "lakjdsflkadf",
+              permissions = Nil
+            )
+          ))
+        ))
+      )
+    )
+
+  )
+
 }
 
 object UserPersistenceImpl {

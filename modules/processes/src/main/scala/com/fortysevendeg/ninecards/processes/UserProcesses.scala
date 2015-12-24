@@ -3,7 +3,7 @@ package com.fortysevendeg.ninecards.processes
 import java.util.UUID
 
 import cats.free.Free
-import com.fortysevendeg.ninecards.processes.messages.AddUserRequest
+import com.fortysevendeg.ninecards.processes.messages.{InstallationRequest, AddUserRequest}
 import com.fortysevendeg.ninecards.services.free.algebra.Users.UserServices
 import com.fortysevendeg.ninecards.processes.domain.{Installation, User}
 import com.fortysevendeg.ninecards.processes.converters.Converters._
@@ -33,10 +33,14 @@ class UserProcesses[F[_]](
       sessionToken = Option(UUID.randomUUID().toString),
       authData = Option(AuthDataServices(google = Option(toGoogleAuthDataRequestProcess(addUserRequest.authData.google)))))
 
+  def updateUser(userId: String, userRequest: AddUserRequest): Free[F, User] = for {
+    updateUser <- userServices.updateUser(userId, toUserRequestApp(userRequest))
+  } yield toUserApp(updateUser)
+
   def createInstallation(request: InstallationRequest): Free[F, Installation] = for {
     newInstallation <- userServices.createInstallation(toInstallationRequestProcess(request))
   } yield fromInstallationProcesses(newInstallation)
-  
+
 }
 
 object UserProcesses {
