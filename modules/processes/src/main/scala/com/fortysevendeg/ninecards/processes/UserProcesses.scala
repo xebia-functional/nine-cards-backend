@@ -36,11 +36,15 @@ class UserProcesses[F[_]](
   def createInstallation(request: InstallationRequest): Free[F, Installation] = for {
     newInstallation <- userServices.createInstallation(toInstallationRequestProcess(request))
   } yield fromInstallationProcesses(newInstallation)
-  
+
+  def updateInstallation(installationId: String, request: InstallationRequest): Free[F, Installation] = for {
+    updateInstallation <- userServices.updateInstallation(toInstallationRequestProcess(request), installationId)
+  } yield fromInstallationProcesses(updateInstallation)
+
 }
 
 object UserProcesses {
 
-  implicit def userProcesses[F[_]](implicit userSevices: UserServices[F]) = new UserProcesses()
+  implicit def userProcesses[F[_]](implicit userServices: UserServices[F]) = new UserProcesses()
 
 }
