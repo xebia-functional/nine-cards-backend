@@ -61,7 +61,7 @@ trait NineCardsApi
               }
           }
         } ~
-        path(Segment / Segment) { (userId, deviceId) =>
+        path(Segment /"device"/ Segment) { (userId, deviceId) =>
           requestLoginHeaders {
             (appId, apiKey) =>
               put {
