@@ -1,8 +1,7 @@
 package com.fortysevendeg.ninecards.services.free.algebra
 
 import cats.free.{Free, Inject}
-import com.fortysevendeg.ninecards.services.free.domain.User
-
+import com.fortysevendeg.ninecards.services.free.domain.{GoogleAuthDataDeviceInfo, Installation, User}
 import scala.language.higherKinds
 
 object Users {
@@ -15,6 +14,18 @@ object Users {
 
   case class CheckPassword(password: String) extends UserOps[Boolean]
 
+  case class GetUserById(userId: String) extends UserOps[Option[User]]
+
+  case class GetUserByEmail(email: String) extends UserOps[Option[User]]
+
+  case class InsertUserDB(user: User) extends UserOps[User]
+
+  case class UpdateUserDevice(userId: String, deviceId: String, device: GoogleAuthDataDeviceInfo) extends UserOps[User]
+
+  case class CreateInstallation(installation: Installation) extends UserOps[Installation]
+
+  case class UpdateInstallation(installation: Installation, installationId: String) extends UserOps[Installation]
+
   class UserServices[F[_]](implicit I: Inject[UserOps, F]) {
 
     def addUser(user: User): Free[F, User] = Free.inject[UserOps, F](AddUser(user))
@@ -22,13 +33,24 @@ object Users {
     def getUserByUserName(username: String): Free[F, Option[User]] = Free.inject[UserOps, F](GetUserByUserName(username))
 
     def checkPassword(password: String): Free[F, Boolean] = Free.inject[UserOps, F](CheckPassword(password))
+
+    def getUserById(userId: String): Free[F, Option[User]] = Free.inject[UserOps, F](GetUserById(userId))
+
+    def getUserByEmail(email: String): Free[F, Option[User]] = Free.inject[UserOps, F](GetUserByEmail(email))
+
+    def insertUser(user: User): Free[F, User] = Free.inject[UserOps, F](InsertUserDB(user))
+
+    def updateUserDevice(userId: String, deviceId: String, device: GoogleAuthDataDeviceInfo): Free[F, User] = Free.inject[UserOps, F](UpdateUserDevice(userId, deviceId, device))
+
+    def createInstallation(installation: Installation): Free[F, Installation] = Free.inject[UserOps, F](CreateInstallation(installation))
+
+    def updateInstallation(installation: Installation, installationId: String): Free[F, Installation] = Free.inject[UserOps, F](UpdateInstallation(installation, installationId))
+
   }
 
   object UserServices {
 
-    implicit def dataSource[F[_]](
-      implicit I: Inject[UserOps, F]): UserServices[F] =
-      new UserServices[F]
+    implicit def dataSource[F[_]](implicit inject: Inject[UserOps, F]): UserServices[F] = new UserServices[F]
 
   }
 

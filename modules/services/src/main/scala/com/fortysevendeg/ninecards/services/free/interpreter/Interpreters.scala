@@ -81,9 +81,25 @@ object Interpreters {
   object UserInterpreter extends (UserOps ~> Task) {
 
     def apply[A](fa: UserOps[A]) = fa match {
+      case GetUserById(userId: String) =>
+        Task {
+          userPersistenceImpl.getUserByUserId(userId)
+        }
+      case GetUserByEmail(email: String) =>
+        Task {
+          userPersistenceImpl.getUserByEmail(email)
+        }
       case AddUser(user: User) =>
         Task {
           userPersistenceImpl.addUser(user)
+        }
+      case InsertUserDB(user: User) =>
+        Task {
+          userPersistenceImpl.insertUserDB(user)
+        }
+      case UpdateUserDevice(userId: String, deviceId: String, device: GoogleAuthDataDeviceInfo) =>
+        Task {
+          userPersistenceImpl.updateUser(userId, deviceId, device)
         }
       case GetUserByUserName(username: String) =>
         Task {
@@ -92,6 +108,14 @@ object Interpreters {
       case CheckPassword(pass: String) =>
         Task {
           userPersistenceImpl.checkPassword(pass)
+        }
+      case CreateInstallation(installation: Installation) =>
+        Task {
+          userPersistenceImpl.createInstallation(installation)
+        }
+      case UpdateInstallation(installation: Installation, installationId: String) =>
+        Task {
+          userPersistenceImpl.updateInstallation(installation, installationId)
         }
     }
   }

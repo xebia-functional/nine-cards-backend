@@ -1,4 +1,4 @@
-package com.fortysevendeg.ninecards.services.free.domain
+package com.fortysevendeg.ninecards.processes.domain
 
 case class AuthData(
   twitter: Option[TwitterAuthData] = None,
@@ -50,4 +50,4 @@ case class Installation(
   deviceType: String,
   deviceToken: Option[String] = None,
   userId: Option[String] = None,
-  channels:Option[List[String]] = None)
+  channels: Option[List[String]] = None)

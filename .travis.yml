@@ -3,8 +3,8 @@ language: scala
 scala:
   - 2.11.7
 script:
-  - sbt ++$TRAVIS_SCALA_VERSION "project api" coverage test
-  - sbt ++$TRAVIS_SCALA_VERSION "project processes" coverage test
-  - sbt ++$TRAVIS_SCALA_VERSION "project services" coverage test
+  - sbt ++$TRAVIS_SCALA_VERSION "project tests" clean coverage test
 after_success:
-  - sbt ++$TRAVIS_SCALA_VERSION "project tests" test:coverageAggregate
+  - sbt ++$TRAVIS_SCALA_VERSION "project tests" coverageReport
+  - sbt ++$TRAVIS_SCALA_VERSION "project tests" coverageAggregate
+  - sbt ++$TRAVIS_SCALA_VERSION "project tests" codacyCoverage

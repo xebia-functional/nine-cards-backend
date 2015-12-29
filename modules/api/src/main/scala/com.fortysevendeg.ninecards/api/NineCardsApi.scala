@@ -1,12 +1,15 @@
 package com.fortysevendeg.ninecards.api
 
 import akka.actor.Actor
-import com.fortysevendeg.ninecards.processes.AppProcesses
-import com.fortysevendeg.ninecards.processes.domain.GooglePlayApp
+import com.fortysevendeg.ninecards.processes.messages._
+import com.fortysevendeg.ninecards.processes.NineCardsServices.NineCardsServices
+import com.fortysevendeg.ninecards.processes.{AppProcesses, UserProcesses}
+import com.fortysevendeg.ninecards.processes.domain._
 import spray.httpx.SprayJsonSupport
 import spray.routing._
-
 import scala.language.{higherKinds, implicitConversions}
+import FreeUtils._
+import NineCardsApiHeaderCommons._
 import scalaz.concurrent.Task
 
 class NineCardsApiActor
@@ -25,65 +28,101 @@ trait NineCardsApi
   with SprayJsonSupport
   with JsonFormats {
 
-  import FreeUtils._
-  import NineCardsApiHeaderCommons._
+  def nineCardsApiRoute(implicit appProcesses: AppProcesses[NineCardsServices], userProcesses: UserProcesses[NineCardsServices]): Route =
+    userApiRoute() ~
+      installationsApiRoute() ~
+      appsApiRoute() ~
+      swaggerApiRoute
 
-  def nineCardsApiRoute(implicit AP: AppProcesses) = {
-
-    import AP._
-
+  private[this] def userApiRoute()(implicit userProcesses: UserProcesses[NineCardsServices]) =
     pathPrefix("users") {
       pathEndOrSingleSlash {
-        post {
-          complete("Starts a session")
+        requestLoginHeaders {
+          (appId, apiKey) =>
+            post {
+              entity(as[AddUserRequest]) {
+                request =>
+                  complete {
+                    val result: Task[User] = userProcesses.signUpUser(request)
+                    result
+                  }
+              }
+            }
         }
       } ~
         path(Segment) { userId =>
           requestLoginHeaders {
             (appId, apiKey) =>
-            get {
-              complete(
-                Map("result" -> s"Gets user info: $userId")
-              )
-            } ~
-            put {
-              complete(
-                Map("result" -> s"Updates user info: $userId")
-              )
-            }
+              get {
+                complete {
+                  val result: Task[User] = userProcesses.getUserById(userId)
+                  result
+                }
+              }
           }
         } ~
-        path("link") {
-          requestFullHeaders {
-            (appId, apiKey, sessionToken, androidId, localization) =>
-            put {
-              complete(
-                Map("result" -> s"Links new account with specific user")
-              )
-            }
+        path(Segment /"device"/ Segment) { (userId, deviceId) =>
+          requestLoginHeaders {
+            (appId, apiKey) =>
+              put {
+                entity(as[UpdateGoogleAuthDataDeviceInfoRequest]) {
+                  request =>
+                    complete {
+                      val result: Task[User] = userProcesses.updateUserDevice(userId, deviceId, request)
+                      result
+                    }
+                }
+              }
           }
         }
-    } ~
-    path("installations") {
-      post {
-        complete(
-          Map("result" -> s"Creates new installation")
-        )
+    }
+
+  private[this] def installationsApiRoute()(implicit userProcesses: UserProcesses[NineCardsServices]) =
+    pathPrefix("installations") {
+      pathEndOrSingleSlash {
+        requestLoginHeaders {
+          (appId, apiKey) =>
+            post {
+              entity(as[InstallationRequest]) {
+                request =>
+                  complete {
+                    val result: Task[Installation] = userProcesses.createInstallation(request)
+                    result
+                  }
+              }
+            }
+        }
+      } ~ path(Segment) { installationId =>
+        requestLoginHeaders {
+          (appId, apiKey) =>
+            put {
+              entity(as[InstallationRequest]) {
+                request =>
+                  complete {
+                    val result: Task[Installation] = userProcesses.updateInstallation(installationId, request)
+                    result
+                  }
+              }
+            }
+        }
       }
-    } ~
+    }
+
+  private[this] def appsApiRoute()(implicit appProcesses: AppProcesses[NineCardsServices]) =
     pathPrefix("apps") {
       path("categorize") {
         get {
           complete {
-            val result: Task[Seq[GooglePlayApp]] = categorizeApps(Seq("com.fortysevendeg.ninecards"))
-
+            val result: Task[Seq[GooglePlayApp]] = appProcesses.categorizeApps(Seq("com.fortysevendeg.ninecards"))
             result
           }
         }
       }
-    } ~
-    // This path prefix grants access to the Swagger documentation.
-    // Both /apiDocs/ and /apiDocs/index.html are valid paths to load Swagger-UI.
+    }
+
+  private[this] def swaggerApiRoute =
+  // This path prefix grants access to the Swagger documentation.
+  // Both /apiDocs/ and /apiDocs/index.html are valid paths to load Swagger-UI.
     pathPrefix("apiDocs") {
       pathEndOrSingleSlash {
         getFromResource("apiDocs/index.html")
@@ -91,5 +130,4 @@ trait NineCardsApi
         getFromResourceDirectory("apiDocs")
       }
     }
-  }
 }
