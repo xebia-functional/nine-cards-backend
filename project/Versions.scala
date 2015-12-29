@@ -6,6 +6,7 @@ object Versions {
   // Core Libs
   val akka = "2.3.12"
   val cats = "0.4.0-SNAPSHOT"
+  val doobie = "0.2.3"
   val jodaTime = "2.9.1"
   val scala = "2.11.7"
   val scalaz = "7.1.5"

@@ -6,7 +6,7 @@ trait Dependencies {
 
   val sprayHttp = "io.spray" %% "spray-can" % Versions.spray
   val sprayJson = "io.spray" %%  "spray-json" % Versions.sprayJson
-  val sprayRouting = "io.spray" %% "spray-routing" % Versions.spray
+  val sprayRouting = "io.spray" %% "spray-routing-shapeless2" % Versions.spray
   val sprayTestKit = "io.spray" %% "spray-testkit" % Versions.spray % "test" exclude("org.specs2", "specs2_2.11")
   val akkaActor = "com.typesafe.akka" %% "akka-actor" % Versions.akka
   val akkaTestKit = "com.typesafe.akka" %% "akka-testkit" % Versions.akka
@@ -15,10 +15,11 @@ trait Dependencies {
   val scalaz = "org.scalaz" %% "scalaz-core" % Versions.scalaz
   val scalazConcurrent = "org.scalaz" %% "scalaz-concurrent" % Versions.scalaz
   val jodaTime = "joda-time" % "joda-time" % Versions.jodaTime
+  val doobieCore = "org.tpolecat" %% "doobie-core" % Versions.doobie
+  val doobiePostgresql = "org.tpolecat" %% "doobie-contrib-postgresql" % Versions.doobie
+  val doobieSpecs2 = "org.tpolecat" %% "doobie-contrib-specs2" % Versions.doobie
 
   val baseDepts = Seq(specs2Core % "test")
-
-  val commonDeps = Seq(libraryDependencies ++= baseDepts)
 
   val apiDeps = Seq(libraryDependencies ++= baseDepts ++ Seq(
     sprayHttp,
@@ -30,6 +31,10 @@ trait Dependencies {
     akkaActor,
     akkaTestKit % "test"))
 
+  val commonDeps = Seq(libraryDependencies ++= baseDepts ++ Seq(
+    scalaz,
+    scalazConcurrent))
+
   val processesDeps = Seq(libraryDependencies ++= baseDepts ++ Seq(
     scalaz,
     scalazConcurrent))
@@ -37,6 +42,9 @@ trait Dependencies {
   val servicesDeps = Seq(libraryDependencies ++= baseDepts ++ Seq(
     jodaTime,
     cats,
+    doobieCore,
+    doobiePostgresql,
+    doobieSpecs2 % "test",
     scalaz,
     scalazConcurrent,
     sprayJson))
