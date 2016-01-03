@@ -16,6 +16,7 @@ trait Dependencies {
   val scalazConcurrent = "org.scalaz" %% "scalaz-concurrent" % Versions.scalaz
   val jodaTime = "joda-time" % "joda-time" % Versions.jodaTime
   val doobieCore = "org.tpolecat" %% "doobie-core" % Versions.doobie
+  val doobieH2 = "org.tpolecat" %% "doobie-contrib-h2" % Versions.doobie
   val doobiePostgresql = "org.tpolecat" %% "doobie-contrib-postgresql" % Versions.doobie
   val doobieSpecs2 = "org.tpolecat" %% "doobie-contrib-specs2" % Versions.doobie
 
@@ -43,6 +44,7 @@ trait Dependencies {
     jodaTime,
     cats,
     doobieCore,
+    doobieH2,
     doobiePostgresql,
     doobieSpecs2 % "test",
     scalaz,

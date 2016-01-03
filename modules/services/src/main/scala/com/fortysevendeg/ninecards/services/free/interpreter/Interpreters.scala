@@ -3,6 +3,7 @@ package com.fortysevendeg.ninecards.services.free.interpreter
 import cats.~>
 import com.fortysevendeg.ninecards.services.free.algebra.AppGooglePlay._
 import com.fortysevendeg.ninecards.services.free.algebra.AppPersistence._
+import com.fortysevendeg.ninecards.services.free.algebra.DBResult.{DBFailure, DBSuccess, DBResult}
 import com.fortysevendeg.ninecards.services.free.algebra.SharedCollectionSubscriptions._
 import com.fortysevendeg.ninecards.services.free.algebra.SharedCollections._
 import com.fortysevendeg.ninecards.services.free.algebra.Users._
@@ -37,6 +38,13 @@ object Interpreters {
         Task {
           appPersistenceImpl.saveCategories(packageNames)
         }
+    }
+  }
+
+  object DBResultInterpreter extends (DBResult ~> Task) {
+    def apply[A](fa: DBResult[A]) = fa match {
+      case DBSuccess(value) => Task.now(value)
+      case DBFailure(e) => Task.fail(e)
     }
   }
 
