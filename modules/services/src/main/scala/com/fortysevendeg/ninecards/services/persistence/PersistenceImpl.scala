@@ -2,6 +2,8 @@ package com.fortysevendeg.ninecards.services.persistence
 
 import doobie.imports._
 
+import scalaz.Foldable
+
 class PersistenceImpl {
 
   def fetchList[K](
@@ -28,11 +30,11 @@ class PersistenceImpl {
     values: A)(implicit ev: Composite[A], ev2: Composite[K]): ConnectionIO[K] =
     Update[A](sql).withUniqueGeneratedKeys[K](fields: _*)(values)
 
-  def updateMany[A, K](
+  def updateMany[F[_], A, K](
     sql: String,
     fields: Seq[String],
-    values: A)(implicit ev: Composite[A], ev2: Composite[K]): ConnectionIO[List[K]] =
-    Update[A](sql).withGeneratedKeys[K](fields: _*)(values).list
+    values: F[A])(implicit ev: Composite[A], ev2: Composite[K], F: Foldable[F]): ConnectionIO[List[K]] =
+    Update[A](sql).updateManyWithGeneratedKeys[K](fields: _*)(values).list
 
 }
 
