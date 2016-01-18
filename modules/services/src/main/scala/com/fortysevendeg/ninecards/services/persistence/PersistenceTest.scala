@@ -10,9 +10,9 @@ object PersistenceTest {
 
     val addItemSql = "insert into persistence (name) values (?)"
     val getItemSql = "select id, name from persistence where id = ?"
-    val fields = Seq("id")
+    val fields = List("id")
 
-    def addItem(name: String): ConnectionIO[Long] = persistence.update[String, Long](
+    def addItem(name: String): ConnectionIO[Long] = persistence.updateWithGeneratedKeys[String, Long](
       sql = addItemSql,
       fields = fields,
       values = name)
