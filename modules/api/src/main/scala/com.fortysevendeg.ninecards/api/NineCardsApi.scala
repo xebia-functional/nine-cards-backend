@@ -1,21 +1,23 @@
 package com.fortysevendeg.ninecards.api
 
 import akka.actor.Actor
-import com.fortysevendeg.ninecards.processes.messages._
+import com.fortysevendeg.ninecards.api.FreeUtils._
+import com.fortysevendeg.ninecards.api.NineCardsApiHeaderCommons._
 import com.fortysevendeg.ninecards.processes.NineCardsServices.NineCardsServices
-import com.fortysevendeg.ninecards.processes.{AppProcesses, UserProcesses}
 import com.fortysevendeg.ninecards.processes.domain._
+import com.fortysevendeg.ninecards.processes.messages._
+import com.fortysevendeg.ninecards.processes.{AppProcesses, UserProcesses}
 import spray.httpx.SprayJsonSupport
 import spray.routing._
+
 import scala.language.{higherKinds, implicitConversions}
-import FreeUtils._
-import NineCardsApiHeaderCommons._
 import scalaz.concurrent.Task
 
 class NineCardsApiActor
   extends Actor
-  with NineCardsApi
-  with AuthHeadersRejectionHandler {
+    with NineCardsApi
+    with AuthHeadersRejectionHandler
+    with NineCardsExceptionHandler {
 
   def actorRefFactory = context
 
@@ -25,8 +27,8 @@ class NineCardsApiActor
 
 trait NineCardsApi
   extends HttpService
-  with SprayJsonSupport
-  with JsonFormats {
+    with SprayJsonSupport
+    with JsonFormats {
 
   def nineCardsApiRoute(implicit appProcesses: AppProcesses[NineCardsServices], userProcesses: UserProcesses[NineCardsServices]): Route =
     userApiRoute() ~
@@ -61,7 +63,7 @@ trait NineCardsApi
               }
           }
         } ~
-        path(Segment /"device"/ Segment) { (userId, deviceId) =>
+        path(Segment / "device" / Segment) { (userId, deviceId) =>
           requestLoginHeaders {
             (appId, apiKey) =>
               put {
