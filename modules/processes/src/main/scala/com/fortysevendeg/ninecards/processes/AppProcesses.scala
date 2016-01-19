@@ -13,9 +13,9 @@ class AppProcesses[F[_]](
   appGooglePlayServices: AppGooglePlayServices[F]) {
 
   def categorizeApps(packageNames: Seq[String]): Free[F, Seq[GooglePlayApp]] = for {
-      persistenceApps <- appPersistenceServices.getCategories(packageNames)
-      googlePlayApps <- appGooglePlayServices.getCategoriesFromGooglePlay(persistenceApps.notFoundApps)
-    } yield (persistenceApps.categorizedApps ++ googlePlayApps.categorizedApps) map toGooglePlayApp
+    persistenceApps <- appPersistenceServices.getCategories(packageNames)
+    googlePlayApps <- appGooglePlayServices.getCategoriesFromGooglePlay(persistenceApps.notFoundApps)
+  } yield (persistenceApps.categorizedApps ++ googlePlayApps.categorizedApps) map toGooglePlayApp
 
 }
 
