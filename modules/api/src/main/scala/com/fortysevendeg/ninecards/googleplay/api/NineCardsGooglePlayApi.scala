@@ -6,7 +6,7 @@ import spray.httpx.SprayJsonSupport
 
 import spray.routing._
 
-class GooglePlayActor extends Actor with GooglePlayApi {
+class NineCardsGooglePlayActor extends Actor with NineCardsGooglePlayApi {
 
   def actorRefFactory = context
 
@@ -14,7 +14,7 @@ class GooglePlayActor extends Actor with GooglePlayApi {
 
 }
 
-trait GooglePlayApi extends HttpService {
+trait NineCardsGooglePlayApi extends HttpService {
 
   def googlePlayApiRoute: Route = packageRoute
 

@@ -10,9 +10,9 @@ import scala.concurrent.duration._
 
 object Boot extends App {
 
-  implicit val system = ActorSystem("google-play-server-actor")
+  implicit val system = ActorSystem("nine-cards-google-play-server-actor")
 
-  val service = system.actorOf(Props[GooglePlayActor], "google-play-server")
+  val service = system.actorOf(Props[NineCardsGooglePlayActor], "nine-cards-google-play-server")
 
   implicit val timeout = Timeout(5.seconds)
 
