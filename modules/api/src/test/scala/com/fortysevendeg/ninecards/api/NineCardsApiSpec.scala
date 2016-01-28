@@ -42,14 +42,14 @@ class NineCardsApiSpec
       }
     }
 
-    "require basic login headers for GET users" in new NineCardsScope {
-      Get(usersPath)  ~> sealRoute(nineCardsApi) ~> check {
+    "require basic login headers for POST users" in new NineCardsScope {
+      Post(usersPath)  ~> sealRoute(nineCardsApi) ~> check {
         status.intValue shouldEqual 401
       }
-      Get(usersPath) ~> RawHeader(headerAppslyAppId, "testNineCards") ~> sealRoute(nineCardsApi) ~> check {
+      Post(usersPath) ~> RawHeader(headerAppslyAppId, "testNineCards") ~> sealRoute(nineCardsApi) ~> check {
         status.intValue shouldEqual 401
       }
-      Get(usersPath) ~> RawHeader(headerAppslyAppId, "testNineCards") ~> RawHeader(headerAppslyAPIKey, "testAPIKey") ~> sealRoute(nineCardsApi) ~> check {
+      Post(usersPath) ~> RawHeader(headerAppslyAppId, "testNineCards") ~> RawHeader(headerAppslyAPIKey, "testAPIKey") ~> sealRoute(nineCardsApi) ~> check {
         status.intValue shouldNotEqual 401
       }
     }
