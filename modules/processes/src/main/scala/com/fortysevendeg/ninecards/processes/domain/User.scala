@@ -1,9 +1,7 @@
 package com.fortysevendeg.ninecards.processes.domain
 
 case class User(
-  id: Option[String] = None,
-  email: Option[String] = None,
-  sessionToken: Option[String] = None)
+  sessionToken: String)
 
 case class Installation(
   id: Option[String] = None,

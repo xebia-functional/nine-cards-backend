@@ -37,7 +37,7 @@ trait NineCardsApi
       swaggerApiRoute
 
   private[this] def userApiRoute()(implicit userProcesses: UserProcesses[NineCardsServices]) =
-    pathPrefix("users") {
+    pathPrefix("login") {
       pathEndOrSingleSlash {
         requestLoginHeaders {
           (appId, apiKey) =>

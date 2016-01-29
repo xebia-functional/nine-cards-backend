@@ -22,14 +22,10 @@ object Converters {
 
   def toUserApp(app: UserAppServices): User =
     User(
-      id = app.id,
-      email = app.email,
       sessionToken = app.sessionToken)
 
   def fromUserApp(app: User): UserAppServices =
     UserAppServices(
-      id = app.id,
-      email = app.email,
       sessionToken = app.sessionToken)
 
   def toInstallationRequestProcess(app: InstallationRequest): InstallationServices =

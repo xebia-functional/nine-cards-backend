@@ -10,7 +10,7 @@ class UserPersistenceImpl {
     Option(
       User(
         id = Option("32132165"),
-        sessionToken = Option("asjdfoaijera")
+        sessionToken = "asjdfoaijera"
       )
     )
 

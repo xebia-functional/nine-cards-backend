@@ -26,7 +26,7 @@ class UserProcesses[F[_]](
 
   private def createFromGoogle(addUserRequest: AddUserRequest): UserAppServices =
     UserAppServices(
-      sessionToken = Option(UUID.randomUUID().toString))
+      sessionToken = UUID.randomUUID().toString)
 
   def createInstallation(request: InstallationRequest): Free[F, Installation] = for {
     newInstallation <- userServices.createInstallation(toInstallationRequestProcess(request))
