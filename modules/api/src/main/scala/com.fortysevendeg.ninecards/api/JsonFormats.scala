@@ -11,33 +11,12 @@ trait JsonFormats
 
   implicit val googlePlayAppFormat = jsonFormat7(GooglePlayApp)
 
-  implicit val googleOAuth2DataFormat = jsonFormat3(GoogleOAuth2Data)
-
-  implicit val googleAuthDataDeviceInfoFormat = jsonFormat4(GoogleAuthDataDeviceInfo)
-
-  implicit val googleAuthDataFormat = jsonFormat2(GoogleAuthData)
-
-  implicit val anonymousAuthDataFormat = jsonFormat1(AnonymousAuthData)
-
-  implicit val facebookAuthDataFormat = jsonFormat3(FacebookAuthData)
-
-  implicit val twitterAuthDataFormat = jsonFormat6(TwitterAuthData)
-
-  implicit val authDataFormat = jsonFormat5(AuthData)
-
-  implicit val userFormat = jsonFormat6(User)
-
-  implicit val googleAuthDataDeviceInfoRequest = jsonFormat4(GoogleAuthDataDeviceInfoRequest)
-
-  implicit val googleAuthDataRequest = jsonFormat2(GoogleAuthDataRequest)
-
-  implicit val authDataRequest = jsonFormat1(AuthDataRequest)
+  implicit val userFormat = jsonFormat3(User)
 
   implicit val addUserRequest = jsonFormat1(AddUserRequest)
 
-  implicit val installationFormat = jsonFormat5(Installation)
+  implicit val installationFormat = jsonFormat3(Installation)
 
-  implicit val installationRequestFormat = jsonFormat4(InstallationRequest)
+  implicit val installationRequestFormat = jsonFormat2(InstallationRequest)
 
-  implicit val updateGoogleAuthDataDeviceInfoRequest = jsonFormat3(UpdateGoogleAuthDataDeviceInfoRequest)
 }

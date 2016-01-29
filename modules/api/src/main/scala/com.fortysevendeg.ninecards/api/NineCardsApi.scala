@@ -51,32 +51,7 @@ trait NineCardsApi
               }
             }
         }
-      } ~
-        path(Segment) { userId =>
-          requestLoginHeaders {
-            (appId, apiKey) =>
-              get {
-                complete {
-                  val result: Task[User] = userProcesses.getUserById(userId)
-                  result
-                }
-              }
-          }
-        } ~
-        path(Segment / "device" / Segment) { (userId, deviceId) =>
-          requestLoginHeaders {
-            (appId, apiKey) =>
-              put {
-                entity(as[UpdateGoogleAuthDataDeviceInfoRequest]) {
-                  request =>
-                    complete {
-                      val result: Task[User] = userProcesses.updateUserDevice(userId, deviceId, request)
-                      result
-                    }
-                }
-              }
-          }
-        }
+      }
     }
 
   private[this] def installationsApiRoute()(implicit userProcesses: UserProcesses[NineCardsServices]) =
