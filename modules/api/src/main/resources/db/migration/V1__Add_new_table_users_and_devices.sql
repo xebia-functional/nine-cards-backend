@@ -1,13 +1,13 @@
 CREATE TABLE Users (
   id serial NOT NULL PRIMARY KEY,
-  email character varying(100),
-  sessionToken character varying(100),
+  email character varying(100) NOT NULL,
+  sessionToken character varying(100) NOT NULL,
   banned BOOLEAN NOT NULL DEFAULT FALSE
 );
 
 CREATE TABLE Devices (
   id serial NOT NULL PRIMARY KEY,
-  userId BIGINT,
+  userId BIGINT REFERENCES Users(id),
   deviceToken character varying(100),
   androidId character varying(100)
 );
