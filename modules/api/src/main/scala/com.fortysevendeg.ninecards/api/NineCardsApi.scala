@@ -3,6 +3,8 @@ package com.fortysevendeg.ninecards.api
 import akka.actor.Actor
 import com.fortysevendeg.ninecards.api.FreeUtils._
 import com.fortysevendeg.ninecards.api.NineCardsApiHeaderCommons._
+import com.fortysevendeg.ninecards.api.converters.Converters._
+import com.fortysevendeg.ninecards.api.messages.DevicesMessages._
 import com.fortysevendeg.ninecards.processes.NineCardsServices.NineCardsServices
 import com.fortysevendeg.ninecards.processes.domain._
 import com.fortysevendeg.ninecards.processes.messages._
@@ -32,7 +34,7 @@ trait NineCardsApi
 
   def nineCardsApiRoute(implicit appProcesses: AppProcesses[NineCardsServices], userProcesses: UserProcesses[NineCardsServices]): Route =
     userApiRoute() ~
-      installationsApiRoute() ~
+      devicesApiRoute() ~
       appsApiRoute() ~
       swaggerApiRoute
 
@@ -54,29 +56,21 @@ trait NineCardsApi
       }
     }
 
-  private[this] def installationsApiRoute()(implicit userProcesses: UserProcesses[NineCardsServices]) =
-    pathPrefix("installations") {
+  private[this] def devicesApiRoute()(implicit userProcesses: UserProcesses[NineCardsServices]) =
+    pathPrefix("devices") {
       pathEndOrSingleSlash {
-        requestLoginHeaders {
-          (appId, apiKey) =>
-            post {
-              entity(as[InstallationRequest]) {
-                request =>
-                  complete {
-                    val result: Task[Installation] = userProcesses.createInstallation(request)
-                    result
-                  }
-              }
-            }
-        }
-      } ~ path(Segment) { installationId =>
-        requestLoginHeaders {
-          (appId, apiKey) =>
+        requestFullHeaders {
+          (appId, apiKey, sessionToken, androidId, marketLocalization) =>
             put {
-              entity(as[InstallationRequest]) {
+              entity(as[ApiUpdateDeviceRequest]) {
                 request =>
+                  /* TODO: The userId should be fetched after authorizing the user through the sessionToken - Issue 266 */
+                  implicit val userId = 123456789l
+                  implicit val deviceAndroidId = androidId
+
                   complete {
-                    val result: Task[Installation] = userProcesses.updateInstallation(installationId, request)
+                    val result: Task[ApiUpdateDeviceResponse] =
+                      userProcesses.updateDevice(request) map toApiUpdateDeviceResponse
                     result
                   }
               }
