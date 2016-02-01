@@ -1,13 +1,13 @@
+import FlywayConfig._
+import org.flywaydb.sbt.FlywayPlugin._
 import sbt.Keys._
 import sbt._
 import spray.revolver.RevolverPlugin
-import org.flywaydb.sbt.FlywayPlugin._
 
 trait Settings {
   this: Build =>
 
   lazy val projectSettings: Seq[Def.Setting[_]] = Seq(
-    run <<= run in Runtime dependsOn flywayMigrate,
     scalaVersion := Versions.scala,
     organization := "com.fortysevendeg",
     organizationName := "47 Degrees",
@@ -29,13 +29,17 @@ trait Settings {
       "Sonatype Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
     ),
     doc in Compile <<= target.map(_ / "none")
-  ) ++ Seq(flywaySettings: _*) ++ Seq(
-    flywayDriver := sys.props.getOrElse("db.driver", default = ""),
-    flywayUrl := sys.props.getOrElse("db.url", default = ""),
-    flywayUser := sys.props.getOrElse("db.user", default = ""),
-    flywayPassword := sys.props.getOrElse("db.password", default = ""))
+  )
 
   lazy val apiSettings = projectSettings ++ Seq(
+    databaseConfig := databaseConfigDef.value,
+    run <<= run in Runtime dependsOn flywayMigrate,
     publishArtifact in(Test, packageBin) := false
-  ) ++ RevolverPlugin.settings
+  ) ++ RevolverPlugin.settings ++ Seq(flywaySettings: _*) ++ Seq(
+    flywayDriver := databaseConfig.value.driver,
+    flywayUrl := databaseConfig.value.url,
+    flywayUser := databaseConfig.value.user,
+    flywayPassword := databaseConfig.value.password
+  )
+
 }
