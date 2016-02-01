@@ -9,5 +9,5 @@ CREATE TABLE Devices (
   id serial NOT NULL PRIMARY KEY,
   userId BIGINT REFERENCES Users(id),
   deviceToken character varying(100),
-  androidId character varying(100)
+  androidId character varying(100) NOT NULL
 );
