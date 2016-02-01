@@ -1,5 +1,6 @@
 package com.fortysevendeg.ninecards.api
 
+import com.fortysevendeg.ninecards.api.messages.DevicesMessages._
 import com.fortysevendeg.ninecards.processes.messages._
 import com.fortysevendeg.ninecards.processes.domain._
 import spray.httpx.SprayJsonSupport
@@ -15,8 +16,7 @@ trait JsonFormats
 
   implicit val addUserRequest = jsonFormat1(AddUserRequest)
 
-  implicit val installationFormat = jsonFormat3(Installation)
+  implicit val updateDeviceRequestFormat = jsonFormat1(ApiUpdateDeviceRequest)
 
-  implicit val installationRequestFormat = jsonFormat2(InstallationRequest)
-
+  implicit val updateDeviceResponseFormat = jsonFormat2(ApiUpdateDeviceResponse)
 }

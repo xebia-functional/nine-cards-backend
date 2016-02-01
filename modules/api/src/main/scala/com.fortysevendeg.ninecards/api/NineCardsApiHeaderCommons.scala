@@ -1,13 +1,12 @@
 package com.fortysevendeg.ninecards.api
 
-import shapeless.HNil
 import shapeless.HList._
+import shapeless.HNil
 import spray.http.StatusCodes
-import spray.routing.directives.RouteDirectives._
+import spray.routing.directives.HeaderDirectives._
 import spray.routing.{HttpService, MissingHeaderRejection, RejectionHandler}
 
 object NineCardsApiHeaderCommons {
-  import spray.routing.directives.HeaderDirectives._
 
   val headerAppslyAppId = "X-Appsly-Application-Id"
   val headerAppslyAPIKey = "X-Appsly-REST-API-Key"
