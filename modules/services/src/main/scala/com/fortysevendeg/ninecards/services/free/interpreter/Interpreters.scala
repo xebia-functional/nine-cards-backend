@@ -97,10 +97,6 @@ object Interpreters {
         Task {
           userPersistenceImpl.createUser(email, androidId, sessionToken)
         }
-      case GetUser(user:User) =>
-        Task {
-          userPersistenceImpl.getUser(user)
-        }
       case GetDeviceByAndroidId(androidId: String) =>
         Task {
           userPersistenceImpl.getDeviceByAndroidId(androidId)
@@ -109,14 +105,6 @@ object Interpreters {
         Task {
           userPersistenceImpl.createDevice(userId, androidId)
         }
-      case GetDevice(device: Device) =>
-        Task {
-          userPersistenceImpl.getDevice(device)
-        }
-      //      case UpdateInstallation(installation: Installation, installationId: String) =>
-      //        Task {
-      //          userPersistenceImpl.updateInstallation(installation, installationId)
-      //        }
     }
   }
 
