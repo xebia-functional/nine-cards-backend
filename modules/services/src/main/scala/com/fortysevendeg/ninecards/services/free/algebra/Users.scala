@@ -12,13 +12,13 @@ object Users {
 
   case class CreateUser(email: String, androidId: String, sessionToken: String) extends UserOps[User]
 
-  case class GetDeviceByAndroidId(androidId: String) extends UserOps[Option[Installation]]
+  case class GetUser(user: User) extends UserOps[User]
 
-  case class CreateDevice(userId: Long, androidId: String) extends UserOps[Installation]
+  case class GetInstallation(installation: Installation) extends UserOps[Installation]
 
-  case class CreateInstallation(installation: Installation) extends UserOps[Installation]
+  case class GetInstallationByAndroidId(androidId: String) extends UserOps[Option[Installation]]
 
-  case class UpdateInstallation(installation: Installation, installationId: String) extends UserOps[Installation]
+  case class CreateInstallation(userId: Long, androidId: String) extends UserOps[Installation]
 
   class UserServices[F[_]](implicit I: Inject[UserOps, F]) {
 
@@ -26,9 +26,13 @@ object Users {
 
     def createUser(email: String, androidId: String, sessionToken: String): Free[F, User] = Free.inject[UserOps, F](CreateUser(email, androidId, sessionToken))
 
-    def getDeviceByAndroidId(androidId: String): Free[F, Option[Installation]] = Free.inject[UserOps, F](GetDeviceByAndroidId(androidId))
+    def getUser(user: User): Free[F, User] = Free.inject[UserOps, F](GetUser(user))
 
-    def createInstallation(userId: Long, androidId: String): Free[F, Installation] = Free.inject[UserOps, F](CreateDevice(userId, androidId))
+    def getInstallation(installation: Installation): Free[F, Installation] = Free.inject[UserOps, F](GetInstallation(installation))
+
+    def getInstallationByAndroidId(androidId: String): Free[F, Option[Installation]] = Free.inject[UserOps, F](GetInstallationByAndroidId(androidId))
+
+    def createInstallation(userId: Long, androidId: String): Free[F, Installation] = Free.inject[UserOps, F](CreateInstallation(userId, androidId))
 
   }
 

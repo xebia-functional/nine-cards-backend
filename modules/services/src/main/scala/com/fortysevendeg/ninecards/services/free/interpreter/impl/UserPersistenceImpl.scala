@@ -22,7 +22,11 @@ class UserPersistenceImpl {
       )
     )
 
-  def getDeviceByAndroidId(androidId: String) = {
+  def getUser(user: User) = user
+
+  def getInstallation(installation: Installation) = installation
+
+  def getInstallationByAndroidId(androidId: String) = {
     Option(
       Installation(
         id = 51654,
@@ -31,13 +35,12 @@ class UserPersistenceImpl {
     )
   }
 
-  def createDevice(userId: Long, androidId: String) =
+  def createInstallation(userId: Long, androidId: String) =
     Installation(
       userId = userId,
       id = 98798,
       androidId = androidId
     )
-
 }
 
 object UserPersistenceImpl {
