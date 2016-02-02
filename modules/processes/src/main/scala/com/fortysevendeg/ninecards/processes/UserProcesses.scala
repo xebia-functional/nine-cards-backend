@@ -12,7 +12,8 @@ import com.fortysevendeg.ninecards.services.free.domain.{User => UserAppServices
 import scala.language.higherKinds
 
 class UserProcesses[F[_]](
-  implicit userServices: UserServices[F]) {
+  implicit userServices: UserServices[F],
+  inject: Inject[Id, F]) {
 
   def signUpUser(userRequest: AddUserRequest): Free[F, User] =
     userServices.getUserByEmail(userRequest.email) flatMap {
@@ -35,6 +36,6 @@ class UserProcesses[F[_]](
 
 object UserProcesses {
 
-  implicit def userProcesses[F[_]](implicit userServices: UserServices[F]) = new UserProcesses()
+  implicit def userProcesses[F[_]](implicit userServices: UserServices[F],inject: Inject[Id, F]) = new UserProcesses()
 
 }
