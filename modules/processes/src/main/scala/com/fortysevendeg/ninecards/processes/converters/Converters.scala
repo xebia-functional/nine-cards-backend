@@ -24,21 +24,18 @@ object Converters {
     User(
       sessionToken = app.sessionToken)
 
-  def fromUserApp(app: User): UserAppServices =
-    UserAppServices(
-      sessionToken = app.sessionToken)
 
-  def toInstallationRequestProcess(app: InstallationRequest): InstallationServices =
-    InstallationServices(
-      deviceToken = app.deviceToken,
-      userId = app.userId
-    )
-
-  def fromInstallationProcesses(app: InstallationServices): Installation =
-    Installation(
-      id = app.id,
-      deviceToken = app.deviceToken,
-      userId = app.userId
-    )
+//  def toInstallationRequestProcess(app: InstallationRequest): InstallationServices =
+//    InstallationServices(
+//      deviceToken = app.deviceToken,
+//      userId = app.userId
+//    )
+//
+//  def fromInstallationProcesses(app: InstallationServices): Installation =
+//    Installation(
+//      id = app.id,
+//      deviceToken = app.deviceToken,
+//      userId = app.userId
+//    )
 
 }

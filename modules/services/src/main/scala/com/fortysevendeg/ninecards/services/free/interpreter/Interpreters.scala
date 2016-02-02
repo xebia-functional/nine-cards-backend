@@ -93,18 +93,30 @@ object Interpreters {
         Task {
           userPersistenceImpl.getUserByEmail(email)
         }
-      case AddUser(user: User) =>
+      case CreateUser(email: String, androidId: String, sessionToken: String) =>
         Task {
-          userPersistenceImpl.addUser(user)
+          userPersistenceImpl.createUser(email, androidId, sessionToken)
         }
-      case CreateInstallation(installation: Installation) =>
+      case GetUser(user:User) =>
         Task {
-          userPersistenceImpl.createInstallation(installation)
+          userPersistenceImpl.getUser(user)
         }
-      case UpdateInstallation(installation: Installation, installationId: String) =>
+      case GetDeviceByAndroidId(androidId: String) =>
         Task {
-          userPersistenceImpl.updateInstallation(installation, installationId)
+          userPersistenceImpl.getDeviceByAndroidId(androidId)
         }
+      case CreateDevice(userId: Long, androidId: String) =>
+        Task {
+          userPersistenceImpl.createDevice(userId, androidId)
+        }
+      case GetDevice(device: Device) =>
+        Task {
+          userPersistenceImpl.getDevice(device)
+        }
+      //      case UpdateInstallation(installation: Installation, installationId: String) =>
+      //        Task {
+      //          userPersistenceImpl.updateInstallation(installation, installationId)
+      //        }
     }
   }
 
