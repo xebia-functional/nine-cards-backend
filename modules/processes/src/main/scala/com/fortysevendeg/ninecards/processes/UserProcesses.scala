@@ -6,7 +6,7 @@ import cats.free.Free
 import com.fortysevendeg.ninecards.processes.converters.Converters._
 import com.fortysevendeg.ninecards.processes.domain.User
 import com.fortysevendeg.ninecards.processes.messages.AddUserRequest
-import com.fortysevendeg.ninecards.processes.messages.DevicesMessages.{UpdateDeviceRequest, UpdateDeviceResponse}
+import com.fortysevendeg.ninecards.processes.messages.InstallationsMessages.{UpdateInstallationRequest, UpdateInstallationResponse}
 import com.fortysevendeg.ninecards.services.free.algebra.Users.UserServices
 import com.fortysevendeg.ninecards.services.free.domain.{User => UserAppServices}
 
@@ -30,11 +30,11 @@ class UserProcesses[F[_]](
     UserAppServices(
       sessionToken = Option(UUID.randomUUID().toString))
 
-  def updateDevice(request: UpdateDeviceRequest): Free[F, UpdateDeviceResponse] =
-    userServices.updateDevice(
+  def updateInstallation(request: UpdateInstallationRequest): Free[F, UpdateInstallationResponse] =
+    userServices.updateInstallation(
       userId = request.userId,
       androidId = request.androidId,
-      deviceToken = request.deviceToken) map toUpdateDeviceResponse
+      deviceToken = request.deviceToken) map toUpdateInstallationResponse
 
 }
 

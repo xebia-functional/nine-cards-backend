@@ -5,7 +5,7 @@ case class User(
   email: Option[String] = None,
   sessionToken: Option[String] = None)
 
-case class Device(
+case class Installation(
   id: Long,
   userId: Long,
   deviceToken: Option[String] = None,

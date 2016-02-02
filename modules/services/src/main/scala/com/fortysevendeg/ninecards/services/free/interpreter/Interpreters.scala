@@ -97,13 +97,13 @@ object Interpreters {
         Task {
           userPersistenceImpl.addUser(user)
         }
-      case CreateDevice(userId: Long, androidId: String, deviceToken: Option[String]) =>
+      case CreateInstallation(userId: Long, androidId: String, deviceToken: Option[String]) =>
         Task {
-          userPersistenceImpl.createDevice(userId, androidId, deviceToken)
+          userPersistenceImpl.createInstallation(userId, androidId, deviceToken)
         }
-      case UpdateDevice(userId: Long, androidId: String, deviceToken: Option[String]) =>
+      case UpdateInstallation(userId: Long, androidId: String, deviceToken: Option[String]) =>
         Task {
-          userPersistenceImpl.updateDevice(userId, androidId, deviceToken)
+          userPersistenceImpl.updateInstallation(userId, androidId, deviceToken)
         }
     }
   }
