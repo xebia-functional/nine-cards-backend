@@ -30,12 +30,11 @@ class UserProcesses[F[_]](
     UserAppServices(
       sessionToken = Option(UUID.randomUUID().toString))
 
-  def updateDevice(request: UpdateDeviceRequest): Free[F, UpdateDeviceResponse] = for {
-    updatedDevice <- userServices.updateDevice(
+  def updateDevice(request: UpdateDeviceRequest): Free[F, UpdateDeviceResponse] =
+    userServices.updateDevice(
       userId = request.userId,
       androidId = request.androidId,
-      deviceToken = request.deviceToken)
-  } yield toUpdateDeviceResponse(updatedDevice)
+      deviceToken = request.deviceToken) map toUpdateDeviceResponse
 
 }
 
