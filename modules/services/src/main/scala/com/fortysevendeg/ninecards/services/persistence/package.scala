@@ -6,6 +6,10 @@ import scalaz.concurrent.Task
 
 package object persistence {
 
-  val transactor = DriverManagerTransactor[Task]("org.postgresql.Driver", "jdbc:postgresql:ninecards", "postgres", "postgres")
+  val transactor = DriverManagerTransactor[Task](
+    driver = "org.postgresql.Driver",
+    url = "jdbc:postgresql:ninecards",
+    user = "postgres",
+    pass = "postgres")
 
 }

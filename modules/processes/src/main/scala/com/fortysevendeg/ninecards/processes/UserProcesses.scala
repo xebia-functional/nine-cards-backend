@@ -18,19 +18,21 @@ import scalaz.Scalaz._
 class UserProcesses[F[_]](
   implicit userPersistenceServices: UserPersistenceServices,
   dbOps: DBOps[F]) {
-  def signUpUser(loginRequest: LoginRequest): Free[F, LoginResponse] = {
+  def signUpUser(loginRequest: LoginRequest): Free[F, LoginResponse] =
     {
-      userPersistenceServices.getUserByEmail(loginRequest.email) flatMap {
-        case Some(user) =>
-          signUpInstallation(loginRequest, user)
-        case None =>
-          for {
-            newUser <- userPersistenceServices.addUser(loginRequest.email, UUID.randomUUID.toString)
-            installation <- userPersistenceServices.createInstallation(newUser.id, None, loginRequest.androidId)
-          } yield (newUser, installation)
-      }
-    }.transact(transactor) map toLoginResponse
-  }
+    userPersistenceServices.getUserByEmail(loginRequest.email) flatMap {
+      case Some(user) =>
+        signUpInstallation(loginRequest, user)
+      case None =>
+        for {
+          newUser <- userPersistenceServices.addUser(loginRequest.email, UUID.randomUUID.toString)
+          installation <- userPersistenceServices.createInstallation(
+            userId = newUser.id,
+            deviceToken = None,
+            androidId = loginRequest.androidId)
+        } yield (newUser, installation)
+    }
+  }.transact(transactor) map toLoginResponse
 
   private def signUpInstallation(request: LoginRequest, user: User): ConnectionIO[(User, Installation)] =
     userPersistenceServices.getInstallationByUserAndAndroidId(user.id, request.androidId) flatMap {
@@ -52,6 +54,7 @@ class UserProcesses[F[_]](
 
 object UserProcesses {
 
-  implicit def userProcesses[F[_]](implicit userPersistenceServices: UserPersistenceServices, dbOps: DBOps[F]) = new UserProcesses()
+  implicit def userProcesses[F[_]](
+    implicit userPersistenceServices: UserPersistenceServices, dbOps: DBOps[F]) = new UserProcesses()
 
 }
