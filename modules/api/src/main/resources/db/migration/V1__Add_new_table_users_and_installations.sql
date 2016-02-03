@@ -5,7 +5,7 @@ CREATE TABLE Users (
   banned BOOLEAN NOT NULL DEFAULT FALSE
 );
 
-CREATE TABLE Devices (
+CREATE TABLE Installations (
   id serial NOT NULL PRIMARY KEY,
   userId BIGINT NOT NULL REFERENCES Users(id),
   deviceToken character varying(100),

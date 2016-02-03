@@ -3,16 +3,14 @@ package com.fortysevendeg.ninecards.services.free.interpreter
 import cats.~>
 import com.fortysevendeg.ninecards.services.free.algebra.AppGooglePlay._
 import com.fortysevendeg.ninecards.services.free.algebra.AppPersistence._
-import com.fortysevendeg.ninecards.services.free.algebra.DBResult.{DBFailure, DBSuccess, DBResult}
+import com.fortysevendeg.ninecards.services.free.algebra.DBResult.{DBFailure, DBResult, DBSuccess}
 import com.fortysevendeg.ninecards.services.free.algebra.SharedCollectionSubscriptions._
 import com.fortysevendeg.ninecards.services.free.algebra.SharedCollections._
-import com.fortysevendeg.ninecards.services.free.algebra.Users._
 import com.fortysevendeg.ninecards.services.free.domain._
 import com.fortysevendeg.ninecards.services.free.interpreter.impl.AppGooglePlayImpl._
 import com.fortysevendeg.ninecards.services.free.interpreter.impl.AppPersistenceImpl._
 import com.fortysevendeg.ninecards.services.free.interpreter.impl.SharedCollectionPersistenceImpl._
 import com.fortysevendeg.ninecards.services.free.interpreter.impl.SharedCollectionSubscriptionPersistenceImpl._
-import com.fortysevendeg.ninecards.services.free.interpreter.impl.UserPersistenceImpl._
 
 import scalaz.concurrent.Task
 
@@ -82,28 +80,6 @@ object Interpreters {
         Task {
           sharedCollectionSubscriptionPersistenceImpl.deleteSharedCollectionSubscription(
             sharedCollectionId = collectionId)
-        }
-    }
-  }
-
-  object UserInterpreter extends (UserOps ~> Task) {
-
-    def apply[A](fa: UserOps[A]) = fa match {
-      case GetUserByEmail(email: String) =>
-        Task {
-          userPersistenceImpl.getUserByEmail(email)
-        }
-      case AddUser(user: User) =>
-        Task {
-          userPersistenceImpl.addUser(user)
-        }
-      case CreateInstallation(userId: Long, androidId: String, deviceToken: Option[String]) =>
-        Task {
-          userPersistenceImpl.createInstallation(userId, androidId, deviceToken)
-        }
-      case UpdateInstallation(userId: Long, androidId: String, deviceToken: Option[String]) =>
-        Task {
-          userPersistenceImpl.updateInstallation(userId, androidId, deviceToken)
         }
     }
   }

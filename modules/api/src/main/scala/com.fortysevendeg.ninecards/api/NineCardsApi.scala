@@ -3,11 +3,11 @@ package com.fortysevendeg.ninecards.api
 import akka.actor.Actor
 import com.fortysevendeg.ninecards.api.FreeUtils._
 import com.fortysevendeg.ninecards.api.NineCardsApiHeaderCommons._
+import com.fortysevendeg.ninecards.api.messages.UserMessages._
 import com.fortysevendeg.ninecards.api.converters.Converters._
 import com.fortysevendeg.ninecards.api.messages.InstallationsMessages._
 import com.fortysevendeg.ninecards.processes.NineCardsServices.NineCardsServices
 import com.fortysevendeg.ninecards.processes.domain._
-import com.fortysevendeg.ninecards.processes.messages._
 import com.fortysevendeg.ninecards.processes.{AppProcesses, UserProcesses}
 import spray.httpx.SprayJsonSupport
 import spray.routing._
@@ -39,15 +39,15 @@ trait NineCardsApi
       swaggerApiRoute
 
   private[this] def userApiRoute()(implicit userProcesses: UserProcesses[NineCardsServices]) =
-    pathPrefix("users") {
+    pathPrefix("login") {
       pathEndOrSingleSlash {
         requestLoginHeaders {
           (appId, apiKey) =>
             post {
-              entity(as[AddUserRequest]) {
+              entity(as[ApiLoginRequest]) {
                 request =>
                   complete {
-                    val result: Task[User] = userProcesses.signUpUser(request)
+                    val result: Task[ApiLoginResponse] = userProcesses.signUpUser(request) map toApiLoginResponse
                     result
                   }
               }
