@@ -11,9 +11,9 @@ trait JsonFormats
 
   implicit val googlePlayAppFormat = jsonFormat7(GooglePlayApp)
 
-  implicit val userFormat = jsonFormat3(User)
+  implicit val userFormat = jsonFormat1(User)
 
-  implicit val addUserRequest = jsonFormat1(AddUserRequest)
+  implicit val addUserRequest = jsonFormat3(AddUserRequest)
 
   implicit val installationFormat = jsonFormat3(Installation)
 

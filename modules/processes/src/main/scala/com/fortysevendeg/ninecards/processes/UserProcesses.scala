@@ -2,44 +2,41 @@ package com.fortysevendeg.ninecards.processes
 
 import java.util.UUID
 
-import cats.free.Free
-import com.fortysevendeg.ninecards.processes.messages.{ InstallationRequest, AddUserRequest}
-import com.fortysevendeg.ninecards.services.free.algebra.Users.UserServices
-import com.fortysevendeg.ninecards.processes.domain.{Installation, User}
+import cats.{Id, ~>}
+import cats.free.{Inject, Free}
+import com.fortysevendeg.ninecards.processes.messages.AddUserRequest
+import com.fortysevendeg.ninecards.services.free.algebra.Users.{GetInstallation, GetUser, UserOps, UserServices}
+import com.fortysevendeg.ninecards.processes.domain.User
 import com.fortysevendeg.ninecards.processes.converters.Converters._
-import com.fortysevendeg.ninecards.services.free.domain.{User => UserAppServices}
+import com.fortysevendeg.ninecards.services.free.domain.{User => UserAppServices, Installation => InstallationServices}
 import scala.language.higherKinds
 
+
 class UserProcesses[F[_]](
-  implicit userServices: UserServices[F]) {
+  implicit userServices: UserServices[F],
+  I: Inject[UserOps, F]) {
 
-  def signUpUser(userRequest: AddUserRequest): Free[F, User] = for {
-    maybeUser <- userServices.getUserByEmail(userRequest.email)
-    user <- createOrReturnUser(maybeUser, userRequest)
-  } yield toUserApp(user)
+  def signUpUser(userRequest: AddUserRequest): Free[F, User] =
+    userServices.getUserByEmail(userRequest.email) flatMap {
+      case Some(user) =>
+        signUpInstallation(userRequest, user)
+        Free.inject[UserOps, F](GetUser(user))
+      case None =>
+        for {
+          newUser <- userServices.createUser(userRequest.email, userRequest.androidId, UUID.randomUUID.toString)
+          installation <- userServices.createInstallation(newUser.id, userRequest.androidId)
+        } yield newUser
+    } map toUserApp
 
-  private def createOrReturnUser(maybeUser: Option[UserAppServices], data: AddUserRequest): Free[F, UserAppServices] =
-    maybeUser match {
-      case Some(user) => userServices.addUser(user)
-      case None => userServices.addUser(createFromGoogle(data))
+  private def signUpInstallation(data: AddUserRequest, user: UserAppServices): Free[F, InstallationServices] =
+    userServices.getInstallationByAndroidId(data.androidId) flatMap {
+      case Some(installation) => Free.inject[UserOps, F](GetInstallation(installation))
+      case None => userServices.createInstallation(user.id, data.androidId)
     }
-
-  private def createFromGoogle(addUserRequest: AddUserRequest): UserAppServices =
-    UserAppServices(
-      sessionToken = Option(UUID.randomUUID().toString))
-
-  def createInstallation(request: InstallationRequest): Free[F, Installation] = for {
-    newInstallation <- userServices.createInstallation(toInstallationRequestProcess(request))
-  } yield fromInstallationProcesses(newInstallation)
-
-  def updateInstallation(installationId: String, request: InstallationRequest): Free[F, Installation] = for {
-    updateInstallation <- userServices.updateInstallation(toInstallationRequestProcess(request), installationId)
-  } yield fromInstallationProcesses(updateInstallation)
-
 }
 
 object UserProcesses {
 
-  implicit def userProcesses[F[_]](implicit userServices: UserServices[F]) = new UserProcesses()
+  implicit def userProcesses[F[_]](implicit userServices: UserServices[F], inject: Inject[UserOps, F]) = new UserProcesses()
 
 }

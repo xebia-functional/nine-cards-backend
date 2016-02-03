@@ -15,9 +15,9 @@ import scalaz.concurrent.Task
 
 class NineCardsApiActor
   extends Actor
-    with NineCardsApi
-    with AuthHeadersRejectionHandler
-    with NineCardsExceptionHandler {
+  with NineCardsApi
+  with AuthHeadersRejectionHandler
+  with NineCardsExceptionHandler {
 
   def actorRefFactory = context
 
@@ -27,17 +27,16 @@ class NineCardsApiActor
 
 trait NineCardsApi
   extends HttpService
-    with SprayJsonSupport
-    with JsonFormats {
+  with SprayJsonSupport
+  with JsonFormats {
 
   def nineCardsApiRoute(implicit appProcesses: AppProcesses[NineCardsServices], userProcesses: UserProcesses[NineCardsServices]): Route =
-    userApiRoute() ~
-      installationsApiRoute() ~
+    loginApiRoute() ~
       appsApiRoute() ~
       swaggerApiRoute
 
-  private[this] def userApiRoute()(implicit userProcesses: UserProcesses[NineCardsServices]) =
-    pathPrefix("users") {
+  private[this] def loginApiRoute()(implicit userProcesses: UserProcesses[NineCardsServices]) =
+    pathPrefix("login") {
       pathEndOrSingleSlash {
         requestLoginHeaders {
           (appId, apiKey) =>
@@ -46,37 +45,6 @@ trait NineCardsApi
                 request =>
                   complete {
                     val result: Task[User] = userProcesses.signUpUser(request)
-                    result
-                  }
-              }
-            }
-        }
-      }
-    }
-
-  private[this] def installationsApiRoute()(implicit userProcesses: UserProcesses[NineCardsServices]) =
-    pathPrefix("installations") {
-      pathEndOrSingleSlash {
-        requestLoginHeaders {
-          (appId, apiKey) =>
-            post {
-              entity(as[InstallationRequest]) {
-                request =>
-                  complete {
-                    val result: Task[Installation] = userProcesses.createInstallation(request)
-                    result
-                  }
-              }
-            }
-        }
-      } ~ path(Segment) { installationId =>
-        requestLoginHeaders {
-          (appId, apiKey) =>
-            put {
-              entity(as[InstallationRequest]) {
-                request =>
-                  complete {
-                    val result: Task[Installation] = userProcesses.updateInstallation(installationId, request)
                     result
                   }
               }

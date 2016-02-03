@@ -8,23 +8,31 @@ object Users {
 
   sealed trait UserOps[A]
 
-  case class AddUser(user: User) extends UserOps[User]
-
   case class GetUserByEmail(email: String) extends UserOps[Option[User]]
 
-  case class CreateInstallation(installation: Installation) extends UserOps[Installation]
+  case class CreateUser(email: String, androidId: String, sessionToken: String) extends UserOps[User]
 
-  case class UpdateInstallation(installation: Installation, installationId: String) extends UserOps[Installation]
+  case class GetUser(user: User) extends UserOps[User]
+
+  case class GetInstallation(installation: Installation) extends UserOps[Installation]
+
+  case class GetInstallationByAndroidId(androidId: String) extends UserOps[Option[Installation]]
+
+  case class CreateInstallation(userId: Long, androidId: String) extends UserOps[Installation]
 
   class UserServices[F[_]](implicit I: Inject[UserOps, F]) {
 
-    def addUser(user: User): Free[F, User] = Free.inject[UserOps, F](AddUser(user))
-
     def getUserByEmail(email: String): Free[F, Option[User]] = Free.inject[UserOps, F](GetUserByEmail(email))
 
-    def createInstallation(installation: Installation): Free[F, Installation] = Free.inject[UserOps, F](CreateInstallation(installation))
+    def createUser(email: String, androidId: String, sessionToken: String): Free[F, User] = Free.inject[UserOps, F](CreateUser(email, androidId, sessionToken))
 
-    def updateInstallation(installation: Installation, installationId: String): Free[F, Installation] = Free.inject[UserOps, F](UpdateInstallation(installation, installationId))
+    def getUser(user: User): Free[F, User] = Free.inject[UserOps, F](GetUser(user))
+
+    def getInstallation(installation: Installation): Free[F, Installation] = Free.inject[UserOps, F](GetInstallation(installation))
+
+    def getInstallationByAndroidId(androidId: String): Free[F, Option[Installation]] = Free.inject[UserOps, F](GetInstallationByAndroidId(androidId))
+
+    def createInstallation(userId: Long, androidId: String): Free[F, Installation] = Free.inject[UserOps, F](CreateInstallation(userId, androidId))
 
   }
 

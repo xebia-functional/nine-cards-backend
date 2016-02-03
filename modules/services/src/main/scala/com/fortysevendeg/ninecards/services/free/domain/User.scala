@@ -1,11 +1,13 @@
 package com.fortysevendeg.ninecards.services.free.domain
 
 case class User(
-  id: Option[String] = None,
-  email: Option[String] = None,
-  sessionToken: Option[String] = None)
+  id: Long,
+  email: String,
+  sessionToken: String,
+  banned: Boolean)
 
 case class Installation(
-  id: Option[String] = None,
+  id: Long,
+  userId: Long,
   deviceToken: Option[String] = None,
-  userId: Option[String] = None)
+  androidId: String)
