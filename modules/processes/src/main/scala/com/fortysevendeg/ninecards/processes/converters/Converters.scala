@@ -1,11 +1,11 @@
 package com.fortysevendeg.ninecards.processes.converters
 
 import com.fortysevendeg.ninecards.processes.domain._
-import com.fortysevendeg.ninecards.processes.messages._
+import com.fortysevendeg.ninecards.processes.messages.InstallationsMessages._
 import com.fortysevendeg.ninecards.services.free.domain.{
+Installation => InstallationServices,
 GooglePlayApp => GooglePlayAppServices,
-User => UserAppServices,
-Installation => InstallationServices
+User => UserAppServices
 }
 
 object Converters {
@@ -32,17 +32,9 @@ object Converters {
       email = app.email,
       sessionToken = app.sessionToken)
 
-  def toInstallationRequestProcess(app: InstallationRequest): InstallationServices =
-    InstallationServices(
-      deviceToken = app.deviceToken,
-      userId = app.userId
-    )
-
-  def fromInstallationProcesses(app: InstallationServices): Installation =
-    Installation(
-      id = app.id,
-      deviceToken = app.deviceToken,
-      userId = app.userId
-    )
+  def toUpdateInstallationResponse(installation: InstallationServices): UpdateInstallationResponse =
+    UpdateInstallationResponse(
+      androidId = installation.androidId,
+      deviceToken = installation.deviceToken)
 
 }

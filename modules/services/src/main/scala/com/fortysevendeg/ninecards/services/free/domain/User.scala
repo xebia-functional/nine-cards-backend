@@ -6,6 +6,7 @@ case class User(
   sessionToken: Option[String] = None)
 
 case class Installation(
-  id: Option[String] = None,
+  id: Long,
+  userId: Long,
   deviceToken: Option[String] = None,
-  userId: Option[String] = None)
+  androidId: String)

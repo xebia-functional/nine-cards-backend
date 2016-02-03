@@ -2,6 +2,7 @@ package com.fortysevendeg.ninecards.services.free.algebra
 
 import cats.free.{Free, Inject}
 import com.fortysevendeg.ninecards.services.free.domain.{Installation, User}
+
 import scala.language.higherKinds
 
 object Users {
@@ -12,9 +13,15 @@ object Users {
 
   case class GetUserByEmail(email: String) extends UserOps[Option[User]]
 
-  case class CreateInstallation(installation: Installation) extends UserOps[Installation]
+  case class CreateInstallation(
+    userId: Long,
+    androidId: String,
+    deviceToken: Option[String]) extends UserOps[Installation]
 
-  case class UpdateInstallation(installation: Installation, installationId: String) extends UserOps[Installation]
+  case class UpdateInstallation(
+    userId: Long,
+    androidId: String,
+    deviceToken: Option[String]) extends UserOps[Installation]
 
   class UserServices[F[_]](implicit I: Inject[UserOps, F]) {
 
@@ -22,9 +29,17 @@ object Users {
 
     def getUserByEmail(email: String): Free[F, Option[User]] = Free.inject[UserOps, F](GetUserByEmail(email))
 
-    def createInstallation(installation: Installation): Free[F, Installation] = Free.inject[UserOps, F](CreateInstallation(installation))
+    def createInstallation(
+      userId: Long,
+      androidId: String,
+      deviceToken: Option[String]): Free[F, Installation] =
+      Free.inject[UserOps, F](CreateInstallation(userId, androidId, deviceToken))
 
-    def updateInstallation(installation: Installation, installationId: String): Free[F, Installation] = Free.inject[UserOps, F](UpdateInstallation(installation, installationId))
+    def updateInstallation(
+      userId: Long,
+      androidId: String,
+      deviceToken: Option[String]): Free[F, Installation] =
+      Free.inject[UserOps, F](UpdateInstallation(userId, androidId, deviceToken))
 
   }
 

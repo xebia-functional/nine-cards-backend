@@ -14,18 +14,19 @@ class UserPersistenceImpl {
       )
     )
 
-  def createInstallation(installation: Installation) =
+  def createInstallation(userId: Long, androidId: String, deviceToken: Option[String]) =
     Installation(
-      userId = installation.userId,
-      id = Option("340520945234109234527345")
-    )
+      id = 12345678l,
+      userId = userId,
+      androidId = androidId,
+      deviceToken = deviceToken)
 
-  def updateInstallation(installation: Installation, installationId: String) =
+  def updateInstallation(userId: Long, androidId: String, deviceToken: Option[String]) =
     Installation(
-      id = Option(installationId),
-      userId = installation.userId,
-      deviceToken = installation.deviceToken
-    )
+      id = 12345678l,
+      userId = userId,
+      androidId = androidId,
+      deviceToken = deviceToken)
 
 }
 
