@@ -2,6 +2,8 @@ sudo: false
 language: scala
 scala:
   - 2.11.7
+jdk:
+  - oraclejdk8
 script:
   - sbt ++$TRAVIS_SCALA_VERSION "project tests" clean coverage test
 after_success:

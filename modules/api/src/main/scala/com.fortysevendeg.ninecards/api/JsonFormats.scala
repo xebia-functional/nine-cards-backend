@@ -1,7 +1,7 @@
 package com.fortysevendeg.ninecards.api
 
 import com.fortysevendeg.ninecards.api.messages.InstallationsMessages._
-import com.fortysevendeg.ninecards.processes.messages._
+import com.fortysevendeg.ninecards.api.messages.UserMessages._
 import com.fortysevendeg.ninecards.processes.domain._
 import spray.httpx.SprayJsonSupport
 import spray.json.DefaultJsonProtocol
@@ -12,9 +12,9 @@ trait JsonFormats
 
   implicit val googlePlayAppFormat = jsonFormat7(GooglePlayApp)
 
-  implicit val userFormat = jsonFormat3(User)
+  implicit val apiLoginRequestFormat = jsonFormat3(ApiLoginRequest)
 
-  implicit val addUserRequest = jsonFormat1(AddUserRequest)
+  implicit val apiLoginResponseFormat = jsonFormat1(ApiLoginResponse)
 
   implicit val updateInstallationRequestFormat = jsonFormat1(ApiUpdateInstallationRequest)
 

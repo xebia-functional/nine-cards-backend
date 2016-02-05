@@ -20,7 +20,7 @@ trait NineCardsApiSpecification
 
   implicit def actorRefFactory = system
 
-  val usersPath = "/users"
+  val usersPath = "/login"
   val apiDocsPath = "/apiDocs/index.html"
 
   val spec = this
