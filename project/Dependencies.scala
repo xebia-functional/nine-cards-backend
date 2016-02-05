@@ -10,7 +10,7 @@ trait Dependencies {
   val sprayTestKit = "io.spray" %% "spray-testkit" % Versions.spray % "test" exclude("org.specs2", "specs2_2.11")
   val akkaActor = "com.typesafe.akka" %% "akka-actor" % Versions.akka
   val akkaTestKit = "com.typesafe.akka" %% "akka-testkit" % Versions.akka
-  val cats = "org.spire-math" %% "cats" % Versions.cats
+  val cats = "org.typelevel" %% "cats" % Versions.cats
   val specs2Core = "org.specs2" %% "specs2-core" % Versions.specs2
   val specs2Scalacheck = "org.specs2" %% "specs2-scalacheck" % Versions.specs2
   val scalaz = "org.scalaz" %% "scalaz-core" % Versions.scalaz
@@ -20,8 +20,10 @@ trait Dependencies {
   val doobieH2 = "org.tpolecat" %% "doobie-contrib-h2" % Versions.doobie
   val doobiePostgresql = "org.tpolecat" %% "doobie-contrib-postgresql" % Versions.doobie
   val doobieSpecs2 = "org.tpolecat" %% "doobie-contrib-specs2" % Versions.doobie
+  val typesafeConfig = "com.typesafe" % "config" % Versions.typesafeConfig
 
   val baseDepts = Seq(
+    typesafeConfig,
     specs2Core % "test" exclude("org.scalaz", "*"),
     specs2Scalacheck % "test")
 

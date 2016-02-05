@@ -3,11 +3,11 @@ package com.fortysevendeg.ninecards.api
 import akka.actor.Actor
 import com.fortysevendeg.ninecards.api.FreeUtils._
 import com.fortysevendeg.ninecards.api.NineCardsApiHeaderCommons._
+import com.fortysevendeg.ninecards.api.messages.UserMessages._
 import com.fortysevendeg.ninecards.api.converters.Converters._
-import com.fortysevendeg.ninecards.api.messages.DevicesMessages._
+import com.fortysevendeg.ninecards.api.messages.InstallationsMessages._
 import com.fortysevendeg.ninecards.processes.NineCardsServices.NineCardsServices
 import com.fortysevendeg.ninecards.processes.domain._
-import com.fortysevendeg.ninecards.processes.messages._
 import com.fortysevendeg.ninecards.processes.{AppProcesses, UserProcesses}
 import spray.httpx.SprayJsonSupport
 import spray.routing._
@@ -34,20 +34,20 @@ trait NineCardsApi
 
   def nineCardsApiRoute(implicit appProcesses: AppProcesses[NineCardsServices], userProcesses: UserProcesses[NineCardsServices]): Route =
     userApiRoute() ~
-      devicesApiRoute() ~
+      installationsApiRoute() ~
       appsApiRoute() ~
       swaggerApiRoute
 
   private[this] def userApiRoute()(implicit userProcesses: UserProcesses[NineCardsServices]) =
-    pathPrefix("users") {
+    pathPrefix("login") {
       pathEndOrSingleSlash {
         requestLoginHeaders {
           (appId, apiKey) =>
             post {
-              entity(as[AddUserRequest]) {
+              entity(as[ApiLoginRequest]) {
                 request =>
                   complete {
-                    val result: Task[User] = userProcesses.signUpUser(request)
+                    val result: Task[ApiLoginResponse] = userProcesses.signUpUser(request) map toApiLoginResponse
                     result
                   }
               }
@@ -56,21 +56,21 @@ trait NineCardsApi
       }
     }
 
-  private[this] def devicesApiRoute()(implicit userProcesses: UserProcesses[NineCardsServices]) =
-    pathPrefix("devices") {
+  private[this] def installationsApiRoute()(implicit userProcesses: UserProcesses[NineCardsServices]) =
+    pathPrefix("installations") {
       pathEndOrSingleSlash {
         requestFullHeaders {
           (appId, apiKey, sessionToken, androidId, marketLocalization) =>
             put {
-              entity(as[ApiUpdateDeviceRequest]) {
+              entity(as[ApiUpdateInstallationRequest]) {
                 request =>
                   /* TODO: The userId should be fetched after authorizing the user through the sessionToken - Issue 266 */
                   implicit val userId = 123456789l
                   implicit val deviceAndroidId = androidId
 
                   complete {
-                    val result: Task[ApiUpdateDeviceResponse] =
-                      userProcesses.updateDevice(request) map toApiUpdateDeviceResponse
+                    val result: Task[ApiUpdateInstallationResponse] =
+                      userProcesses.updateInstallation(request) map toApiUpdateInstallationResponse
                     result
                   }
               }

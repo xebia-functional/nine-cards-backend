@@ -4,43 +4,57 @@ import java.util.UUID
 
 import cats.free.Free
 import com.fortysevendeg.ninecards.processes.converters.Converters._
-import com.fortysevendeg.ninecards.processes.domain.User
-import com.fortysevendeg.ninecards.processes.messages.AddUserRequest
-import com.fortysevendeg.ninecards.processes.messages.DevicesMessages.{UpdateDeviceRequest, UpdateDeviceResponse}
-import com.fortysevendeg.ninecards.services.free.algebra.Users.UserServices
-import com.fortysevendeg.ninecards.services.free.domain.{User => UserAppServices}
+import com.fortysevendeg.ninecards.processes.messages.InstallationsMessages._
+import com.fortysevendeg.ninecards.processes.messages.UserMessages._
+import com.fortysevendeg.ninecards.services.common.TaskOps._
+import com.fortysevendeg.ninecards.services.free.algebra.DBResult.DBOps
+import com.fortysevendeg.ninecards.services.free.domain._
+import com.fortysevendeg.ninecards.services.persistence.{UserPersistenceServices, _}
+import doobie.imports._
 
 import scala.language.higherKinds
+import scalaz.Scalaz._
 
 class UserProcesses[F[_]](
-  implicit userServices: UserServices[F]) {
+  implicit userPersistenceServices: UserPersistenceServices,
+  dbOps: DBOps[F]) {
+  def signUpUser(loginRequest: LoginRequest): Free[F, LoginResponse] =
+    {
+    userPersistenceServices.getUserByEmail(loginRequest.email) flatMap {
+      case Some(user) =>
+        signUpInstallation(loginRequest, user)
+      case None =>
+        for {
+          newUser <- userPersistenceServices.addUser(loginRequest.email, UUID.randomUUID.toString)
+          installation <- userPersistenceServices.createInstallation(
+            userId = newUser.id,
+            deviceToken = None,
+            androidId = loginRequest.androidId)
+        } yield (newUser, installation)
+    }
+  }.transact(transactor) map toLoginResponse
 
-  def signUpUser(userRequest: AddUserRequest): Free[F, User] = for {
-    maybeUser <- userServices.getUserByEmail(userRequest.email)
-    user <- createOrReturnUser(maybeUser, userRequest)
-  } yield toUserApp(user)
-
-  private def createOrReturnUser(maybeUser: Option[UserAppServices], data: AddUserRequest): Free[F, UserAppServices] =
-    maybeUser match {
-      case Some(user) => userServices.addUser(user)
-      case None => userServices.addUser(createFromGoogle(data))
+  private def signUpInstallation(request: LoginRequest, user: User): ConnectionIO[(User, Installation)] =
+    userPersistenceServices.getInstallationByUserAndAndroidId(user.id, request.androidId) flatMap {
+      case Some(installation) =>
+        (user, installation).point[ConnectionIO]
+      case None =>
+        userPersistenceServices.createInstallation(user.id, None, request.androidId) map {
+          installation =>
+            (user, installation)
+        }
     }
 
-  private def createFromGoogle(addUserRequest: AddUserRequest): UserAppServices =
-    UserAppServices(
-      sessionToken = Option(UUID.randomUUID().toString))
-
-  def updateDevice(request: UpdateDeviceRequest): Free[F, UpdateDeviceResponse] = for {
-    updatedDevice <- userServices.updateDevice(
+  def updateInstallation(request: UpdateInstallationRequest): Free[F, UpdateInstallationResponse] =
+    userPersistenceServices.updateInstallation(
       userId = request.userId,
       androidId = request.androidId,
-      deviceToken = request.deviceToken)
-  } yield toUpdateDeviceResponse(updatedDevice)
-
+      deviceToken = request.deviceToken).transact(transactor) map toUpdateInstallationResponse
 }
 
 object UserProcesses {
 
-  implicit def userProcesses[F[_]](implicit userServices: UserServices[F]) = new UserProcesses()
+  implicit def userProcesses[F[_]](
+    implicit userPersistenceServices: UserPersistenceServices, dbOps: DBOps[F]) = new UserProcesses()
 
 }
