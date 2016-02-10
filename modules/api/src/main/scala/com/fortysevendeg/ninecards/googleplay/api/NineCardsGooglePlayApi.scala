@@ -1,10 +1,5 @@
 package com.fortysevendeg.ninecards.api
 
-//import cats._
-//import cats.std._
-//import cats.std.all._
-//import cats.implicits._
-//import cats.syntax.foldable._
 import cats.data.Xor
 import com.akdeniz.googleplaycrawler.GooglePlayException
 import spray.http.HttpResponse
@@ -21,7 +16,7 @@ import org.apache.http.impl.client.DefaultHttpClient
 import scala.collection.JavaConversions._
 import shapeless._
 import io.circe._
-//import io.circe.syntax._
+import io.circe.syntax._
 import io.circe.parser._
 import io.circe.generic.auto._
 
@@ -36,25 +31,6 @@ class NineCardsGooglePlayActor extends Actor with NineCardsGooglePlayApi {
 
 object NineCardsGooglePlayApi {
 
-  implicit val categoryValuesEncoder: Encoder[SinglePackage] = new Encoder[SinglePackage] {
-    def apply(singlePackage: SinglePackage): Json = {
-      Json.obj("docV2" ->
-        Json.obj("details" ->
-          Json.obj("appDetails" ->
-            Json.obj("appCategory" ->
-              Json.array(singlePackage.categories.map(Json.string): _*)))))
-    }
-  }
-
-  implicit def packageDetailsEncoder(implicit cve: Encoder[SinglePackage]): Encoder[PackageDetails] = new Encoder[PackageDetails] {
-    def apply(packageDetails: PackageDetails): Json = {
-      Json.obj(
-        "errors" -> Json.array(packageDetails.errors.map(Json.string): _*),
-        "items"  -> Json.array(packageDetails.items.map(cve.apply): _*)
-      )
-    }
-  }
-
   implicit def circeJsonMarshaller[A](implicit encoder: Encoder[A]): Marshaller[A] = Marshaller.of[A](ContentTypes.`application/json`) {
     case (a, contentType, ctx) => ctx.marshalTo(HttpEntity(ContentTypes.`application/json`, encoder(a).noSpaces))
   }
@@ -66,7 +42,6 @@ object NineCardsGooglePlayApi {
       }, m(_, ctx))
     }
   }
-
 
   //todo try to make this more like the encoders above
   implicit val packageListUnmarshaller = new Unmarshaller[PackageListRequest] {
@@ -92,7 +67,7 @@ trait NineCardsGooglePlayApi extends HttpService {
 
   // TODO: Turn package into a real type
   // TODO: Have this run async
-  private[this] def getPackage(t: Token, id: AndroidId, lo: Option[Localisation], packageName: String): Xor[GooglePlayException, SinglePackage] = {
+  private[this] def getPackage(t: Token, id: AndroidId, lo: Option[Localisation], packageName: String): Xor[GooglePlayException, Item] = {
     println(s"Getting details for $packageName")
     val gpApi = new GooglePlayAPI()
     gpApi.setToken(t.value)
@@ -100,9 +75,38 @@ trait NineCardsGooglePlayApi extends HttpService {
     gpApi.setClient(new DefaultHttpClient)
     lo.foreach(l => gpApi.setLocalization(l.value))
 
-    val fetchedData = Xor.catchOnly[GooglePlayException](gpApi.details(packageName).getDocV2.getDetails.getAppDetails.getAppCategoryList.toList)
+    Xor.catchOnly[GooglePlayException] {
+      val docV2 = gpApi.details(packageName).getDocV2
+      val details = docV2.getDetails
+      val appDetails = details.getAppDetails
+      val agg = docV2.getAggregateRating
 
-    fetchedData.map(categoryList => SinglePackage(categoryList))
+      Item(
+        DocV2(
+          title   = docV2.getTitle,
+          creator = docV2.getCreator,
+          docid   = docV2.getDocid,
+          details = Details(
+            appDetails = AppDetails(
+              appCategory  = appDetails.getAppCategoryList.toList,
+              numDownloads = appDetails.getNumDownloads,
+              permission   = appDetails.getPermissionList.toList
+            )
+          ),
+          aggregateRating = AggregateRating(
+            ratingsCount     = agg.getRatingsCount,
+            oneStarRatings   = agg.getOneStarRatings,
+            twoStarRatings   = agg.getTwoStarRatings,
+            threeStarRatings = agg.getThreeStarRatings,
+            fourStarRatings  = agg.getFourStarRatings,
+            fiveStarRatings  = agg.getFiveStarRatings,
+            starRating       = agg.getStarRating
+          ),
+          image = List(), // TODO
+          offer = List()  // TODO
+        )
+      )
+    }
   }
 
   private[this] def packageRoute =
@@ -120,6 +124,7 @@ trait NineCardsGooglePlayApi extends HttpService {
 
               val details = packageNames.foldLeft(PackageDetails(Nil, Nil)) { case (PackageDetails(errors, items), packageName) =>
                 val xOrPackage = getPackage(token, androidId, localisationOption, packageName)
+                // todo is it worth logging errors here?
                 xOrPackage.fold(_ => PackageDetails(packageName :: errors, items), p => PackageDetails(errors, p :: items))
               }
 
@@ -136,8 +141,14 @@ object Domain {
   case class AndroidId(value: String) extends AnyVal
   case class Localisation(value: String) extends AnyVal
 
-  //todo better name?
-  case class SinglePackage(categories: List[String]) extends AnyVal
   case class PackageListRequest(items: List[String]) extends AnyVal
-  case class PackageDetails(errors: List[String], items: List[SinglePackage])
+  case class PackageDetails(errors: List[String], items: List[Item])
+
+  case class Item(docV2: DocV2)
+  case class DocV2(title: String, creator: String, docid: String, details: Details, aggregateRating: AggregateRating, image: List[Image], offer: List[Offer])
+  case class Details(appDetails: AppDetails)
+  case class AppDetails(appCategory: List[String], numDownloads: String, permission: List[String])
+  case class AggregateRating(ratingsCount: Long, oneStarRatings: Long, twoStarRatings: Long, threeStarRatings: Long, fourStarRatings: Long, fiveStarRatings: Long, starRating: Double) // commentcount?
+  case class Image(imageType: Long, imageUrl: String) // todo check which fields are necessary here
+  case class Offer(offerType: Long) // todo check which fields are necessary here
 }
