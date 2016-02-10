@@ -2,13 +2,6 @@ package com.fortysevendeg.ninecards.api
 
 import cats.data.Xor
 import com.akdeniz.googleplaycrawler.GooglePlayException
-import spray.http.HttpResponse
-import spray.http.StatusCodes
-import spray.http.{ContentTypes, HttpEntity, HttpResponse}
-import spray.httpx.marshalling.Marshaller
-import spray.httpx.marshalling.ToResponseMarshaller
-import spray.httpx.unmarshalling.MalformedContent
-import spray.httpx.unmarshalling.Unmarshaller
 import spray.routing._
 import akka.actor.Actor
 import com.akdeniz.googleplaycrawler.GooglePlayAPI
@@ -19,8 +12,12 @@ import io.circe._
 import io.circe.syntax._
 import io.circe.parser._
 import io.circe.generic.auto._
-
+import com.fortysevendeg.ninecards.googleplay.ncSpray._
 import Domain._
+
+import spray.httpx.unmarshalling.MalformedContent
+import spray.httpx.unmarshalling.Unmarshaller
+import spray.http.HttpEntity
 
 class NineCardsGooglePlayActor extends Actor with NineCardsGooglePlayApi {
 
@@ -29,31 +26,24 @@ class NineCardsGooglePlayActor extends Actor with NineCardsGooglePlayApi {
   def receive = runRoute(googlePlayApiRoute)
 }
 
-object NineCardsGooglePlayApi {
+object Domain {
+  case class Token(value: String) extends AnyVal
+  case class AndroidId(value: String) extends AnyVal
+  case class Localisation(value: String) extends AnyVal
 
-  implicit def circeJsonMarshaller[A](implicit encoder: Encoder[A]): Marshaller[A] = Marshaller.of[A](ContentTypes.`application/json`) {
-    case (a, contentType, ctx) => ctx.marshalTo(HttpEntity(ContentTypes.`application/json`, encoder(a).noSpaces))
-  }
+  case class PackageListRequest(items: List[String]) extends AnyVal
+  case class PackageDetails(errors: List[String], items: List[Item])
 
-  implicit def googlePlayExceptionXorMarshaller[A](implicit m: ToResponseMarshaller[A]): ToResponseMarshaller[Xor[GooglePlayException, A]] = {
-    ToResponseMarshaller[Xor[GooglePlayException, A]] { (v, ctx) =>
-      v.fold({ e =>
-        ctx.marshalTo(HttpResponse(status = StatusCodes.InternalServerError, entity = HttpEntity(e.toString)))
-      }, m(_, ctx))
-    }
-  }
-
-  //todo try to make this more like the encoders above
-  implicit val packageListUnmarshaller = new Unmarshaller[PackageListRequest] {
-    def apply(entity: HttpEntity) = {
-      decode[PackageListRequest](entity.asString).fold(e => Left(MalformedContent("Unable to parse entity into JSON list", e)), s => Right(s))
-    }
-  }
+  case class Item(docV2: DocV2)
+  case class DocV2(title: String, creator: String, docid: String, details: Details, aggregateRating: AggregateRating, image: List[Image], offer: List[Offer])
+  case class Details(appDetails: AppDetails)
+  case class AppDetails(appCategory: List[String], numDownloads: String, permission: List[String])
+  case class AggregateRating(ratingsCount: Long, oneStarRatings: Long, twoStarRatings: Long, threeStarRatings: Long, fourStarRatings: Long, fiveStarRatings: Long, starRating: Double) // commentcount?
+  case class Image(imageType: Long, imageUrl: String) // todo check which fields are necessary here
+  case class Offer(offerType: Long) // todo check which fields are necessary here
 }
 
 trait NineCardsGooglePlayApi extends HttpService {
-  import NineCardsGooglePlayApi._
-
   def googlePlayApiRoute: Route = packageRoute
 
   type Headers = Token :: AndroidId :: Option[Localisation] :: HNil
@@ -64,11 +54,17 @@ trait NineCardsGooglePlayApi extends HttpService {
     localisation <- optionalHeaderValueByName("X-Android-Market-Localization")
   } yield Token(token) :: AndroidId(androidId) :: localisation.map(Localisation.apply) :: HNil
 
+  // todo I should be able to make this generic and move it into the package object
+  implicit val packageListUnmarshaller: Unmarshaller[PackageListRequest] = new Unmarshaller[PackageListRequest] {
+    def apply(entity: HttpEntity) = {
+      decode[PackageListRequest](entity.asString).fold(e => Left(MalformedContent("Unable to parse entity into JSON list", e)), s => Right(s))
+    }
+  }
+
 
   // TODO: Turn package into a real type
   // TODO: Have this run async
   private[this] def getPackage(t: Token, id: AndroidId, lo: Option[Localisation], packageName: String): Xor[GooglePlayException, Item] = {
-    println(s"Getting details for $packageName")
     val gpApi = new GooglePlayAPI()
     gpApi.setToken(t.value)
     gpApi.setAndroidID(id.value)
@@ -134,21 +130,4 @@ trait NineCardsGooglePlayApi extends HttpService {
         }
       }
     }
-}
-
-object Domain {
-  case class Token(value: String) extends AnyVal
-  case class AndroidId(value: String) extends AnyVal
-  case class Localisation(value: String) extends AnyVal
-
-  case class PackageListRequest(items: List[String]) extends AnyVal
-  case class PackageDetails(errors: List[String], items: List[Item])
-
-  case class Item(docV2: DocV2)
-  case class DocV2(title: String, creator: String, docid: String, details: Details, aggregateRating: AggregateRating, image: List[Image], offer: List[Offer])
-  case class Details(appDetails: AppDetails)
-  case class AppDetails(appCategory: List[String], numDownloads: String, permission: List[String])
-  case class AggregateRating(ratingsCount: Long, oneStarRatings: Long, twoStarRatings: Long, threeStarRatings: Long, fourStarRatings: Long, fiveStarRatings: Long, starRating: Double) // commentcount?
-  case class Image(imageType: Long, imageUrl: String) // todo check which fields are necessary here
-  case class Offer(offerType: Long) // todo check which fields are necessary here
 }
