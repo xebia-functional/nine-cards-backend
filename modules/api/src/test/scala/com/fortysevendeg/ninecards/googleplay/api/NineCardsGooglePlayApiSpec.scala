@@ -13,6 +13,7 @@ import io.circe.parser._
 import io.circe.generic.auto._
 
 case class Detailed(errors: List[String], items: List[Item])
+
 case class Item(docV2: DocV2)
 case class DocV2(details: Details)
 case class Details(appDetails: AppDetails)
@@ -71,7 +72,8 @@ class NineCardsGooglePlayApiSpec
       }.googlePlayApiRoute
 
 
-      Post("/googleplay/packages/detailed", allPackages.asJson.noSpaces) ~> addHeaders(requestHeaders) ~> route ~> check {
+      // todo do I want to use a packagelistrequest here?
+      Post("/googleplay/packages/detailed", Domain.PackageListRequest(allPackages).asJson.noSpaces) ~> addHeaders(requestHeaders) ~> route ~> check {
         status must_== OK
         val response = responseAs[String]
         decode[Detailed](response).fold(e => Some((e, response)), _ => None) must_== None

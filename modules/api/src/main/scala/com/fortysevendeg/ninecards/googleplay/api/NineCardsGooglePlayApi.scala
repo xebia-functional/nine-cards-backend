@@ -36,19 +36,22 @@ class NineCardsGooglePlayActor extends Actor with NineCardsGooglePlayApi {
 
 object NineCardsGooglePlayApi {
 
-  implicit val categoryValuesEncoder: Encoder[CategoryValues] = new Encoder[CategoryValues] {
-    def apply(categoryValues: CategoryValues): Json = {
+  implicit val categoryValuesEncoder: Encoder[SinglePackage] = new Encoder[SinglePackage] {
+    def apply(singlePackage: SinglePackage): Json = {
       Json.obj("docV2" ->
         Json.obj("details" ->
           Json.obj("appDetails" ->
             Json.obj("appCategory" ->
-              Json.array(categoryValues.value.map(Json.string): _*)))))
+              Json.array(singlePackage.categories.map(Json.string): _*)))))
     }
   }
 
-  implicit def packageDetailsEncoder(implicit cve: Encoder[CategoryValues]): Encoder[PackageDetails] = new Encoder[PackageDetails] {
+  implicit def packageDetailsEncoder(implicit cve: Encoder[SinglePackage]): Encoder[PackageDetails] = new Encoder[PackageDetails] {
     def apply(packageDetails: PackageDetails): Json = {
-      Json.obj("errors" -> Json.array(packageDetails.errors.map(Json.string): _*), "items" -> Json.array(packageDetails.items.map(cve.apply): _*))
+      Json.obj(
+        "errors" -> Json.array(packageDetails.errors.map(Json.string): _*),
+        "items"  -> Json.array(packageDetails.items.map(cve.apply): _*)
+      )
     }
   }
 
@@ -89,7 +92,7 @@ trait NineCardsGooglePlayApi extends HttpService {
 
   // TODO: Turn package into a real type
   // TODO: Have this run async
-  private[this] def getPackage(t: Token, id: AndroidId, lo: Option[Localisation], packageName: String): Xor[GooglePlayException, CategoryValues] = {
+  private[this] def getPackage(t: Token, id: AndroidId, lo: Option[Localisation], packageName: String): Xor[GooglePlayException, SinglePackage] = {
     println(s"Getting details for $packageName")
     val gpApi = new GooglePlayAPI()
     gpApi.setToken(t.value)
@@ -99,7 +102,7 @@ trait NineCardsGooglePlayApi extends HttpService {
 
     val fetchedData = Xor.catchOnly[GooglePlayException](gpApi.details(packageName).getDocV2.getDetails.getAppDetails.getAppCategoryList.toList)
 
-    fetchedData.map(categoryList => CategoryValues(categoryList))
+    fetchedData.map(categoryList => SinglePackage(categoryList))
   }
 
   private[this] def packageRoute =
@@ -134,7 +137,7 @@ object Domain {
   case class Localisation(value: String) extends AnyVal
 
   //todo better name?
-  case class CategoryValues(value: List[String]) extends AnyVal
+  case class SinglePackage(categories: List[String]) extends AnyVal
   case class PackageListRequest(items: List[String]) extends AnyVal
-  case class PackageDetails(errors: List[String], items: List[CategoryValues])
+  case class PackageDetails(errors: List[String], items: List[SinglePackage])
 }
