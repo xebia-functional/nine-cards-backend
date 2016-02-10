@@ -1,8 +1,19 @@
 package com.fortysevendeg.ninecards.api
 
+//import cats._
+//import cats.std._
+//import cats.std.all._
+//import cats.implicits._
+//import cats.syntax.foldable._
+import cats.data.Xor
+import com.akdeniz.googleplaycrawler.GooglePlayException
+import spray.http.HttpResponse
+import spray.http.StatusCodes
 import spray.http.{ContentTypes, HttpEntity, HttpResponse}
 import spray.httpx.marshalling.Marshaller
 import spray.httpx.marshalling.ToResponseMarshaller
+import spray.httpx.unmarshalling.MalformedContent
+import spray.httpx.unmarshalling.Unmarshaller
 import spray.routing._
 import akka.actor.Actor
 import com.akdeniz.googleplaycrawler.GooglePlayAPI
@@ -10,6 +21,11 @@ import org.apache.http.impl.client.DefaultHttpClient
 import scala.collection.JavaConversions._
 import shapeless._
 import io.circe._
+//import io.circe.syntax._
+import io.circe.parser._
+import io.circe.generic.auto._
+
+import Domain._
 
 class NineCardsGooglePlayActor extends Actor with NineCardsGooglePlayApi {
 
@@ -19,16 +35,41 @@ class NineCardsGooglePlayActor extends Actor with NineCardsGooglePlayApi {
 }
 
 object NineCardsGooglePlayApi {
-  implicit def categoryMarshaller: Marshaller[CategoryValues] = Marshaller.of[CategoryValues](ContentTypes.`application/json`) {
-    case (CategoryValues(cs), contentType, ctx) =>
-      val asJson =
-        Json.obj("docV2" ->
-          Json.obj("details" ->
-            Json.obj("appDetails" ->
-              Json.obj("appCategory" ->
-                Json.array(cs.map(Json.string): _*)))))
 
-      ctx.marshalTo(HttpEntity(ContentTypes.`application/json`, asJson.noSpaces))
+  implicit val categoryValuesEncoder: Encoder[CategoryValues] = new Encoder[CategoryValues] {
+    def apply(categoryValues: CategoryValues): Json = {
+      Json.obj("docV2" ->
+        Json.obj("details" ->
+          Json.obj("appDetails" ->
+            Json.obj("appCategory" ->
+              Json.array(categoryValues.value.map(Json.string): _*)))))
+    }
+  }
+
+  implicit def packageDetailsEncoder(implicit cve: Encoder[CategoryValues]): Encoder[PackageDetails] = new Encoder[PackageDetails] {
+    def apply(packageDetails: PackageDetails): Json = {
+      Json.obj("errors" -> Json.array(packageDetails.errors.map(Json.string): _*), "items" -> Json.array(packageDetails.items.map(cve.apply): _*))
+    }
+  }
+
+  implicit def circeJsonMarshaller[A](implicit encoder: Encoder[A]): Marshaller[A] = Marshaller.of[A](ContentTypes.`application/json`) {
+    case (a, contentType, ctx) => ctx.marshalTo(HttpEntity(ContentTypes.`application/json`, encoder(a).noSpaces))
+  }
+
+  implicit def googlePlayExceptionXorMarshaller[A](implicit m: ToResponseMarshaller[A]): ToResponseMarshaller[Xor[GooglePlayException, A]] = {
+    ToResponseMarshaller[Xor[GooglePlayException, A]] { (v, ctx) =>
+      v.fold({ e =>
+        ctx.marshalTo(HttpResponse(status = StatusCodes.InternalServerError, entity = HttpEntity(e.toString)))
+      }, m(_, ctx))
+    }
+  }
+
+
+  //todo try to make this more like the encoders above
+  implicit val packageListUnmarshaller = new Unmarshaller[PackageListRequest] {
+    def apply(entity: HttpEntity) = {
+      decode[PackageListRequest](entity.asString).fold(e => Left(MalformedContent("Unable to parse entity into JSON list", e)), s => Right(s))
+    }
   }
 }
 
@@ -45,25 +86,55 @@ trait NineCardsGooglePlayApi extends HttpService {
     localisation <- optionalHeaderValueByName("X-Android-Market-Localization")
   } yield Token(token) :: AndroidId(androidId) :: localisation.map(Localisation.apply) :: HNil
 
+
+  // TODO: Turn package into a real type
+  // TODO: Have this run async
+  private[this] def getPackage(t: Token, id: AndroidId, lo: Option[Localisation], packageName: String): Xor[GooglePlayException, CategoryValues] = {
+    println(s"Getting details for $packageName")
+    val gpApi = new GooglePlayAPI()
+    gpApi.setToken(t.value)
+    gpApi.setAndroidID(id.value)
+    gpApi.setClient(new DefaultHttpClient)
+    lo.foreach(l => gpApi.setLocalization(l.value))
+
+    val fetchedData = Xor.catchOnly[GooglePlayException](gpApi.details(packageName).getDocV2.getDetails.getAppDetails.getAppCategoryList.toList)
+
+    fetchedData.map(categoryList => CategoryValues(categoryList))
+  }
+
   private[this] def packageRoute =
-    get {
-      path("googleplay" / "package" / Segment) { packageName =>
-        requestHeaders { case (Token(token), AndroidId(androidId), localisationOption) =>
-          val gpApi = new GooglePlayAPI()
-          gpApi.setToken(token)
-          gpApi.setAndroidID(androidId)
-          gpApi.setClient(new DefaultHttpClient)
-          localisationOption.foreach(l => gpApi.setLocalization(l.value))
+    pathPrefix("googleplay") {
+      requestHeaders { (token, androidId, localisationOption) =>
+        get {
+          path("package" / Segment) { packageName => // TODO make this a package type
+            val packageDetails = getPackage(token, androidId, localisationOption, packageName)
+            complete(packageDetails)
+          }
+        } ~
+        post {
+          path("packages" / "detailed") {
+            entity(as[PackageListRequest]) { case PackageListRequest(packageNames) =>
 
-          val categoryList = gpApi.details(packageName).getDocV2.getDetails.getAppDetails.getAppCategoryList.toList
+              val details = packageNames.foldLeft(PackageDetails(Nil, Nil)) { case (PackageDetails(errors, items), packageName) =>
+                val xOrPackage = getPackage(token, androidId, localisationOption, packageName)
+                xOrPackage.fold(_ => PackageDetails(packageName :: errors, items), p => PackageDetails(errors, p :: items))
+              }
 
-          complete(CategoryValues(categoryList))
+              complete(details)
+            }
+          }
         }
       }
     }
 }
 
-case class Token(value: String) extends AnyVal
-case class AndroidId(value: String) extends AnyVal
-case class Localisation(value: String) extends AnyVal
-case class CategoryValues(value: List[String]) extends AnyVal
+object Domain {
+  case class Token(value: String) extends AnyVal
+  case class AndroidId(value: String) extends AnyVal
+  case class Localisation(value: String) extends AnyVal
+
+  //todo better name?
+  case class CategoryValues(value: List[String]) extends AnyVal
+  case class PackageListRequest(items: List[String]) extends AnyVal
+  case class PackageDetails(errors: List[String], items: List[CategoryValues])
+}
