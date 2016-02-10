@@ -12,7 +12,7 @@ import io.circe._
 import io.circe.syntax._
 import io.circe.parser._
 import io.circe.generic.auto._
-import com.fortysevendeg.ninecards.googleplay.ncSpray._
+import com.fortysevendeg.ninecards.googleplay.ninecardsspray._
 import Domain._
 
 import spray.httpx.unmarshalling.MalformedContent

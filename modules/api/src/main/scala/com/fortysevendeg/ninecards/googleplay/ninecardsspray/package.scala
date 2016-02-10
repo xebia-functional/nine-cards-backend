@@ -17,7 +17,7 @@ import spray.http.HttpEntity
 /**
   * Some notes here
   */
-package object ncSpray {
+package object ninecardsspray {
 
   implicit def circeJsonMarshaller[A](implicit encoder: Encoder[A]): Marshaller[A] = Marshaller.of[A](ContentTypes.`application/json`) {
     case (a, contentType, ctx) => ctx.marshalTo(HttpEntity(ContentTypes.`application/json`, encoder(a).noSpaces))
