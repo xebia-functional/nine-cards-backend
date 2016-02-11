@@ -61,15 +61,20 @@ trait NineCardsGooglePlayApi extends HttpService {
     }
   }
 
-
-  // TODO: Turn package into a real type
-  // TODO: Have this run async
-  private[this] def getPackage(t: Token, id: AndroidId, lo: Option[Localisation], packageName: String): Xor[GooglePlayException, Item] = {
+  private[this] def googlePlayApi(t: Token, id: AndroidId, lo: Option[Localisation]): GooglePlayAPI = {
     val gpApi = new GooglePlayAPI()
     gpApi.setToken(t.value)
     gpApi.setAndroidID(id.value)
     gpApi.setClient(new DefaultHttpClient)
     lo.foreach(l => gpApi.setLocalization(l.value))
+
+    gpApi
+  }
+
+
+  // TODO: Turn package into a real type
+  // TODO: Have this run async
+  private[this] def getPackage(gpApi: GooglePlayAPI, packageName: String): Xor[GooglePlayException, Item] = {
 
     Xor.catchOnly[GooglePlayException] {
       val docV2 = gpApi.details(packageName).getDocV2
@@ -110,7 +115,8 @@ trait NineCardsGooglePlayApi extends HttpService {
       requestHeaders { (token, androidId, localisationOption) =>
         get {
           path("package" / Segment) { packageName => // TODO make this a package type
-            val packageDetails = getPackage(token, androidId, localisationOption, packageName)
+            val gpApi = googlePlayApi(token, androidId, localisationOption)
+            val packageDetails = getPackage(gpApi, packageName)
             complete(packageDetails)
           }
         } ~
@@ -118,8 +124,10 @@ trait NineCardsGooglePlayApi extends HttpService {
           path("packages" / "detailed") {
             entity(as[PackageListRequest]) { case PackageListRequest(packageNames) =>
 
+              val gpApi = googlePlayApi(token, androidId, localisationOption)
+
               val details = packageNames.foldLeft(PackageDetails(Nil, Nil)) { case (PackageDetails(errors, items), packageName) =>
-                val xOrPackage = getPackage(token, androidId, localisationOption, packageName)
+                val xOrPackage = getPackage(gpApi, packageName)
                 // todo is it worth logging errors here?
                 xOrPackage.fold(_ => PackageDetails(packageName :: errors, items), p => PackageDetails(errors, p :: items))
               }
