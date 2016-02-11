@@ -14,7 +14,7 @@ trait Dependencies {
   val circeGeneric = "io.circe" %% "circe-generic" % Versions.circe
   val circeParser = "io.circe" %% "circe-parser" % Versions.circe
 
-  val cats = "org.typelevel" %% "cats" % "0.4.0" // TODO move this to version
+  val cats = "org.typelevel" %% "cats" % Versions.cats
 
   val akkaActor = "com.typesafe.akka" %% "akka-actor" % Versions.akka
 
