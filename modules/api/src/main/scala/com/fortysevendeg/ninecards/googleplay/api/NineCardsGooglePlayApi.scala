@@ -23,28 +23,74 @@ class NineCardsGooglePlayActor extends Actor with NineCardsGooglePlayApi {
 
   def actorRefFactory = context
 
-  def receive = runRoute(googlePlayApiRoute)
+  def receive = runRoute(googlePlayApiRoute(Service.callGooglePlayApi _))
 }
 
 object Domain {
+  case class Package(value: String) extends AnyVal
   case class Token(value: String) extends AnyVal
   case class AndroidId(value: String) extends AnyVal
-  case class Localisation(value: String) extends AnyVal
+  case class Localisation(value: String) extends AnyVal //todo make z
 
   case class PackageListRequest(items: List[String]) extends AnyVal
   case class PackageDetails(errors: List[String], items: List[Item])
 
   case class Item(docV2: DocV2)
-  case class DocV2(title: String, creator: String, docid: String, details: Details, aggregateRating: AggregateRating, image: List[Image], offer: List[Offer])
+  case class DocV2(title: String, creator: String, docid: String, details: Details, aggregateRating: AggregateRating/*, image: List[Image], offer: List[Offer]*/)
   case class Details(appDetails: AppDetails)
   case class AppDetails(appCategory: List[String], numDownloads: String, permission: List[String])
-  case class AggregateRating(ratingsCount: Long, oneStarRatings: Long, twoStarRatings: Long, threeStarRatings: Long, fourStarRatings: Long, fiveStarRatings: Long, starRating: Double) // commentcount?
+  case class AggregateRating(ratingsCount: Long, /* oneStarRatings: Long, twoStarRatings: Long, threeStarRatings: Long, fourStarRatings: Long, fiveStarRatings: Long,*/ starRating: Double) // commentcount?
   case class Image(imageType: Long, imageUrl: String) // todo check which fields are necessary here
   case class Offer(offerType: Long) // todo check which fields are necessary here
 }
 
+object Service {
+  def callGooglePlayApi(t: Token, id: AndroidId, lo: Option[Localisation]): Package => Xor[GooglePlayException, Item] = {
+    val gpApi = new GooglePlayAPI()
+    gpApi.setToken(t.value)
+    gpApi.setAndroidID(id.value)
+    gpApi.setClient(new DefaultHttpClient)
+    lo.foreach(l => gpApi.setLocalization(l.value))
+
+    { pkg =>
+
+      Xor.catchOnly[GooglePlayException] {
+        val docV2 = gpApi.details(pkg.value).getDocV2
+        val details = docV2.getDetails
+        val appDetails = details.getAppDetails
+        val agg = docV2.getAggregateRating
+
+        Item(
+          DocV2(
+            title   = docV2.getTitle,
+            creator = docV2.getCreator,
+            docid   = docV2.getDocid,
+            details = Details(
+              appDetails = AppDetails(
+                appCategory  = appDetails.getAppCategoryList.toList,
+                numDownloads = appDetails.getNumDownloads,
+                permission   = appDetails.getPermissionList.toList
+              )
+            ),
+            aggregateRating = AggregateRating(
+              ratingsCount     = agg.getRatingsCount,
+/*              oneStarRatings   = agg.getOneStarRatings,
+              twoStarRatings   = agg.getTwoStarRatings,
+              threeStarRatings = agg.getThreeStarRatings,
+              fourStarRatings  = agg.getFourStarRatings,
+              fiveStarRatings  = agg.getFiveStarRatings,
+ */            starRating       = agg.getStarRating
+            )/*,
+            image = List(), // TODO
+            offer = List()  // TODO
+              */)
+        )
+      }
+    }
+  }
+}
+
 trait NineCardsGooglePlayApi extends HttpService {
-  def googlePlayApiRoute: Route = packageRoute
 
   type Headers = Token :: AndroidId :: Option[Localisation] :: HNil
 
@@ -61,62 +107,12 @@ trait NineCardsGooglePlayApi extends HttpService {
     }
   }
 
-  private[this] def googlePlayApi(t: Token, id: AndroidId, lo: Option[Localisation]): GooglePlayAPI = {
-    val gpApi = new GooglePlayAPI()
-    gpApi.setToken(t.value)
-    gpApi.setAndroidID(id.value)
-    gpApi.setClient(new DefaultHttpClient)
-    lo.foreach(l => gpApi.setLocalization(l.value))
-
-    gpApi
-  }
-
-
-  // TODO: Turn package into a real type
-  // TODO: Have this run async
-  private[this] def getPackage(gpApi: GooglePlayAPI, packageName: String): Xor[GooglePlayException, Item] = {
-
-    Xor.catchOnly[GooglePlayException] {
-      val docV2 = gpApi.details(packageName).getDocV2
-      val details = docV2.getDetails
-      val appDetails = details.getAppDetails
-      val agg = docV2.getAggregateRating
-
-      Item(
-        DocV2(
-          title   = docV2.getTitle,
-          creator = docV2.getCreator,
-          docid   = docV2.getDocid,
-          details = Details(
-            appDetails = AppDetails(
-              appCategory  = appDetails.getAppCategoryList.toList,
-              numDownloads = appDetails.getNumDownloads,
-              permission   = appDetails.getPermissionList.toList
-            )
-          ),
-          aggregateRating = AggregateRating(
-            ratingsCount     = agg.getRatingsCount,
-            oneStarRatings   = agg.getOneStarRatings,
-            twoStarRatings   = agg.getTwoStarRatings,
-            threeStarRatings = agg.getThreeStarRatings,
-            fourStarRatings  = agg.getFourStarRatings,
-            fiveStarRatings  = agg.getFiveStarRatings,
-            starRating       = agg.getStarRating
-          ),
-          image = List(), // TODO
-          offer = List()  // TODO
-        )
-      )
-    }
-  }
-
-  private[this] def packageRoute =
+  def googlePlayApiRoute(getPackage: (Token, AndroidId, Option[Localisation]) => Package => Xor[GooglePlayException, Item]) =
     pathPrefix("googleplay") {
       requestHeaders { (token, androidId, localisationOption) =>
         get {
           path("package" / Segment) { packageName => // TODO make this a package type
-            val gpApi = googlePlayApi(token, androidId, localisationOption)
-            val packageDetails = getPackage(gpApi, packageName)
+            val packageDetails = getPackage(token, androidId, localisationOption)(Package(packageName))
             complete(packageDetails)
           }
         } ~
@@ -124,10 +120,10 @@ trait NineCardsGooglePlayApi extends HttpService {
           path("packages" / "detailed") {
             entity(as[PackageListRequest]) { case PackageListRequest(packageNames) =>
 
-              val gpApi = googlePlayApi(token, androidId, localisationOption)
+              val packageFetcher = getPackage(token, androidId, localisationOption)
 
               val details = packageNames.foldLeft(PackageDetails(Nil, Nil)) { case (PackageDetails(errors, items), packageName) =>
-                val xOrPackage = getPackage(gpApi, packageName)
+                val xOrPackage = packageFetcher(Package(packageName))
                 // todo is it worth logging errors here?
                 xOrPackage.fold(_ => PackageDetails(packageName :: errors, items), p => PackageDetails(errors, p :: items))
               }

@@ -13,64 +13,109 @@ import io.circe.parser._
 import io.circe.generic.auto._
 import Domain._
 
+import cats.data.Xor
+import cats.syntax.option._
+import com.akdeniz.googleplaycrawler.GooglePlayException
+
+import org.scalacheck._
+import org.scalacheck.Prop._
+import org.scalacheck.Shapeless._
+import org.specs2.ScalaCheck
+import org.scalacheck.Gen._
+import org.scalacheck.Arbitrary._
+
 class NineCardsGooglePlayApiSpec
     extends Specification
+    with ScalaCheck
     with Specs2RouteTest {
 
   val requestHeaders = List(
-    RawHeader("X-Android-ID", "3D4D7FE45C813D3E"),
-    RawHeader("X-Google-Play-Token", "DQAAABQBAACJr1nBqQRTmbhS7yFG8NbWqkSXJchcJ5t8FEH-FNNtpk0cU-Xy8-nc_z4fuQV3Sw-INSFK_NuQnafoqNI06nHPD4yaqXVnQbonrVsokBKQnmkQ9SsD0jVZi8bUsC4ehd-w2tmEe7SZ_8vXhw_3f1iNnsrAqkpEvbPkFIo9oZeAq26us2dTo22Ttn3idGoua8Is_PO9EKzItDQD-0T9QXIDDl5otNMG5T4MS9vrbPOEhjorHqGfQJjT8Y10SK2QdgwwyIF2nCGZ6N-E-hbLjD0caXkY7ATpzhOUIJNnBitIs-h52E8JzgHysbYBK9cy6k6Im0WPyHvzXvrwsUK2RTwh-YBpFVSpBACmc89OZKnYE-VfgKHg9SSv1aNrBeEETQE"),
+    RawHeader("X-Android-ID", "androidId"),
+    RawHeader("X-Google-Play-Token", "googlePlayToken"),
     RawHeader("X-Android-Market-Localization", "es-ES")
   )
 
-  val knownPackages = List(
-    "com.google.android.googlequicksearchbox",
-    "uk.co.bbc.android.sportdomestic"
-  )
+  implicit val arbPackage: Arbitrary[Package] = Arbitrary(nonEmptyListOf(alphaNumChar).map(chars => Package(chars.mkString)))
 
-  val unknownPackage = "com.package.does.not.exist"
-
-  val allPackages = unknownPackage :: knownPackages
+  // TODO pull this out somewhere else
+  // A generator which returns a map of A->B, a list of As that are in the map, and a list of As that are not
+  def genPick[A, B](implicit arba: Arbitrary[A], arbb: Arbitrary[B]): Gen[(Map[A, B], List[A], List[A])] = for {
+    pairs <- arbitrary[Map[A, B]]
+    keys = pairs.keySet
+    validPicks <- someOf(keys)
+    anotherList <- listOf(arbitrary[A])
+    invalidPicks = anotherList.filterNot(i => keys.contains(i))
+  } yield (pairs, validPicks.toList, invalidPicks)
 
   "Nine Cards Google Play Api" should {
 
-    //TODO persist the response from Google Play, set up something to serve that
-    "give the package name for a known single Google Play Store app" in {
+    "give the package name for a known single Google Play Store app" in prop { (pkg: Package, item: Item) =>
+
+      def requestPackage(t: Token, id: AndroidId, lo: Option[Localisation]): Package => Xor[GooglePlayException, Item] = { p =>
+        if(p == pkg) {
+          Xor.right(item)
+        } else {
+          Xor.left(new GooglePlayException("Looking for package that does not exist"))
+        }
+      }
 
       val route = new NineCardsGooglePlayApi {
         override def actorRefFactory = system
-      }.googlePlayApiRoute
+      }.googlePlayApiRoute(requestPackage _)
 
-      Get("/googleplay/package/com.google.android.googlequicksearchbox") ~> addHeaders(requestHeaders) ~> route ~> check {
+      Get(s"/googleplay/package/${pkg.value}") ~> addHeaders(requestHeaders) ~> route ~> check {
         status must_== OK
         val response = responseAs[String]
-        decode[Item](response).fold(e => Some((e, response)), _ => None) must_== None // we only care about the failure
+        decode[Item](response) must_=== Xor.right(item)
       }
     }
 
-    "fail with an Internal Server Error when the package is not known" in {
+    "fail with an Internal Server Error when the package is not known" in prop { (unknownPackage: Package, wrongItem: Item) =>
+
+      def requestPackage(t: Token, id: AndroidId, lo: Option[Localisation]): Package => Xor[GooglePlayException, Item] = { p =>
+        if(p == unknownPackage) {
+          Xor.left(new GooglePlayException("Package does not exist"))
+        } else {
+          Xor.right(wrongItem)
+        }
+      }
 
       val route = new NineCardsGooglePlayApi {
         override def actorRefFactory = system
-      }.googlePlayApiRoute
+      }.googlePlayApiRoute(requestPackage _)
 
-      Get(s"/googleplay/package/$unknownPackage") ~> addHeaders(requestHeaders) ~> route ~> check {
-        status must_== InternalServerError
+      Get(s"/googleplay/package/${unknownPackage.value}") ~> addHeaders(requestHeaders) ~> route ~> check {
+        status must_=== InternalServerError
       }
     }
 
-    "give the package details for the known packages and highlight the errors" in {
+    "give the package details for the known packages and highlight the errors" in prop { (data: (Map[Package, Item], List[Package], List[Package])) =>
+
+      val (database, succs, errs) = data
+
+      val expectedResult = PackageDetails(
+        errors = errs.map(_.value),
+        items = succs.map(i => database(i))
+      )
+
+      def requestPackage(t: Token, id: AndroidId, lo: Option[Localisation]): Package => Xor[GooglePlayException, Item] = { p =>
+        database.get(p).toRightXor[GooglePlayException](new GooglePlayException("Package ${p.value} does not exist"))
+      }
 
       val route = new NineCardsGooglePlayApi {
         override def actorRefFactory = system
-      }.googlePlayApiRoute
+      }.googlePlayApiRoute(requestPackage _)
 
+      val allPackages = (succs ++ errs).map(_.value)
 
       Post("/googleplay/packages/detailed", PackageListRequest(allPackages).asJson.noSpaces) ~> addHeaders(requestHeaders) ~> route ~> check {
         status must_== OK
         val response = responseAs[String]
-        decode[PackageDetails](response).fold(e => Some((e, response)), _ => None) must_== None
+        val decoded = decode[PackageDetails](response).getOrElse(throw new RuntimeException(s"Unable to parse response [$response]"))
+
+        decoded.errors aka "Expected error items" must containTheSameElementsAs(expectedResult.errors)
+        decoded.items aka "Expected successful items" must containTheSameElementsAs(expectedResult.items)
       }
-    }
+    }.setGen(genPick[Package, Item])
   }
 }

@@ -12,7 +12,7 @@ object Versions {
   val scala = "2.11.7"
   val spray = "1.3.3"
   val cats = "0.4.0"
-  
+
   val googleplayCrawler = "0.3"
 
   resolvers += Resolver.sonatypeRepo("snapshots")
@@ -20,4 +20,5 @@ object Versions {
 
   // Test Libs
   val specs2 = "3.7"
+  val scalaCheckShapeless = "0.3.2-SNAPSHOT"
 }
