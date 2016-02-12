@@ -35,6 +35,7 @@ class NineCardsGooglePlayApiSpec
     RawHeader("X-Android-Market-Localization", "es-ES")
   )
 
+  // we want a slightly different generator to the one that would be automatically generated - no empty string.
   implicit val arbPackage: Arbitrary[Package] = Arbitrary(nonEmptyListOf(alphaNumChar).map(chars => Package(chars.mkString)))
 
   // TODO pull this out somewhere else
