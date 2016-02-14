@@ -8,7 +8,7 @@ Badge Coverage](https://api.codacy.com/project/badge/coverage/34b25607022243aeb4
 **Table of Contents**
 
 - [Summary](#Summary)
-- [Compile](#Compile)
+- [Prerequisites](#Prerequisites)
 - [Execute](#Execute)
 - [Database connection](#DatabaseConnection)
 - [Authentication](#authentication)
@@ -27,13 +27,19 @@ This backend app contains all our public work. It's splitted in 3 different modu
 * processes
 * services
 
-##Compile
+##Prerequisites
 
 To compile the project:
 
 * 	Install sbt
+
+          $ brew install sbt
+     	  
 * 	Install [postgress](##postgress)
 * 	Clone this GiHub project in your computer
+    	
+           $ git clone https://github.com/47deg/nine-cards-backend.git
+    
 *     [Connection database](##Databaseconnection)
 	
 ##Execute
@@ -119,6 +125,8 @@ Response
     	"deviceToken": "1111a-2222b-33c-4444d" 
      }
 
+   
+
 ##Postgress
 
 ###Installation:
@@ -163,7 +171,7 @@ Response
     
 
 ##License
-Copyright (C) 2012 47 Degrees, LLC Reactive, scalable software solutions. http://47deg.com hello@47deg.com
+Copyright (C) 2012 47 Degrees, LLC Reactive. http://47deg.com hello@47deg.com
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at
 
