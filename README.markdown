@@ -155,7 +155,7 @@ Response
 
         createdb ninecards
 
-5. Giving permissions:
+5. Grant permissions to the new user:
 
         GRANT ALL ON DATABASE ninecards TO ninecards_user;
 
