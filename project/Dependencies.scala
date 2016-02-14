@@ -21,6 +21,8 @@ trait Dependencies {
   val doobiePostgresql = "org.tpolecat" %% "doobie-contrib-postgresql" % Versions.doobie
   val doobieSpecs2 = "org.tpolecat" %% "doobie-contrib-specs2" % Versions.doobie
   val typesafeConfig = "com.typesafe" % "config" % Versions.typesafeConfig
+  val flywaydbCore = "org.flywaydb" % "flyway-core" % Versions.flywaydb
+  val flywaydbParent = "org.flywaydb" % "flyway-parent" % Versions.flywaydb
 
   val baseDepts = Seq(
     typesafeConfig,
@@ -54,5 +56,7 @@ trait Dependencies {
     doobieSpecs2 % "test",
     scalaz,
     scalazConcurrent,
-    sprayJson))
+    sprayJson,
+    flywaydbCore % "test",
+    flywaydbParent % "test"))
 }

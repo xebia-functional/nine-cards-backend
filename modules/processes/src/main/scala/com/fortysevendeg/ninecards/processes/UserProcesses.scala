@@ -18,15 +18,14 @@ import scalaz.Scalaz._
 class UserProcesses[F[_]](
   implicit userPersistenceServices: UserPersistenceServices,
   dbOps: DBOps[F]) {
-  def signUpUser(loginRequest: LoginRequest): Free[F, LoginResponse] =
-    {
+  def signUpUser(loginRequest: LoginRequest): Free[F, LoginResponse] = {
     userPersistenceServices.getUserByEmail(loginRequest.email) flatMap {
       case Some(user) =>
         signUpInstallation(loginRequest, user)
       case None =>
         for {
-          newUser <- userPersistenceServices.addUser(loginRequest.email, UUID.randomUUID.toString)
-          installation <- userPersistenceServices.createInstallation(
+          newUser <- userPersistenceServices.addUser[User](loginRequest.email, UUID.randomUUID.toString)
+          installation <- userPersistenceServices.createInstallation[Installation](
             userId = newUser.id,
             deviceToken = None,
             androidId = loginRequest.androidId)
@@ -39,9 +38,8 @@ class UserProcesses[F[_]](
       case Some(installation) =>
         (user, installation).point[ConnectionIO]
       case None =>
-        userPersistenceServices.createInstallation(user.id, None, request.androidId) map {
-          installation =>
-            (user, installation)
+        userPersistenceServices.createInstallation[Installation](user.id, None, request.androidId) map {
+          installation => (user, installation)
         }
     }
 

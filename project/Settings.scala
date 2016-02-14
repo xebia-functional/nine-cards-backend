@@ -26,7 +26,8 @@ trait Settings {
       Classpaths.typesafeReleases,
       Resolver.bintrayRepo("scalaz", "releases"),
       DefaultMavenRepository,
-      "Sonatype Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
+      "Sonatype Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
+      "Flyway" at "http://flywaydb.org/repo"
     ),
     doc in Compile <<= target.map(_ / "none")
   )
@@ -42,4 +43,7 @@ trait Settings {
     flywayPassword := databaseConfig.value.password
   )
 
+  lazy val serviceSettings = projectSettings ++ Seq(
+    unmanagedClasspath in Test += (baseDirectory in LocalProject("api")).value / "src/main/resources"
+  )
 }

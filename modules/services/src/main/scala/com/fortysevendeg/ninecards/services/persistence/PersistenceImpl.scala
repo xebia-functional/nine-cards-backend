@@ -5,7 +5,20 @@ import shapeless.HNil
 
 import scalaz.Foldable
 
-class PersistenceImpl {
+class PersistenceImpl(val supportsSelectForUpdate : Boolean = true) {
+
+  def generateQuery[K](sql: String)(implicit ev: Composite[K]): Query0[K] =
+    Query[HNil, K](sql).toQuery0(HNil)
+
+  def generateQuery[A, K](
+    sql: String,
+    values: A)(implicit ev: Composite[A], ev2: Composite[K]) =
+    Query[A, K](sql).toQuery0(values)
+
+  def generateUpdateWithGeneratedKeys[A, K](
+    sql: String,
+    values: A)(implicit ev: Composite[A], ev2: Composite[K]) =
+    Update[A](sql).toUpdate0(values)
 
   def fetchList[K](
     sql: String)(implicit ev: Composite[K]): ConnectionIO[List[K]] =
@@ -38,8 +51,12 @@ class PersistenceImpl {
   def updateWithGeneratedKeys[A, K](
     sql: String,
     fields: List[String],
-    values: A)(implicit ev: Composite[A], ev2: Composite[K]): ConnectionIO[K] =
-    Update[A](sql).withUniqueGeneratedKeys[K](fields: _*)(values)
+    values: A)(implicit ev: Composite[A], ev2: Composite[K]): ConnectionIO[K] = {
+    if(supportsSelectForUpdate)
+      Update[A](sql).withUniqueGeneratedKeys[K](fields: _*)(values)
+    else
+      Update[A](sql).withUniqueGeneratedKeys[K](List("id"): _*)(values)
+  }
 
   def updateMany[F[_], A](
     sql: String,
