@@ -13,13 +13,11 @@ import com.fortysevendeg.ninecards.services.persistence.{UserPersistenceServices
 import doobie.imports._
 
 import scala.language.higherKinds
-import scalaz.Scalaz._
 
 class UserProcesses[F[_]](
   implicit userPersistenceServices: UserPersistenceServices,
   dbOps: DBOps[F]) {
-  def signUpUser(loginRequest: LoginRequest): Free[F, LoginResponse] =
-    {
+  def signUpUser(loginRequest: LoginRequest): Free[F, LoginResponse] = {
     userPersistenceServices.getUserByEmail(loginRequest.email) flatMap {
       case Some(user) =>
         signUpInstallation(loginRequest, user)
@@ -37,7 +35,7 @@ class UserProcesses[F[_]](
   private def signUpInstallation(request: LoginRequest, user: User): ConnectionIO[(User, Installation)] =
     userPersistenceServices.getInstallationByUserAndAndroidId(user.id, request.androidId) flatMap {
       case Some(installation) =>
-        (user, installation).point[ConnectionIO]
+        (user, installation)
       case None =>
         userPersistenceServices.createInstallation(user.id, None, request.androidId) map {
           installation =>
@@ -50,6 +48,17 @@ class UserProcesses[F[_]](
       userId = request.userId,
       androidId = request.androidId,
       deviceToken = request.deviceToken).transact(transactor) map toUpdateInstallationResponse
+
+  def checkSessionToken(
+    sessionToken: String,
+    androidId: String): Free[F, Option[Long]] = {
+    userPersistenceServices.getUserBySessionToken(sessionToken) flatMap[Option[Long]] {
+      case Some(user) =>
+        userPersistenceServices.getInstallationByUserAndAndroidId(user.id, androidId).map(
+          installation => installation map (_ => user.id))
+      case None => None
+    }
+  }.transact(transactor)
 }
 
 object UserProcesses {

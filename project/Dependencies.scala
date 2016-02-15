@@ -13,6 +13,7 @@ trait Dependencies {
   val cats = "org.typelevel" %% "cats" % Versions.cats
   val specs2Core = "org.specs2" %% "specs2-core" % Versions.specs2
   val specs2Scalacheck = "org.specs2" %% "specs2-scalacheck" % Versions.specs2
+  val specs2Mockito = "org.specs2" %% "specs2-mock" % Versions.specs2
   val scalaz = "org.scalaz" %% "scalaz-core" % Versions.scalaz
   val scalazConcurrent = "org.scalaz" %% "scalaz-concurrent" % Versions.scalaz
   val jodaTime = "joda-time" % "joda-time" % Versions.jodaTime
@@ -21,10 +22,13 @@ trait Dependencies {
   val doobiePostgresql = "org.tpolecat" %% "doobie-contrib-postgresql" % Versions.doobie
   val doobieSpecs2 = "org.tpolecat" %% "doobie-contrib-specs2" % Versions.doobie
   val typesafeConfig = "com.typesafe" % "config" % Versions.typesafeConfig
+  val flywaydbCore = "org.flywaydb" % "flyway-core" % Versions.flywaydb
+  val flywaydbParent = "org.flywaydb" % "flyway-parent" % Versions.flywaydb
 
   val baseDepts = Seq(
     typesafeConfig,
     specs2Core % "test" exclude("org.scalaz", "*"),
+    specs2Mockito % "test",
     specs2Scalacheck % "test")
 
   val apiDeps = Seq(libraryDependencies ++= baseDepts ++ Seq(
@@ -35,7 +39,8 @@ trait Dependencies {
     scalaz,
     scalazConcurrent,
     akkaActor,
-    akkaTestKit % "test"))
+    akkaTestKit % "test",
+    cats % "test"))
 
   val commonDeps = Seq(libraryDependencies ++= baseDepts ++ Seq(
     scalaz,
@@ -54,5 +59,7 @@ trait Dependencies {
     doobieSpecs2 % "test",
     scalaz,
     scalazConcurrent,
-    sprayJson))
+    sprayJson,
+    flywaydbCore % "test",
+    flywaydbParent % "test"))
 }

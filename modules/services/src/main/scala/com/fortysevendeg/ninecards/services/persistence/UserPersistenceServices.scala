@@ -12,10 +12,13 @@ class UserPersistenceServices(implicit persistence: PersistenceImpl) {
     sessionToken: String) =
     persistence.updateWithGeneratedKeys[(String, String), User](UserQueries.insert, User.allFields, (email, sessionToken))
 
-
   def getUserByEmail(
     email: String): ConnectionIO[Option[User]] =
     persistence.fetchOption[String, User](UserQueries.getByEmail, email)
+
+  def getUserBySessionToken(
+    sessionToken: String): ConnectionIO[Option[User]] =
+    persistence.fetchOption[String, User](UserQueries.getBySessionToken, sessionToken)
 
   def createInstallation(
     userId: Long,

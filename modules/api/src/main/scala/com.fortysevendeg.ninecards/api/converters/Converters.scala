@@ -1,5 +1,6 @@
 package com.fortysevendeg.ninecards.api.converters
 
+import com.fortysevendeg.ninecards.api.NineCardsHeaders.Domain._
 import com.fortysevendeg.ninecards.api.messages.InstallationsMessages._
 import com.fortysevendeg.ninecards.api.messages.UserMessages._
 import com.fortysevendeg.ninecards.processes.messages.InstallationsMessages._
@@ -23,10 +24,10 @@ object Converters {
 
   implicit def toUpdateInstallationRequest(
     request: ApiUpdateInstallationRequest)(
-    implicit userId: Long, androidId: String): UpdateInstallationRequest =
+    implicit userId: UserId, androidId: AndroidId): UpdateInstallationRequest =
     UpdateInstallationRequest(
-      userId = userId,
-      androidId = androidId,
+      userId = userId.value,
+      androidId = androidId.value,
       deviceToken = request.deviceToken)
 
   implicit def toApiUpdateInstallationResponse(

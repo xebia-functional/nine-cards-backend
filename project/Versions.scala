@@ -7,6 +7,7 @@ object Versions {
   val akka = "2.3.12"
   val cats = "0.4.0"
   val doobie = "0.2.4-SNAPSHOT"
+  val flywaydb = "3.2.1"
   val jodaTime = "2.9.1"
   val scala = "2.11.7"
   val scalaz = "7.1.5"
