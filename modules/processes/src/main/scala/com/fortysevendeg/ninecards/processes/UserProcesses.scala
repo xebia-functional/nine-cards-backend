@@ -52,12 +52,13 @@ class UserProcesses[F[_]](
   def checkSessionToken(
     sessionToken: String,
     androidId: String): Free[F, Option[Long]] = {
-    userPersistenceServices.getUserBySessionToken(sessionToken) flatMap[Option[Long]] {
+    val result: ConnectionIO[Option[Long]] = userPersistenceServices.getUserBySessionToken(sessionToken) flatMap {
       case Some(user) =>
         userPersistenceServices.getInstallationByUserAndAndroidId(user.id, androidId).map(
           installation => installation map (_ => user.id))
-      case None => None
+      case _ => None
     }
+    result
   }.transact(transactor)
 }
 
