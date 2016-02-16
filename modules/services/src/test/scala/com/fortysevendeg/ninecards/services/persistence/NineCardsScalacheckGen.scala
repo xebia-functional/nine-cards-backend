@@ -28,9 +28,7 @@ trait NineCardsScalacheckGen {
     domain <- fixedLengthString(3)
   } yield s"$mailbox@$topLevelDomain.$domain"
 
-  val uuidGenerator: Gen[String] = for {
-    uuid <- Gen.uuid
-  } yield uuid.toString
+  val uuidGenerator: Gen[String] = Gen.uuid.map(_.toString)
 
   implicit def abAndroidId: Arbitrary[AndroidId] = Arbitrary(uuidGenerator.map(AndroidId.apply))
 
