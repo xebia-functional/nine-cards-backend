@@ -9,6 +9,9 @@ class InstallationsQueriesSpec
     with AnalysisSpec
     with DomainDatabaseContext {
 
+  val getById = persistenceImpl.generateQuery[Long, Installation](Installation.Queries.getById, 1)
+  check(getById)
+
   val getByUserAndAndroidId = persistenceImpl.generateQuery[(Long, String), Installation](Installation.Queries.getByUserAndAndroidId, (1, "111a-222b-33c-444d13"))
   check(getByUserAndAndroidId)
 

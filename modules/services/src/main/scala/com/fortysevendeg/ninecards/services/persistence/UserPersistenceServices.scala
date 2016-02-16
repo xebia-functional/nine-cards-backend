@@ -27,11 +27,15 @@ class UserPersistenceServices(implicit persistence: PersistenceImpl) {
     androidId: String): ConnectionIO[Option[Installation]] =
     persistence.fetchOption[(Long, String), Installation](InstallationQueries.getByUserAndAndroidId, (userId, androidId))
 
-  def updateInstallation(
+  def getInstallationById(
+    id: Long): ConnectionIO[Option[Installation]] =
+    persistence.fetchOption[(Long), Installation](InstallationQueries.getById, id)
+
+  def updateInstallation[K](
     userId: Long,
     deviceToken: Option[String],
-    androidId: String): ConnectionIO[Installation] =
-    persistence.updateWithGeneratedKeys[(Option[String], Long, String), Installation](InstallationQueries.updateDeviceToken, Installation.allFields, (deviceToken, userId, androidId))
+    androidId: String)(implicit ev: Composite[K]): ConnectionIO[K] =
+    persistence.updateWithGeneratedKeys[(Option[String], Long, String),K] (InstallationQueries.updateDeviceToken, Installation.allFields, (deviceToken, userId, androidId))
 
 }
 

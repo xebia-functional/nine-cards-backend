@@ -5,12 +5,21 @@ import org.specs2.ScalaCheck
 import doobie.imports._
 import org.specs2.mutable.Specification
 import org.scalacheck.{Arbitrary, Gen}
+import org.specs2.specification.BeforeEach
 
 
 class UserPersistenceImplSpec
   extends Specification
+    with BeforeEach
     with ScalaCheck
     with DomainDatabaseContext {
+
+  sequential
+
+  def before = {
+    flywaydb.clean()
+    flywaydb.migrate()
+  }
 
   val userGenerator: Gen[User] = for {
     id <- Gen.resultOf((s: Long) => (s))
@@ -28,21 +37,46 @@ class UserPersistenceImplSpec
 
   implicit val arbInstallation: Arbitrary[Installation] = Arbitrary(installationGenerator)
 
+
+  "addUser" should {
+    "new users can be created" in {
+      prop { (user: User) =>
+        val id: Long = userPersistenceServices.addUser[Long](user.email, user.sessionToken).transact(transactor).run
+        val storeUser = userPersistenceServices.getUserByEmail(user.email).transact(transactor).run
+        storeUser should beSome[User].which {
+          u => u == user.copy(id)
+        }
+      }
+    }
+  }
+
   "getUserByEmail" should {
-    "return a User if there is an element in the table that meets the criteria" in {
+    "users can be queried by their Email" in {
       prop { (user: User) =>
         val id: Long = userPersistenceServices.addUser[Long](user.email, user.sessionToken).transact(transactor).run
         val storeUser = userPersistenceServices.getUserByEmail(user.email).transact(transactor).run
         storeUser should beSome[User].which {
           user2 => user.email shouldEqual user2.email
         }
-
       }
     }
   }
 
-  "getInstallationById" should {
-    "return a Installation if there is an element in the table that meets the criteria" in {
+  "createInstallation" should {
+    "new installation can be created" in {
+      prop { (installation: Installation, user: User) =>
+        val userId: Long = userPersistenceServices.addUser[Long](user.email, user.sessionToken).transact(transactor).run
+        val id = userPersistenceServices.createInstallation[Long](userId, None, installation.androidId).transact(transactor).run
+        val storeInstallation = userPersistenceServices.getInstallationById(id = id).transact(transactor).run
+        storeInstallation should beSome[Installation].which {
+          install => install shouldEqual Installation(id= id, userId =userId, deviceToken = None,androidId = installation.androidId)
+        }
+      }
+    }
+  }
+
+  "getInstallationByUserAndAndroidId" should {
+    "installations can be queried by their userId and androidId" in {
       prop { (installation: Installation, user: User) =>
         val userId: Long = userPersistenceServices.addUser[Long](user.email, user.sessionToken).transact(transactor).run
         val id = userPersistenceServices.createInstallation[Long](userId, None, installation.androidId).transact(transactor).run
