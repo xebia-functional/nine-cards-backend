@@ -87,45 +87,8 @@ X-Android-Market-Localization : en-US
 
 ##Endpoints
 
-###Login
-Request
+You can download all the requests for the existing endpoints in the [Postman Collection](https://github.com/47deg/nine-cards-backend/assets/postman/NineCardsV2.json.postman_collection)
 
-```
-GET        /api/ninecards/login
-```
-
-    {
-        "email": "john@test.com",
-        "androidId": "1A2B3C4D5E6F",
-        "oauthToken": "F6E5D4C3B2A1"
-    }
-
-Response
-
-    {
-    	"sessionToken: "11111a-2222b-333c-44444d"
-    }
-
-###Update installation
-Request
-
-```
-PUT        /api/ninecards/installation
-```
-
-    {
-    	"deviceToken": "1111a-2222b-33c-4444d" 
-     }
-
-
-Response
-
-     { 
-    	"androidId": "1A2B3C4D5E6F", 
-    	"deviceToken": "1111a-2222b-33c-4444d" 
-     }
-
-   
 
 ##Postgress
 
