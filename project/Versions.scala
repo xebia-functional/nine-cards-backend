@@ -16,7 +16,7 @@ object Versions {
   val googleplayCrawler = "0.3"
 
   resolvers += Resolver.sonatypeRepo("snapshots")
-  val circe = "0.3.0-SNAPSHOT"
+  val circe = "0.3.0"
 
   // Test Libs
   val specs2 = "3.7"
