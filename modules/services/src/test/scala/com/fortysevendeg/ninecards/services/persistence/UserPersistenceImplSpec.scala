@@ -6,6 +6,7 @@ import doobie.imports._
 import org.specs2.mutable.Specification
 import org.scalacheck.{Arbitrary, Gen}
 import org.specs2.specification.BeforeEach
+import scalaz.std.list._
 
 
 class UserPersistenceImplSpec
@@ -124,5 +125,43 @@ class UserPersistenceImplSpec
           storeInstallation should beNone
       }
     }
+  }
+
+  "updateInstallation" should {
+    "installation can be updated" in {
+      prop { (installation: Installation, user: User) =>
+        val userId: Long = userPersistenceServices.addUser[Long](user.email, user.sessionToken).transact(transactor).run
+        println(userId)
+        val idInstall = userPersistenceServices.createInstallation[Long](userId, None, installation.androidId).transact(transactor).run
+        println(idInstall)
+        val install = userPersistenceServices.getInstallationById(idInstall).transact(transactor).run
+        println(install)
+
+        //        val result = userPersistenceServices.updateInstallation[Long](userId = userId, deviceToken = Option("1111a-2222b-33c-4444d"), androidId = installation.androidId).transact(transactor).run
+        //        println(result)
+
+
+        val values = List((Option("faljfda-kbasf"), userId, installation.androidId))
+        val result = persistenceImpl.updateMany[List, (Option[String], Long, String)](
+          sql = "update installations set devicetoken=? where userid=? and androidid=?",
+          values = values).transact(transactor).attemptRun
+        println(result)
+
+        //        val updateDeviceToken1 = "update installations set devicetoken=? where id =?"
+
+        //                val result = userPersistenceServices.updateInstallation[Long](userId = userId, deviceToken = Option("faljfda-kbasf"), androidId = installation.androidId).transact(transactor).run
+        //       val result: Long = persistenceImpl.updateWithGeneratedKeys[(Option[String], Long), Long](updateDeviceToken1,, (Option("faljfda-kbasf"), idInstall)).transact(transactor).run
+        //        println(result)
+        //        val storeInstallation = userPersistenceServices.getInstallationByUserAndAndroidId(userId = userId, androidId = installation.androidId).transact(transactor).run
+        //        println(storeInstallation)
+        //        storeInstallation should beSome[Installation].which {
+        //          install => install.deviceToken shouldEqual Option("faljfda-kbasf")
+        //        }
+
+        1 shouldEqual 1
+
+      }
+    }
+
   }
 }

@@ -7,7 +7,8 @@ CREATE TABLE Users (
 
 CREATE TABLE Installations (
   id serial NOT NULL PRIMARY KEY,
-  userId BIGINT NOT NULL REFERENCES Users(id),
+  userId BIGINT NOT NULL REFERENCES Users(id) ,
   deviceToken character varying(100),
-  androidId character varying(100) NOT NULL
+  androidId character varying(100) NOT NULL,
+  unique (userId, androidId)
 );

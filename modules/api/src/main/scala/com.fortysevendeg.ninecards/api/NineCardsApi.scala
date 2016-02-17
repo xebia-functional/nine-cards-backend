@@ -65,7 +65,7 @@ trait NineCardsApi
               entity(as[ApiUpdateInstallationRequest]) {
                 request =>
                   /* TODO: The userId should be fetched after authorizing the user through the sessionToken - Issue 266 */
-                  implicit val userId = 123456789l
+                  implicit val userId = 1l
                   implicit val deviceAndroidId = androidId
 
                   complete {
