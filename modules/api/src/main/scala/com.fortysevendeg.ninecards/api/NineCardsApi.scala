@@ -41,8 +41,7 @@ trait NineCardsApi
       appsApiRoute ~
       swaggerApiRoute
 
-  private[this] def userApiRoute(
-    implicit userProcesses: UserProcesses[NineCardsServices]) =
+  private[this] def userApiRoute(implicit userProcesses: UserProcesses[NineCardsServices]) =
     pathPrefix("login") {
       pathEndOrSingleSlash {
         requestLoginHeaders {
@@ -59,8 +58,7 @@ trait NineCardsApi
       }
     }
 
-  private[this] def installationsApiRoute(
-    implicit userProcesses: UserProcesses[NineCardsServices]) =
+  private[this] def installationsApiRoute(implicit userProcesses: UserProcesses[NineCardsServices]) =
     pathPrefix("installations") {
       pathEndOrSingleSlash {
         nineCardsAuthenticator.authenticateUser { (user, androidId) =>
@@ -79,8 +77,7 @@ trait NineCardsApi
       }
     }
 
-  private[this] def appsApiRoute(
-    implicit appProcesses: AppProcesses[NineCardsServices]) =
+  private[this] def appsApiRoute(implicit appProcesses: AppProcesses[NineCardsServices]) =
     pathPrefix("apps") {
       path("categorize") {
         get {
