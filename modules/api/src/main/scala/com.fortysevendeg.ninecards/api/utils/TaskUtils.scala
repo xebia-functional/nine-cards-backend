@@ -21,18 +21,18 @@ object TaskUtils {
     implicit m: ToResponseMarshaller[A]): ToResponseMarshaller[Task[A]] =
     ToResponseMarshaller[Task[A]] {
       (task, ctx) =>
-        task.runAsync {
+        Task.fork(task).runAsync {
           _.fold(
             left => ctx.handleError(left),
             right => m(right, ctx))
         }
     }
 
-  implicit def freeTaskMarshaller[S[_], M[_], A](
-    implicit int: S ~> Task,
+  implicit def freeTaskMarshaller[S[_], A](
+    implicit interpreters: S ~> Task,
     taskMarshaller: Lazy[ToResponseMarshaller[Task[A]]]): ToResponseMarshaller[Free[S, A]] =
     ToResponseMarshaller[Free[S, A]] {
       (free, ctx) =>
-        taskMarshaller.value(free.foldMap(int), ctx)
+        taskMarshaller.value(free.foldMap(interpreters), ctx)
     }
 }
