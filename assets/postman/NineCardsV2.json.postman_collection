@@ -1,0 +1,56 @@
+{
+	"id": "b43e9f50-85f6-ff88-214a-d01949e6de14",
+	"name": "NineCardsV2",
+	"description": "",
+	"order": [
+		"bbf77adc-263e-8471-d913-9c995b76bbc9",
+		"e35d4eee-3cd1-5d85-9de1-76687c1fefe5"
+	],
+	"folders": [],
+	"timestamp": 1450177688588,
+	"owner": 0,
+	"remoteLink": "",
+	"public": false,
+	"requests": [
+		{
+			"id": "bbf77adc-263e-8471-d913-9c995b76bbc9",
+			"headers": "X-Appsly-Application-Id: {{appid}}\nX-Appsly-REST-API-Key: {{appkey}}\nContent-Type: application/json\n",
+			"url": "http://{{baseurl}}/login",
+			"preRequestScript": "",
+			"pathVariables": {},
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": "",
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1455637990198,
+			"name": "/login",
+			"description": "Reports the health of the application.",
+			"collectionId": "b43e9f50-85f6-ff88-214a-d01949e6de14",
+			"responses": [],
+			"rawModeData": "{\n    \"email\": \"javielinux@gmail.com\",\n    \"oauthToken\":\"adsfa-adfa-asdf-asdf\",\n    \"androidId\":\"35a4df64a31adf3\"\n}"
+		},
+		{
+			"id": "e35d4eee-3cd1-5d85-9de1-76687c1fefe5",
+			"headers": "X-Appsly-Application-Id: {{appid}}\nX-Appsly-REST-API-Key: {{appkey}}\nContent-Type: application/json\nX-Appsly-Session-Token: {{token}}\nX-Android-ID: {{androidId}}\nX-Android-Market-Localization: {{location}}\n",
+			"url": "http://{{baseurl}}/installations",
+			"preRequestScript": "",
+			"pathVariables": {},
+			"method": "PUT",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": "",
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1455638086729,
+			"name": "Update installation",
+			"description": "Reports the health of the application.",
+			"collectionId": "b43e9f50-85f6-ff88-214a-d01949e6de14",
+			"responses": [],
+			"rawModeData": " { \n     \"deviceToken\": \"1111a-2222b-33c-4444d\" \n }"
+		}
+	]
+}
