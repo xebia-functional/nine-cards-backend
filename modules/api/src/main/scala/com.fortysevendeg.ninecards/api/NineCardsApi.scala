@@ -1,13 +1,13 @@
 package com.fortysevendeg.ninecards.api
 
 import akka.actor.Actor
-import com.fortysevendeg.ninecards.api.utils.FreeUtils._
-import com.fortysevendeg.ninecards.api.utils.TaskUtils._
 import com.fortysevendeg.ninecards.api.NineCardsApiHeaderCommons._
 import com.fortysevendeg.ninecards.api.NineCardsAuthenticator._
 import com.fortysevendeg.ninecards.api.converters.Converters._
 import com.fortysevendeg.ninecards.api.messages.InstallationsMessages._
 import com.fortysevendeg.ninecards.api.messages.UserMessages._
+import com.fortysevendeg.ninecards.api.utils.FreeUtils._
+import com.fortysevendeg.ninecards.api.utils.TaskUtils._
 import com.fortysevendeg.ninecards.processes.NineCardsServices.NineCardsServices
 import com.fortysevendeg.ninecards.processes.{AppProcesses, UserProcesses}
 import spray.httpx.SprayJsonSupport
@@ -44,8 +44,8 @@ trait NineCardsApi
   private[this] def userApiRoute(implicit userProcesses: UserProcesses[NineCardsServices]) =
     pathPrefix("login") {
       pathEndOrSingleSlash {
-        requestLoginHeaders {
-          (appId, apiKey) =>
+        requestLoginHeaders { (appId, apiKey) =>
+          nineCardsAuthenticator.authenticateLoginRequest {
             post {
               entity(as[ApiLoginRequest]) {
                 request =>
@@ -54,6 +54,7 @@ trait NineCardsApi
                   }
               }
             }
+          }
         }
       }
     }
