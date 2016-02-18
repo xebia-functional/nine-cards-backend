@@ -17,6 +17,7 @@ object User {
 
   object Queries {
     val getByEmail = "select * from users where email=?"
+    val getBySessionToken = "select * from users where sessiontoken=?"
     val insert = "insert into users(email,sessiontoken) values(?,?)"
   }
 

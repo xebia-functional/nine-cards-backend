@@ -47,6 +47,18 @@ class UserProcesses[F[_]](
     val result = userPersistenceServices.updateInstallation[Installation](userId = request.userId, androidId = request.androidId, deviceToken = request.deviceToken)
     result.transact(transactor) map toUpdateInstallationResponse
   }
+
+  def checkSessionToken(
+    sessionToken: String,
+    androidId: String): Free[F, Option[Long]] = {
+    val result: ConnectionIO[Option[Long]] = userPersistenceServices.getUserBySessionToken(sessionToken) flatMap {
+      case Some(user) =>
+        userPersistenceServices.getInstallationByUserAndAndroidId(user.id, androidId).map(
+          installation => installation map (_ => user.id))
+      case _ => None
+    }
+    result
+  }.transact(transactor)
 }
 
 object UserProcesses {
