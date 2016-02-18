@@ -1,4 +1,4 @@
-package com.fortysevendeg.ninecards.api
+package com.fortysevendeg.ninecards.api // todo wrong package
 
 import spray.httpx.marshalling.Marshaller
 import spray.httpx.marshalling.ToResponseMarshaller
@@ -20,6 +20,8 @@ import org.scalacheck.Prop._
 import org.scalacheck.Shapeless._
 import org.scalacheck.Gen._
 import org.scalacheck.Arbitrary._
+
+import com.fortysevendeg.ninecards.googleplay.service.GooglePlayService._
 
 trait ScalaCheckRouteTest extends RouteTest with TestFrameworkInterface {
   def failTest(msg: String): Nothing = throw new RuntimeException(msg)
@@ -48,7 +50,7 @@ object NineCardsGooglePlayApiProperties extends Properties("Nine Cards Google Pl
 
   property("returns the correct package name for a Google Play Store app") = forAll { (pkg: Package, item: Item) =>
 
-    def requestPackage(t: Token, id: AndroidId, lo: Option[Localisation]): Package => Xor[GooglePlayException, Item] = { p =>
+    def requestPackage(params: GoogleAuthParams): Package => Xor[GooglePlayException, Item] = { p =>
       if(p == pkg) {
         Xor.right(item)
       } else {
@@ -69,7 +71,7 @@ object NineCardsGooglePlayApiProperties extends Properties("Nine Cards Google Pl
 
   property("fails with an Internal Server Error when the package is not known") = forAll {(unknownPackage: Package, wrongItem: Item) =>
 
-    def requestPackage(t: Token, id: AndroidId, lo: Option[Localisation]): Package => Xor[GooglePlayException, Item] = { p =>
+    def requestPackage(params: GoogleAuthParams): Package => Xor[GooglePlayException, Item] = { p =>
       if(p == unknownPackage) {
         Xor.left(new GooglePlayException("Package does not exist"))
       } else {
@@ -94,7 +96,7 @@ object NineCardsGooglePlayApiProperties extends Properties("Nine Cards Google Pl
     val errors = errs.map(_.value).toSet
     val items = succs.map(i => database(i)).toSet
 
-    def requestPackage(t: Token, id: AndroidId, lo: Option[Localisation]): Package => Xor[GooglePlayException, Item] = { p =>
+    def requestPackage(params: GoogleAuthParams): Package => Xor[GooglePlayException, Item] = { p =>
       database.get(p).toRightXor[GooglePlayException](new GooglePlayException("Package ${p.value} does not exist"))
     }
 
