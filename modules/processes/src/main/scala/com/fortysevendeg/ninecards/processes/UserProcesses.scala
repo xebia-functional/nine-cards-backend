@@ -13,6 +13,7 @@ import com.fortysevendeg.ninecards.services.persistence.{UserPersistenceServices
 import doobie.imports._
 
 import scala.language.higherKinds
+import scalaz.Scalaz._
 
 class UserProcesses[F[_]](
   implicit userPersistenceServices: UserPersistenceServices,
@@ -23,8 +24,8 @@ class UserProcesses[F[_]](
         signUpInstallation(loginRequest, user)
       case None =>
         for {
-          newUser <- userPersistenceServices.addUser(loginRequest.email, UUID.randomUUID.toString)
-          installation <- userPersistenceServices.createInstallation(
+          newUser <- userPersistenceServices.addUser[User](loginRequest.email, UUID.randomUUID.toString)
+          installation <- userPersistenceServices.createInstallation[Installation](
             userId = newUser.id,
             deviceToken = None,
             androidId = loginRequest.androidId)
@@ -35,19 +36,17 @@ class UserProcesses[F[_]](
   private def signUpInstallation(request: LoginRequest, user: User): ConnectionIO[(User, Installation)] =
     userPersistenceServices.getInstallationByUserAndAndroidId(user.id, request.androidId) flatMap {
       case Some(installation) =>
-        (user, installation)
+        (user, installation).point[ConnectionIO]
       case None =>
-        userPersistenceServices.createInstallation(user.id, None, request.androidId) map {
-          installation =>
-            (user, installation)
+        userPersistenceServices.createInstallation[Installation](user.id, None, request.androidId) map {
+          installation => (user, installation)
         }
     }
 
-  def updateInstallation(request: UpdateInstallationRequest): Free[F, UpdateInstallationResponse] =
-    userPersistenceServices.updateInstallation(
-      userId = request.userId,
-      androidId = request.androidId,
-      deviceToken = request.deviceToken).transact(transactor) map toUpdateInstallationResponse
+  def updateInstallation(request: UpdateInstallationRequest)(implicit ev:Composite[Installation]): Free[F, UpdateInstallationResponse] = {
+    val result = userPersistenceServices.updateInstallation[Installation](userId = request.userId, androidId = request.androidId, deviceToken = request.deviceToken)
+    result.transact(transactor) map toUpdateInstallationResponse
+  }
 
   def checkSessionToken(
     sessionToken: String,

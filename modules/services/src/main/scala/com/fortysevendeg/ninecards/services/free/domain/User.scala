@@ -28,6 +28,7 @@ object Installation {
 
   object Queries {
     val getByUserAndAndroidId = "select * from installations where userid=? and androidid=?"
+    val getById = "select * from installations where id=?"
     val insert = "insert into installations(userid,devicetoken,androidid) values(?,?,?)"
     val updateDeviceToken = "update installations set devicetoken=? where userid=? and androidid=?"
   }
