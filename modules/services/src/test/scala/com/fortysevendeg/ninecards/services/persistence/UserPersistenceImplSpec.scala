@@ -1,11 +1,13 @@
 package com.fortysevendeg.ninecards.services.persistence
 
 import com.fortysevendeg.ninecards.services.free.domain.{Installation, User}
+import com.fortysevendeg.ninecards.services.persistence.NineCardsGenEntities.{SessionToken, Email, AndroidId}
 import org.specs2.ScalaCheck
 import doobie.imports._
+import org.specs2.matcher.DisjunctionMatchers
+import org.specs2.specification.BeforeEach
 import org.specs2.mutable.Specification
 import org.scalacheck.{Arbitrary, Gen}
-import org.specs2.specification.BeforeEach
 import scalaz.std.list._
 
 
@@ -13,7 +15,9 @@ class UserPersistenceImplSpec
   extends Specification
     with BeforeEach
     with ScalaCheck
-    with DomainDatabaseContext {
+    with DomainDatabaseContext
+    with DisjunctionMatchers
+    with NineCardsScalacheckGen {
 
   sequential
 
@@ -117,49 +121,20 @@ class UserPersistenceImplSpec
     }
   }
 
-  "getInstallationByUserAndAndroidId" should {
-    "return None if the table is empty" in {
-      prop {
-        (installation: Installation, user: User) =>
-          val storeInstallation = userPersistenceServices.getInstallationByUserAndAndroidId(userId = user.id, androidId = installation.androidId).transact(transactor).run
-          storeInstallation should beNone
-      }
-    }
-  }
 
   "updateInstallation" should {
     "installation can be updated" in {
-      prop { (installation: Installation, user: User) =>
-        val userId: Long = userPersistenceServices.addUser[Long](user.email, user.sessionToken).transact(transactor).run
-        println(userId)
-        val idInstall = userPersistenceServices.createInstallation[Long](userId, None, installation.androidId).transact(transactor).run
-        println(idInstall)
-        val install = userPersistenceServices.getInstallationById(idInstall).transact(transactor).run
-        println(install)
+      prop { (androidId: AndroidId, email: Email, sessionToken: SessionToken) =>
+        val userId: Long = userPersistenceServices.addUser[Long](email.value, sessionToken.value).transact(transactor).run
+        userPersistenceServices.createInstallation[Long](userId, None, androidId.value).transact(transactor).run
 
-        //        val result = userPersistenceServices.updateInstallation[Long](userId = userId, deviceToken = Option("1111a-2222b-33c-4444d"), androidId = installation.androidId).transact(transactor).run
-        //        println(result)
-
-
-        val values = List((Option("faljfda-kbasf"), userId, installation.androidId))
-        val result = persistenceImpl.updateMany[List, (Option[String], Long, String)](
-          sql = "update installations set devicetoken=? where userid=? and androidid=?",
-          values = values).transact(transactor).attemptRun
-        println(result)
-
-        //        val updateDeviceToken1 = "update installations set devicetoken=? where id =?"
-
-        //                val result = userPersistenceServices.updateInstallation[Long](userId = userId, deviceToken = Option("faljfda-kbasf"), androidId = installation.androidId).transact(transactor).run
-        //       val result: Long = persistenceImpl.updateWithGeneratedKeys[(Option[String], Long), Long](updateDeviceToken1,, (Option("faljfda-kbasf"), idInstall)).transact(transactor).run
-        //        println(result)
-        //        val storeInstallation = userPersistenceServices.getInstallationByUserAndAndroidId(userId = userId, androidId = installation.androidId).transact(transactor).run
-        //        println(storeInstallation)
-        //        storeInstallation should beSome[Installation].which {
-        //          install => install.deviceToken shouldEqual Option("faljfda-kbasf")
-        //        }
-
-        1 shouldEqual 1
-
+        val values = List((Option("faljfda-kbasf"), userId, androidId.value))
+        persistenceImpl.updateMany[List, (Option[String], Long, String)](
+          sql = Installation.Queries.updateDeviceToken,
+          values = values).transact(transactor).attemptRun must be_\/-[Int].which {
+          affectedRows =>
+            affectedRows mustEqual values.size
+        }
       }
     }
 
