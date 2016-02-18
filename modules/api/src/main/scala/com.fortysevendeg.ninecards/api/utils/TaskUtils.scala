@@ -21,7 +21,7 @@ object TaskUtils {
     implicit m: ToResponseMarshaller[A]): ToResponseMarshaller[Task[A]] =
     ToResponseMarshaller[Task[A]] {
       (task, ctx) =>
-        Task.fork(task).runAsync {
+        task.runAsync {
           _.fold(
             left => ctx.handleError(left),
             right => m(right, ctx))
