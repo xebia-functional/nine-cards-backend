@@ -45,7 +45,7 @@ trait NineCardsApi
     pathPrefix("login") {
       pathEndOrSingleSlash {
         requestLoginHeaders { (appId, apiKey) =>
-          nineCardsAuthenticator.authenticateLoginRequest { _ =>
+          nineCardsAuthenticator.authenticateLoginRequest {
             post {
               entity(as[ApiLoginRequest]) {
                 request =>

@@ -18,10 +18,8 @@ object NineCardsHeaders {
     case class MarketLocalization(value: String) extends AnyVal
     case class SessionToken(value: String) extends AnyVal
     case class UserId(value: Long) extends AnyVal
-    case class IsValidEmail(value: Boolean) extends AnyVal
   }
 
-  type LoginInfo = IsValidEmail :: HNil
   type UserInfo = UserId :: AndroidId :: HNil
   type ApiInfo = ApplicationId :: HNil
 }

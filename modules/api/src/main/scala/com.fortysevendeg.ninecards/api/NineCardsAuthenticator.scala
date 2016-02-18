@@ -11,7 +11,7 @@ import shapeless._
 import spray.routing.authentication._
 import spray.routing.directives.FutureDirectives._
 import spray.routing.directives._
-import spray.routing.{AuthenticationFailedRejection, Directive}
+import spray.routing.{AuthenticationFailedRejection, Directive, Directive0}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.language.implicitConversions
@@ -30,10 +30,16 @@ class NineCardsAuthenticator(
     auth: ⇒ Future[Authentication[T]]): AuthMagnet[T] =
     new AuthMagnet(onSuccess(auth))
 
-  def authenticateLoginRequest: Directive[LoginInfo] = for {
-    request <- entity(as[ApiLoginRequest])
-    isValid <- authenticate(validateLoginRequest(request.email, request.oauthToken))
-  } yield IsValidEmail(isValid) :: HNil
+  val rejectionByCredentialsRejected = AuthenticationFailedRejection(
+    cause = AuthenticationFailedRejection.CredentialsRejected,
+    challengeHeaders = Nil)
+
+  def authenticateLoginRequest: Directive0 = {
+    for {
+      request <- entity(as[ApiLoginRequest])
+      isValid <- authenticate(validateLoginRequest(request.email, request.oauthToken))
+    } yield isValid
+  } flatMap { _ => Directive.Empty }
 
   /* TODO: We are only checking if the provided email and oauth token are empty. We should
    * research how to validate the Google Oauth token. See more in:
@@ -45,10 +51,7 @@ class NineCardsAuthenticator(
     Future {
       (email, oauthToken) match {
         case (e, o) if e.isEmpty || o.isEmpty =>
-          Left(
-            AuthenticationFailedRejection(
-              cause = AuthenticationFailedRejection.CredentialsRejected,
-              challengeHeaders = Nil))
+          Left(rejectionByCredentialsRejected)
         case _ => Right(true)
       }
     }
@@ -67,16 +70,11 @@ class NineCardsAuthenticator(
     Future {
       result.attemptRun match {
         case -\/(e) =>
-          Left(AuthenticationFailedRejection(
-            cause = AuthenticationFailedRejection.CredentialsRejected,
-            challengeHeaders = Nil))
+          Left(rejectionByCredentialsRejected)
         case \/-(value) => value match {
           case Some(v) => Right(v)
           case None =>
-            Left(
-              AuthenticationFailedRejection(
-                cause = AuthenticationFailedRejection.CredentialsRejected,
-                challengeHeaders = Nil))
+            Left(rejectionByCredentialsRejected)
         }
       }
     }
