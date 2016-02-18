@@ -29,22 +29,6 @@ class UserPersistenceImplSpec
     flywaydb.migrate()
   }
 
-  val userGenerator: Gen[User] = for {
-    id <- Gen.resultOf((s: Long) => (s))
-    email <- Gen.uuid
-    sessionToken <- Gen.uuid
-  } yield User(id = id, email = email.toString, sessionToken = sessionToken.toString, banned = false)
-
-  implicit val arbUser: Arbitrary[User] = Arbitrary(userGenerator)
-
-  val installationGenerator: Gen[Installation] = for {
-    id <- Gen.resultOf((s: Long) => (s))
-    userId <- Gen.resultOf((s: Long) => (s))
-    androidId <- Gen.uuid
-  } yield Installation(id = id, userId = userId, deviceToken = None, androidId = androidId.toString)
-
-  implicit val arbInstallation: Arbitrary[Installation] = Arbitrary(installationGenerator)
-
   "addUser" should {
     "new users can be created" in {
       prop { (email: Email, sessionToken: SessionToken) =>
