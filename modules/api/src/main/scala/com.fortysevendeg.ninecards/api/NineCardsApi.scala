@@ -1,21 +1,20 @@
 package com.fortysevendeg.ninecards.api
 
 import akka.actor.Actor
-import com.fortysevendeg.ninecards.api.FreeUtils._
+import com.fortysevendeg.ninecards.api.utils.FreeUtils._
+import com.fortysevendeg.ninecards.api.utils.TaskUtils._
 import com.fortysevendeg.ninecards.api.NineCardsApiHeaderCommons._
 import com.fortysevendeg.ninecards.api.NineCardsAuthenticator._
 import com.fortysevendeg.ninecards.api.converters.Converters._
 import com.fortysevendeg.ninecards.api.messages.InstallationsMessages._
 import com.fortysevendeg.ninecards.api.messages.UserMessages._
 import com.fortysevendeg.ninecards.processes.NineCardsServices.NineCardsServices
-import com.fortysevendeg.ninecards.processes.domain._
 import com.fortysevendeg.ninecards.processes.{AppProcesses, UserProcesses}
 import spray.httpx.SprayJsonSupport
 import spray.routing._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.language.{higherKinds, implicitConversions}
-import scalaz.concurrent.Task
 
 class NineCardsApiActor
   extends Actor
@@ -34,7 +33,9 @@ trait NineCardsApi
     with SprayJsonSupport
     with JsonFormats {
 
-  def nineCardsApiRoute(implicit appProcesses: AppProcesses[NineCardsServices], userProcesses: UserProcesses[NineCardsServices]): Route =
+  def nineCardsApiRoute[T](
+    implicit appProcesses: AppProcesses[NineCardsServices],
+    userProcesses: UserProcesses[NineCardsServices]): Route =
     userApiRoute ~
       installationsApiRoute ~
       appsApiRoute ~
@@ -49,8 +50,7 @@ trait NineCardsApi
               entity(as[ApiLoginRequest]) {
                 request =>
                   complete {
-                    val result: Task[ApiLoginResponse] = userProcesses.signUpUser(request) map toApiLoginResponse
-                    result
+                    userProcesses.signUpUser(request) map toApiLoginResponse
                   }
               }
             }
@@ -69,9 +69,7 @@ trait NineCardsApi
                 implicit val userId = user
 
                 complete {
-                  val result: Task[ApiUpdateInstallationResponse] =
-                    userProcesses.updateInstallation(request) map toApiUpdateInstallationResponse
-                  result
+                  userProcesses.updateInstallation(request) map toApiUpdateInstallationResponse
                 }
             }
           }
@@ -84,8 +82,7 @@ trait NineCardsApi
       path("categorize") {
         get {
           complete {
-            val result: Task[Seq[GooglePlayApp]] = appProcesses.categorizeApps(Seq("com.fortysevendeg.ninecards"))
-            result
+            appProcesses.categorizeApps(Seq("com.fortysevendeg.ninecards"))
           }
         }
       }

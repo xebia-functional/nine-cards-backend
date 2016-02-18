@@ -1,6 +1,7 @@
 package com.fortysevendeg.ninecards.api
 
-import com.fortysevendeg.ninecards.api.FreeUtils._
+import com.fortysevendeg.ninecards.api.utils.FreeUtils._
+import com.fortysevendeg.ninecards.api.utils.TaskUtils._
 import com.fortysevendeg.ninecards.api.NineCardsHeaders.Domain._
 import com.fortysevendeg.ninecards.api.NineCardsHeaders._
 import com.fortysevendeg.ninecards.processes.NineCardsServices.NineCardsServices
