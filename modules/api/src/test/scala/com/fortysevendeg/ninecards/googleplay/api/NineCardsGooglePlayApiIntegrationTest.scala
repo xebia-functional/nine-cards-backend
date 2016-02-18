@@ -31,9 +31,7 @@ class NineCardsGooglePlayApiIntegrationTest extends Specification with Specs2Rou
 
 
   val validPackages = List("air.fisherprice.com.shapesAndColors", "com.rockstargames.gtalcs", "com.ted.android")
-
   val invalidPackages = List("com.package.does.not.exist", "com.another.invalid.package")
-
   val allPackages = validPackages.toList ++ invalidPackages
 
   "Calling a propertly wired NineCardsGoogleApi class" should {

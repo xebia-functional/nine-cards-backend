@@ -36,10 +36,10 @@ object Domain {
   case class PackageDetails(errors: List[String], items: List[Item])
 
   case class Item(docV2: DocV2)
-  case class DocV2(title: String, creator: String, docid: String, details: Details, aggregateRating: AggregateRating/*, image: List[Image], offer: List[Offer]*/)
+  case class DocV2(title: String, creator: String, docid: String, details: Details, aggregateRating: AggregateRating, image: List[Image], offer: List[Offer])
   case class Details(appDetails: AppDetails)
   case class AppDetails(appCategory: List[String], numDownloads: String, permission: List[String])
-  case class AggregateRating(ratingsCount: Long, /* oneStarRatings: Long, twoStarRatings: Long, threeStarRatings: Long, fourStarRatings: Long, fiveStarRatings: Long,*/ starRating: Double) // commentcount?
+  case class AggregateRating(ratingsCount: Long, oneStarRatings: Long, twoStarRatings: Long, threeStarRatings: Long, fourStarRatings: Long, fiveStarRatings: Long, starRating: Double) // commentcount?
   case class Image(imageType: Long, imageUrl: String) // todo check which fields are necessary here
   case class Offer(offerType: Long) // todo check which fields are necessary here
 }
@@ -74,16 +74,16 @@ object Service {
             ),
             aggregateRating = AggregateRating(
               ratingsCount     = agg.getRatingsCount,
-/*              oneStarRatings   = agg.getOneStarRatings,
+              oneStarRatings   = agg.getOneStarRatings,
               twoStarRatings   = agg.getTwoStarRatings,
               threeStarRatings = agg.getThreeStarRatings,
               fourStarRatings  = agg.getFourStarRatings,
               fiveStarRatings  = agg.getFiveStarRatings,
- */            starRating       = agg.getStarRating
-            )/*,
+              starRating       = agg.getStarRating
+            ),
             image = List(), // TODO
             offer = List()  // TODO
-              */)
+          )
         )
       }
     }
