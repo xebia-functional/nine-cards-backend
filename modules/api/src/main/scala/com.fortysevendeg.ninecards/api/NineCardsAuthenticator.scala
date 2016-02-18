@@ -37,8 +37,8 @@ class NineCardsAuthenticator(
   def authenticateLoginRequest: Directive0 = {
     for {
       request <- entity(as[ApiLoginRequest])
-      isValid <- authenticate(validateLoginRequest(request.email, request.oauthToken))
-    } yield isValid
+      _ <- authenticate(validateLoginRequest(request.email, request.oauthToken))
+    } yield ()
   } flatMap { _ => Directive.Empty }
 
   /* TODO: We are only checking if the provided email and oauth token are empty. We should
