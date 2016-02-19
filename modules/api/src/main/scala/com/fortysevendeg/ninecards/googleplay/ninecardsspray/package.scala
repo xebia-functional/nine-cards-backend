@@ -33,11 +33,11 @@ package object ninecardsspray {
     * @param m a ToResponseMarshaller for the successful type. It is usually enough to have an implicit marshaller for that type. See circeJsonMarshaller.
     * @return a ToResponseMarshaller capable of handling error cases automatically.
     */
-  implicit def exceptionalXorMarshaller[A, E <: Exception](implicit m: ToResponseMarshaller[A]): ToResponseMarshaller[Xor[E, A]] = {
+/*  implicit def exceptionalXorMarshaller[A, E <: Exception](implicit m: ToResponseMarshaller[A]): ToResponseMarshaller[Xor[E, A]] = {
     ToResponseMarshaller[Xor[E, A]] { (v, ctx) =>
       v.fold({ e =>
         ctx.marshalTo(HttpResponse(status = StatusCodes.InternalServerError, entity = HttpEntity(e.toString)))
       }, m(_, ctx))
     }
   }
-}
+ */}

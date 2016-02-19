@@ -8,7 +8,7 @@ import com.akdeniz.googleplaycrawler.GooglePlayAPI
 import scala.collection.JavaConversions._
 import org.apache.http.impl.client.DefaultHttpClient
 
-object GooglePlayCrawler extends GooglePlayService {
+object GooglePlayCrawler {
 
   lazy val httpClient = new DefaultHttpClient(GooglePlayAPI.getConnectionManager)
 

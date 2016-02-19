@@ -10,7 +10,7 @@ import io.circe.generic.auto._
 import cats.data.Xor
 import Domain._
 
-import com.fortysevendeg.ninecards.googleplay.service.GooglePlayCrawler
+import com.fortysevendeg.ninecards.googleplay.service.Http4sGooglePlayService
 
 class NineCardsGooglePlayApiIntegrationTest extends Specification with Specs2RouteTest {
 
@@ -29,7 +29,7 @@ class NineCardsGooglePlayApiIntegrationTest extends Specification with Specs2Rou
 
   val route = new NineCardsGooglePlayApi {
     override def actorRefFactory = system
-  }.googlePlayApiRoute(GooglePlayCrawler.packageRequest _)
+  }.googlePlayApiRoute(Http4sGooglePlayService.packageRequest _)
 
 
   val validPackages = List("air.fisherprice.com.shapesAndColors", "com.rockstargames.gtalcs", "com.ted.android")

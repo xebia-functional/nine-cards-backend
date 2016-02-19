@@ -14,6 +14,9 @@ object GooglePlayService {
   type GoogleAuthParams = (Token, AndroidId, Option[Localization])
 }
 
+/*
 trait GooglePlayService {
   def packageRequest(params: GooglePlayService.GoogleAuthParams): Package => Xor[GooglePlayException, Item]
 }
+
+ */

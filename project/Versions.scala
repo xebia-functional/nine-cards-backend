@@ -15,6 +15,9 @@ object Versions {
 
   val googleplayCrawler = "0.3"
 
+//  resolvers += "Scalaz Bintray Repo" at "http://dl.bintray.com/scalaz/releases"
+  val http4sClient = "0.12.1"
+
   resolvers += Resolver.sonatypeRepo("snapshots")
   val circe = "0.3.0"
 
