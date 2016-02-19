@@ -19,3 +19,4 @@ trait NoAutoHtmlLinkFragments extends org.specs2.specification.dsl.ReferenceDsl 
   override def linkFragment(alias: String) = super.linkFragment(alias)
   override def seeFragment(alias: String) = super.seeFragment(alias)
 }
+
