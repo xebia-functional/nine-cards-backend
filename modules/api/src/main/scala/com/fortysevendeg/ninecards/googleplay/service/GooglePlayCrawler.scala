@@ -9,12 +9,16 @@ import scala.collection.JavaConversions._
 import org.apache.http.impl.client.DefaultHttpClient
 
 object GooglePlayCrawler extends GooglePlayService {
+
+  lazy val httpClient = new DefaultHttpClient(GooglePlayAPI.getConnectionManager)
+
+
   def packageRequest(params: GoogleAuthParams): Package => Xor[GooglePlayException, Item] = {
     val (t, id, lo) = params
     val gpApi = new GooglePlayAPI()
     gpApi.setToken(t.value)
     gpApi.setAndroidID(id.value)
-    gpApi.setClient(new DefaultHttpClient)
+    gpApi.setClient(httpClient)
     lo.foreach(l => gpApi.setLocalization(l.value))
 
     { pkg =>
