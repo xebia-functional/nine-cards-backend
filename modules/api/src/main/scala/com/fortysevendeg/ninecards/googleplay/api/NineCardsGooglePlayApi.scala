@@ -45,11 +45,14 @@ object Domain {
 }
 
 object Service {
+
+  lazy val httpClient = new DefaultHttpClient(GooglePlayAPI.getConnectionManager)
+
   def callGooglePlayApi(t: Token, id: AndroidId, lo: Option[Localisation]): Package => Xor[GooglePlayException, Item] = {
     val gpApi = new GooglePlayAPI()
     gpApi.setToken(t.value)
     gpApi.setAndroidID(id.value)
-    gpApi.setClient(new DefaultHttpClient)
+    gpApi.setClient(httpClient)
     lo.foreach(l => gpApi.setLocalization(l.value))
 
     { pkg =>
