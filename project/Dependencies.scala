@@ -9,6 +9,8 @@ trait Dependencies {
   val sprayTestKit = "io.spray" %% "spray-testkit" % Versions.spray % "test" exclude("org.specs2", "specs2_2.11")
   val specs2Core = "org.specs2" %% "specs2-core" % Versions.specs2 % "test"
 
+  val specs2MatcherExtra = "org.specs2" %% "specs2-matcher-extra" % Versions.specs2 % "test"
+
   val specs2ScalaCheck = "org.specs2" %% "specs2-scalacheck" % Versions.specs2 % "test"
 
   // todo work out how best to manage these names!
@@ -40,5 +42,6 @@ trait Dependencies {
     circeGeneric,
     circeParser,
     scalaCheckShapeless,
-    specs2ScalaCheck))
+    specs2ScalaCheck,
+    specs2MatcherExtra))
 }
