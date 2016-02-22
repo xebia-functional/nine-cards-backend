@@ -1,6 +1,6 @@
 package com.fortysevendeg.ninecards.googleplay.service
 
-import com.fortysevendeg.ninecards.api.Domain._
+import com.fortysevendeg.ninecards.googleplay.api.Domain._
 import com.akdeniz.googleplaycrawler.GooglePlayException
 import cats.data.Xor
 import GooglePlayService._

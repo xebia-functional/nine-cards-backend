@@ -1,4 +1,4 @@
-package com.fortysevendeg.ninecards.api
+package com.fortysevendeg.ninecards.googleplay.api
 
 import org.specs2.mutable.Specification
 import spray.testkit.Specs2RouteTest

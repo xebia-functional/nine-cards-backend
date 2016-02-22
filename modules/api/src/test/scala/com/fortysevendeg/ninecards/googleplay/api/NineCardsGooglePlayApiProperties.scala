@@ -1,4 +1,4 @@
-package com.fortysevendeg.ninecards.api // todo wrong package
+package com.fortysevendeg.ninecards.googleplay.api
 
 import spray.httpx.marshalling.Marshaller
 import spray.httpx.marshalling.ToResponseMarshaller

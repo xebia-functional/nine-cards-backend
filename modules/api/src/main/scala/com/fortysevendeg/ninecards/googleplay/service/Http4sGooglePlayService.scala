@@ -3,7 +3,7 @@ package com.fortysevendeg.ninecards.googleplay.service
 import org.http4s.Http4s._
 import scalaz.concurrent.Task
 import GooglePlayService._
-import com.fortysevendeg.ninecards.api.Domain._
+import com.fortysevendeg.ninecards.googleplay.api.Domain._
 
 object Http4sGooglePlayService {
 

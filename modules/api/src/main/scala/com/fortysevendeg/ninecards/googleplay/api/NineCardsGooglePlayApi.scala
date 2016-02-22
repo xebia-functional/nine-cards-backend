@@ -1,4 +1,4 @@
-package com.fortysevendeg.ninecards.api // todo this package name is wrong
+package com.fortysevendeg.ninecards.googleplay.api
 
 import spray.routing._
 import akka.actor.Actor
@@ -117,9 +117,9 @@ trait NineCardsGooglePlayApi extends HttpService {
 
               val packageFetcher = getPackage((token, androidId, localisationOption))
 
-              val fetched: Task[List[Xor[String, Item]]] = packageNames.map { p =>
+              val fetched: Task[List[Xor[String, Item]]] = packageNames.traverse{ p =>
                 packageFetcher(Package(p)).map(_.toRightXor[String](p))
-              }.sequenceU
+              }
 
               val details: Task[PackageDetails] = fetched.map { (xors: List[Xor[String, Item]]) =>
                 xors.foldLeft(PackageDetails(Nil, Nil)) { case (PackageDetails(errors, items), xor) =>

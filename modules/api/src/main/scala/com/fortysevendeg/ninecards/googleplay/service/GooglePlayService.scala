@@ -4,7 +4,7 @@ import cats.data.Xor
 
 import com.akdeniz.googleplaycrawler.GooglePlayException
 
-import com.fortysevendeg.ninecards.api.Domain._
+import com.fortysevendeg.ninecards.googleplay.api.Domain._
 
 object GooglePlayService {
   case class Token(value: String) extends AnyVal
