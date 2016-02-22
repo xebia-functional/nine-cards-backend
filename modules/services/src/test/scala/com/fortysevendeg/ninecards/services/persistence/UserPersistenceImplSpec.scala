@@ -105,22 +105,4 @@ class UserPersistenceImplSpec
       }
     }
   }
-
-
-  "updateInstallation" should {
-    "installation can be updated" in {
-      prop { (androidId: AndroidId, email: Email, sessionToken: SessionToken) =>
-        val userId: Long = userPersistenceServices.addUser[Long](email.value, sessionToken.value).transact(transactor).run
-        userPersistenceServices.createInstallation[Long](userId, None, androidId.value).transact(transactor).run
-
-        val values = List((Option("faljfda-kbasf"), userId, androidId.value))
-        persistenceImpl.updateMany[List, (Option[String], Long, String)](
-          sql = Installation.Queries.updateDeviceToken,
-          values = values).transact(transactor).attemptRun must be_\/-[Int].which {
-          affectedRows =>
-            affectedRows mustEqual values.size
-        }
-      }
-    }
-  }
 }
