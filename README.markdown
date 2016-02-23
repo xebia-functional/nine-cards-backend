@@ -7,16 +7,14 @@ Badge Coverage](https://api.codacy.com/project/badge/coverage/34b25607022243aeb4
 
 **Table of Contents**
 
-- [Summary](#Summary)
-- [Prerequisites](#Prerequisites)
-- [Execute](#Execute)
-- [Database connection](#DatabaseConnection)
+- [Summary](#summary)
+- [Prerequisites](#prerequisites)
+- [Execute](#execute)
+- [Database connection](#database-connection)
 - [Authentication](#authentication)
-- [Endpoints](#endpoints)
-    - [Login](#Login)
-    - [Update Installation](#Updateinstallation)
-- [Postgress](#Postgress)
-- [License](#License)
+- [Request](#request)
+- [Postgres](#postgres)
+- [License](#license)
 
 
 ##Summary
@@ -35,12 +33,12 @@ To compile the project:
 
           $ brew install sbt
      	  
-* 	Install [postgress](##postgress)
+* 	Install [postgres](#postgres)
 * 	Clone this GiHub project in your computer
     	
            $ git clone https://github.com/47deg/nine-cards-backend.git
     
-*     [Connection database](##Databaseconnection)
+*   [Connection database](#database-connection)
 	
 ##Execute
 
@@ -52,7 +50,7 @@ From project root directory run:
 
 
 
-##Database connection
+###Database connection
 Possible ways to define the database connection info:
 
 1. Modifying the application.conf file:
@@ -85,12 +83,12 @@ X-Android-ID : androidId
 X-Android-Market-Localization : en-US
 ```
 
-##Endpoints
+##Request
 
-You can download all the requests for the existing endpoints in the [Postman Collection](https://github.com/47deg/nine-cards-backend/assets/postman/NineCardsV2.json.postman_collection)
+You can download all the requests for the existing endpoints in the [Postman Collection](https://github.com/47deg/nine-cards-backend/blob/master/assets/postman/NineCardsV2.json.postman_collection)
 
 
-##Postgress
+##Postgres
 
 ###Installation:
 

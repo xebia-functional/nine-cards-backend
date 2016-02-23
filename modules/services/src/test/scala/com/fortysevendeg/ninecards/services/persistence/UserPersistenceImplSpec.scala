@@ -5,16 +5,21 @@ import com.fortysevendeg.ninecards.services.free.domain.{Installation, User}
 import com.fortysevendeg.ninecards.services.persistence.NineCardsGenEntities.{AndroidId, SessionToken, Email}
 import org.specs2.ScalaCheck
 import doobie.imports._
+import org.specs2.matcher.DisjunctionMatchers
+import org.specs2.specification.BeforeEach
 import org.specs2.mutable.Specification
 import org.scalacheck.{Arbitrary, Gen}
 import org.specs2.specification.BeforeEach
 import org.scalacheck.Arbitrary.arbitrary
+import scalaz.std.list._
+
 
 class UserPersistenceImplSpec
   extends Specification
     with BeforeEach
     with ScalaCheck
     with DomainDatabaseContext
+    with DisjunctionMatchers
     with NineCardsScalacheckGen {
 
   sequential
@@ -96,15 +101,6 @@ class UserPersistenceImplSpec
         val userId: Long = userPersistenceServices.addUser[Long](email.value, sessionToken.value).transact(transactor).run
         val id = userPersistenceServices.createInstallation[Long](userId, None, androidId.value).transact(transactor).run
         val storeInstallation = userPersistenceServices.getInstallationByUserAndAndroidId(userId = userId, androidId = androidId.value.reverse).transact(transactor).run
-        storeInstallation should beNone
-      }
-    }
-  }
-
-  "getInstallationByUserAndAndroidId" should {
-    "return None if the table is empty" in {
-      prop { (androidId: AndroidId, userId: Long) =>
-        val storeInstallation = userPersistenceServices.getInstallationByUserAndAndroidId(userId = userId, androidId = androidId.value).transact(transactor).run
         storeInstallation should beNone
       }
     }
