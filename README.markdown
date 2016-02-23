@@ -10,7 +10,7 @@ Badge Coverage](https://api.codacy.com/project/badge/coverage/34b25607022243aeb4
 - [Summary](#summary)
 - [Prerequisites](#prerequisites)
 - [Execute](#execute)
-- [Database connection](#databaseConnection)
+- [Database connection](#databaseconnection)
 - [Authentication](#authentication)
 - [Request](#request)
 - [Postgress](#postgress)
@@ -33,12 +33,12 @@ To compile the project:
 
           $ brew install sbt
      	  
-* 	Install [postgress](##postgress)
+* 	Install [postgress](#postgress)
 * 	Clone this GiHub project in your computer
     	
            $ git clone https://github.com/47deg/nine-cards-backend.git
     
-*     [Connection database](##Databaseconnection)
+*   [Connection database](#databaseconnection)
 	
 ##Execute
 
