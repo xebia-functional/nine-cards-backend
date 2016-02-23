@@ -10,7 +10,7 @@ object Versions {
   val flywaydb = "3.2.1"
   val jodaTime = "2.9.2"
   val scala = "2.11.7"
-  val scalaz = "7.1.6"
+  val scalaz = "7.1.7"
   val spray = "1.3.3"
   val sprayJson = "1.3.2"
   val typesafeConfig = "1.3.0"
