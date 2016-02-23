@@ -13,6 +13,8 @@ import spray.httpx.unmarshalling.MalformedContent
 import spray.httpx.unmarshalling.Unmarshaller
 import spray.http.HttpEntity
 
+import scalaz.concurrent.Task
+
 /**
   * Some implicit conversions for using Circe and Cats with Spray.
   */
@@ -26,4 +28,20 @@ package object ninecardsspray {
   implicit def circeJsonMarshaller[A](implicit encoder: Encoder[A]): Marshaller[A] = Marshaller.of[A](ContentTypes.`application/json`) {
     case (a, contentType, ctx) => ctx.marshalTo(HttpEntity(ContentTypes.`application/json`, encoder(a).noSpaces))
   }
+
+  /**
+    *  A to response marshaller capable of completing Scalaz concurrent tasks
+    *  @param m A to response marshaller for the underlying type
+    *  @return A marshaller capable of completing a Task
+    */
+  implicit def tasksMarshaller[A](implicit m: ToResponseMarshaller[A]): ToResponseMarshaller[Task[A]] =
+    ToResponseMarshaller[Task[A]] {
+      (task, ctx) =>
+        task.runAsync {
+          _.fold(
+            left => ctx.handleError(left),
+            right => m(right, ctx))
+        }
+    }
+
 }

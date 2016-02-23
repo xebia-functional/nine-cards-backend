@@ -8,7 +8,7 @@ import io.circe.parser._
 import io.circe.syntax._
 import io.circe.generic.auto._
 import cats.data.Xor
-import Domain._
+import com.fortysevendeg.ninecards.googleplay.domain.Domain._
 
 import com.fortysevendeg.ninecards.googleplay.service.Http4sGooglePlayService
 

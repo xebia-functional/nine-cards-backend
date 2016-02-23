@@ -4,7 +4,7 @@ import org.http4s._
 import org.http4s.Http4s._
 import scalaz.concurrent.Task
 import GooglePlayService._
-import com.fortysevendeg.ninecards.googleplay.api.Domain._
+import com.fortysevendeg.ninecards.googleplay.domain.Domain._
 import scodec.bits.ByteVector
 import com.fortysevendeg.googleplay.proto.GooglePlay.ResponseWrapper
 import scala.collection.JavaConversions._
