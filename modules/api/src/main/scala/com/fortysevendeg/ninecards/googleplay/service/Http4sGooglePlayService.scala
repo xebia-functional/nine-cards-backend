@@ -14,8 +14,8 @@ object Http4sGooglePlayService {
 
   val client = org.http4s.client.blaze.PooledHttp1Client()
 
-  def packageRequest(params: GoogleAuthParams): Package => Task[Option[Item]] = { p =>
-
+  // todo it's expected to change Option[Item] to be something more granular to indicate failure
+  def packageRequest(params: GoogleAuthParams): Package => Task[Option[Item]] = {
     val (Token(token), AndroidId(androidId), localizationOption) = params
 
     val headers = List(
@@ -35,19 +35,27 @@ object Http4sGooglePlayService {
       case Localization(locale) => Header("Accept-Language", locale)
     }.toList ++ headers
 
-    val request = new Request(
-      method = Method.GET,
-      uri = packageUri(p),
-      headers = Headers(allHeaders: _*)
-    )
+    { p =>
 
-    client.fetch(request) {
-      case Successful(resp) => resp.as[Item].map(Some(_))
-      case x => Task.now(None)
+      val uriForPackage = packageUri(p)
+
+      uriForPackage.fold(Task.now(None): Task[Option[Item]]) { u =>
+
+        val request = new Request(
+          method = Method.GET,
+          uri = u,
+          headers = Headers(allHeaders: _*)
+        )
+
+        client.fetch(request) {
+          case Successful(resp) => resp.as[Item].map(Some(_))
+          case x => Task.now(None)
+        }
+      }
     }
   }
 
-  def packageUri(p: Package) = Uri.fromString(s"https://android.clients.google.com/fdfe/details?doc=${p.value}").getOrElse(throw new RuntimeException("Nope")) // todo fix this!
+  def packageUri(p: Package): Option[Uri] = Uri.fromString(s"https://android.clients.google.com/fdfe/details?doc=${p.value}").toOption
 
   implicit def protobufItemDecoder(implicit byteVectorDecoder: EntityDecoder[ByteVector]): EntityDecoder[Item] = byteVectorDecoder map parseResponseToItem
 

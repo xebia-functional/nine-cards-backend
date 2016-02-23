@@ -13,7 +13,6 @@ trait Dependencies {
 
   val specs2ScalaCheck = "org.specs2" %% "specs2-scalacheck" % Versions.specs2 % "test"
 
-  // todo work out how best to manage these names!
   val scalaCheckShapeless = "com.github.alexarchambault" %% "scalacheck-shapeless_1.12" % Versions.scalaCheckShapeless % "test"
 
   val circeCore = "io.circe" %% "circe-core" % Versions.circe
