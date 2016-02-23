@@ -1,16 +1,10 @@
 package com.fortysevendeg.ninecards.googleplay.api
 
-import spray.routing._
-import akka.actor.Actor
-import shapeless._
 import com.fortysevendeg.ninecards.googleplay.ninecardsspray._
 import com.fortysevendeg.ninecards.googleplay.domain.Domain._
 import com.fortysevendeg.ninecards.googleplay.service.GooglePlayService._
 import com.fortysevendeg.ninecards.googleplay.service.Http4sGooglePlayService
-import scalaz.concurrent.Task
-
 import com.fortysevendeg.extracats._
-
 import cats._
 import cats.Traverse
 import cats.std.option._
@@ -18,7 +12,10 @@ import cats.std.list._
 import cats.syntax.traverse._
 import cats.syntax.option._
 import cats.data.Xor
-
+import spray.routing._
+import akka.actor.Actor
+import shapeless._
+import scalaz.concurrent.Task
 import io.circe.generic.auto._
 
 class NineCardsGooglePlayActor extends Actor with NineCardsGooglePlayApi {

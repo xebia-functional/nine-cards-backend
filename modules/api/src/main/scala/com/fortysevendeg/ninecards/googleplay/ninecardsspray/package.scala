@@ -1,17 +1,12 @@
 package com.fortysevendeg.ninecards.googleplay
 
 import cats.data.Xor
-import spray.httpx.marshalling.Marshaller
-import spray.httpx.marshalling.ToResponseMarshaller
-import spray.http.{ContentTypes, HttpEntity, HttpResponse, StatusCodes}
+import spray.httpx.marshalling.{Marshaller, ToResponseMarshaller}
+import spray.http.{ContentTypes, HttpEntity}
 import io.circe._
 import io.circe.syntax._
 import io.circe.parser._
 import io.circe.generic.auto._
-
-import spray.httpx.unmarshalling.MalformedContent
-import spray.httpx.unmarshalling.Unmarshaller
-import spray.http.HttpEntity
 
 import scalaz.concurrent.Task
 

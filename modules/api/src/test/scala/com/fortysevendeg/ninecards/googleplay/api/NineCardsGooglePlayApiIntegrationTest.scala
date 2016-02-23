@@ -1,5 +1,7 @@
 package com.fortysevendeg.ninecards.googleplay.api
 
+import com.fortysevendeg.ninecards.googleplay.domain.Domain._
+import com.fortysevendeg.ninecards.googleplay.service.Http4sGooglePlayService
 import org.specs2.mutable.Specification
 import spray.testkit.Specs2RouteTest
 import spray.http.HttpHeaders.RawHeader
@@ -8,9 +10,6 @@ import io.circe.parser._
 import io.circe.syntax._
 import io.circe.generic.auto._
 import cats.data.Xor
-import com.fortysevendeg.ninecards.googleplay.domain.Domain._
-
-import com.fortysevendeg.ninecards.googleplay.service.Http4sGooglePlayService
 
 class NineCardsGooglePlayApiIntegrationTest extends Specification with Specs2RouteTest {
 

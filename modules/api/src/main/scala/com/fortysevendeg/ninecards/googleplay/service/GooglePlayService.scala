@@ -1,6 +1,5 @@
 package com.fortysevendeg.ninecards.googleplay.service
 
-import cats.data.Xor
 import com.fortysevendeg.ninecards.googleplay.domain.Domain._
 
 object GooglePlayService {

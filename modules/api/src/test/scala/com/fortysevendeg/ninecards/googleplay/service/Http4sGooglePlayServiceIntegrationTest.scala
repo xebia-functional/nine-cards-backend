@@ -1,10 +1,10 @@
 package com.fortysevendeg.ninecards.googleplay.service
 
+import GooglePlayService._
+import com.fortysevendeg.ninecards.googleplay.domain.Domain._
 import org.specs2.mutable.Specification
 import org.specs2.matcher.TaskMatchers
 import spray.testkit.Specs2RouteTest
-import GooglePlayService._
-import com.fortysevendeg.ninecards.googleplay.domain.Domain._
 import java.nio.file.Paths
 import java.nio.file.Files
 

@@ -1,7 +1,6 @@
 package com.fortysevendeg.ninecards.googleplay.api
 
-import spray.httpx.marshalling.Marshaller
-import spray.httpx.marshalling.ToResponseMarshaller
+import com.fortysevendeg.ninecards.googleplay.domain.Domain._
 import spray.testkit.{RouteTest, TestFrameworkInterface}
 import spray.http.HttpHeaders.RawHeader
 import spray.http.StatusCodes._
@@ -9,11 +8,7 @@ import io.circe._
 import io.circe.syntax._
 import io.circe.parser._
 import io.circe.generic.auto._
-import com.fortysevendeg.ninecards.googleplay.domain.Domain._
-
 import cats.data.Xor
-import cats.syntax.option._
-
 import org.scalacheck._
 import org.scalacheck.Prop._
 import org.scalacheck.Shapeless._
