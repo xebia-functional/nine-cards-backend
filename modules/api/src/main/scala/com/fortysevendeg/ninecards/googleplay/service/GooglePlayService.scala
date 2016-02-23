@@ -1,9 +1,6 @@
 package com.fortysevendeg.ninecards.googleplay.service
 
 import cats.data.Xor
-
-import com.akdeniz.googleplaycrawler.GooglePlayException
-
 import com.fortysevendeg.ninecards.googleplay.api.Domain._
 
 object GooglePlayService {
@@ -13,10 +10,3 @@ object GooglePlayService {
 
   type GoogleAuthParams = (Token, AndroidId, Option[Localization])
 }
-
-/*
-trait GooglePlayService {
-  def packageRequest(params: GooglePlayService.GoogleAuthParams): Package => Xor[GooglePlayException, Item]
-}
-
- */

@@ -24,8 +24,6 @@ trait Dependencies {
 
   val akkaActor = "com.typesafe.akka" %% "akka-actor" % Versions.akka
 
-  val googleplayCrawler = "com.akdeniz" % "googleplaycrawler" % Versions.googleplayCrawler
-
   val http4sClient = "org.http4s" %% "http4s-blaze-client" % Versions.http4sClient
 
   val baseDepts = Seq(specs2Core)
@@ -36,7 +34,6 @@ trait Dependencies {
     sprayRouting,
     sprayTestKit,
     akkaActor,
-    googleplayCrawler,
     http4sClient,
     circeCore,
     circeGeneric,

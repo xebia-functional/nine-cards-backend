@@ -13,8 +13,6 @@ object Versions {
   val spray = "1.3.3"
   val cats = "0.4.0"
 
-  val googleplayCrawler = "0.3"
-
   resolvers += "Scalaz Bintray Repo" at "http://dl.bintray.com/scalaz/releases"
   val http4sClient = "0.12.1"
 

@@ -14,7 +14,6 @@ import spray.httpx.unmarshalling.Unmarshaller
 import spray.http.HttpEntity
 import com.fortysevendeg.ninecards.googleplay.service.GooglePlayService._
 import com.fortysevendeg.ninecards.googleplay.service.Http4sGooglePlayService
-import com.fortysevendeg.ninecards.googleplay.service.GooglePlayCrawler
 import scalaz.concurrent.Task
 
 import cats._
