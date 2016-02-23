@@ -16,5 +16,5 @@ object Versions {
   val typesafeConfig = "1.3.0"
 
   // Testing libs
-  val specs2 = "3.6.5"
+  val specs2 = "3.6.6"
 }
