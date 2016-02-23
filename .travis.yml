@@ -1,8 +1,10 @@
-sudo: true
+sudo: false
 language: scala
 scala:
   - 2.11.7
 script:
   - sbt ++$$TRAVIS_SCALA_VERSION "project api" clean coverage compile
-before_install:
-  - sudo apt-get install protobuf-compiler
+addons:
+  apt:
+    packages:
+      - protobuf-compiler
