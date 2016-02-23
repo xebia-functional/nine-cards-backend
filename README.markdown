@@ -10,7 +10,7 @@ Badge Coverage](https://api.codacy.com/project/badge/coverage/34b25607022243aeb4
 - [Summary](#summary)
 - [Prerequisites](#prerequisites)
 - [Execute](#execute)
-- [Database connection](#databaseconnection)
+- [Database connection](#database)
 - [Authentication](#authentication)
 - [Request](#request)
 - [Postgress](#postgress)
@@ -38,7 +38,7 @@ To compile the project:
     	
            $ git clone https://github.com/47deg/nine-cards-backend.git
     
-*   [Connection database](#databaseconnection)
+*   [Connection database](#database)
 	
 ##Execute
 
