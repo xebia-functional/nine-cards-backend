@@ -12,7 +12,7 @@ import org.http4s.Status.ResponseClass.Successful
 
 object Http4sGooglePlayService {
 
-  val client = org.http4s.client.blaze.defaultClient
+  val client = org.http4s.client.blaze.PooledHttp1Client()
 
   def packageRequest(params: GoogleAuthParams): Package => Task[Option[Item]] = { p =>
 
