@@ -42,10 +42,6 @@ trait Dependencies {
     akkaTestKit % "test",
     cats % "test"))
 
-  val commonDeps = Seq(libraryDependencies ++= baseDepts ++ Seq(
-    scalaz,
-    scalazConcurrent))
-
   val processesDeps = Seq(libraryDependencies ++= baseDepts ++ Seq(
     scalaz,
     scalazConcurrent))
