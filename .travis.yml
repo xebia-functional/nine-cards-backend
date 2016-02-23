@@ -4,3 +4,7 @@ scala:
   - 2.11.7
 script:
   - sbt ++$$TRAVIS_SCALA_VERSION "project api" clean coverage compile
+addons:
+  apt:
+    packages:
+      - protobuf-compiler

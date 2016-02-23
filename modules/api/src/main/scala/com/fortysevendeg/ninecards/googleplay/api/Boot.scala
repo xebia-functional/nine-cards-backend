@@ -1,4 +1,4 @@
-package com.fortysevendeg.ninecards.api
+package com.fortysevendeg.ninecards.googleplay.api
 
 import akka.actor.{ActorSystem, Props}
 import akka.io.IO

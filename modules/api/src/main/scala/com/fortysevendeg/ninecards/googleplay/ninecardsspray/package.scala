@@ -1,18 +1,14 @@
 package com.fortysevendeg.ninecards.googleplay
 
 import cats.data.Xor
-import spray.httpx.marshalling.Marshaller
-import spray.httpx.marshalling.ToResponseMarshaller
-import spray.http.{ContentTypes, HttpEntity, HttpResponse, StatusCodes}
+import spray.httpx.marshalling.{Marshaller, ToResponseMarshaller}
+import spray.http.{ContentTypes, HttpEntity}
 import io.circe._
 import io.circe.syntax._
 import io.circe.parser._
 import io.circe.generic.auto._
-import com.fortysevendeg.ninecards.api.Domain.PackageListRequest
 
-import spray.httpx.unmarshalling.MalformedContent
-import spray.httpx.unmarshalling.Unmarshaller
-import spray.http.HttpEntity
+import scalaz.concurrent.Task
 
 /**
   * Some implicit conversions for using Circe and Cats with Spray.
@@ -29,15 +25,18 @@ package object ninecardsspray {
   }
 
   /**
-    * A response marshaller capable of handling Cats Xor, with the error type being an Exception
-    * @param m a ToResponseMarshaller for the successful type. It is usually enough to have an implicit marshaller for that type. See circeJsonMarshaller.
-    * @return a ToResponseMarshaller capable of handling error cases automatically.
+    *  A to response marshaller capable of completing Scalaz concurrent tasks
+    *  @param m A to response marshaller for the underlying type
+    *  @return A marshaller capable of completing a Task
     */
-  implicit def exceptionalXorMarshaller[A, E <: Exception](implicit m: ToResponseMarshaller[A]): ToResponseMarshaller[Xor[E, A]] = {
-    ToResponseMarshaller[Xor[E, A]] { (v, ctx) =>
-      v.fold({ e =>
-        ctx.marshalTo(HttpResponse(status = StatusCodes.InternalServerError, entity = HttpEntity(e.toString)))
-      }, m(_, ctx))
+  implicit def tasksMarshaller[A](implicit m: ToResponseMarshaller[A]): ToResponseMarshaller[Task[A]] =
+    ToResponseMarshaller[Task[A]] {
+      (task, ctx) =>
+        task.runAsync {
+          _.fold(
+            left => ctx.handleError(left),
+            right => m(right, ctx))
+        }
     }
-  }
+
 }

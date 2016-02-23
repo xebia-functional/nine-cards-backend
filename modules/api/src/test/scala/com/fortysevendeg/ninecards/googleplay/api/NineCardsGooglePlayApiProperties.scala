@@ -1,7 +1,6 @@
-package com.fortysevendeg.ninecards.api
+package com.fortysevendeg.ninecards.googleplay.api
 
-import spray.httpx.marshalling.Marshaller
-import spray.httpx.marshalling.ToResponseMarshaller
+import com.fortysevendeg.ninecards.googleplay.domain.Domain._
 import spray.testkit.{RouteTest, TestFrameworkInterface}
 import spray.http.HttpHeaders.RawHeader
 import spray.http.StatusCodes._
@@ -9,17 +8,16 @@ import io.circe._
 import io.circe.syntax._
 import io.circe.parser._
 import io.circe.generic.auto._
-import Domain._
-
 import cats.data.Xor
-import cats.syntax.option._
-import com.akdeniz.googleplaycrawler.GooglePlayException
-
 import org.scalacheck._
 import org.scalacheck.Prop._
 import org.scalacheck.Shapeless._
 import org.scalacheck.Gen._
 import org.scalacheck.Arbitrary._
+
+import com.fortysevendeg.ninecards.googleplay.service.GooglePlayService._
+
+import scalaz.concurrent.Task
 
 trait ScalaCheckRouteTest extends RouteTest with TestFrameworkInterface {
   def failTest(msg: String): Nothing = throw new RuntimeException(msg)
@@ -48,11 +46,11 @@ object NineCardsGooglePlayApiProperties extends Properties("Nine Cards Google Pl
 
   property("returns the correct package name for a Google Play Store app") = forAll { (pkg: Package, item: Item) =>
 
-    def requestPackage(t: Token, id: AndroidId, lo: Option[Localisation]): Package => Xor[GooglePlayException, Item] = { p =>
+    def requestPackage(params: GoogleAuthParams): Package => Task[Option[Item]] = { p =>
       if(p == pkg) {
-        Xor.right(item)
+        Task.now(Some(item))
       } else {
-        Xor.left(new GooglePlayException("Looking for package that does not exist"))
+        Task.now(None)
       }
     }
 
@@ -69,11 +67,11 @@ object NineCardsGooglePlayApiProperties extends Properties("Nine Cards Google Pl
 
   property("fails with an Internal Server Error when the package is not known") = forAll {(unknownPackage: Package, wrongItem: Item) =>
 
-    def requestPackage(t: Token, id: AndroidId, lo: Option[Localisation]): Package => Xor[GooglePlayException, Item] = { p =>
+    def requestPackage(params: GoogleAuthParams): Package => Task[Option[Item]] = { p =>
       if(p == unknownPackage) {
-        Xor.left(new GooglePlayException("Package does not exist"))
+        Task.now(None)
       } else {
-        Xor.right(wrongItem)
+        Task.now(Some(wrongItem))
       }
     }
 
@@ -94,8 +92,8 @@ object NineCardsGooglePlayApiProperties extends Properties("Nine Cards Google Pl
     val errors = errs.map(_.value).toSet
     val items = succs.map(i => database(i)).toSet
 
-    def requestPackage(t: Token, id: AndroidId, lo: Option[Localisation]): Package => Xor[GooglePlayException, Item] = { p =>
-      database.get(p).toRightXor[GooglePlayException](new GooglePlayException("Package ${p.value} does not exist"))
+    def requestPackage(params: GoogleAuthParams): Package => Task[Option[Item]] = { p =>
+      Task.now(database.get(p))
     }
 
     val route = new NineCardsGooglePlayApi {
