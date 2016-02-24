@@ -7,6 +7,5 @@ object NineCardsBuild extends Build with Settings with Dependencies {
 
   lazy val root = project.in(file("."))
     .settings(apiSettings ++ apiDeps ++ PB.protobufSettings : _*)
-
-//  lazy val api = project.in(file("modules/api"))
+    .settings(scalacOptions ++= Seq("-language:higherKinds"))
 }

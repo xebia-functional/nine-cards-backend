@@ -2,8 +2,9 @@ package com.fortysevendeg.ninecards.googleplay.api
 
 import com.fortysevendeg.ninecards.googleplay.ninecardsspray._
 import com.fortysevendeg.ninecards.googleplay.domain.Domain._
-import com.fortysevendeg.ninecards.googleplay.service.GooglePlayService._
+import com.fortysevendeg.ninecards.googleplay.service.GooglePlayDomain._
 import com.fortysevendeg.ninecards.googleplay.service.Http4sGooglePlayService
+import com.fortysevendeg.ninecards.googleplay.service.free.algebra.GooglePlay._
 import com.fortysevendeg.extracats._
 import cats._
 import cats.Traverse
@@ -23,6 +24,46 @@ class NineCardsGooglePlayActor extends Actor with NineCardsGooglePlayApi {
   def actorRefFactory = context
 
   def receive = runRoute(googlePlayApiRoute(Http4sGooglePlayService.packageRequest _))
+}
+
+trait NewApi extends HttpService {
+
+  import spray.httpx.marshalling.ToResponseMarshaller
+  import cats.free.Free
+
+  val requestHeaders = for { // todo put this in a package object somewhere
+    token        <- headerValueByName("X-Google-Play-Token")
+    androidId    <- headerValueByName("X-Android-ID")
+    localisation <- optionalHeaderValueByName("X-Android-Market-Localization")
+  } yield Token(token) :: AndroidId(androidId) :: localisation.map(Localization.apply) :: HNil
+
+  def newRoute[M[_]: Monad](
+    implicit
+      googlePlayService: GooglePlayService[GooglePlayOps],
+      interpreter: GooglePlayOps ~> M, // todo can this be made GPO ~> TRM
+      itemMarshaller: ToResponseMarshaller[Free[GooglePlayOps, Option[Item]]], // todo need to make the option[item] generic
+      bulkMarshaller: ToResponseMarshaller[Free[GooglePlayOps, PackageDetails]]
+  ): Route =
+    pathPrefix("googleplay") {
+      requestHeaders { (token, androidId, locaizationOption) =>
+        get {
+          path("package" / Segment) { packageName =>
+            complete {
+              googlePlayService.requestPackage(Package(packageName))
+            }
+          }
+        } ~
+        post {
+          path("packages" / "detailed") {
+            entity(as[PackageListRequest]) { req =>
+              complete {
+                googlePlayService.bulkRequestPackage(req)
+              }
+            }
+          }
+        }
+      }
+    }
 }
 
 trait NineCardsGooglePlayApi extends HttpService {

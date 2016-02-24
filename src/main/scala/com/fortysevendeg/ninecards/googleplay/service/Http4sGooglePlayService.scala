@@ -1,6 +1,6 @@
 package com.fortysevendeg.ninecards.googleplay.service
 
-import GooglePlayService._
+import GooglePlayDomain._
 import com.fortysevendeg.ninecards.googleplay.domain.Domain._
 import com.fortysevendeg.googleplay.proto.GooglePlay.ResponseWrapper
 import org.http4s._
