@@ -24,12 +24,14 @@ trait Dependencies {
   val typesafeConfig = "com.typesafe" % "config" % Versions.typesafeConfig
   val flywaydbCore = "org.flywaydb" % "flyway-core" % Versions.flywaydb
   val flywaydbParent = "org.flywaydb" % "flyway-parent" % Versions.flywaydb
+  val scalacheckShapeless = "com.github.alexarchambault" %% "scalacheck-shapeless_1.12" % Versions.scalacheckShapeless
 
   val baseDepts = Seq(
     typesafeConfig,
     specs2Core % "test" exclude("org.scalaz", "*"),
     specs2Mockito % "test",
-    specs2Scalacheck % "test")
+    specs2Scalacheck % "test",
+    scalacheckShapeless % "test")
 
   val apiDeps = Seq(libraryDependencies ++= baseDepts ++ Seq(
     sprayHttp,

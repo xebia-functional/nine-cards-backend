@@ -1,21 +1,24 @@
 package com.fortysevendeg.ninecards.api
 
-import java.util.UUID
-
 import akka.actor.ActorRefFactory
 import cats.free.Free
 import com.fortysevendeg.ninecards.api.NineCardsHeaders._
+import com.fortysevendeg.ninecards.api.messages.InstallationsMessages.ApiUpdateInstallationRequest
 import com.fortysevendeg.ninecards.api.messages.UserMessages.ApiLoginRequest
 import com.fortysevendeg.ninecards.processes.NineCardsServices.NineCardsServices
 import com.fortysevendeg.ninecards.processes.UserProcesses
+import com.fortysevendeg.ninecards.processes.messages.InstallationsMessages.{UpdateInstallationRequest, UpdateInstallationResponse}
+import com.fortysevendeg.ninecards.services.common.TaskOps._
+import com.fortysevendeg.ninecards.services.persistence.PersistenceExceptions.PersistenceException
 import org.specs2.matcher.Matchers
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
-import org.specs2.specification.Scope
 import spray.http.HttpHeaders.RawHeader
 import spray.http.MediaTypes
 import spray.routing.HttpService
 import spray.testkit.Specs2RouteTest
+
+import scalaz.concurrent.Task
 
 trait NineCardsApiSpecification
   extends Specification
@@ -39,9 +42,16 @@ trait NineCardsApiSpecification
     override implicit def actorRefFactory: ActorRefFactory = NineCardsApiSpecification.this.actorRefFactory
   }.nineCardsApiRoute
 
-  userProcesses.checkSessionToken(sessionTokenHeaderValue, androidIdHeaderValue) returns Free.pure(Option(1l))
+  val persistenceException = PersistenceException("Test error", Option(new RuntimeException("Test error")))
+  val task: Task[UpdateInstallationResponse] = Task.fail(persistenceException)
+
+  userProcesses.checkSessionToken(sessionTokenHeaderValue, androidIdHeaderValue) returns Free.pure(Option(userId))
 
   userProcesses.checkSessionToken(wrongSessionTokenHeaderValue, androidIdHeaderValue) returns Free.pure(None)
+
+  userProcesses.updateInstallation(updateInstallationRequest) returns Free.pure(updateInstallationResponse)
+
+  userProcesses.updateInstallation(wrongUpdateInstallationRequest) returns task.liftF[NineCardsServices]
 }
 
 trait NineCardsApiContext {
@@ -59,6 +69,22 @@ trait NineCardsApiContext {
   val sessionTokenHeaderValue = "1d1afeea-c7ec-45d8-a6f8-825b836f2785"
 
   val wrongSessionTokenHeaderValue = "52a6510c-d357-4bca-a7e7-49851c4910ec"
+
+  val deviceToken: Option[String] = Option("d897b6f1-c6a9-42bd-bf42-c787883c7d3e")
+
+  val wrongDeviceToken = Option("81420986-db52-4521-8d4e-6bdb3c6e5867")
+
+  val userId = 1l
+
+  val apiUpdateInstallationRequest = ApiUpdateInstallationRequest(deviceToken)
+
+  val wrongApiUpdateInstallationRequest = ApiUpdateInstallationRequest(wrongDeviceToken)
+
+  val updateInstallationRequest = UpdateInstallationRequest(userId, androidIdHeaderValue, deviceToken)
+
+  val wrongUpdateInstallationRequest = UpdateInstallationRequest(userId, androidIdHeaderValue, wrongDeviceToken)
+
+  val updateInstallationResponse = UpdateInstallationResponse(androidIdHeaderValue, deviceToken)
 
   val apiRequestHeaders = List(
     RawHeader(headerAppId, appIdHeaderValue),
@@ -165,13 +191,23 @@ class NineCardsApiSpec
         }
     }
 
-    "return a code different than 401 Unauthorized status if a valid credential is provided" in {
+    "return a 200 Ok status code if a valid credential is provided" in {
 
-      Put(installationsPath) ~>
+      Put(installationsPath, apiUpdateInstallationRequest) ~>
         addHeaders(validUserInfoHeaders) ~>
         sealRoute(nineCardsApi) ~>
         check {
-          status.intValue shouldNotEqual 401
+          status.intValue shouldEqual 200
+        }
+    }
+
+    "return a 500 Internal Server Error status code if a persistence error happens" in {
+
+      Put(installationsPath, wrongApiUpdateInstallationRequest) ~>
+        addHeaders(validUserInfoHeaders) ~>
+        sealRoute(nineCardsApi) ~>
+        check {
+          status.intValue shouldEqual 500
         }
     }
   }
