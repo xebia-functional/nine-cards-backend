@@ -41,15 +41,15 @@ trait NewApi extends HttpService {
     implicit
       googlePlayService: GooglePlayService[GooglePlayOps],
       interpreter: GooglePlayOps ~> M, // todo can this be made GPO ~> TRM
-      itemMarshaller: ToResponseMarshaller[Free[GooglePlayOps, Option[Item]]], // todo need to make the option[item] generic
-      bulkMarshaller: ToResponseMarshaller[Free[GooglePlayOps, PackageDetails]]
+      itemMarshaller: ToResponseMarshaller[M[Option[Item]]], // todo need to make the option[item] generic
+      bulkMarshaller: ToResponseMarshaller[M[PackageDetails]]
   ): Route =
     pathPrefix("googleplay") {
       requestHeaders { (token, androidId, locaizationOption) =>
         get {
           path("package" / Segment) { packageName =>
             complete {
-              googlePlayService.requestPackage(Package(packageName))
+              googlePlayService.requestPackage(Package(packageName)).foldMap(interpreter)
             }
           }
         } ~
@@ -57,7 +57,7 @@ trait NewApi extends HttpService {
           path("packages" / "detailed") {
             entity(as[PackageListRequest]) { req =>
               complete {
-                googlePlayService.bulkRequestPackage(req)
+                googlePlayService.bulkRequestPackage(req).foldMap(interpreter)
               }
             }
           }

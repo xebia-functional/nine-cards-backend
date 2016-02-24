@@ -15,9 +15,14 @@ import org.scalacheck.Shapeless._
 import org.scalacheck.Gen._
 import org.scalacheck.Arbitrary._
 
-import com.fortysevendeg.ninecards.googleplay.service.GooglePlayService._
+import com.fortysevendeg.ninecards.googleplay.service.GooglePlayDomain._
 
 import scalaz.concurrent.Task
+
+import cats._
+import com.fortysevendeg.ninecards.googleplay.service.free.algebra.GooglePlay._
+import com.fortysevendeg.ninecards.googleplay.ninecardsspray._
+import cats.syntax.option._
 
 trait ScalaCheckRouteTest extends RouteTest with TestFrameworkInterface {
   def failTest(msg: String): Nothing = throw new RuntimeException(msg)
@@ -46,17 +51,18 @@ object NineCardsGooglePlayApiProperties extends Properties("Nine Cards Google Pl
 
   property("returns the correct package name for a Google Play Store app") = forAll { (pkg: Package, item: Item) =>
 
-    def requestPackage(params: GoogleAuthParams): Package => Task[Option[Item]] = { p =>
-      if(p == pkg) {
-        Task.now(Some(item))
-      } else {
-        Task.now(None)
+    implicit val interpreter: GooglePlayOps ~> Id = new (GooglePlayOps ~> Id) {
+      def apply[A](fa: GooglePlayOps[A]) = fa match {
+        case RequestPackage(p) =>
+          if (p == pkg) Some(item)
+          else None
+        case _ => failTest("Should only be making a request for a single package")
       }
     }
 
-    val route = new NineCardsGooglePlayApi {
+    val route = new NewApi {
       override def actorRefFactory = system
-    }.googlePlayApiRoute(requestPackage _)
+    }.newRoute[Id]
 
     Get(s"/googleplay/package/${pkg.value}") ~> addHeaders(requestHeaders) ~> route ~> check {
       val response = responseAs[String]
@@ -67,17 +73,18 @@ object NineCardsGooglePlayApiProperties extends Properties("Nine Cards Google Pl
 
   property("fails with an Internal Server Error when the package is not known") = forAll {(unknownPackage: Package, wrongItem: Item) =>
 
-    def requestPackage(params: GoogleAuthParams): Package => Task[Option[Item]] = { p =>
-      if(p == unknownPackage) {
-        Task.now(None)
-      } else {
-        Task.now(Some(wrongItem))
+    implicit val interpreter: GooglePlayOps ~> Id = new (GooglePlayOps ~> Id) {
+      def apply[A](fa: GooglePlayOps[A]) = fa match {
+        case RequestPackage(p) =>
+          if (p == unknownPackage) None
+          else Some(wrongItem)
+        case _ => failTest("Should only be making a request for a single package")
       }
     }
 
-    val route = new NineCardsGooglePlayApi {
+    val route = new NewApi {
       override def actorRefFactory = system
-    }.googlePlayApiRoute(requestPackage _)
+    }.newRoute[Id]
 
     Get(s"/googleplay/package/${unknownPackage.value}") ~> addHeaders(requestHeaders) ~> route ~> check {
       status ?= InternalServerError
@@ -92,17 +99,29 @@ object NineCardsGooglePlayApiProperties extends Properties("Nine Cards Google Pl
     val errors = errs.map(_.value).toSet
     val items = succs.map(i => database(i)).toSet
 
-    def requestPackage(params: GoogleAuthParams): Package => Task[Option[Item]] = { p =>
-      Task.now(database.get(p))
+    implicit val interpreter: GooglePlayOps ~> Id = new (GooglePlayOps ~> Id) {
+      def apply[A](fa: GooglePlayOps[A]) = fa match {
+        case BulkRequestPackage(PackageListRequest(items)) =>
+
+          val fetched: List[Xor[String, Item]] = items.map{ i =>
+            database.get(Package(i)).toRightXor(i)
+          }
+
+          fetched.foldLeft(PackageDetails(Nil, Nil)) { case (PackageDetails(errors, items), next) =>
+            next.fold(s => PackageDetails(s :: errors, items), i => PackageDetails(errors, i :: items))
+          }
+
+        case _ => failTest("Should only be making a bulk request")
+      }
     }
 
-    val route = new NineCardsGooglePlayApi {
+    val route = new NewApi {
       override def actorRefFactory = system
-    }.googlePlayApiRoute(requestPackage _)
+    }.newRoute[Id]
 
     val allPackages = (succs ++ errs).map(_.value)
 
-    Post("/googleplay/packages/detailed", PackageListRequest(allPackages).asJson.noSpaces) ~> addHeaders(requestHeaders) ~> route ~> check {
+    Post("/googleplay/packages/detailed", PackageListRequest(allPackages)) ~> addHeaders(requestHeaders) ~> route ~> check {
 
       val response = responseAs[String]
       val decoded = decode[PackageDetails](response).getOrElse(throw new RuntimeException(s"Unable to parse response [$response]"))

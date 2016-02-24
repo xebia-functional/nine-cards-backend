@@ -1,6 +1,6 @@
 package com.fortysevendeg.ninecards.googleplay.service
 
-import GooglePlayService._
+import GooglePlayDomain._
 import com.fortysevendeg.ninecards.googleplay.domain.Domain._
 import org.specs2.mutable.Specification
 import org.specs2.matcher.TaskMatchers

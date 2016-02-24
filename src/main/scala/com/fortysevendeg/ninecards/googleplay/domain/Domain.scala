@@ -26,7 +26,7 @@ object Domain {
   // Domain-specific marshalling and unmarshalling
   implicit val packageListUnmarshaller: Unmarshaller[PackageListRequest] = new Unmarshaller[PackageListRequest] {
     def apply(entity: HttpEntity) = {
-      decode[PackageListRequest](entity.asString).fold(e => Left(MalformedContent("Unable to parse entity into JSON list", e)), s => Right(s))
+      decode[PackageListRequest](entity.asString).fold(e => Left(MalformedContent(s"Unable to parse entity into JSON list: $entity", e)), s => Right(s))
     }
   }
 
