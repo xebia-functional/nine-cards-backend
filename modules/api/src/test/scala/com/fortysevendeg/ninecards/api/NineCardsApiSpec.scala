@@ -7,9 +7,13 @@ import com.fortysevendeg.ninecards.api.messages.InstallationsMessages.ApiUpdateI
 import com.fortysevendeg.ninecards.api.messages.UserMessages.ApiLoginRequest
 import com.fortysevendeg.ninecards.processes.NineCardsServices.NineCardsServices
 import com.fortysevendeg.ninecards.processes.UserProcesses
-import com.fortysevendeg.ninecards.processes.messages.InstallationsMessages.{UpdateInstallationRequest, UpdateInstallationResponse}
+import com.fortysevendeg.ninecards.processes.messages.InstallationsMessages._
+import com.fortysevendeg.ninecards.processes.messages.UserMessages.{LoginRequest, LoginResponse}
 import com.fortysevendeg.ninecards.services.common.TaskOps._
+import com.fortysevendeg.ninecards.services.free.domain.Installation
 import com.fortysevendeg.ninecards.services.persistence.PersistenceExceptions.PersistenceException
+import doobie.imports._
+import org.mockito.Matchers.{eq => mockEq}
 import org.specs2.matcher.Matchers
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
@@ -42,33 +46,44 @@ trait NineCardsApiSpecification
     override implicit def actorRefFactory: ActorRefFactory = NineCardsApiSpecification.this.actorRefFactory
   }.nineCardsApiRoute
 
-  val persistenceException = PersistenceException("Test error", Option(new RuntimeException("Test error")))
-  val task: Task[UpdateInstallationResponse] = Task.fail(persistenceException)
+  userProcesses.checkSessionToken(sessionToken, androidId) returns Free.pure(Option(userId))
 
-  userProcesses.checkSessionToken(sessionTokenHeaderValue, androidIdHeaderValue) returns Free.pure(Option(userId))
+  userProcesses.checkSessionToken(wrongSessionToken, androidId) returns Free.pure(None)
 
-  userProcesses.checkSessionToken(wrongSessionTokenHeaderValue, androidIdHeaderValue) returns Free.pure(None)
+  userProcesses.checkSessionToken(failingSessionToken, androidId) returns checkSessionTokenTask.liftF[NineCardsServices]
 
-  userProcesses.updateInstallation(updateInstallationRequest) returns Free.pure(updateInstallationResponse)
+  userProcesses.signUpUser(loginRequest) returns Free.pure(loginResponse)
 
-  userProcesses.updateInstallation(wrongUpdateInstallationRequest) returns task.liftF[NineCardsServices]
+  userProcesses.signUpUser(wrongLoginRequest) returns loginTask.liftF[NineCardsServices]
+
+  userProcesses.updateInstallation(
+    mockEq(updateInstallationRequest))(
+    any[Composite[Installation]]) returns Free.pure(updateInstallationResponse)
+
+  userProcesses.updateInstallation(
+    mockEq(wrongUpdateInstallationRequest))(
+    any[Composite[Installation]]) returns updateInstallationTask.liftF[NineCardsServices]
 }
 
 trait NineCardsApiContext {
 
-  val appIdHeaderValue = "269b293b-d5f9-4f76-bbcd-020c3fc11336"
+  val appId = "269b293b-d5f9-4f76-bbcd-020c3fc11336"
 
-  val appKeyHeaderValue = "f73d5513-16ac-4894-840d-08e8cf36b4b1"
+  val appKey = "f73d5513-16ac-4894-840d-08e8cf36b4b1"
 
-  val androidIdHeaderValue = "f07a13984f6d116a"
+  val androidId = "f07a13984f6d116a"
 
-  val emailValue = "x@y.com"
+  val email = "valid.email@test.com"
 
-  val oauthTokenValue = "DQAAABQBAACJr1nBqQRTmbhS7yFG8NbWqkSXJchcJ5t8FEH-FNNtpk0cU-Xy8-nc_z4fuQV3Sw-INSFK_NuQnafoqNI06nHPD4yaqXVnQbonrVsokBKQnmkQ9SsD0jVZi8bUsC4ehd-w2tmEe7SZ_8vXhw_3f1iNnsrAqkpEvbPkFIo9oZeAq26us2dTo22Ttn3idGoua8Is_PO9EKzItDQD-0T9QXIDDl5otNMG5T4MS9vrbPOEhjorHqGfQJjT8Y10SK2QdgwwyIF2nCGZ6N-E-hbLjD0caXkY7ATpzhOUIJNnBitIs-h52E8JzgHysbYBK9cy6k6Im0WPyHvzXvrwsUK2RTwh-YBpFVSpBACmc89OZKnYE-VfgKHg9SSv1aNrBeEETQE"
+  val wrongEmail = "wrong.email@test.com"
 
-  val sessionTokenHeaderValue = "1d1afeea-c7ec-45d8-a6f8-825b836f2785"
+  val oauthToken = "DQAAABQBAACJr1nBqQRTmbhS7yFG8NbWqkSXJchcJ5t8FEH-FNNtpk0cU-Xy8-nc_z4fuQV3Sw-INSFK_NuQnafoqNI06nHPD4yaqXVnQbonrVsokBKQnmkQ9SsD0jVZi8bUsC4ehd-w2tmEe7SZ_8vXhw_3f1iNnsrAqkpEvbPkFIo9oZeAq26us2dTo22Ttn3idGoua8Is_PO9EKzItDQD-0T9QXIDDl5otNMG5T4MS9vrbPOEhjorHqGfQJjT8Y10SK2QdgwwyIF2nCGZ6N-E-hbLjD0caXkY7ATpzhOUIJNnBitIs-h52E8JzgHysbYBK9cy6k6Im0WPyHvzXvrwsUK2RTwh-YBpFVSpBACmc89OZKnYE-VfgKHg9SSv1aNrBeEETQE"
 
-  val wrongSessionTokenHeaderValue = "52a6510c-d357-4bca-a7e7-49851c4910ec"
+  val sessionToken = "1d1afeea-c7ec-45d8-a6f8-825b836f2785"
+
+  val failingSessionToken = "a439c00e-9a01-4b0e-a446-1d8410229072"
+
+  val wrongSessionToken = "52a6510c-d357-4bca-a7e7-49851c4910ec"
 
   val deviceToken: Option[String] = Option("d897b6f1-c6a9-42bd-bf42-c787883c7d3e")
 
@@ -76,27 +91,51 @@ trait NineCardsApiContext {
 
   val userId = 1l
 
+  val apiLoginRequest = ApiLoginRequest(email, androidId, oauthToken)
+
+  val wrongApiLoginRequest = ApiLoginRequest(wrongEmail, androidId, oauthToken)
+
   val apiUpdateInstallationRequest = ApiUpdateInstallationRequest(deviceToken)
 
   val wrongApiUpdateInstallationRequest = ApiUpdateInstallationRequest(wrongDeviceToken)
 
-  val updateInstallationRequest = UpdateInstallationRequest(userId, androidIdHeaderValue, deviceToken)
+  val loginRequest = LoginRequest(email, androidId, oauthToken)
 
-  val wrongUpdateInstallationRequest = UpdateInstallationRequest(userId, androidIdHeaderValue, wrongDeviceToken)
+  val wrongLoginRequest = LoginRequest(wrongEmail, androidId, oauthToken)
 
-  val updateInstallationResponse = UpdateInstallationResponse(androidIdHeaderValue, deviceToken)
+  val loginResponse = LoginResponse(sessionToken)
+
+  val updateInstallationRequest = UpdateInstallationRequest(userId, androidId, deviceToken)
+
+  val wrongUpdateInstallationRequest = UpdateInstallationRequest(userId, androidId, wrongDeviceToken)
+
+  val updateInstallationResponse = UpdateInstallationResponse(androidId, deviceToken)
+
+  val persistenceException = PersistenceException(
+    message = "Test error",
+    cause = Option(new RuntimeException("Test error")))
+
+  val checkSessionTokenTask: Task[Option[Long]] = Task.fail(persistenceException)
+
+  val loginTask: Task[LoginResponse] = Task.fail(persistenceException)
+
+  val updateInstallationTask: Task[UpdateInstallationResponse] = Task.fail(persistenceException)
 
   val apiRequestHeaders = List(
-    RawHeader(headerAppId, appIdHeaderValue),
-    RawHeader(headerApiKey, appKeyHeaderValue))
+    RawHeader(headerAppId, appId),
+    RawHeader(headerApiKey, appKey))
 
   val validUserInfoHeaders = List(
-    RawHeader(headerAndroidId, androidIdHeaderValue),
-    RawHeader(headerSessionToken, sessionTokenHeaderValue))
+    RawHeader(headerAndroidId, androidId),
+    RawHeader(headerSessionToken, sessionToken))
+
+  val failingUserInfoHeaders = List(
+    RawHeader(headerAndroidId, androidId),
+    RawHeader(headerSessionToken, failingSessionToken))
 
   val wrongUserInfoHeaders = List(
-    RawHeader(headerAndroidId, androidIdHeaderValue),
-    RawHeader(headerSessionToken, wrongSessionTokenHeaderValue))
+    RawHeader(headerAndroidId, androidId),
+    RawHeader(headerSessionToken, wrongSessionToken))
 }
 
 class NineCardsApiSpec
@@ -117,7 +156,7 @@ class NineCardsApiSpec
   "POST /login" should {
     "return a 401 Unauthorized status code if no headers are provided" in {
 
-      Put(loginPath) ~>
+      Post(loginPath) ~>
         sealRoute(nineCardsApi) ~>
         check {
           status.intValue shouldEqual 401
@@ -125,8 +164,8 @@ class NineCardsApiSpec
     }
     "return a 401 Unauthorized status code if some of the headers aren't provided" in {
 
-      Put(loginPath) ~>
-        addHeader(RawHeader(headerAppId, appIdHeaderValue)) ~>
+      Post(loginPath) ~>
+        addHeader(RawHeader(headerAppId, appId)) ~>
         sealRoute(nineCardsApi) ~>
         check {
           status.intValue shouldEqual 401
@@ -134,7 +173,7 @@ class NineCardsApiSpec
     }
     "return a 401 Unauthorized status code if the given email is empty" in {
 
-      Put(loginPath, ApiLoginRequest("", androidIdHeaderValue, oauthTokenValue)) ~>
+      Post(loginPath, ApiLoginRequest("", androidId, oauthToken)) ~>
         addHeaders(apiRequestHeaders) ~>
         sealRoute(nineCardsApi) ~>
         check {
@@ -143,20 +182,29 @@ class NineCardsApiSpec
     }
     "return a 401 Unauthorized status code if the given oauth token is empty" in {
 
-      Put(loginPath, ApiLoginRequest(emailValue, androidIdHeaderValue, "")) ~>
+      Post(loginPath, ApiLoginRequest(email, androidId, "")) ~>
         addHeaders(apiRequestHeaders) ~>
         sealRoute(nineCardsApi) ~>
         check {
           status.intValue shouldEqual 401
         }
     }
-    "return a code different than 401 Unauthorized status if all the required info is provided" in {
+    "return a 200 Ok status code if all the required info is provided" in {
 
-      Put(loginPath, ApiLoginRequest(emailValue, androidIdHeaderValue, oauthTokenValue)) ~>
+      Post(loginPath, apiLoginRequest) ~>
         addHeaders(apiRequestHeaders) ~>
         sealRoute(nineCardsApi) ~>
         check {
-          status.intValue shouldNotEqual 401
+          status.intValue shouldEqual 200
+        }
+    }
+    "return a 500 Internal Server Error status code if a persistence error happens" in {
+
+      Post(loginPath, wrongApiLoginRequest) ~>
+        addHeaders(apiRequestHeaders) ~>
+        sealRoute(nineCardsApi) ~>
+        check {
+          status.intValue shouldEqual 500
         }
     }
   }
@@ -174,7 +222,7 @@ class NineCardsApiSpec
     "return a 401 Unauthorized status code if some of the headers aren't provided" in {
 
       Put(installationsPath) ~>
-        addHeader(RawHeader(headerAndroidId, androidIdHeaderValue)) ~>
+        addHeader(RawHeader(headerAndroidId, androidId)) ~>
         sealRoute(nineCardsApi) ~>
         check {
           status.intValue shouldEqual 401
@@ -185,6 +233,16 @@ class NineCardsApiSpec
 
       Put(installationsPath) ~>
         addHeaders(wrongUserInfoHeaders) ~>
+        sealRoute(nineCardsApi) ~>
+        check {
+          status.intValue shouldEqual 401
+        }
+    }
+
+    "return a 401 Unauthorized status code if a persistence error happens" in {
+
+      Put(installationsPath, apiUpdateInstallationRequest) ~>
+        addHeaders(failingUserInfoHeaders) ~>
         sealRoute(nineCardsApi) ~>
         check {
           status.intValue shouldEqual 401
