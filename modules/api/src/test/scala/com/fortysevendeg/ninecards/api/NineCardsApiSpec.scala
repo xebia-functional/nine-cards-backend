@@ -36,7 +36,7 @@ trait NineCardsApiSpecification
     with NineCardsExceptionHandler
     with Specs2RouteTest {
 
-  implicit def default(implicit system: ActorSystem) = RouteTestTimeout(3.second dilated system)
+  implicit def default(implicit system: ActorSystem) = RouteTestTimeout(5.second dilated system)
 
   implicit def actorRefFactory = system
 
@@ -123,7 +123,7 @@ trait NineCardsApiContext {
     message = "Test error",
     cause = Option(new RuntimeException("Test error")))
 
-  val checkSessionTokenTask: Task[Option[Long]] = Task.fail(persistenceException)
+  val checkSessionTokenTask: Task[Option[Long]] = Task.fail(persistenceException).
 
   val loginTask: Task[LoginResponse] = Task.fail(persistenceException)
 
