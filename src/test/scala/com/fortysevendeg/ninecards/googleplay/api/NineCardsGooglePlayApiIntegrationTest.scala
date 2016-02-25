@@ -32,15 +32,13 @@ class NineCardsGooglePlayApiIntegrationTest extends Specification with Specs2Rou
     RawHeader("X-Android-Market-Localization", "es-ES")
   )
 
-
   val route = new NineCardsGooglePlayApi {
     override def actorRefFactory = system
   }.googlePlayApiRoute[Task]
 
-
   val validPackages = List("air.fisherprice.com.shapesAndColors", "com.rockstargames.gtalcs", "com.ted.android")
   val invalidPackages = List("com.package.does.not.exist", "com.another.invalid.package")
-  val allPackages = validPackages.toList ++ invalidPackages
+  val allPackages = validPackages ++ invalidPackages
 
   "Calling a propertly wired NineCardsGoogleApi class" should {
     "Successfully connect to Google Play and give a response for a single package" in {

@@ -3,31 +3,27 @@ package com.fortysevendeg.ninecards.googleplay.service.free.interpreter
 import org.http4s._
 import org.http4s.Http4s._
 import org.http4s.Status.ResponseClass.Successful
-
-import com.fortysevendeg.ninecards.googleplay.service.free.algebra.GooglePlay._
-import cats.~>
 import scalaz.concurrent.Task
-
 import scodec.bits.ByteVector
 import scala.collection.JavaConversions._
+import com.fortysevendeg.googleplay.proto.GooglePlay.ResponseWrapper
+import com.fortysevendeg.extracats._
+import com.fortysevendeg.ninecards.googleplay.service.free.algebra.GooglePlay._
 import com.fortysevendeg.ninecards.googleplay.service.GooglePlayDomain._
 import com.fortysevendeg.ninecards.googleplay.domain.Domain._
-import com.fortysevendeg.googleplay.proto.GooglePlay.ResponseWrapper
-
-import com.fortysevendeg.extracats._
+import cats.~>
 import cats.data.Xor
 import cats.syntax.option._
 import cats.std.list._
 import cats.syntax.traverse._
 
-//todo break this up a bit, maybe different file for the bytevector stuff
 object Http4sTaskInterpreter {
+
+  val client = org.http4s.client.blaze.PooledHttp1Client() // todo where is best to create the client?
 
   def packageUri(p: Package): Option[Uri] = Uri.fromString(s"https://android.clients.google.com/fdfe/details?doc=${p.value}").toOption
 
   implicit def protobufItemDecoder(implicit byteVectorDecoder: EntityDecoder[ByteVector]): EntityDecoder[Item] = byteVectorDecoder map parseResponseToItem
-
-  val client = org.http4s.client.blaze.PooledHttp1Client()
 
   val parseResponseToItem: ByteVector => Item = { byteVector =>
 
@@ -64,8 +60,6 @@ object Http4sTaskInterpreter {
   }
 
   def headers(t: Token, id: AndroidId, lo: Option[Localization]): Headers = {
-
-
     val allHeaders = lo.map {
       case Localization(locale) => Header("Accept-Language", locale)
     }.toList ++ List(

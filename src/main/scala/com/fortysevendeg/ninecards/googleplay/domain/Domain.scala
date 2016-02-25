@@ -35,6 +35,5 @@ object Domain {
       o.fold(ctx.marshalTo(HttpResponse(status = StatusCodes.InternalServerError, entity = HttpEntity("Cannot find item!"))))(im(_, ctx))
     }
   }
-
 }
 

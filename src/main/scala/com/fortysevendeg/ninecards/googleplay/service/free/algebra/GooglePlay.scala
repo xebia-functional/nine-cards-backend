@@ -1,7 +1,6 @@
 package com.fortysevendeg.ninecards.googleplay.service.free.algebra
 
 import cats.free.{Free, Inject}
-import scala.language.higherKinds // todo put in sbt
 import com.fortysevendeg.ninecards.googleplay.domain.Domain._
 import com.fortysevendeg.ninecards.googleplay.service.GooglePlayDomain._
 

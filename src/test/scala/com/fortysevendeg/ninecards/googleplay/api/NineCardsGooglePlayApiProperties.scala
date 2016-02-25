@@ -1,6 +1,9 @@
 package com.fortysevendeg.ninecards.googleplay.api
 
 import com.fortysevendeg.ninecards.googleplay.domain.Domain._
+import com.fortysevendeg.ninecards.googleplay.service.GooglePlayDomain._
+import com.fortysevendeg.ninecards.googleplay.service.free.algebra.GooglePlay._
+import com.fortysevendeg.ninecards.googleplay.ninecardsspray._
 import spray.testkit.{RouteTest, TestFrameworkInterface}
 import spray.http.HttpHeaders.RawHeader
 import spray.http.StatusCodes._
@@ -8,21 +11,15 @@ import io.circe._
 import io.circe.syntax._
 import io.circe.parser._
 import io.circe.generic.auto._
+import cats._
+import cats.syntax.option._
 import cats.data.Xor
 import org.scalacheck._
 import org.scalacheck.Prop._
 import org.scalacheck.Shapeless._
 import org.scalacheck.Gen._
 import org.scalacheck.Arbitrary._
-
-import com.fortysevendeg.ninecards.googleplay.service.GooglePlayDomain._
-
 import scalaz.concurrent.Task
-
-import cats._
-import com.fortysevendeg.ninecards.googleplay.service.free.algebra.GooglePlay._
-import com.fortysevendeg.ninecards.googleplay.ninecardsspray._
-import cats.syntax.option._
 
 trait ScalaCheckRouteTest extends RouteTest with TestFrameworkInterface {
   def failTest(msg: String): Nothing = throw new RuntimeException(msg)

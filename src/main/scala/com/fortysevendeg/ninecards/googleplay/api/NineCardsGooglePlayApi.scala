@@ -13,12 +13,11 @@ import cats.syntax.traverse._
 import cats.syntax.option._
 import cats.data.Xor
 import spray.routing._
+import spray.httpx.marshalling.ToResponseMarshaller
 import akka.actor.Actor
 import shapeless._
 import scalaz.concurrent.Task
 import io.circe.generic.auto._
-import spray.httpx.marshalling.ToResponseMarshaller
-import cats.free.Free
 import com.fortysevendeg.ninecards.googleplay.service.free.interpreter.Http4sTaskInterpreter
 
 class NineCardsGooglePlayActor extends Actor with NineCardsGooglePlayApi {

@@ -1,14 +1,13 @@
-package com.fortysevendeg.ninecards.googleplay.service
+package com.fortysevendeg.ninecards.googleplay.service.free.interpreter
 
-import GooglePlayDomain._
+import com.fortysevendeg.ninecards.googleplay.service.GooglePlayDomain._
 import com.fortysevendeg.ninecards.googleplay.domain.Domain._
+import com.fortysevendeg.ninecards.googleplay.service.free.algebra.GooglePlay._
 import org.specs2.mutable.Specification
 import org.specs2.matcher.TaskMatchers
 import spray.testkit.Specs2RouteTest
 import java.nio.file.Paths
 import java.nio.file.Files
-import com.fortysevendeg.ninecards.googleplay.service.free.interpreter.Http4sTaskInterpreter
-import com.fortysevendeg.ninecards.googleplay.service.free.algebra.GooglePlay._
 
 class Http4sTaskInterpreterIntegrationTest extends Specification with Specs2RouteTest with TaskMatchers {
 
