@@ -20,9 +20,8 @@ import cats.syntax.option._
 import cats.std.list._
 import cats.syntax.traverse._
 
-//todo rename for http4s
 //todo break this up a bit, maybe different file for the bytevector stuff
-object TaskInterpreter {
+object Http4sTaskInterpreter {
 
   def packageUri(p: Package): Option[Uri] = Uri.fromString(s"https://android.clients.google.com/fdfe/details?doc=${p.value}").toOption
 

@@ -60,9 +60,9 @@ object NineCardsGooglePlayApiProperties extends Properties("Nine Cards Google Pl
       }
     }
 
-    val route = new NewApi {
+    val route = new NineCardsGooglePlayApi {
       override def actorRefFactory = system
-    }.newRoute[Id]
+    }.googlePlayApiRoute[Id]
 
     Get(s"/googleplay/package/${pkg.value}") ~> addHeaders(requestHeaders) ~> route ~> check {
       val response = responseAs[String]
@@ -82,9 +82,9 @@ object NineCardsGooglePlayApiProperties extends Properties("Nine Cards Google Pl
       }
     }
 
-    val route = new NewApi {
+    val route = new NineCardsGooglePlayApi {
       override def actorRefFactory = system
-    }.newRoute[Id]
+    }.googlePlayApiRoute[Id]
 
     Get(s"/googleplay/package/${unknownPackage.value}") ~> addHeaders(requestHeaders) ~> route ~> check {
       status ?= InternalServerError
@@ -115,9 +115,9 @@ object NineCardsGooglePlayApiProperties extends Properties("Nine Cards Google Pl
       }
     }
 
-    val route = new NewApi {
+    val route = new NineCardsGooglePlayApi {
       override def actorRefFactory = system
-    }.newRoute[Id]
+    }.googlePlayApiRoute[Id]
 
     val allPackages = (succs ++ errs).map(_.value)
 

@@ -1,7 +1,6 @@
 package com.fortysevendeg.ninecards.googleplay.api
 
 import com.fortysevendeg.ninecards.googleplay.domain.Domain._
-import com.fortysevendeg.ninecards.googleplay.service.Http4sGooglePlayService
 import org.specs2.mutable.Specification
 import spray.testkit.Specs2RouteTest
 import spray.http.HttpHeaders.RawHeader
@@ -15,7 +14,7 @@ import scalaz.concurrent.Task
 import com.fortysevendeg.extracats._
 
 import com.fortysevendeg.ninecards.googleplay.ninecardsspray._
-import com.fortysevendeg.ninecards.googleplay.service.free.interpreter.TaskInterpreter._
+import com.fortysevendeg.ninecards.googleplay.service.free.interpreter.Http4sTaskInterpreter._
 import com.fortysevendeg.ninecards.googleplay._
 
 class NineCardsGooglePlayApiIntegrationTest extends Specification with Specs2RouteTest {
@@ -34,9 +33,9 @@ class NineCardsGooglePlayApiIntegrationTest extends Specification with Specs2Rou
   )
 
 
-  val route = new NewApi {
+  val route = new NineCardsGooglePlayApi {
     override def actorRefFactory = system
-  }.newRoute[Task]
+  }.googlePlayApiRoute[Task]
 
 
   val validPackages = List("air.fisherprice.com.shapesAndColors", "com.rockstargames.gtalcs", "com.ted.android")
