@@ -1,7 +1,7 @@
 package spray.testkit
 
-import org.specs2.execute.{ Failure, FailureException }
-import org.specs2.specification.core.{ Fragments, SpecificationStructure }
+import org.specs2.execute.{Failure, FailureException}
+import org.specs2.specification.core.{Fragments, SpecificationStructure}
 import org.specs2.specification.create.DefaultFragmentFactory
 
 trait Specs2Interface extends TestFrameworkInterface with SpecificationStructure {

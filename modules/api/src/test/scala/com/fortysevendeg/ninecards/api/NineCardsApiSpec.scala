@@ -10,13 +10,12 @@ import com.fortysevendeg.ninecards.processes.UserProcesses
 import com.fortysevendeg.ninecards.processes.messages.InstallationsMessages._
 import com.fortysevendeg.ninecards.processes.messages.UserMessages.{LoginRequest, LoginResponse}
 import com.fortysevendeg.ninecards.services.common.TaskOps._
-import com.fortysevendeg.ninecards.services.free.domain.Installation
 import com.fortysevendeg.ninecards.services.persistence.PersistenceExceptions.PersistenceException
-import doobie.imports._
 import org.mockito.Matchers.{eq => mockEq}
 import org.specs2.matcher.Matchers
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
+import org.specs2.specification.Scope
 import spray.http.HttpHeaders.RawHeader
 import spray.http.MediaTypes
 import spray.routing.HttpService
@@ -34,38 +33,56 @@ trait NineCardsApiSpecification
     with NineCardsApiContext
     with Specs2RouteTest {
 
-  val loginPath = "/login"
-  val installationsPath = "/installations"
-  val apiDocsPath = "/apiDocs/index.html"
-
-  implicit val userProcesses: UserProcesses[NineCardsServices] = mock[UserProcesses[NineCardsServices]]
-
   implicit def actorRefFactory = system
 
-  val nineCardsApi = new NineCardsApi {
-    override implicit def actorRefFactory: ActorRefFactory = NineCardsApiSpecification.this.actorRefFactory
-  }.nineCardsApiRoute
+  trait BasicScope extends Scope {
 
-  userProcesses.checkSessionToken(sessionToken, androidId) returns Free.pure(Option(userId))
+    implicit val userProcesses: UserProcesses[NineCardsServices] = mock[UserProcesses[NineCardsServices]]
 
-  userProcesses.checkSessionToken(wrongSessionToken, androidId) returns Free.pure(None)
+    val nineCardsApi = new NineCardsApi {
+      override implicit def actorRefFactory: ActorRefFactory = NineCardsApiSpecification.this.actorRefFactory
+    }.nineCardsApiRoute
 
-  userProcesses.checkSessionToken(failingSessionToken, androidId) returns checkSessionTokenTask.liftF[NineCardsServices]
+  }
 
-  userProcesses.signUpUser(loginRequest) returns Free.pure(loginResponse)
+  trait SuccessfulScope extends BasicScope {
 
-  userProcesses.signUpUser(wrongLoginRequest) returns loginTask.liftF[NineCardsServices]
+    userProcesses.checkSessionToken(sessionToken, androidId) returns Free.pure(Option(userId))
 
-  userProcesses.updateInstallation(
-    mockEq(updateInstallationRequest))(
-    any[Composite[Installation]]) returns Free.pure(updateInstallationResponse)
+    userProcesses.signUpUser(loginRequest) returns Free.pure(loginResponse)
 
-  userProcesses.updateInstallation(
-    mockEq(wrongUpdateInstallationRequest))(
-    any[Composite[Installation]]) returns updateInstallationTask.liftF[NineCardsServices]
+    userProcesses.updateInstallation(
+      mockEq(updateInstallationRequest))(
+      any) returns Free.pure(updateInstallationResponse)
+  }
+
+  trait UnsuccessfulScope extends BasicScope {
+
+    userProcesses.checkSessionToken(sessionToken, androidId) returns Free.pure(None)
+  }
+
+  trait FailingScope extends BasicScope {
+
+    userProcesses.checkSessionToken(sessionToken, androidId) returns Free.pure(Option(userId))
+
+    userProcesses.checkSessionToken(failingSessionToken, androidId) returns checkSessionTokenTask.liftF[NineCardsServices]
+
+    userProcesses.signUpUser(loginRequest) returns loginTask.liftF[NineCardsServices]
+
+    userProcesses.updateInstallation(
+      mockEq(updateInstallationRequest))(
+      any) returns updateInstallationTask.liftF[NineCardsServices]
+  }
+
 }
 
 trait NineCardsApiContext {
+
+  val loginPath = "/login"
+
+  val installationsPath = "/installations"
+
+  val apiDocsPath = "/apiDocs/index.html"
 
   val appId = "269b293b-d5f9-4f76-bbcd-020c3fc11336"
 
@@ -75,39 +92,25 @@ trait NineCardsApiContext {
 
   val email = "valid.email@test.com"
 
-  val wrongEmail = "wrong.email@test.com"
-
   val oauthToken = "DQAAABQBAACJr1nBqQRTmbhS7yFG8NbWqkSXJchcJ5t8FEH-FNNtpk0cU-Xy8-nc_z4fuQV3Sw-INSFK_NuQnafoqNI06nHPD4yaqXVnQbonrVsokBKQnmkQ9SsD0jVZi8bUsC4ehd-w2tmEe7SZ_8vXhw_3f1iNnsrAqkpEvbPkFIo9oZeAq26us2dTo22Ttn3idGoua8Is_PO9EKzItDQD-0T9QXIDDl5otNMG5T4MS9vrbPOEhjorHqGfQJjT8Y10SK2QdgwwyIF2nCGZ6N-E-hbLjD0caXkY7ATpzhOUIJNnBitIs-h52E8JzgHysbYBK9cy6k6Im0WPyHvzXvrwsUK2RTwh-YBpFVSpBACmc89OZKnYE-VfgKHg9SSv1aNrBeEETQE"
 
   val sessionToken = "1d1afeea-c7ec-45d8-a6f8-825b836f2785"
 
   val failingSessionToken = "a439c00e-9a01-4b0e-a446-1d8410229072"
 
-  val wrongSessionToken = "52a6510c-d357-4bca-a7e7-49851c4910ec"
-
-  val deviceToken: Option[String] = Option("d897b6f1-c6a9-42bd-bf42-c787883c7d3e")
-
-  val wrongDeviceToken = Option("81420986-db52-4521-8d4e-6bdb3c6e5867")
+  val deviceToken = Option("d897b6f1-c6a9-42bd-bf42-c787883c7d3e")
 
   val userId = 1l
 
   val apiLoginRequest = ApiLoginRequest(email, androidId, oauthToken)
 
-  val wrongApiLoginRequest = ApiLoginRequest(wrongEmail, androidId, oauthToken)
-
   val apiUpdateInstallationRequest = ApiUpdateInstallationRequest(deviceToken)
 
-  val wrongApiUpdateInstallationRequest = ApiUpdateInstallationRequest(wrongDeviceToken)
-
   val loginRequest = LoginRequest(email, androidId, oauthToken)
-
-  val wrongLoginRequest = LoginRequest(wrongEmail, androidId, oauthToken)
 
   val loginResponse = LoginResponse(sessionToken)
 
   val updateInstallationRequest = UpdateInstallationRequest(userId, androidId, deviceToken)
-
-  val wrongUpdateInstallationRequest = UpdateInstallationRequest(userId, androidId, wrongDeviceToken)
 
   val updateInstallationResponse = UpdateInstallationResponse(androidId, deviceToken)
 
@@ -125,24 +128,20 @@ trait NineCardsApiContext {
     RawHeader(headerAppId, appId),
     RawHeader(headerApiKey, appKey))
 
-  val validUserInfoHeaders = List(
+  val userInfoHeaders = List(
     RawHeader(headerAndroidId, androidId),
     RawHeader(headerSessionToken, sessionToken))
 
   val failingUserInfoHeaders = List(
     RawHeader(headerAndroidId, androidId),
     RawHeader(headerSessionToken, failingSessionToken))
-
-  val wrongUserInfoHeaders = List(
-    RawHeader(headerAndroidId, androidId),
-    RawHeader(headerSessionToken, wrongSessionToken))
 }
 
 class NineCardsApiSpec
   extends NineCardsApiSpecification {
 
   "nineCardsApi" should {
-    "grant access to Swagger documentation" in {
+    "grant access to Swagger documentation" in new BasicScope {
       Get(apiDocsPath) ~>
         sealRoute(nineCardsApi) ~>
         check {
@@ -154,7 +153,7 @@ class NineCardsApiSpec
   }
 
   "POST /login" should {
-    "return a 401 Unauthorized status code if no headers are provided" in {
+    "return a 401 Unauthorized status code if no headers are provided" in new BasicScope {
 
       Post(loginPath) ~>
         sealRoute(nineCardsApi) ~>
@@ -162,7 +161,7 @@ class NineCardsApiSpec
           status.intValue shouldEqual 401
         }
     }
-    "return a 401 Unauthorized status code if some of the headers aren't provided" in {
+    "return a 401 Unauthorized status code if some of the headers aren't provided" in new BasicScope {
 
       Post(loginPath) ~>
         addHeader(RawHeader(headerAppId, appId)) ~>
@@ -171,7 +170,7 @@ class NineCardsApiSpec
           status.intValue shouldEqual 401
         }
     }
-    "return a 401 Unauthorized status code if the given email is empty" in {
+    "return a 401 Unauthorized status code if the given email is empty" in new BasicScope {
 
       Post(loginPath, ApiLoginRequest("", androidId, oauthToken)) ~>
         addHeaders(apiRequestHeaders) ~>
@@ -180,7 +179,7 @@ class NineCardsApiSpec
           status.intValue shouldEqual 401
         }
     }
-    "return a 401 Unauthorized status code if the given oauth token is empty" in {
+    "return a 401 Unauthorized status code if the given oauth token is empty" in new BasicScope {
 
       Post(loginPath, ApiLoginRequest(email, androidId, "")) ~>
         addHeaders(apiRequestHeaders) ~>
@@ -189,7 +188,7 @@ class NineCardsApiSpec
           status.intValue shouldEqual 401
         }
     }
-    "return a 200 Ok status code if all the required info is provided" in {
+    "return a 200 Ok status code if all the required info is provided" in new SuccessfulScope {
 
       Post(loginPath, apiLoginRequest) ~>
         addHeaders(apiRequestHeaders) ~>
@@ -198,9 +197,9 @@ class NineCardsApiSpec
           status.intValue shouldEqual 200
         }
     }
-    "return a 500 Internal Server Error status code if a persistence error happens" in {
+    "return a 500 Internal Server Error status code if a persistence error happens" in new FailingScope {
 
-      Post(loginPath, wrongApiLoginRequest) ~>
+      Post(loginPath, apiLoginRequest) ~>
         addHeaders(apiRequestHeaders) ~>
         sealRoute(nineCardsApi) ~>
         check {
@@ -210,7 +209,7 @@ class NineCardsApiSpec
   }
 
   "PUT /installations" should {
-    "return a 401 Unauthorized status code if no headers are provided" in {
+    "return a 401 Unauthorized status code if no headers are provided" in new BasicScope {
 
       Put(installationsPath) ~>
         sealRoute(nineCardsApi) ~>
@@ -219,7 +218,7 @@ class NineCardsApiSpec
         }
     }
 
-    "return a 401 Unauthorized status code if some of the headers aren't provided" in {
+    "return a 401 Unauthorized status code if some of the headers aren't provided" in new BasicScope {
 
       Put(installationsPath) ~>
         addHeader(RawHeader(headerAndroidId, androidId)) ~>
@@ -229,17 +228,17 @@ class NineCardsApiSpec
         }
     }
 
-    "return a 401 Unauthorized status code if a wrong credential is provided" in {
+    "return a 401 Unauthorized status code if a wrong credential is provided" in new UnsuccessfulScope {
 
       Put(installationsPath) ~>
-        addHeaders(wrongUserInfoHeaders) ~>
+        addHeaders(userInfoHeaders) ~>
         sealRoute(nineCardsApi) ~>
         check {
           status.intValue shouldEqual 401
         }
     }
 
-    "return a 401 Unauthorized status code if a persistence error happens" in {
+    "return a 401 Unauthorized status code if a persistence error happens" in new FailingScope {
 
       Put(installationsPath, apiUpdateInstallationRequest) ~>
         addHeaders(failingUserInfoHeaders) ~>
@@ -249,20 +248,20 @@ class NineCardsApiSpec
         }
     }
 
-    "return a 200 Ok status code if a valid credential is provided" in {
+    "return a 200 Ok status code if a valid credential is provided" in new SuccessfulScope {
 
       Put(installationsPath, apiUpdateInstallationRequest) ~>
-        addHeaders(validUserInfoHeaders) ~>
+        addHeaders(userInfoHeaders) ~>
         sealRoute(nineCardsApi) ~>
         check {
           status.intValue shouldEqual 200
         }
     }
 
-    "return a 500 Internal Server Error status code if a persistence error happens" in {
+    "return a 500 Internal Server Error status code if a persistence error happens" in new FailingScope {
 
-      Put(installationsPath, wrongApiUpdateInstallationRequest) ~>
-        addHeaders(validUserInfoHeaders) ~>
+      Put(installationsPath, apiUpdateInstallationRequest) ~>
+        addHeaders(userInfoHeaders) ~>
         sealRoute(nineCardsApi) ~>
         check {
           status.intValue shouldEqual 500
