@@ -1,6 +1,7 @@
 package com.fortysevendeg.ninecards.api
 
-import akka.actor.ActorRefFactory
+import akka.actor.{ActorRefFactory, ActorSystem}
+import akka.testkit._
 import cats.free.Free
 import com.fortysevendeg.ninecards.api.NineCardsHeaders._
 import com.fortysevendeg.ninecards.api.messages.InstallationsMessages.ApiUpdateInstallationRequest
@@ -21,6 +22,7 @@ import spray.http.MediaTypes
 import spray.routing.HttpService
 import spray.testkit.Specs2RouteTest
 
+import scala.concurrent.duration.DurationInt
 import scalaz.concurrent.Task
 
 trait NineCardsApiSpecification
@@ -31,7 +33,10 @@ trait NineCardsApiSpecification
     with Matchers
     with Mockito
     with NineCardsApiContext
+    with NineCardsExceptionHandler
     with Specs2RouteTest {
+
+  implicit def default(implicit system: ActorSystem) = RouteTestTimeout(3.second dilated system)
 
   implicit def actorRefFactory = system
 
