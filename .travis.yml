@@ -3,7 +3,7 @@ language: scala
 scala:
   - 2.11.7
 script:
-  - sbt ++$$TRAVIS_SCALA_VERSION "project api" clean coverage compile
+  - sbt ++$$TRAVIS_SCALA_VERSION clean coverage compile
 addons:
   apt:
     packages:
