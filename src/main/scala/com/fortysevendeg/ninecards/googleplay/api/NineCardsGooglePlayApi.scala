@@ -45,11 +45,11 @@ trait NewApi extends HttpService {
       bulkMarshaller: ToResponseMarshaller[M[PackageDetails]]
   ): Route =
     pathPrefix("googleplay") {
-      requestHeaders { (token, androidId, locaizationOption) =>
+      requestHeaders { (token, androidId, localizationOption) =>
         get {
           path("package" / Segment) { packageName =>
             complete {
-              googlePlayService.requestPackage(Package(packageName)).foldMap(interpreter)
+              googlePlayService.requestPackage((token, androidId, localizationOption), Package(packageName)).foldMap(interpreter)
             }
           }
         } ~
@@ -57,7 +57,7 @@ trait NewApi extends HttpService {
           path("packages" / "detailed") {
             entity(as[PackageListRequest]) { req =>
               complete {
-                googlePlayService.bulkRequestPackage(req).foldMap(interpreter)
+                googlePlayService.bulkRequestPackage((token, androidId, localizationOption), req).foldMap(interpreter)
               }
             }
           }

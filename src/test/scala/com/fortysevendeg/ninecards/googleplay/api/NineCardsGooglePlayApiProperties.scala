@@ -53,7 +53,7 @@ object NineCardsGooglePlayApiProperties extends Properties("Nine Cards Google Pl
 
     implicit val interpreter: GooglePlayOps ~> Id = new (GooglePlayOps ~> Id) {
       def apply[A](fa: GooglePlayOps[A]) = fa match {
-        case RequestPackage(p) =>
+        case RequestPackage(_, p) =>
           if (p == pkg) Some(item)
           else None
         case _ => failTest("Should only be making a request for a single package")
@@ -75,7 +75,7 @@ object NineCardsGooglePlayApiProperties extends Properties("Nine Cards Google Pl
 
     implicit val interpreter: GooglePlayOps ~> Id = new (GooglePlayOps ~> Id) {
       def apply[A](fa: GooglePlayOps[A]) = fa match {
-        case RequestPackage(p) =>
+        case RequestPackage(_, p) =>
           if (p == unknownPackage) None
           else Some(wrongItem)
         case _ => failTest("Should only be making a request for a single package")
@@ -101,7 +101,7 @@ object NineCardsGooglePlayApiProperties extends Properties("Nine Cards Google Pl
 
     implicit val interpreter: GooglePlayOps ~> Id = new (GooglePlayOps ~> Id) {
       def apply[A](fa: GooglePlayOps[A]) = fa match {
-        case BulkRequestPackage(PackageListRequest(items)) =>
+        case BulkRequestPackage(_, PackageListRequest(items)) =>
 
           val fetched: List[Xor[String, Item]] = items.map{ i =>
             database.get(Package(i)).toRightXor(i)
