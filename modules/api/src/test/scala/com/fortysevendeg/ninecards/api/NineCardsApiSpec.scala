@@ -123,7 +123,7 @@ trait NineCardsApiContext {
     message = "Test error",
     cause = Option(new RuntimeException("Test error")))
 
-  val checkSessionTokenTask: Task[Option[Long]] = Task.fail(persistenceException).
+  val checkSessionTokenTask: Task[Option[Long]] = Task.fail(persistenceException)
 
   val loginTask: Task[LoginResponse] = Task.fail(persistenceException)
 
