@@ -27,7 +27,7 @@ class NineCardsAuthenticator(
     with JsonFormats {
 
   implicit def fromFutureAuth[T](
-    auth: ⇒ Future[Authentication[T]]): AuthMagnet[T] =
+    auth: => Future[Authentication[T]]): AuthMagnet[T] =
     new AuthMagnet(onSuccess(auth))
 
   val rejectionByCredentialsRejected = AuthenticationFailedRejection(
