@@ -37,8 +37,9 @@ trait NewApi extends HttpService {
     localisation <- optionalHeaderValueByName("X-Android-Market-Localization")
   } yield Token(token) :: AndroidId(androidId) :: localisation.map(Localization.apply) :: HNil
 
-  def newRoute[M[_]: Monad](
+  def newRoute[M[_]](
     implicit
+      monadM: Monad[M],
       googlePlayService: GooglePlayService[GooglePlayOps],
       interpreter: GooglePlayOps ~> M, // todo can this be made GPO ~> TRM
       itemMarshaller: ToResponseMarshaller[M[Option[Item]]], // todo need to make the option[item] generic

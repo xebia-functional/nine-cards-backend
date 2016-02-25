@@ -11,6 +11,13 @@ import io.circe.syntax._
 import io.circe.generic.auto._
 import cats.data.Xor
 
+import scalaz.concurrent.Task
+import com.fortysevendeg.extracats._
+
+import com.fortysevendeg.ninecards.googleplay.ninecardsspray._
+import com.fortysevendeg.ninecards.googleplay.service.free.interpreter.TaskInterpreter._
+import com.fortysevendeg.ninecards.googleplay._
+
 class NineCardsGooglePlayApiIntegrationTest extends Specification with Specs2RouteTest {
 
   /*
@@ -26,9 +33,10 @@ class NineCardsGooglePlayApiIntegrationTest extends Specification with Specs2Rou
     RawHeader("X-Android-Market-Localization", "es-ES")
   )
 
-  val route = new NineCardsGooglePlayApi {
+
+  val route = new NewApi {
     override def actorRefFactory = system
-  }.googlePlayApiRoute(Http4sGooglePlayService.packageRequest _)
+  }.newRoute[Task]
 
 
   val validPackages = List("air.fisherprice.com.shapesAndColors", "com.rockstargames.gtalcs", "com.ted.android")
@@ -47,7 +55,7 @@ class NineCardsGooglePlayApiIntegrationTest extends Specification with Specs2Rou
     }
 
     "Successfully connect to Google Play and give a response for a list of packages" in {
-      Post(s"/googleplay/packages/detailed", PackageListRequest(allPackages).asJson.noSpaces) ~> addHeaders(requestHeaders) ~> route ~> check {
+      Post(s"/googleplay/packages/detailed", PackageListRequest(allPackages)) ~> addHeaders(requestHeaders) ~> route ~> check {
         status must_=== OK
 
         val response = decode[PackageDetails](responseAs[String]).map {
