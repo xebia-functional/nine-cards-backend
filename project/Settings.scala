@@ -1,5 +1,6 @@
 import FlywayConfig._
-import org.flywaydb.sbt.FlywayPlugin._
+import org.flywaydb.sbt.FlywayPlugin
+import org.flywaydb.sbt.FlywayPlugin.autoImport._
 import sbt.Keys._
 import sbt._
 import spray.revolver.RevolverPlugin
@@ -27,7 +28,7 @@ trait Settings {
       Resolver.bintrayRepo("scalaz", "releases"),
       DefaultMavenRepository,
       "Sonatype Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
-      "Flyway" at "http://flywaydb.org/repo"
+      "Flyway" at "https://flywaydb.org/repo"
     ),
     doc in Compile <<= target.map(_ / "none")
   )
@@ -36,7 +37,7 @@ trait Settings {
     databaseConfig := databaseConfigDef.value,
     run <<= run in Runtime dependsOn flywayMigrate,
     publishArtifact in(Test, packageBin) := false
-  ) ++ RevolverPlugin.settings ++ Seq(flywaySettings: _*) ++ Seq(
+  ) ++ RevolverPlugin.settings ++ Seq(FlywayPlugin.projectSettings: _*) ++ Seq(
     flywayDriver := databaseConfig.value.driver,
     flywayUrl := databaseConfig.value.url,
     flywayUser := databaseConfig.value.user,

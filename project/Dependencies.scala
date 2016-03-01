@@ -23,7 +23,6 @@ trait Dependencies {
   val doobieSpecs2 = "org.tpolecat" %% "doobie-contrib-specs2" % Versions.doobie
   val typesafeConfig = "com.typesafe" % "config" % Versions.typesafeConfig
   val flywaydbCore = "org.flywaydb" % "flyway-core" % Versions.flywaydb
-  val flywaydbParent = "org.flywaydb" % "flyway-parent" % Versions.flywaydb
   val scalacheckShapeless = "com.github.alexarchambault" %% "scalacheck-shapeless_1.12" % Versions.scalacheckShapeless
 
   val baseDepts = Seq(
@@ -58,6 +57,5 @@ trait Dependencies {
     scalaz,
     scalazConcurrent,
     sprayJson,
-    flywaydbCore % "test",
-    flywaydbParent % "test"))
+    flywaydbCore % "test"))
 }
