@@ -33,7 +33,7 @@ class UserProcesses[F[_]](
     }
   }.transact(transactor) map toLoginResponse
 
-  private def signUpInstallation(request: LoginRequest, user: User): ConnectionIO[(User, Installation)] =
+  private def signUpInstallation(request: LoginRequest, user: User): ConnectionIO[(User, Installation)] = {
     userPersistenceServices.getInstallationByUserAndAndroidId(user.id, request.androidId) flatMap {
       case Some(installation) =>
         (user, installation).point[ConnectionIO]
@@ -42,6 +42,7 @@ class UserProcesses[F[_]](
           installation => (user, installation)
         }
     }
+  }
 
   def updateInstallation(
     request: UpdateInstallationRequest)(

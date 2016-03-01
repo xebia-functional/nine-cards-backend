@@ -39,7 +39,6 @@ class UserPersistenceServices(implicit persistence: PersistenceImpl) {
     userId: Long,
     deviceToken: Option[String],
     androidId: String)(implicit ev: Composite[K]): ConnectionIO[K] = {
-   println("updateInstallation")
     persistence.updateWithGeneratedKeys[(Option[String], Long, String), K](InstallationQueries.updateDeviceToken, Installation.allFields, (deviceToken, userId, androidId))
   }
 }
