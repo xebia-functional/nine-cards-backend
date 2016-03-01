@@ -38,9 +38,9 @@ class UserPersistenceServices(implicit persistence: PersistenceImpl) {
   def updateInstallation[K](
     userId: Long,
     deviceToken: Option[String],
-    androidId: String)(implicit ev: Composite[K]): ConnectionIO[K] = {
+    androidId: String)(implicit ev: Composite[K]): ConnectionIO[K] =
     persistence.updateWithGeneratedKeys[(Option[String], Long, String), K](InstallationQueries.updateDeviceToken, Installation.allFields, (deviceToken, userId, androidId))
-  }
+
 }
 
 object UserPersistenceServices {

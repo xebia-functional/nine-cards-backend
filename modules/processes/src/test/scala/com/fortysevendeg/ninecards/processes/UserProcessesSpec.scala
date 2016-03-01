@@ -144,7 +144,7 @@ class UserProcessesSpec
       signUpInstallation.foldMap(interpreters).run shouldEqual updateInstallationResponse
     }
   }
-
+   
   "checkSessionToken" should {
     "return the userId if exists a user with that sessionToken and androidId" in new SuccessfulScope {
       val checkSessionToken = userProcesses.checkSessionToken(sessionToken, androidId)

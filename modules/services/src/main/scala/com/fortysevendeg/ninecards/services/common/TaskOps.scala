@@ -16,7 +16,6 @@ object TaskOps {
     def liftF[F[_]](implicit dbOps: DBOps[F]): cats.free.Free[F, A] = task.attemptRun match {
       case \/-(value) => dbOps.success(value)
       case -\/(e) =>
-        e.printStackTrace
         dbOps.failure(
           PersistenceException(
             message = "An error was found while accessing to database",
