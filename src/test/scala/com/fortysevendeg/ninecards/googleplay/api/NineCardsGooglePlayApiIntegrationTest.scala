@@ -15,7 +15,7 @@ import scalaz.concurrent.Task
 import com.fortysevendeg.extracats._
 
 import com.fortysevendeg.ninecards.googleplay.ninecardsspray._
-import com.fortysevendeg.ninecards.googleplay.service.free.interpreter.Http4sTaskInterpreter._
+import com.fortysevendeg.ninecards.googleplay.service.free.interpreter.TaskInterpreter._
 import com.fortysevendeg.ninecards.googleplay._
 
 class NineCardsGooglePlayApiIntegrationTest extends Specification with Specs2RouteTest with TestConfig {

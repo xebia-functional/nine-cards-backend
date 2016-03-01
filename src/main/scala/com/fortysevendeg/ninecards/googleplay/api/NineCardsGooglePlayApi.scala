@@ -18,11 +18,11 @@ import akka.actor.Actor
 import shapeless._
 import scalaz.concurrent.Task
 import io.circe.generic.auto._
-import com.fortysevendeg.ninecards.googleplay.service.free.interpreter.Http4sTaskInterpreter
+import com.fortysevendeg.ninecards.googleplay.service.free.interpreter.TaskInterpreter
 
 class NineCardsGooglePlayActor extends Actor with NineCardsGooglePlayApi {
 
-  import Http4sTaskInterpreter._
+  import TaskInterpreter._
 
   def actorRefFactory = context
 

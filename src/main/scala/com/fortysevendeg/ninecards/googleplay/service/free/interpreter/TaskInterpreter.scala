@@ -11,7 +11,7 @@ import cats.std.list._
 import cats.syntax.traverse._
 import cats.Foldable
 
-object Http4sTaskInterpreter {
+object TaskInterpreter {
 
   implicit val interpreter = new (GooglePlayOps ~> Task) {
     def apply[A](fa: GooglePlayOps[A]) = fa match {

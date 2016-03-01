@@ -7,7 +7,7 @@ import org.specs2.mutable.Specification
 import org.specs2.matcher.TaskMatchers
 import spray.testkit.Specs2RouteTest
 
-class Http4sTaskInterpreterIntegrationTest extends Specification with Specs2RouteTest with TaskMatchers with TestConfig {
+class TaskInterpreterIntegrationTest extends Specification with Specs2RouteTest with TaskMatchers with TestConfig {
 
   val params = (token, androidId, Some(localization))
 
@@ -16,7 +16,7 @@ class Http4sTaskInterpreterIntegrationTest extends Specification with Specs2Rout
 
       val expectedCategory = "EDUCATION"
 
-      val result = Http4sTaskInterpreter.interpreter(RequestPackage(params, Package("air.fisherprice.com.shapesAndColors")))
+      val result = TaskInterpreter.interpreter(RequestPackage(params, Package("air.fisherprice.com.shapesAndColors")))
 
       val retrievedCategory = result.map { optionalItem =>
         optionalItem.flatMap(_.docV2.details.appDetails.appCategory.headOption)
@@ -36,7 +36,7 @@ class Http4sTaskInterpreterIntegrationTest extends Specification with Specs2Rout
 
       val packages = successfulCategories.map(_._1) ++ invalidPackages
 
-      val response = Http4sTaskInterpreter.interpreter(BulkRequestPackage(params, PackageListRequest(packages)))
+      val response = TaskInterpreter.interpreter(BulkRequestPackage(params, PackageListRequest(packages)))
 
       val result = response.map { case PackageDetails(errors, items) =>
         val itemCategories = items.flatMap(_.docV2.details.appDetails.appCategory)
