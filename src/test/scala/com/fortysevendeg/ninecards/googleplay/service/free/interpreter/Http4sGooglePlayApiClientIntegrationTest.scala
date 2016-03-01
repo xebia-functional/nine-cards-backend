@@ -8,6 +8,8 @@ import org.specs2.matcher.TaskMatchers
 import spray.testkit.Specs2RouteTest
 import java.nio.file.Paths
 import java.nio.file.Files
+import scalaz.concurrent.Task
+import cats.data.Xor
 
 class Http4sGooglePlayApiClientIntegrationTest extends Specification with Specs2RouteTest with TaskMatchers with TestConfig {
 
@@ -25,6 +27,22 @@ class Http4sGooglePlayApiClientIntegrationTest extends Specification with Specs2
       val item: Item = Http4sGooglePlayApiClient.parseResponseToItem(byteVector)
 
       item.docV2.docid must_=== packageName
+    }
+  }
+
+  "Making an API request" should {
+    val headers = Http4sGooglePlayApiClient.headers(token, androidId, Some(localization))
+    "result in an Item for packages that exist" in {
+      val request = Http4sGooglePlayApiClient.request(Package(packageName), headers)
+      val fetchedDocId = request.map(xor => xor.map(item => item.docV2.docid))
+
+      fetchedDocId must returnValue(Xor.right(packageName))
+    }
+    "result in an error state for packages that do not exist" in {
+      val unknownPackage = "com.package.does.not.exist"
+      val request = Http4sGooglePlayApiClient.request(Package(unknownPackage), headers)
+
+      request must returnValue(Xor.left(unknownPackage))
     }
   }
 }
