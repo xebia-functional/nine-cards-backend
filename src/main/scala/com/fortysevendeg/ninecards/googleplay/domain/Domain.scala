@@ -16,7 +16,6 @@ object Domain {
   case class PackageListRequest(items: List[String]) extends AnyVal
   case class PackageDetails(errors: List[String], items: List[Item])
 
-
   implicit val packageDetailsMoniod: Monoid[PackageDetails] = new Monoid[PackageDetails] {
     def empty: PackageDetails = PackageDetails(Nil, Nil)
     def combine(x: PackageDetails, y: PackageDetails): PackageDetails = PackageDetails(errors = x.errors ++ y.errors, items = x.items ++ y.items)
