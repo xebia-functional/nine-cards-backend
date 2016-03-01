@@ -49,7 +49,6 @@ trait UserProcessesSpecification
 
     userPersistenceServices.updateInstallation[Installation](mockEq(userId), mockEq(Option(deviceToken)), mockEq(androidId))(any) returns installation.point[ConnectionIO]
 
-
   }
 
   trait UnsuccessfulScope extends BasicScope {
@@ -81,15 +80,17 @@ trait UserProcessesContext {
 
   val deviceToken = "abc"
 
+  val installationId = 1l
+
   val loginRequest = LoginRequest(email, androidId, outhToken)
+
+  val loginResponse = LoginResponse(sessionToken)
 
   val updateInstallationRequest = UpdateInstallationRequest(userId, androidId, Option(deviceToken))
 
   val updateInstallationResponse = UpdateInstallationResponse(androidId, Option(deviceToken))
 
-  val expectedInstallationResponse = Free.pure(updateInstallationResponse)
-
-  val installation = Installation(1l,userId,Option(deviceToken),androidId)
+  val installation = Installation(installationId,userId,Option(deviceToken),androidId)
 
 }
 
@@ -98,18 +99,18 @@ class UserProcessesSpec
   extends UserProcessesSpecification
     with ScalaCheck {
 
-//  "signUpUser" should {
-//    "return LoginResponse object" in new SuccessfulScope {
-//      val signUpUser: Free[NineCardsServices, LoginResponse] = userProcesses.signUpUser(loginRequest)
-//      println(s"###@@@@@#@#@#@#@#@#@#@#@#@#@#@#$signUpUser")
-//
-//      1 shouldEqual 1
-//    }
-//  }
+  "signUpUser" should {
+    "return LoginResponse object" in new SuccessfulScope {
+      val signUpUser: Free[NineCardsServices, LoginResponse] = userProcesses.signUpUser(loginRequest)
+      println(s"###@@@@@#@#@#@#@#@#@#@#@#@#@#@#$signUpUser")
+
+      1 shouldEqual 1
+    }
+  }
 
   "updateInstallation" should {
     "return UpdateInstallationResponse object" in new SuccessfulScope {
-      val signUpInstallation = userProcesses.updateInstallation(updateInstallationRequest)
+      val signUpInstallation: Free[NineCardsServices, UpdateInstallationResponse] = userProcesses.updateInstallation(updateInstallationRequest)
       signUpInstallation.foldMap(interpreters).run shouldEqual updateInstallationResponse
     }
   }
