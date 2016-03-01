@@ -1,7 +1,7 @@
 package com.fortysevendeg.ninecards.googleplay.api
 
+import com.fortysevendeg.ninecards.googleplay.TestConfig
 import com.fortysevendeg.ninecards.googleplay.domain.Domain._
-import com.fortysevendeg.ninecards.googleplay.service.Http4sGooglePlayService
 import org.specs2.mutable.Specification
 import spray.testkit.Specs2RouteTest
 import spray.http.HttpHeaders.RawHeader
@@ -11,7 +11,14 @@ import io.circe.syntax._
 import io.circe.generic.auto._
 import cats.data.Xor
 
-class NineCardsGooglePlayApiIntegrationTest extends Specification with Specs2RouteTest {
+import scalaz.concurrent.Task
+import com.fortysevendeg.extracats._
+
+import com.fortysevendeg.ninecards.googleplay.ninecardsspray._
+import com.fortysevendeg.ninecards.googleplay.service.free.interpreter.Http4sTaskInterpreter._
+import com.fortysevendeg.ninecards.googleplay._
+
+class NineCardsGooglePlayApiIntegrationTest extends Specification with Specs2RouteTest with TestConfig {
 
   /*
    * Reasons this test suite may fail:
@@ -21,19 +28,18 @@ class NineCardsGooglePlayApiIntegrationTest extends Specification with Specs2Rou
    */
 
   val requestHeaders = List(
-    RawHeader("X-Android-ID", "3D4D7FE45C813D3E"),
-    RawHeader("X-Google-Play-Token", "DQAAABQBAACJr1nBqQRTmbhS7yFG8NbWqkSXJchcJ5t8FEH-FNNtpk0cU-Xy8-nc_z4fuQV3Sw-INSFK_NuQnafoqNI06nHPD4yaqXVnQbonrVsokBKQnmkQ9SsD0jVZi8bUsC4ehd-w2tmEe7SZ_8vXhw_3f1iNnsrAqkpEvbPkFIo9oZeAq26us2dTo22Ttn3idGoua8Is_PO9EKzItDQD-0T9QXIDDl5otNMG5T4MS9vrbPOEhjorHqGfQJjT8Y10SK2QdgwwyIF2nCGZ6N-E-hbLjD0caXkY7ATpzhOUIJNnBitIs-h52E8JzgHysbYBK9cy6k6Im0WPyHvzXvrwsUK2RTwh-YBpFVSpBACmc89OZKnYE-VfgKHg9SSv1aNrBeEETQE"),
-    RawHeader("X-Android-Market-Localization", "es-ES")
+    RawHeader("X-Android-ID", androidId.value),
+    RawHeader("X-Google-Play-Token", token.value),
+    RawHeader("X-Android-Market-Localization", localization.value)
   )
 
   val route = new NineCardsGooglePlayApi {
     override def actorRefFactory = system
-  }.googlePlayApiRoute(Http4sGooglePlayService.packageRequest _)
-
+  }.googlePlayApiRoute[Task]
 
   val validPackages = List("air.fisherprice.com.shapesAndColors", "com.rockstargames.gtalcs", "com.ted.android")
   val invalidPackages = List("com.package.does.not.exist", "com.another.invalid.package")
-  val allPackages = validPackages.toList ++ invalidPackages
+  val allPackages = validPackages ++ invalidPackages
 
   "Calling a propertly wired NineCardsGoogleApi class" should {
     "Successfully connect to Google Play and give a response for a single package" in {
@@ -47,7 +53,7 @@ class NineCardsGooglePlayApiIntegrationTest extends Specification with Specs2Rou
     }
 
     "Successfully connect to Google Play and give a response for a list of packages" in {
-      Post(s"/googleplay/packages/detailed", PackageListRequest(allPackages).asJson.noSpaces) ~> addHeaders(requestHeaders) ~> route ~> check {
+      Post(s"/googleplay/packages/detailed", PackageListRequest(allPackages)) ~> addHeaders(requestHeaders) ~> route ~> check {
         status must_=== OK
 
         val response = decode[PackageDetails](responseAs[String]).map {

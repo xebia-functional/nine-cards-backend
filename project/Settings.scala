@@ -12,7 +12,7 @@ trait Settings {
     organizationHomepage := Some(new URL("http://47deg.com")),
     version := Versions.buildVersion,
     conflictWarning := ConflictWarning.disable,
-    scalacOptions ++= Seq("-deprecation", "-unchecked", "-feature"),
+    scalacOptions ++= Seq("-deprecation", "-unchecked", "-feature", "-language:higherKinds"),
     javaOptions in Test ++= Seq("-XX:MaxPermSize=128m", "-Xms512m", "-Xmx512m"),
     sbt.Keys.fork in Test := false,
     publishMavenStyle := true,
