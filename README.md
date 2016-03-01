@@ -67,6 +67,13 @@ Example Response:
 }
 ```
 
+Response codes:
+
+| Code | Reason |
+|------|--------|
+| `200 OK` | Successfully found `<package>` |
+| `500 Internal Server Error` | Package not found |
+
 ---
 
 The updated versioned endpoint will look as follows. Please note this is a work in progress and is subject to change. Suggestions and comments are welcome.
@@ -77,7 +84,7 @@ The updated versioned endpoint will look as follows. Please note this is a work 
 |----------|--------|--------------|
 | `/googleplay/package/<package>` | `GET` | `application/vnd+47deg.9c.package.v1+json` |
 
-Example response:
+Example JSON response:
 
 ```
 {
@@ -88,6 +95,14 @@ Example response:
    ]
 }
 ```
+
+
+Response codes:
+
+| Code | Reason |
+|------|--------|
+| `200 OK` | Successfully found `<package>` |
+| `404 Not Found` | Package not found |
 
 #### Bulk Package Details
 
@@ -139,6 +154,13 @@ Example response:
 }
 ```
 
+
+Response codes:
+
+| Code | Reason |
+|------|--------|
+| `200 OK` | All responses, even if all packages are errors |
+
 ---
 
 The updated versioned endpoint will look as follows. Please note this is a work in progress and is subject to change. Suggestions and comments are welcome.
@@ -161,7 +183,7 @@ Example request body:
 }
 ```
 
-Example response:
+Example JSON response:
 
 ```json
 {
@@ -186,3 +208,9 @@ Example response:
    ]
 }
 ```
+
+Response codes:
+
+| Code | Reason |
+|------|--------|
+| `200 OK` | All responses, even if all packages are errors |
