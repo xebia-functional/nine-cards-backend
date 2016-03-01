@@ -2,8 +2,6 @@ package com.fortysevendeg.ninecards.services.free.algebra
 
 import cats.free.{Free, Inject}
 
-import scala.language.higherKinds
-
 object DBResult {
 
   sealed trait DBResult[A]

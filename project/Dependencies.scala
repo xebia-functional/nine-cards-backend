@@ -16,6 +16,7 @@ trait Dependencies {
   val specs2Mockito = "org.specs2" %% "specs2-mock" % Versions.specs2
   val scalaz = "org.scalaz" %% "scalaz-core" % Versions.scalaz
   val scalazConcurrent = "org.scalaz" %% "scalaz-concurrent" % Versions.scalaz
+  val jodaConvert = "org.joda" % "joda-convert" % Versions.jodaConvert
   val jodaTime = "joda-time" % "joda-time" % Versions.jodaTime
   val doobieCore = "org.tpolecat" %% "doobie-core" % Versions.doobie
   val doobieH2 = "org.tpolecat" %% "doobie-contrib-h2" % Versions.doobie
@@ -48,6 +49,7 @@ trait Dependencies {
     scalazConcurrent))
 
   val servicesDeps = Seq(libraryDependencies ++= baseDepts ++ Seq(
+    jodaConvert,
     jodaTime,
     cats,
     doobieCore exclude("org.scalaz", "*"),
