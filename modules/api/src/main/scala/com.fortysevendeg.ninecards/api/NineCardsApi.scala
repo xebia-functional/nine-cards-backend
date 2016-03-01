@@ -9,7 +9,7 @@ import com.fortysevendeg.ninecards.api.messages.UserMessages._
 import com.fortysevendeg.ninecards.api.utils.FreeUtils._
 import com.fortysevendeg.ninecards.api.utils.TaskUtils._
 import com.fortysevendeg.ninecards.processes.NineCardsServices.NineCardsServices
-import com.fortysevendeg.ninecards.processes.{AppProcesses, UserProcesses}
+import com.fortysevendeg.ninecards.processes.UserProcesses
 import spray.httpx.SprayJsonSupport
 import spray.routing._
 
@@ -34,11 +34,9 @@ trait NineCardsApi
     with JsonFormats {
 
   def nineCardsApiRoute[T](
-    implicit appProcesses: AppProcesses[NineCardsServices],
-    userProcesses: UserProcesses[NineCardsServices]): Route =
+    implicit userProcesses: UserProcesses[NineCardsServices]): Route =
     userApiRoute ~
       installationsApiRoute ~
-      appsApiRoute ~
       swaggerApiRoute
 
   private[this] def userApiRoute(implicit userProcesses: UserProcesses[NineCardsServices]) =
@@ -73,17 +71,6 @@ trait NineCardsApi
                   userProcesses.updateInstallation(request) map toApiUpdateInstallationResponse
                 }
             }
-          }
-        }
-      }
-    }
-
-  private[this] def appsApiRoute(implicit appProcesses: AppProcesses[NineCardsServices]) =
-    pathPrefix("apps") {
-      path("categorize") {
-        get {
-          complete {
-            appProcesses.categorizeApps(Seq("com.fortysevendeg.ninecards"))
           }
         }
       }

@@ -43,8 +43,13 @@ class UserProcesses[F[_]](
         }
     }
 
-  def updateInstallation(request: UpdateInstallationRequest)(implicit ev:Composite[Installation]): Free[F, UpdateInstallationResponse] = {
-    val result = userPersistenceServices.updateInstallation[Installation](userId = request.userId, androidId = request.androidId, deviceToken = request.deviceToken)
+  def updateInstallation(
+    request: UpdateInstallationRequest)(
+    implicit ev: Composite[Installation]): Free[F, UpdateInstallationResponse] = {
+    val result = userPersistenceServices.updateInstallation[Installation](
+      userId = request.userId,
+      androidId = request.androidId,
+      deviceToken = request.deviceToken)
     result.transact(transactor) map toUpdateInstallationResponse
   }
 
