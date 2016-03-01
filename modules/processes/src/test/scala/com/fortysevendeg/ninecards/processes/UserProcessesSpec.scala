@@ -47,6 +47,9 @@ trait UserProcessesSpecification
 
     userPersistenceServices.updateInstallation[Installation](mockEq(userId), mockEq(Option(deviceToken)), mockEq(androidId))(any) returns installation.point[ConnectionIO]
 
+    userPersistenceServices.getUserBySessionToken(mockEq(sessionToken)) returns Option(user).point[ConnectionIO]
+
+    userPersistenceServices.getInstallationByUserAndAndroidId(mockEq(userId), mockEq(androidId)) returns Option(installation).point[ConnectionIO]
   }
 
   trait UnsuccessfulScope extends BasicScope {
@@ -57,13 +60,15 @@ trait UserProcessesSpecification
 
     userPersistenceServices.createInstallation[Installation](mockEq(userId), mockEq(None), mockEq(androidId))(any) returns installation.point[ConnectionIO]
 
+    userPersistenceServices.getUserBySessionToken(mockEq(sessionToken)) returns wrongUser.point[ConnectionIO]
+
   }
 
   trait FailingScope extends BasicScope {
 
     userPersistenceServices.getUserByEmail(email) returns wrongUser.point[ConnectionIO]
 
-    userPersistenceServices.addUser[User](mockEq(email), mockEq(sessionToken))(any) returns user.point[ConnectionIO]
+    userPersistenceServices.addUser[User](mockEq(email), any[String])(any) returns user.point[ConnectionIO]
 
     userPersistenceServices.createInstallation[Installation](mockEq(userId), mockEq(None), mockEq(androidId))(any) returns installation.point[ConnectionIO]
 
@@ -105,6 +110,10 @@ trait UserProcessesContext {
 
   val wrongInstallation: Option[Installation] = None
 
+  val checkSessionTokenResponse = Option(userId)
+
+  val wrongCheckSessionTokenResponse = None
+
 }
 
 
@@ -133,6 +142,17 @@ class UserProcessesSpec
     "return UpdateInstallationResponse object" in new SuccessfulScope {
       val signUpInstallation = userProcesses.updateInstallation(updateInstallationRequest)
       signUpInstallation.foldMap(interpreters).run shouldEqual updateInstallationResponse
+    }
+  }
+
+  "checkSessionToken" should {
+    "return the userId if exists a user with that sessionToken and androidId" in new SuccessfulScope {
+      val checkSessionToken = userProcesses.checkSessionToken(sessionToken, androidId)
+      checkSessionToken.foldMap(interpreters).run shouldEqual checkSessionTokenResponse
+    }
+    "return None if not exists a user with that sessionToken and androidId" in new UnsuccessfulScope {
+      val checkSessionToken = userProcesses.checkSessionToken(sessionToken, androidId)
+      checkSessionToken.foldMap(interpreters).run shouldEqual wrongCheckSessionTokenResponse
     }
   }
 
