@@ -16,6 +16,8 @@ import cats.data.Xor
 import cats.syntax.option._
 import cats.std.list._
 import cats.syntax.traverse._
+import cats.std.list._
+import cats.Foldable
 
 object Http4sTaskInterpreter {
 
@@ -96,6 +98,7 @@ object Http4sTaskInterpreter {
     }
   }
 
+
   implicit val interpreter = new (GooglePlayOps ~> Task) {
     def apply[A](fa: GooglePlayOps[A]) = fa match {
       case RequestPackage((token, androidId, localizationOption), pkg) =>
@@ -111,8 +114,8 @@ object Http4sTaskInterpreter {
         }
 
         fetched.map { (xors: List[Xor[String, Item]]) =>
-          xors.foldLeft(PackageDetails(Nil, Nil)) { case (PackageDetails(errors, items), xor) =>
-            xor.fold(s => PackageDetails(s :: errors, items), i => PackageDetails(errors, i :: items))
+          Foldable[List].foldMap(xors) { xor =>
+            xor.fold(e => PackageDetails(List(e), Nil), i => PackageDetails(Nil, List(i)))
           }
         }
     }

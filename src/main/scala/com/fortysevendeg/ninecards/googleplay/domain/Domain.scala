@@ -8,12 +8,19 @@ import io.circe._
 import io.circe.syntax._
 import io.circe.parser._
 import io.circe.generic.auto._
+import cats.Monoid
 
 object Domain {
   case class Package(value: String) extends AnyVal
 
   case class PackageListRequest(items: List[String]) extends AnyVal
   case class PackageDetails(errors: List[String], items: List[Item])
+
+
+  implicit val packageDetailsMoniod: Monoid[PackageDetails] = new Monoid[PackageDetails] {
+    def empty: PackageDetails = PackageDetails(Nil, Nil)
+    def combine(x: PackageDetails, y: PackageDetails): PackageDetails = PackageDetails(errors = x.errors ++ y.errors, items = x.items ++ y.items)
+  }
 
   case class Item(docV2: DocV2)
   case class DocV2(title: String, creator: String, docid: String, details: Details, aggregateRating: AggregateRating, image: List[Image], offer: List[Offer])
