@@ -1,7 +1,7 @@
 package spray.testkit
 
-import org.specs2.execute.{ Failure, FailureException }
-import org.specs2.specification.core.{ Fragments, SpecificationStructure }
+import org.specs2.execute.{Failure, FailureException}
+import org.specs2.specification.core.{Fragments, SpecificationStructure}
 import org.specs2.specification.create.DefaultFragmentFactory
 
 trait Specs2Interface extends TestFrameworkInterface with SpecificationStructure {
@@ -12,7 +12,7 @@ trait Specs2Interface extends TestFrameworkInterface with SpecificationStructure
     throw new FailureException(Failure(msg, stackTrace = fixedTrace))
   }
 
-  override def map(fs: ⇒ Fragments) = super.map(fs).append(DefaultFragmentFactory.step(cleanUp()))
+  override def map(fs: => Fragments) = super.map(fs).append(DefaultFragmentFactory.step(cleanUp()))
 }
 
 trait NoAutoHtmlLinkFragments extends org.specs2.specification.dsl.ReferenceDsl {
