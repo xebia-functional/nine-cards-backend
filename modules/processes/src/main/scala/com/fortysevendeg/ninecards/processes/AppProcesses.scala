@@ -6,8 +6,6 @@ import com.fortysevendeg.ninecards.processes.domain.GooglePlayApp
 import com.fortysevendeg.ninecards.services.free.algebra.AppGooglePlay.AppGooglePlayServices
 import com.fortysevendeg.ninecards.services.free.algebra.AppPersistence.AppPersistenceServices
 
-import scala.language.higherKinds
-
 class AppProcesses[F[_]](
   implicit appPersistenceServices: AppPersistenceServices[F],
   appGooglePlayServices: AppGooglePlayServices[F]) {

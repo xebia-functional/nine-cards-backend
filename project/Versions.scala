@@ -8,6 +8,7 @@ object Versions {
   val cats = "0.4.0"
   val doobie = "0.2.4-SNAPSHOT"
   val flywaydb = "4.0"
+  val jodaConvert = "1.8.1"
   val jodaTime = "2.9.2"
   val scala = "2.11.7"
   val scalacheckShapeless = "0.3.1"

@@ -3,8 +3,6 @@ package com.fortysevendeg.ninecards.services.free.algebra
 import cats.free.{Free, Inject}
 import com.fortysevendeg.ninecards.services.free.domain.{SharedCollection, SharedCollectionSubscription}
 
-import scala.language.higherKinds
-
 object SharedCollections {
 
   sealed trait SharedCollectionOps[A]
