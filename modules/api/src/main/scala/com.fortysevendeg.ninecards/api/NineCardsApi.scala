@@ -14,7 +14,6 @@ import spray.httpx.SprayJsonSupport
 import spray.routing._
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.language.{higherKinds, implicitConversions}
 
 class NineCardsApiActor
   extends Actor

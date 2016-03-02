@@ -5,7 +5,6 @@ import cats.free.Free
 import shapeless.Lazy
 import spray.httpx.marshalling.ToResponseMarshaller
 
-import scala.language.{higherKinds, implicitConversions}
 import scalaz.concurrent.Task
 
 object TaskUtils {

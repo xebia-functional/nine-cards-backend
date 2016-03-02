@@ -4,7 +4,6 @@ import cats.free.Free
 import com.fortysevendeg.ninecards.services.free.algebra.DBResult.DBOps
 import com.fortysevendeg.ninecards.services.persistence.PersistenceExceptions.PersistenceException
 
-import scala.language.{higherKinds, implicitConversions}
 import scalaz.concurrent.Task
 import scalaz.{-\/, \/-}
 
