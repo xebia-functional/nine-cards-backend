@@ -5,13 +5,8 @@ import com.fortysevendeg.ninecards.googleplay.domain.Domain._
 import com.fortysevendeg.ninecards.googleplay.service.GooglePlayDomain._
 import com.fortysevendeg.ninecards.googleplay.service.free.algebra.GooglePlay._
 import com.fortysevendeg.extracats._
-import cats._
-import cats.Traverse
-import cats.std.option._
-import cats.std.list._
-import cats.syntax.traverse._
-import cats.syntax.option._
-import cats.data.Xor
+import cats.Monad
+import cats.~>
 import spray.routing._
 import spray.httpx.marshalling.ToResponseMarshaller
 import akka.actor.Actor

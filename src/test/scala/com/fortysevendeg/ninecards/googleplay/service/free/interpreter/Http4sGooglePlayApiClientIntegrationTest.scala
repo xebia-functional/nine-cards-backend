@@ -36,7 +36,7 @@ class Http4sGooglePlayApiClientIntegrationTest extends Specification with Specs2
       val request = Http4sGooglePlayApiClient.request(Package(packageName), headers)
       val fetchedDocId = request.map(xor => xor.map(item => item.docV2.docid))
 
-      fetchedDocId must returnValue(Xor.right(packageName))
+      fetchedDocId must returnValue(Xor.right(packageName)) // todo should this be more comprehensive? check all other tests too
     }
     "result in an error state for packages that do not exist" in {
       val unknownPackage = "com.package.does.not.exist"

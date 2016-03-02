@@ -25,6 +25,8 @@ trait Dependencies {
 
   val http4sClient = "org.http4s" %% "http4s-blaze-client" % Versions.http4sClient
 
+  val tagSoup = "org.ccil.cowan.tagsoup" % "tagsoup" % Versions.tagSoup
+
   val baseDepts = Seq(specs2Core)
 
   val apiDeps = Seq(libraryDependencies ++= baseDepts ++ Seq(
@@ -39,5 +41,6 @@ trait Dependencies {
     circeParser,
     scalaCheckShapeless,
     specs2ScalaCheck,
-    specs2MatcherExtra))
+    specs2MatcherExtra,
+    tagSoup))
 }
