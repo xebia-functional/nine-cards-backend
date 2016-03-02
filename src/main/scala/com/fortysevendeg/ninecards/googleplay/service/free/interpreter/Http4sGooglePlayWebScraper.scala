@@ -1,11 +1,35 @@
 package com.fortysevendeg.ninecards.googleplay.service.free.interpreter
 
 import com.fortysevendeg.ninecards.googleplay.domain.Domain._
+import com.fortysevendeg.ninecards.googleplay.service.GooglePlayDomain._
 import scala.xml.Node
+import cats.data.Xor
 import cats.std.option._
 import cats.syntax.cartesian._
+import scalaz.concurrent.Task
+import org.http4s._
+import org.http4s.Http4s._
+import scodec.bits.ByteVector
+import scala.xml.parsing.NoBindingFactoryAdapter
+import org.ccil.cowan.tagsoup.jaxp.SAXFactoryImpl
+import org.xml.sax.InputSource
+import org.http4s.Status.ResponseClass.Successful
 
 object Http4sGooglePlayWebScraper {
+
+  val parser = new SAXFactoryImpl().newSAXParser()
+  val adapter = new NoBindingFactoryAdapter
+
+  val byteVectorToEntityDecodedNode: ByteVector => Node = { byteVector =>
+    byteVector.decodeUtf8.fold ({ e =>
+      throw e
+    }, {s =>
+      adapter.loadXML(new InputSource(new java.io.ByteArrayInputStream(s.getBytes)), parser)
+    })
+  }
+
+  implicit def httpNodeDecoder(implicit byteVectorDecoder: EntityDecoder[ByteVector]): EntityDecoder[Node] = byteVectorDecoder map byteVectorToEntityDecodedNode
+
   def parseResponseToItem(document: Node): Option[Item] = {
 
     val CategoryHrefRegex = "/store/apps/category/(\\w+)".r
@@ -43,12 +67,12 @@ object Http4sGooglePlayWebScraper {
       Item(
         DocV2(
           title = title,
-          creator = "Creator",
+          creator = "",
           docid = docId,
           details = Details(
             appDetails = AppDetails(
               appCategory = parsedAppCategories,
-              numDownloads = "Lots",
+              numDownloads = "",
               permission = List()
             )
           ),
@@ -65,6 +89,28 @@ object Http4sGooglePlayWebScraper {
           offer = List()
         )
       )
+    }
+  }
+
+  def request(p: Package, localizationOption: Option[Localization]): Task[Xor[String, Item]] = {
+    val client = org.http4s.client.blaze.PooledHttp1Client()
+
+    val localization = localizationOption.fold("")(l => s"&hl=${l.value}")
+
+    def packageUri(p: Package): Option[Uri] = Uri.fromString(s"https://play.google.com/store/apps/details?id=${p.value}${localization}").toOption
+
+    packageUri(p).fold(Task.now(Xor.left(p.value)): Task[Xor[String, Item]]) {u =>
+      val request = new Request(
+        method = Method.GET,
+        uri = u
+      )
+      client.fetch(request) {
+        case Successful(resp) => resp.as[Node].map{ n =>
+          val maybeItem = parseResponseToItem(n)
+          maybeItem.fold(Xor.left(p.value): Xor[String, Item])(i => Xor.right(i))
+        }
+        case x => Task.now(Xor.left(p.value))
+      }
     }
   }
 }
