@@ -90,9 +90,7 @@ Example JSON response:
 {
    "title": "9 Cards Home Launcher",
    "packageName":"com.fortysevendeg.ninecardslauncher",
-   "categories": [
-      "PERSONALIZATION"
-   ]
+   "category": "PERSONALIZATION" 
 }
 ```
 
@@ -194,16 +192,12 @@ Example JSON response:
       {
          "title": "9 Cards Home Launcher",
          "packageName":"com.fortysevendeg.ninecardslauncher",
-         "categories": [
-            "PERSONALIZATION"
-         ]
+         "category": "PERSONALIZATION" 
       },
       {
          "title": "Google",
          "packageName":"com.google.android.googlequicksearchbox",
-         "categories": [
-            "TOOLS"
-         ]
+         "category": "TOOLS" 
       }
    ]
 }
