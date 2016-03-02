@@ -14,7 +14,6 @@ import spray.routing.directives._
 import spray.routing.{AuthenticationFailedRejection, Directive, Directive0}
 
 import scala.concurrent.{ExecutionContext, Future}
-import scala.language.implicitConversions
 import scalaz.concurrent.Task
 import scalaz.{-\/, \/-}
 

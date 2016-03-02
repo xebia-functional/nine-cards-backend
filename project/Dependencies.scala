@@ -16,6 +16,7 @@ trait Dependencies {
   val specs2Mockito = "org.specs2" %% "specs2-mock" % Versions.specs2
   val scalaz = "org.scalaz" %% "scalaz-core" % Versions.scalaz
   val scalazConcurrent = "org.scalaz" %% "scalaz-concurrent" % Versions.scalaz
+  val jodaConvert = "org.joda" % "joda-convert" % Versions.jodaConvert
   val jodaTime = "joda-time" % "joda-time" % Versions.jodaTime
   val doobieCore = "org.tpolecat" %% "doobie-core" % Versions.doobie
   val doobieH2 = "org.tpolecat" %% "doobie-contrib-h2" % Versions.doobie
@@ -23,7 +24,6 @@ trait Dependencies {
   val doobieSpecs2 = "org.tpolecat" %% "doobie-contrib-specs2" % Versions.doobie
   val typesafeConfig = "com.typesafe" % "config" % Versions.typesafeConfig
   val flywaydbCore = "org.flywaydb" % "flyway-core" % Versions.flywaydb
-  val flywaydbParent = "org.flywaydb" % "flyway-parent" % Versions.flywaydb
   val scalacheckShapeless = "com.github.alexarchambault" %% "scalacheck-shapeless_1.12" % Versions.scalacheckShapeless
 
   val baseDepts = Seq(
@@ -49,6 +49,7 @@ trait Dependencies {
     scalazConcurrent))
 
   val servicesDeps = Seq(libraryDependencies ++= baseDepts ++ Seq(
+    jodaConvert,
     jodaTime,
     cats,
     doobieCore exclude("org.scalaz", "*"),
@@ -58,6 +59,5 @@ trait Dependencies {
     scalaz,
     scalazConcurrent,
     sprayJson,
-    flywaydbCore % "test",
-    flywaydbParent % "test"))
+    flywaydbCore % "test"))
 }

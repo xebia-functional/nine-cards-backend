@@ -3,8 +3,6 @@ package com.fortysevendeg.ninecards.services.free.algebra
 import cats.free.{Free, Inject}
 import com.fortysevendeg.ninecards.services.free.domain.CategorizeResponse
 
-import scala.language.higherKinds
-
 object AppPersistence {
 
   sealed trait AppPersistenceOps[A]

@@ -12,7 +12,6 @@ import com.fortysevendeg.ninecards.services.free.domain._
 import com.fortysevendeg.ninecards.services.persistence.{UserPersistenceServices, _}
 import doobie.imports._
 
-import scala.language.higherKinds
 import scalaz.Scalaz._
 
 class UserProcesses[F[_]](
