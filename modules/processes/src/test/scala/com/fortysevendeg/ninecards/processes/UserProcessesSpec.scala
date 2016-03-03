@@ -1,20 +1,19 @@
 package com.fortysevendeg.ninecards.processes
 
 import cats.Monad
-import cats.free.Free
 import com.fortysevendeg.ninecards.processes.NineCardsServices._
-import com.fortysevendeg.ninecards.processes.messages.InstallationsMessages.{UpdateInstallationResponse, UpdateInstallationRequest}
-import com.fortysevendeg.ninecards.processes.messages.UserMessages.{LoginResponse, LoginRequest}
+import com.fortysevendeg.ninecards.processes.messages.InstallationsMessages._
+import com.fortysevendeg.ninecards.processes.messages.UserMessages.{LoginRequest, LoginResponse}
 import com.fortysevendeg.ninecards.services.free.domain.{Installation, User}
 import com.fortysevendeg.ninecards.services.persistence.UserPersistenceServices
 import doobie.imports._
-import org.specs2.ScalaCheck
-import org.specs2.mutable.Specification
-import org.scalacheck.Shapeless._
-import org.specs2.matcher.Matchers
 import org.mockito.Matchers.{eq => mockEq}
+import org.specs2.ScalaCheck
+import org.specs2.matcher.Matchers
 import org.specs2.mock.Mockito
+import org.specs2.mutable.Specification
 import org.specs2.specification.Scope
+
 import scalaz.Scalaz._
 import scalaz.concurrent.Task
 
@@ -34,6 +33,11 @@ trait UserProcessesSpecification
 
   trait BasicScope extends Scope {
 
+    implicit val transactor = DriverManagerTransactor[Task](
+      driver = "org.h2.Driver",
+      url = "jdbc:h2:mem:test3;DB_CLOSE_DELAY=-1",
+      user = "sa",
+      pass = "")
     implicit val userPersistenceServices: UserPersistenceServices = mock[UserPersistenceServices]
     implicit val userProcesses = new UserProcesses[NineCardsServices]
 
