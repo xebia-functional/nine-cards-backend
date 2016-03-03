@@ -17,7 +17,7 @@ class Http4sGooglePlayWebScraperIntegrationTest extends Specification with Specs
 
   val packageName = "air.fisherprice.com.shapesAndColors"
 
-  val expectedPackages = List("EDUCATION", "FAMILY_EDUCATION")
+  val expectedCategories = List("EDUCATION", "FAMILY_EDUCATION")
   val expectedDocId = "air.fisherprice.com.shapesAndColors"
   val expectedTitle = "Shapes & Colors Music Show"
 
@@ -29,15 +29,11 @@ class Http4sGooglePlayWebScraperIntegrationTest extends Specification with Specs
 
       val resource = getClass.getClassLoader.getResource(packageName + ".html")
 
-      val expectedPackages = List("EDUCATION", "FAMILY_EDUCATION")
-      val expectedDocId = "air.fisherprice.com.shapesAndColors"
-      val expectedTitle = "Shapes & Colors Music Show"
-      
       def doc: Node = adapter.loadXML(new InputSource(new FileInputStream(resource.getFile)), parser)
 
       val parsedItem = Http4sGooglePlayWebScraper.parseResponseToItem(doc).getOrElse(failTest("Item should parse correctly"))
 
-      parsedItem.docV2.details.appDetails.appCategory must_=== expectedPackages
+      parsedItem.docV2.details.appDetails.appCategory must_=== expectedCategories
       parsedItem.docV2.docid must_=== expectedDocId
       parsedItem.docV2.title must_=== expectedTitle
     }
@@ -52,7 +48,7 @@ class Http4sGooglePlayWebScraperIntegrationTest extends Specification with Specs
         }
       }
 
-      relevantDetails must returnValue(Xor.right((expectedDocId, expectedPackages, expectedTitle)))
+      relevantDetails must returnValue(Xor.right((expectedDocId, expectedCategories, expectedTitle)))
     }
     "result in an error state for packages that do not exist" in {
       val unknownPackage = "com.package.does.not.exist"

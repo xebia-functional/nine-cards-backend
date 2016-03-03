@@ -32,32 +32,36 @@ object Http4sGooglePlayWebScraper {
 
   def parseResponseToItem(document: Node): Option[Item] = {
 
-    val CategoryHrefRegex = "/store/apps/category/(\\w+)".r
-
     val parsedTitle: Option[String] = {
       val collected = (document \\ "div").collect {
-        case n if((n \ "@class").text == "id-app-title") => n.text
+        case n if((n \\ "@itemprop").text == "name") => n.child.text.trim
       }
 
       collected.headOption
     }
 
     val parsedDocId: Option[String] = {
-      val collected = (document \\ "div").collect{
-        case n if((n \ "@class").text == "details-wrapper apps square-cover id-track-partial-impression id-deep-link-item") =>
-          (n \ "@data-docid").text
+      val collected = (document \\ "@data-load-more-docid").collect {
+        case n => n.text
       }
 
       collected.headOption
     }
 
+    val CategoryHrefRegex = "/store/apps/category/(\\w+)".r
+
     val parsedAppCategories: List[String] = {
+      def spanName(n: Node): String = {
+        val spanElem = (n \\ "span")
+        (spanElem \\ "@itemprop").text
+      }
+
       val categories: Seq[String] = (document \\ "a") collect {
-      case n if (n \\ "@class").text == "document-subtitle category" =>
-        val href = (n \\ "@href").text
-        href match {
-          case CategoryHrefRegex(path) => path
-        }
+        case n if (spanName(n) == "genre") =>
+          val href = (n \\ "@href").text
+          href match {
+            case CategoryHrefRegex(path) => path
+          }
       }
 
       categories.toList
