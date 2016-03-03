@@ -4,8 +4,6 @@ import cats.free.Free
 import cats.{Monad, ~>}
 import com.fortysevendeg.ninecards.processes.NineCardsServices
 
-import scala.language.{higherKinds, implicitConversions}
-
 object FreeUtils {
 
   implicit val interpreters = NineCardsServices.interpreters

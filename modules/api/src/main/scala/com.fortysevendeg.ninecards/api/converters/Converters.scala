@@ -6,8 +6,6 @@ import com.fortysevendeg.ninecards.api.messages.UserMessages._
 import com.fortysevendeg.ninecards.processes.messages.InstallationsMessages._
 import com.fortysevendeg.ninecards.processes.messages.UserMessages._
 
-import scala.language.implicitConversions
-
 object Converters {
 
   implicit def toLoginRequest(

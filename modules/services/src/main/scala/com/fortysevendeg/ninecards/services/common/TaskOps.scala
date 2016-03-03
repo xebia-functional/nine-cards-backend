@@ -3,8 +3,8 @@ package com.fortysevendeg.ninecards.services.common
 import cats.free.Free
 import com.fortysevendeg.ninecards.services.free.algebra.DBResult.DBOps
 import com.fortysevendeg.ninecards.services.persistence.PersistenceExceptions.PersistenceException
+import doobie.imports._
 
-import scala.language.{higherKinds, implicitConversions}
 import scalaz.concurrent.Task
 import scalaz.{-\/, \/-}
 
@@ -21,6 +21,18 @@ object TaskOps {
             message = "An error was found while accessing to database",
             cause = Option(e)))
     }
+  }
+
+  implicit class ConnectionIOOps[A](c: ConnectionIO[A]) {
+    def liftF[F[_]](implicit dbOps: DBOps[F], transactor: Transactor[Task]): cats.free.Free[F, A] =
+      c.transact(transactor).attemptRun match {
+        case \/-(value) => dbOps.success(value)
+        case -\/(e) =>
+          dbOps.failure(
+            PersistenceException(
+              message = "An error was found while accessing to database",
+              cause = Option(e)))
+      }
   }
 
 }

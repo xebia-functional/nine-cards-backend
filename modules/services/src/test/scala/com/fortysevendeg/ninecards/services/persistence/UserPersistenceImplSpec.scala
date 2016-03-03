@@ -2,17 +2,12 @@ package com.fortysevendeg.ninecards.services.persistence
 
 
 import com.fortysevendeg.ninecards.services.free.domain.{Installation, User}
-import com.fortysevendeg.ninecards.services.persistence.NineCardsGenEntities.{AndroidId, SessionToken, Email}
-import org.specs2.ScalaCheck
+import com.fortysevendeg.ninecards.services.persistence.NineCardsGenEntities.{AndroidId, Email, SessionToken}
 import doobie.imports._
+import org.specs2.ScalaCheck
 import org.specs2.matcher.DisjunctionMatchers
-import org.specs2.specification.BeforeEach
 import org.specs2.mutable.Specification
-import org.scalacheck.{Arbitrary, Gen}
 import org.specs2.specification.BeforeEach
-import org.scalacheck.Arbitrary.arbitrary
-import scalaz.std.list._
-
 
 class UserPersistenceImplSpec
   extends Specification

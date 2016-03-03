@@ -12,12 +12,14 @@ import com.fortysevendeg.ninecards.services.free.domain._
 import com.fortysevendeg.ninecards.services.persistence.{UserPersistenceServices, _}
 import doobie.imports._
 
-import scala.language.higherKinds
 import scalaz.Scalaz._
+import scalaz.concurrent.Task
 
 class UserProcesses[F[_]](
   implicit userPersistenceServices: UserPersistenceServices,
+  transactor: Transactor[Task],
   dbOps: DBOps[F]) {
+
   def signUpUser(loginRequest: LoginRequest): Free[F, LoginResponse] = {
     userPersistenceServices.getUserByEmail(loginRequest.email) flatMap {
       case Some(user) =>
@@ -31,7 +33,7 @@ class UserProcesses[F[_]](
             androidId = loginRequest.androidId)
         } yield (newUser, installation)
     }
-  }.transact(transactor) map toLoginResponse
+  }.liftF[F] map toLoginResponse
 
   private def signUpInstallation(request: LoginRequest, user: User): ConnectionIO[(User, Installation)] =
     userPersistenceServices.getInstallationByUserAndAndroidId(user.id, request.androidId) flatMap {
@@ -50,7 +52,7 @@ class UserProcesses[F[_]](
       userId = request.userId,
       androidId = request.androidId,
       deviceToken = request.deviceToken)
-    result.transact(transactor) map toUpdateInstallationResponse
+    result.liftF[F] map toUpdateInstallationResponse
   }
 
   def checkSessionToken(
@@ -63,12 +65,13 @@ class UserProcesses[F[_]](
       case _ => None
     }
     result
-  }.transact(transactor)
+  }.liftF[F]
 }
 
 object UserProcesses {
 
   implicit def userProcesses[F[_]](
-    implicit userPersistenceServices: UserPersistenceServices, dbOps: DBOps[F]) = new UserProcesses()
+    implicit userPersistenceServices: UserPersistenceServices,
+    dbOps: DBOps[F]) = new UserProcesses
 
 }

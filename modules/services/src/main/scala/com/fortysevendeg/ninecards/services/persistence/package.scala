@@ -8,7 +8,7 @@ import scalaz.concurrent.Task
 
 package object persistence {
 
-  val transactor = DriverManagerTransactor[Task](
+  implicit lazy val transactor: Transactor[Task] = DriverManagerTransactor[Task](
     driver = getConfigValue("db.default.driver"),
     url = getConfigValue("db.default.url"),
     user = getConfigValue("db.default.user"),
