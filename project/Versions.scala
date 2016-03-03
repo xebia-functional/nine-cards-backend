@@ -19,7 +19,10 @@ object Versions {
   resolvers += Resolver.sonatypeRepo("snapshots")
   val circe = "0.3.0"
 
+  val tagSoup = "1.2.1"
+
   // Test Libs
   val specs2 = "3.6.6" // this is the last version depending on scalaz 7.1.4. Http4s needs Scalaz 7.1
   val scalaCheckShapeless = "0.3.2-SNAPSHOT"
+
 }

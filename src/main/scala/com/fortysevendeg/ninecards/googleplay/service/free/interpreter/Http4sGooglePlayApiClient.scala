@@ -3,21 +3,15 @@ package com.fortysevendeg.ninecards.googleplay.service.free.interpreter
 import org.http4s._
 import org.http4s.Http4s._
 import org.http4s.Status.ResponseClass.Successful
-import scalaz.concurrent.Task
 import scodec.bits.ByteVector
 import scala.collection.JavaConversions._
 import com.fortysevendeg.googleplay.proto.GooglePlay.ResponseWrapper
-import com.fortysevendeg.extracats._
-import com.fortysevendeg.ninecards.googleplay.service.free.algebra.GooglePlay._
-import com.fortysevendeg.ninecards.googleplay.service.GooglePlayDomain._
 import com.fortysevendeg.ninecards.googleplay.domain.Domain._
-import cats.~>
 import cats.data.Xor
-import cats.syntax.option._
-import cats.std.list._
-import cats.syntax.traverse._
+import scalaz.concurrent.Task
+import com.fortysevendeg.ninecards.googleplay.service.GooglePlayDomain._
 
-object Http4sTaskInterpreter {
+object Http4sGooglePlayApiClient {
 
   val client = org.http4s.client.blaze.PooledHttp1Client() // todo where is best to create the client?
 
@@ -93,28 +87,6 @@ object Http4sTaskInterpreter {
         case Successful(resp) => resp.as[Item].map(i => Xor.right(i))
         case x => Task.now(Xor.left(packageName))
       }
-    }
-  }
-
-  implicit val interpreter = new (GooglePlayOps ~> Task) {
-    def apply[A](fa: GooglePlayOps[A]) = fa match {
-      case RequestPackage((token, androidId, localizationOption), pkg) =>
-        request(pkg, headers(token, androidId, localizationOption)).map(_.fold(_ => None: Option[Item], Some(_)))
-
-      case BulkRequestPackage((token, androidId, localizationOption), PackageListRequest(packageNames)) =>
-        val packages: List[Package] = packageNames.map(Package.apply)
-
-        val hs: Headers = headers(token, androidId, localizationOption)
-
-        val fetched: Task[List[Xor[String, Item]]] = packages.traverse{ p =>
-          request(p, hs)
-        }
-
-        fetched.map { (xors: List[Xor[String, Item]]) =>
-          xors.foldLeft(PackageDetails(Nil, Nil)) { case (PackageDetails(errors, items), xor) =>
-            xor.fold(s => PackageDetails(s :: errors, items), i => PackageDetails(errors, i :: items))
-          }
-        }
     }
   }
 }
