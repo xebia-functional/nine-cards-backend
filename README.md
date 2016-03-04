@@ -131,6 +131,16 @@ You can download all the requests for the existing endpoints in the [Postman Col
     	\q
     
 
+## Deploy - Preparing the Application
+
+The source code, binaries—classes, dependencies, and the application configuration should be packed in an archive file to be transferred to [IaaS](https://en.wikipedia.org/wiki/Cloud_computing#Infrastructure_as_a_service_.28IaaS.29)/[PaaS](https://en.wikipedia.org/wiki/Platform_as_a_service). In this case we're going to use [sbt-assembly](https://github.com/sbt/sbt-assembly), a sbt plugin originally ported from codahale's assembly-sbt, which I'm guessing was inspired by Maven's assembly plugin. The goal is simple: Create a fat JAR of your project with all of its dependencies.
+
+From project root directory you could create the app artifact as follows:
+
+    $ sbt "project api" assembly
+
+By default, the fat jar will be created in the `{appPath}/modules/api/target/scala-2.11/` folder.
+
 ##License
 Copyright (C) 2012 47 Degrees, LLC Reactive. http://47deg.com hello@47deg.com
 

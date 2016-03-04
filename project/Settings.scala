@@ -3,6 +3,9 @@ import org.flywaydb.sbt.FlywayPlugin
 import org.flywaydb.sbt.FlywayPlugin.autoImport._
 import sbt.Keys._
 import sbt._
+import sbtassembly.AssemblyPlugin._
+import sbtassembly.AssemblyPlugin.autoImport._
+import sbtassembly.MergeStrategy._
 import spray.revolver.RevolverPlugin
 
 trait Settings {
@@ -33,15 +36,41 @@ trait Settings {
     doc in Compile <<= target.map(_ / "none")
   )
 
-  lazy val apiSettings = projectSettings ++ Seq(
-    databaseConfig := databaseConfigDef.value,
-    run <<= run in Runtime dependsOn flywayMigrate,
+  lazy val apiSettings = projectSettings ++
+    Seq(
+      databaseConfig := databaseConfigDef.value,
+      run <<= run in Runtime dependsOn flywayMigrate
+    ) ++
+    RevolverPlugin.settings ++
+    flywaySettings ++
+    nineCardsAssemblySettings
+
+  lazy val flywaySettings =
+    Seq(FlywayPlugin.projectSettings: _*) ++
+      Seq(
+        flywayDriver := databaseConfig.value.driver,
+        flywayUrl := databaseConfig.value.url,
+        flywayUser := databaseConfig.value.user,
+        flywayPassword := databaseConfig.value.password
+      )
+
+  lazy val nineCardsAssemblySettings = assemblySettings ++ Seq(
+    assemblyJarName in assembly := s"9cards-${Versions.buildVersion}.jar",
+    assembleArtifact in assemblyPackageScala := true,
+    Keys.test in assembly := {},
+    assemblyMergeStrategy in assembly := {
+      case "application.conf" => concat
+      case "reference.conf" => concat
+      case "unwanted.txt" => discard
+      case entry =>
+        val oldStrategy = (assemblyMergeStrategy in assembly).value
+        val mergeStrategy = oldStrategy(entry)
+        mergeStrategy == deduplicate match {
+          case true => first
+          case _ => mergeStrategy
+        }
+    },
     publishArtifact in(Test, packageBin) := false
-  ) ++ RevolverPlugin.settings ++ Seq(FlywayPlugin.projectSettings: _*) ++ Seq(
-    flywayDriver := databaseConfig.value.driver,
-    flywayUrl := databaseConfig.value.url,
-    flywayUser := databaseConfig.value.user,
-    flywayPassword := databaseConfig.value.password
   )
 
   lazy val serviceSettings = projectSettings ++ Seq(
