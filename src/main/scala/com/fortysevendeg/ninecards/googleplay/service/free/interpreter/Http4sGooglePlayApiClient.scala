@@ -10,12 +10,15 @@ import com.fortysevendeg.ninecards.googleplay.domain.Domain._
 import cats.data.Xor
 import scalaz.concurrent.Task
 import com.fortysevendeg.ninecards.googleplay.service.GooglePlayDomain._
+import com.fortysevendeg.ninecards.config.NineCardsConfig
 
 object Http4sGooglePlayApiClient {
 
   val client = org.http4s.client.blaze.PooledHttp1Client() // todo where is best to create the client?
 
-  def packageUri(p: Package): Option[Uri] = Uri.fromString(s"https://android.clients.google.com/fdfe/details?doc=${p.value}").toOption
+  val googlePlayApiEndpoint = NineCardsConfig.getConfigValue("googleplay.api.endpoint")
+
+  def packageUri(p: Package): Option[Uri] = Uri.fromString(s"$googlePlayApiEndpoint?doc=${p.value}").toOption
 
   implicit def protobufItemDecoder(implicit byteVectorDecoder: EntityDecoder[ByteVector]): EntityDecoder[Item] = byteVectorDecoder map parseResponseToItem
 

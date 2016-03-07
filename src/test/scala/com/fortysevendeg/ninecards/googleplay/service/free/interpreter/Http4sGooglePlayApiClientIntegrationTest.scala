@@ -1,7 +1,6 @@
 package com.fortysevendeg.ninecards.googleplay.service.free.interpreter
 
 import com.fortysevendeg.ninecards.googleplay.domain.Domain._
-import com.fortysevendeg.ninecards.googleplay.service.free.algebra.GooglePlay._
 import com.fortysevendeg.ninecards.googleplay.TestConfig
 import org.specs2.mutable.Specification
 import org.specs2.matcher.TaskMatchers
