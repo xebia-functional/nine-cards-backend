@@ -5,67 +5,66 @@ import shapeless.HNil
 
 import scalaz.Foldable
 
-class PersistenceImpl(val supportsSelectForUpdate : Boolean = true) {
+class PersistenceImpl[K](val supportsSelectForUpdate: Boolean = true) {
 
-  def generateQuery[K](sql: String)(implicit ev: Composite[K]): Query0[K] =
+  def generateQuery(sql: String)(implicit K: Composite[K]): Query0[K] =
     Query[HNil, K](sql).toQuery0(HNil)
 
-  def generateQuery[A, K](
+  def generateQuery[A](
+    sql: String, values: A)(
+    implicit A: Composite[A],
+    K: Composite[K]): Query0[K] = Query[A, K](sql).toQuery0(values)
+
+  def generateUpdateWithGeneratedKeys[A](
+    sql: String, values: A)(
+    implicit A: Composite[A]): Update0 = Update[A](sql).toUpdate0(values)
+
+  def fetchList(
+    sql: String)(
+    implicit K: Composite[K]): ConnectionIO[List[K]] = Query[HNil, K](sql).toQuery0(HNil).to[List]
+
+  def fetchList[A](
+    sql: String, values: A)(
+    implicit A: Composite[A],
+    K: Composite[K]): ConnectionIO[List[K]] = Query[A, K](sql).to[List](values)
+
+  def fetchOption[A](
     sql: String,
-    values: A)(implicit ev: Composite[A], ev2: Composite[K]) =
-    Query[A, K](sql).toQuery0(values)
+    values: A)(
+    implicit A: Composite[A],
+    K: Composite[K]): ConnectionIO[Option[K]] = Query[A, K](sql).option(values)
 
-  def generateUpdateWithGeneratedKeys[A, K](
-    sql: String,
-    values: A)(implicit ev: Composite[A], ev2: Composite[K]) =
-    Update[A](sql).toUpdate0(values)
+  def fetchUnique[A](
+    sql: String, values: A)(
+    implicit A: Composite[A],
+    K: Composite[K]): ConnectionIO[K] = Query[A, K](sql).unique(values)
 
-  def fetchList[K](
-    sql: String)(implicit ev: Composite[K]): ConnectionIO[List[K]] =
-    Query[HNil, K](sql).toQuery0(HNil).to[List]
-
-  def fetchList[A, K](
-    sql: String,
-    values: A)(implicit ev: Composite[A], ev2: Composite[K]): ConnectionIO[List[K]] =
-    Query[A, K](sql).to[List](values)
-
-  def fetchOption[A, K](
-    sql: String,
-    values: A)(implicit ev: Composite[A], ev2: Composite[K]): ConnectionIO[Option[K]] =
-    Query[A, K](sql).option(values)
-
-  def fetchUnique[A, K](
-    sql: String,
-    values: A)(implicit ev: Composite[A], ev2: Composite[K]): ConnectionIO[K] =
-    Query[A, K](sql).unique(values)
-
-  def update(
-    sql: String): ConnectionIO[Int] =
-    Update[HNil](sql).run(HNil)
+  def update(sql: String): ConnectionIO[Int] = Update[HNil](sql).run(HNil)
 
   def update[A](
     sql: String,
-    values: A)(implicit ev: Composite[A]): ConnectionIO[Int] =
-    Update[A](sql).run(values)
+    values: A)(
+    implicit A: Composite[A]): ConnectionIO[Int] = Update[A](sql).run(values)
 
-  def updateWithGeneratedKeys[A, K](
-    sql: String,
-    fields: List[String],
-    values: A)(implicit ev: Composite[A], ev2: Composite[K]): ConnectionIO[K] = {
-    if(supportsSelectForUpdate)
-      Update[A](sql).withUniqueGeneratedKeys[K](fields: _*)(values)
-    else
-      Update[A](sql).withUniqueGeneratedKeys[K](List("id"): _*)(values)
+  def updateWithGeneratedKeys[L] = new {
+    def apply[A](sql: String, fields: List[String], values: A)(
+      implicit A: Composite[A], K: Composite[L]): ConnectionIO[L] = {
+      if (supportsSelectForUpdate)
+        Update[A](sql).withUniqueGeneratedKeys[L](fields: _*)(values)
+      else
+        Update[A](sql).withUniqueGeneratedKeys[L](List("id"): _*)(values)
+    }
   }
 
   def updateMany[F[_], A](
     sql: String,
-    values: F[A])(implicit ev: Composite[A], F: Foldable[F]): ConnectionIO[Int] =
-    Update[A](sql).updateMany(values)
+    values: F[A])(
+    implicit A: Composite[A],
+    F: Foldable[F]): ConnectionIO[Int] = Update[A](sql).updateMany(values)
 
 }
 
 object PersistenceImpl {
 
-  implicit def persistenceImpl: PersistenceImpl = new PersistenceImpl
+  implicit def persistenceImpl[K]: PersistenceImpl[K] = new PersistenceImpl
 }

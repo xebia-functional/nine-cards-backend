@@ -5,45 +5,60 @@ import com.fortysevendeg.ninecards.services.free.domain.User.{Queries => UserQue
 import com.fortysevendeg.ninecards.services.free.domain._
 import doobie.imports._
 
-class UserPersistenceServices(implicit persistence: PersistenceImpl) {
+class UserPersistenceServices(
+  implicit userPersistence: PersistenceImpl[User],
+  installationPersistence: PersistenceImpl[Installation]) {
 
   def addUser[K](
     email: String,
     sessionToken: String)(implicit ev: Composite[K]): ConnectionIO[K] =
-    persistence.updateWithGeneratedKeys[(String, String), K](UserQueries.insert, User.allFields, (email, sessionToken))
+    userPersistence.updateWithGeneratedKeys[K](
+      sql = UserQueries.insert,
+      fields = User.allFields,
+      values = (email, sessionToken))
 
   def getUserByEmail(
     email: String): ConnectionIO[Option[User]] =
-    persistence.fetchOption[String, User](UserQueries.getByEmail, email)
+    userPersistence.fetchOption(UserQueries.getByEmail, email)
 
   def getUserBySessionToken(
     sessionToken: String): ConnectionIO[Option[User]] =
-    persistence.fetchOption[String, User](UserQueries.getBySessionToken, sessionToken)
+    userPersistence.fetchOption(UserQueries.getBySessionToken, sessionToken)
 
   def createInstallation[K](
     userId: Long,
     deviceToken: Option[String],
     androidId: String)(implicit ev: Composite[K]): ConnectionIO[K] =
-    persistence.updateWithGeneratedKeys[(Long, Option[String], String), K](InstallationQueries.insert, Installation.allFields, (userId, deviceToken, androidId))
+    userPersistence.updateWithGeneratedKeys[K](
+      sql = InstallationQueries.insert,
+      fields = Installation.allFields,
+      values = (userId, deviceToken, androidId))
 
   def getInstallationByUserAndAndroidId(
     userId: Long,
     androidId: String): ConnectionIO[Option[Installation]] =
-    persistence.fetchOption[(Long, String), Installation](InstallationQueries.getByUserAndAndroidId, (userId, androidId))
+    installationPersistence.fetchOption(
+      sql = InstallationQueries.getByUserAndAndroidId,
+      values = (userId, androidId))
 
   def getInstallationById(
     id: Long): ConnectionIO[Option[Installation]] =
-    persistence.fetchOption[(Long), Installation](InstallationQueries.getById, id)
+    installationPersistence.fetchOption(InstallationQueries.getById, id)
 
   def updateInstallation[K](
     userId: Long,
     deviceToken: Option[String],
     androidId: String)(implicit ev: Composite[K]): ConnectionIO[K] =
-    persistence.updateWithGeneratedKeys[(Option[String], Long, String), K](InstallationQueries.updateDeviceToken, Installation.allFields, (deviceToken, userId, androidId))
+    userPersistence.updateWithGeneratedKeys[K](
+      sql = InstallationQueries.updateDeviceToken,
+      fields = Installation.allFields,
+      values = (deviceToken, userId, androidId))
 
 }
 
 object UserPersistenceServices {
 
-  implicit def userPersistenceImpl(implicit persistence: PersistenceImpl) = new UserPersistenceServices()
+  implicit def userPersistenceImpl(
+    implicit userPersistence: PersistenceImpl[User],
+    installationPersistence: PersistenceImpl[Installation]) = new UserPersistenceServices
 }
