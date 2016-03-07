@@ -1,5 +1,6 @@
 package com.fortysevendeg.ninecards.googleplay.service.free.interpreter
 
+import com.fortysevendeg.ninecards.config.NineCardsConfig
 import com.fortysevendeg.ninecards.googleplay.domain.Domain._
 import com.fortysevendeg.ninecards.googleplay.service.GooglePlayDomain._
 import scala.xml.Node
@@ -99,9 +100,11 @@ object Http4sGooglePlayWebScraper {
   def request(p: Package, localizationOption: Option[Localization]): Task[Xor[String, Item]] = {
     val client = org.http4s.client.blaze.PooledHttp1Client()
 
+    val googlePlayWebEndpoint = NineCardsConfig.getConfigValue("googleplay.web.endpoint")
+
     val localization = localizationOption.fold("")(l => s"&hl=${l.value}")
 
-    def packageUri(p: Package): Option[Uri] = Uri.fromString(s"https://play.google.com/store/apps/details?id=${p.value}${localization}").toOption
+    def packageUri(p: Package): Option[Uri] = Uri.fromString(s"$googlePlayWebEndpoint?id=${p.value}${localization}").toOption
 
     packageUri(p).fold(Task.now(Xor.left(p.value)): Task[Xor[String, Item]]) {u =>
       val request = new Request(
