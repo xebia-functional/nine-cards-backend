@@ -2,7 +2,7 @@ package com.fortysevendeg.ninecards.googleplay.service.free.interpreter
 
 import com.fortysevendeg.ninecards.googleplay.domain.Domain._
 import com.fortysevendeg.ninecards.googleplay.service.GooglePlayDomain._
-import com.fortysevendeg.ninecards.googleplay.service.free.algebra.GooglePlay.RequestPackage
+import com.fortysevendeg.ninecards.googleplay.service.free.algebra.GooglePlay.{ BulkRequestPackage, RequestPackage }
 import org.scalacheck._
 import org.scalacheck.Prop._
 import org.scalacheck.Shapeless._
@@ -45,14 +45,16 @@ object TaskInterpreterProperties extends Properties("Task interpreter") {
   ))
 
 
-  property("Requesting a single package should pass the correct parameters to the client request") = forAll { (pkg: Package, t: Token, id: AndroidId, i: Item) =>
+  property("Requesting a single package should pass the correct parameters to the client request") = forAll { (pkg: Package, i: Item, t: Token, id: AndroidId, l: Localization, b: Boolean) =>
 
-    val request = RequestPackage((t, id, None), pkg)
+    val lo = if(b) Some(l) else None // well this is horrible
+
+    val request = RequestPackage((t, id, lo), pkg)
 
     val f: (Package, GoogleAuthParams) => Task[Xor[String, Item]] = { case (pkgParam, (tParam, idParam, loParam)) =>
       Task.now {
         (pkgParam, tParam, idParam, loParam) match {
-          case (`pkg`, `t`, `id`, None) => Xor.right(i)
+          case (`pkg`, `t`, `id`, `lo`) => Xor.right(i)
           case _ => Xor.left(pkgParam.value)
         }
       }
@@ -64,6 +66,31 @@ object TaskInterpreterProperties extends Properties("Task interpreter") {
 
     response.run ?= Some(i)
   }
+
+  property("Requesting multiple packages should call the API for the given packages and no others") = forAllNoShrink { (ps: List[Package], i: Item, t: Token, id: AndroidId) =>
+
+    val packageNames = ps.map(_.value)
+
+    val request = BulkRequestPackage((t, id, None), PackageListRequest(packageNames))
+
+    val f: (Package, GoogleAuthParams) => Task[Xor[String, Item]] = { case (pkgParam, (tParam, idParam, loParam)) =>
+      Task.now {
+        (tParam, idParam, loParam) match {
+          case (`t`, `id`, None) if(ps.contains(pkgParam)) => Xor.right(i)
+          case _ => Xor.left(pkgParam.value)
+        }
+      }
+    }
+
+    val interpreter = TaskInterpreter.interpreter(f)
+
+    val response = interpreter(request)
+
+    val packageDetails = response.run
+
+    (s"Should have not errored for any request: ${packageDetails.errors}" |: (packageDetails.errors ?= Nil)) &&
+    (s"Should have successfully returned for each given package: ${packageDetails.items.length}" |: (packageDetails.items.length ?= ps.length))
+  }
 }
 
 /*
@@ -72,4 +99,6 @@ object TaskInterpreterProperties extends Properties("Task interpreter") {
  *  Xor left on api then right on web
  *  Xor right on api does not call web
  *  Failed task on both makes an Xor left
+ * 
+ * The above for both single and bulk
  */
