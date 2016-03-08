@@ -9,12 +9,14 @@ import spray.testkit.Specs2RouteTest
 
 class TaskInterpreterIntegrationTest extends Specification with Specs2RouteTest with TaskMatchers with TestConfig {
 
+  val interpreter = TaskInterpreter.interpreter(Http4sGooglePlayApiClient.request _)
+
   "Making requests to the Google Play store" should {
     "result in a correctly parsed response for a single package" in {
 
       val expectedCategory = "EDUCATION"
 
-      val result = TaskInterpreter.interpreter(RequestPackage(params, Package("air.fisherprice.com.shapesAndColors")))
+      val result = interpreter(RequestPackage(params, Package("air.fisherprice.com.shapesAndColors")))
 
       val retrievedCategory = result.map { optionalItem =>
         optionalItem.flatMap(_.docV2.details.appDetails.appCategory.headOption)
@@ -34,7 +36,7 @@ class TaskInterpreterIntegrationTest extends Specification with Specs2RouteTest 
 
       val packages = successfulCategories.map(_._1) ++ invalidPackages
 
-      val response = TaskInterpreter.interpreter(BulkRequestPackage(params, PackageListRequest(packages)))
+      val response = interpreter(BulkRequestPackage(params, PackageListRequest(packages)))
 
       val result = response.map { case PackageDetails(errors, items) =>
         val itemCategories = items.flatMap(_.docV2.details.appDetails.appCategory)

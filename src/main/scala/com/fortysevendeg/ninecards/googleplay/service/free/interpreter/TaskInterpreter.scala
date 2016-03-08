@@ -1,5 +1,6 @@
 package com.fortysevendeg.ninecards.googleplay.service.free.interpreter
 
+import com.fortysevendeg.ninecards.googleplay.service.GooglePlayDomain.GoogleAuthParams
 import scalaz.concurrent.Task
 import com.fortysevendeg.extracats._
 import com.fortysevendeg.ninecards.googleplay.service.free.algebra.GooglePlay._
@@ -12,16 +13,16 @@ import cats.Foldable
 
 object TaskInterpreter {
 
-  implicit val interpreter = new (GooglePlayOps ~> Task) {
+  def interpreter(apiRequest: (Package, GoogleAuthParams) => Task[Xor[String, Item]]) = new (GooglePlayOps ~> Task) {
     def apply[A](fa: GooglePlayOps[A]) = fa match {
       case RequestPackage((token, androidId, localizationOption), pkg) =>
-        Http4sGooglePlayApiClient.request(pkg, (token, androidId, localizationOption)).map(_.toOption)
+        apiRequest(pkg, (token, androidId, localizationOption)).map(_.toOption)
 
       case BulkRequestPackage((token, androidId, localizationOption), PackageListRequest(packageNames)) =>
         val packages: List[Package] = packageNames.map(Package.apply)
 
         val fetched: Task[List[Xor[String, Item]]] = packages.traverse{ p =>
-          Http4sGooglePlayApiClient.request(p, (token, androidId, localizationOption))
+          apiRequest(p, (token, androidId, localizationOption))
         }
 
         fetched.map { (xors: List[Xor[String, Item]]) =>
