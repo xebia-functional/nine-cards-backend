@@ -9,8 +9,6 @@ import spray.testkit.Specs2RouteTest
 
 class TaskInterpreterIntegrationTest extends Specification with Specs2RouteTest with TaskMatchers with TestConfig {
 
-  val params = (token, androidId, Some(localization))
-
   "Making requests to the Google Play store" should {
     "result in a correctly parsed response for a single package" in {
 

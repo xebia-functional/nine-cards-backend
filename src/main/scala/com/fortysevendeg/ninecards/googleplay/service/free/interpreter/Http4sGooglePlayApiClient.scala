@@ -56,7 +56,10 @@ object Http4sGooglePlayApiClient {
     )
   }
 
-  def headers(t: Token, id: AndroidId, lo: Option[Localization]): Headers = {
+  def headers(auth: GoogleAuthParams): Headers = {
+
+    val (t, id, lo) = auth
+
     val allHeaders = lo.map {
       case Localization(locale) => Header("Accept-Language", locale)
     }.toList ++ List(
@@ -76,9 +79,11 @@ object Http4sGooglePlayApiClient {
   }
 
   // todo it's expected to change Option[Item] to be something more granular to indicate failure
-  def request(pkg: Package, h: Headers): Task[Xor[String, Item]] = {
+  def request(pkg: Package, auth: GoogleAuthParams): Task[Xor[String, Item]] = {
 
     val packageName = pkg.value
+
+    val h = headers(auth)
 
     packageUri(pkg).fold(Task.now(Xor.left(packageName)): Task[Xor[String, Item]]) {u =>
       val request = new Request(
