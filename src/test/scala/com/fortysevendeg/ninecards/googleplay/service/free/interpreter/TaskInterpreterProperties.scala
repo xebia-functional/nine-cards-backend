@@ -44,6 +44,7 @@ object TaskInterpreterProperties extends Properties("Task interpreter") {
     )
   ))
 
+  val exceptionalRequest: (Any, Any) => Task[Xor[String, Item]] = ((_, _) => Task.fail(new RuntimeException("API request failed")))
 
   property("Requesting a single package should pass the correct parameters to the client request") = forAll { (pkg: Package, i: Item, t: Token, id: AndroidId, l: Localization, b: Boolean) =>
 
@@ -60,14 +61,14 @@ object TaskInterpreterProperties extends Properties("Task interpreter") {
       }
     }
 
-    val interpreter = TaskInterpreter.interpreter(f)
+    val interpreter = TaskInterpreter.interpreter(f, exceptionalRequest)
 
     val response = interpreter(request)
 
     response.run ?= Some(i)
   }
 
-  property("Requesting multiple packages should call the API for the given packages and no others") = forAllNoShrink { (ps: List[Package], i: Item, t: Token, id: AndroidId) =>
+  property("Requesting multiple packages should call the API for the given packages and no others") = forAll { (ps: List[Package], i: Item, t: Token, id: AndroidId) =>
 
     val packageNames = ps.map(_.value)
 
@@ -82,7 +83,7 @@ object TaskInterpreterProperties extends Properties("Task interpreter") {
       }
     }
 
-    val interpreter = TaskInterpreter.interpreter(f)
+    val interpreter = TaskInterpreter.interpreter(f, exceptionalRequest)
 
     val response = interpreter(request)
 
@@ -91,14 +92,68 @@ object TaskInterpreterProperties extends Properties("Task interpreter") {
     (s"Should have not errored for any request: ${packageDetails.errors}" |: (packageDetails.errors ?= Nil)) &&
     (s"Should have successfully returned for each given package: ${packageDetails.items.length}" |: (packageDetails.items.length ?= ps.length))
   }
+
+  property("An unsuccessful API call falls back to the web request") = forAll { (pkg: Package, i: Item, t: Token, id: AndroidId) =>
+
+    val request = RequestPackage((t, id, None), pkg)
+
+    val apiRequest: (Package, GoogleAuthParams) => Task[Xor[String, Item]] = { case (Package(name), _) =>
+      Task.now(Xor.left(name))
+    }
+
+    val webRequest: (Package, Option[Localization]) => Task[Xor[String, Item]] = { (p, _) => // todo
+      Task.now {
+        if (p == pkg) Xor.right(i)
+        else Xor.left(p.value)
+      }
+    }
+
+    val interpreter = TaskInterpreter.interpreter(apiRequest, webRequest)
+
+    val response = interpreter(request)
+
+    response.run ?= Some(i)
+  }
+
+  property("Unsuccessful in both the API and web calls results in an unsuccessful response") = forAll { (pkg: Package, t: Token, id: AndroidId) =>
+
+    val request = RequestPackage((t, id, None), pkg)
+
+    val failingApiRequest: (Package, GoogleAuthParams) => Task[Xor[String, Item]] = { case (Package(name), _) =>
+      Task.now(Xor.left(name))
+    }
+
+    val failingWebRequest: (Package, Option[Localization]) => Task[Xor[String, Item]] = { case (Package(name), _) => // todo
+      Task.now(Xor.left(name))
+    }
+
+    val interpreter = TaskInterpreter.interpreter(failingApiRequest, failingWebRequest)
+
+    val response = interpreter(request)
+
+    response.run ?= None
+  }
+
+  property("A failed task in the API call results in the web request being made") = forAll { (pkg: Package, webResponse: Xor[String, Item], t: Token, id: AndroidId) =>
+
+    val request = RequestPackage((t, id, None), pkg)
+
+    val successfulWebRequest: (Package, Option[Localization]) => Task[Xor[String, Item]] = { (p, _) => // todo
+      if(p == pkg) Task.now(webResponse)
+      else Task.fail(new RuntimeException("Exception thrown by task when it should not be"))
+    }
+
+    val interpreter = TaskInterpreter.interpreter(exceptionalRequest, successfulWebRequest)
+
+    val response = interpreter(request)
+
+    response.run ?= webResponse.toOption
+  }
 }
 
 /*
  * Scenarios to test
- *  Failed task on api calls web
- *  Xor left on api then right on web
- *  Xor right on api does not call web
- *  Failed task on both makes an Xor left
- * 
  * The above for both single and bulk
+ * 
+ * Need to test for failover in a properly wired class
  */

@@ -38,7 +38,7 @@ class NineCardsGooglePlayApiIntegrationTest extends Specification with Specs2Rou
     RawHeader("X-Android-Market-Localization", localization.value)
   )
 
-  implicit val i = interpreter(Http4sGooglePlayApiClient.request _)
+  implicit val i = interpreter(Http4sGooglePlayApiClient.request _, (_, _) => ???)
 
   val route = new NineCardsGooglePlayApi {
     override def actorRefFactory = system
