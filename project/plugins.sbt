@@ -10,6 +10,6 @@ addSbtPlugin("org.scoverage" % "sbt-scoverage" % "1.3.5")
 
 addSbtPlugin("com.codacy" % "sbt-codacy-coverage" % "1.2.1")
 
-addSbtPlugin("org.flywaydb" % "flyway-sbt" % "4.0")
+addSbtPlugin("org.flywaydb" % "flyway-sbt" % "3.2.1")
 
 addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.14.2")
