@@ -1,6 +1,5 @@
 import FlywayConfig._
-import org.flywaydb.sbt.FlywayPlugin
-import org.flywaydb.sbt.FlywayPlugin.autoImport._
+import org.flywaydb.sbt.FlywayPlugin._
 import sbt.Keys._
 import sbt._
 import sbtassembly.AssemblyPlugin._
@@ -42,11 +41,11 @@ trait Settings {
       run <<= run in Runtime dependsOn flywayMigrate
     ) ++
     RevolverPlugin.settings ++
-    flywaySettings ++
+    nineCardsFlywaySettings ++
     nineCardsAssemblySettings
 
-  lazy val flywaySettings =
-    Seq(FlywayPlugin.projectSettings: _*) ++
+  lazy val nineCardsFlywaySettings =
+    Seq(flywaySettings: _*) ++
       Seq(
         flywayDriver := databaseConfig.value.driver,
         flywayUrl := databaseConfig.value.url,
