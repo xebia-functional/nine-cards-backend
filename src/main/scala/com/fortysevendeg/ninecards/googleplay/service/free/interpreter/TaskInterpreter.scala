@@ -21,10 +21,8 @@ object TaskInterpreter {
   ) = new (GooglePlayOps ~> Task) {
     def apply[A](fa: GooglePlayOps[A]) = fa match {
       case RequestPackage((token, androidId, localizationOption), pkg) =>
-        // there is a smell here in that api request can "fail",
-        // returning left xor, but also fail by the task being a failed state
-        // it's possible with this configuration for the web request to be called twice
-        // i should write a test to guard against that.
+        // Currently this results in the webrequest being called twice
+        // if the API request fails and the Web Request returns an Xor.left
         XorT(apiRequest(pkg, (token, androidId, localizationOption)).or(webRequest(pkg, localizationOption)))
           .orElse(XorT(webRequest(pkg, localizationOption)))
           .to[Option]

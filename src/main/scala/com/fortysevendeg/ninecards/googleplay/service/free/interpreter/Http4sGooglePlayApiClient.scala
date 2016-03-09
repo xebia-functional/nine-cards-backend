@@ -93,7 +93,9 @@ object Http4sGooglePlayApiClient {
       )
       client.fetch(request) {
         case Successful(resp) => resp.as[Item].map(i => Xor.right(i))
-        case x => Task.now(Xor.left(packageName))
+        case _ => Task.now(Xor.left(packageName))
+      }.handle {
+        case _ => Xor.left(packageName)
       }
     }
   }
