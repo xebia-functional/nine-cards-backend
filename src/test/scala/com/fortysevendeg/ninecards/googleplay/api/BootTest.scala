@@ -3,9 +3,7 @@ package com.fortysevendeg.ninecards.googleplay.api
 import java.net.Socket
 import org.specs2.matcher.EventuallyMatchers
 import org.specs2.mutable.Specification
-
-import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
 
 class BootTest extends Specification with EventuallyMatchers {
 
@@ -14,7 +12,7 @@ class BootTest extends Specification with EventuallyMatchers {
 
       Boot.main(Array())
 
-      eventually{
+      eventually(retries = 100, sleep = 100.millis){
         val socket = new Socket("localhost", 8081)
         socket.isConnected
       }
