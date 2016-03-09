@@ -1,6 +1,5 @@
 import FlywayConfig._
-import org.flywaydb.sbt.FlywayPlugin
-import org.flywaydb.sbt.FlywayPlugin.autoImport._
+import org.flywaydb.sbt.FlywayPlugin._
 import sbt.Keys._
 import sbt._
 import sbtassembly.AssemblyPlugin._
@@ -18,7 +17,7 @@ trait Settings {
     organizationHomepage := Some(new URL("http://47deg.com")),
     version := Versions.buildVersion,
     conflictWarning := ConflictWarning.disable,
-    scalacOptions ++= Seq("-deprecation", "-unchecked", "-feature", "-language:higherKinds", "-language:implicitConversions"),
+    scalacOptions ++= Seq("-deprecation", "-unchecked", "-feature", "-language:higherKinds", "-language:implicitConversions", "-language:reflectiveCalls"),
     javaOptions in Test ++= Seq("-XX:MaxPermSize=128m", "-Xms512m", "-Xmx512m"),
     sbt.Keys.fork in Test := false,
     publishMavenStyle := true,
@@ -42,11 +41,11 @@ trait Settings {
       run <<= run in Runtime dependsOn flywayMigrate
     ) ++
     RevolverPlugin.settings ++
-    flywaySettings ++
+    nineCardsFlywaySettings ++
     nineCardsAssemblySettings
 
-  lazy val flywaySettings =
-    Seq(FlywayPlugin.projectSettings: _*) ++
+  lazy val nineCardsFlywaySettings =
+    Seq(flywaySettings: _*) ++
       Seq(
         flywayDriver := databaseConfig.value.driver,
         flywayUrl := databaseConfig.value.url,

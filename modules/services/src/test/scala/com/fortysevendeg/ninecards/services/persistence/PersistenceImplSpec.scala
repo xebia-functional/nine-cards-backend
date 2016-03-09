@@ -62,7 +62,7 @@ trait DatabaseContext {
     sql"SELECT id,name,active FROM persistence WHERE active=$active OR active=$inactive".query[PersistenceItem].list
   }
 
-  val persistenceImpl = new PersistenceImpl
+  val persistenceImpl = new PersistenceImpl[PersistenceItem]
 
   def genBoundedList[T](minSize: Int = 1, maxSize: Int = 100, gen: Gen[T]): Gen[List[T]] =
     Gen.choose(minSize, maxSize) flatMap { size => Gen.listOfN(size, gen) }
@@ -103,8 +103,8 @@ class PersistenceImplSpec
   "fetchList (SQL without parameters)" should {
     "return an empty list if the table is empty" in {
       prop { (i: Int) =>
-        val list = persistenceImpl.fetchList[PersistenceItem](
-          sql = fetchAllSql).transact(trx).run
+
+        val list = persistenceImpl.fetchList(sql = fetchAllSql).transact(trx).run
 
         list must beEmpty
       }
@@ -115,8 +115,7 @@ class PersistenceImplSpec
       prop { (data: List[(String, Boolean)]) =>
         insertItems(data).transact(trx).run
 
-        val list = persistenceImpl.fetchList[PersistenceItem](
-          sql = fetchAllSql).transact(trx).run
+        val list = persistenceImpl.fetchList(sql = fetchAllSql).transact(trx).run
 
         list must not be empty
       }
@@ -128,8 +127,7 @@ class PersistenceImplSpec
         val namesWithStatus = names map ((_, false))
         insertItems(namesWithStatus).transact(trx).run
 
-        val list = persistenceImpl.fetchList[PersistenceItem](
-          sql = fetchAllActiveSql).transact(trx).run
+        val list = persistenceImpl.fetchList(sql = fetchAllActiveSql).transact(trx).run
 
         list must beEmpty
       }
@@ -139,7 +137,7 @@ class PersistenceImplSpec
   "fetchList" should {
     "return an empty list if the table is empty" in {
       prop { (status: Boolean) =>
-        val list = persistenceImpl.fetchList[Boolean, PersistenceItem](
+        val list = persistenceImpl.fetchList(
           sql = fetchByStatusSql,
           values = status).transact(trx).run
 
@@ -151,7 +149,7 @@ class PersistenceImplSpec
         val namesWithStatus = names map ((_, true))
         insertItems(namesWithStatus).transact(trx).run
 
-        val list: List[PersistenceItem] = persistenceImpl.fetchList[Boolean, PersistenceItem](
+        val list = persistenceImpl.fetchList(
           sql = fetchByStatusSql,
           values = true).transact(trx).run
 
@@ -164,7 +162,7 @@ class PersistenceImplSpec
         val namesWithStatus = names map ((_, true))
         insertItems(namesWithStatus).transact(trx).run
 
-        val list: List[PersistenceItem] = persistenceImpl.fetchList[Boolean, PersistenceItem](
+        val list = persistenceImpl.fetchList(
           sql = fetchByStatusSql,
           values = false).transact(trx).run
 
@@ -176,7 +174,7 @@ class PersistenceImplSpec
   "fetchOption" should {
     "return None if the table is empty" in {
       prop { (status: Boolean) =>
-        val persistenceItem = persistenceImpl.fetchOption[Boolean, PersistenceItem](
+        val persistenceItem = persistenceImpl.fetchOption(
           sql = fetchByStatusSql,
           values = status).transact(trx).run
 
@@ -188,7 +186,7 @@ class PersistenceImplSpec
         val (name, active) = data
         val id = insertItem(name = name, active = active).transact(trx).run
 
-        val persistenceItem = persistenceImpl.fetchOption[(Long, Boolean), PersistenceItem](
+        val persistenceItem = persistenceImpl.fetchOption(
           sql = fetchByIdAndStatusSql,
           values = (id, active)).transact(trx).run
 
@@ -204,7 +202,7 @@ class PersistenceImplSpec
       prop { (data: (String, Boolean)) =>
         val (name, active) = data
         val id = insertItem(name = name, active = active).transact(trx).run
-        val persistenceItem = persistenceImpl.fetchOption[(Long, Boolean), PersistenceItem](
+        val persistenceItem = persistenceImpl.fetchOption(
           sql = fetchByIdAndStatusSql,
           values = (id, !active)).transact(trx).run
 
@@ -216,7 +214,7 @@ class PersistenceImplSpec
         val namesWithStatus = names map ((_, true))
         insertItems(namesWithStatus).transact(trx).run
 
-        persistenceImpl.fetchOption[Boolean, PersistenceItem](
+        persistenceImpl.fetchOption(
           sql = fetchByStatusSql,
           values = true).transact(trx).run must throwA[Throwable]
       }
@@ -226,7 +224,7 @@ class PersistenceImplSpec
   "fetchUnique" should {
     "throw an exception if the table is empty" in {
       prop { (id: Long) =>
-        persistenceImpl.fetchUnique[Long, PersistenceItem](
+        persistenceImpl.fetchUnique(
           sql = fetchByIdSql,
           values = id).transact(trx).attemptRun must be_-\/[Throwable]
       }
@@ -235,7 +233,7 @@ class PersistenceImplSpec
       prop { (data: (String, Boolean)) =>
         val (name, active) = data
         val id = insertItem(name = name, active = active).transact(trx).run
-        val item = persistenceImpl.fetchUnique[Long, PersistenceItem](
+        val item = persistenceImpl.fetchUnique(
           sql = fetchByIdSql,
           values = id).transact(trx).run
 
@@ -248,7 +246,7 @@ class PersistenceImplSpec
         val (name, active) = data
         val id = insertItem(name = name, active = active).transact(trx).run
 
-        persistenceImpl.fetchUnique[(Long, Boolean), PersistenceItem](
+        persistenceImpl.fetchUnique(
           sql = fetchByIdAndStatusSql,
           values = (id, !active)).transact(trx).attemptRun must be_-\/[Throwable]
       }
@@ -258,7 +256,7 @@ class PersistenceImplSpec
         val namesWithStatus = names map ((_, true))
         insertItems(namesWithStatus).transact(trx).run
 
-        persistenceImpl.fetchUnique[Boolean, PersistenceItem](
+        persistenceImpl.fetchUnique(
           sql = fetchByStatusSql,
           values = true).transact(trx).run must throwA[Throwable]
       }
@@ -379,7 +377,7 @@ class PersistenceImplSpec
       prop { (data: (String, Boolean)) =>
         val (name, active) = data
 
-        persistenceImpl.updateWithGeneratedKeys[(String, Boolean), Long](
+        persistenceImpl.updateWithGeneratedKeys[Long](
           sql = insertSql,
           fields = List("id"),
           values = data).transact(trx).attemptRun must be_\/-[Long].which {
@@ -399,7 +397,7 @@ class PersistenceImplSpec
     "return the number of affected rows after inserting a batch of items in the table" in {
       prop { (data: List[(String, Boolean)]) =>
 
-        persistenceImpl.updateMany[List, (String, Boolean)](
+        persistenceImpl.updateMany(
           sql = insertSql,
           values = data).transact(trx).attemptRun must be_\/-[Int].which {
           affectedRows =>
@@ -411,7 +409,7 @@ class PersistenceImplSpec
     "return the number of affected rows equals to 0 after updating a batch of items " +
       "in the table if the table is empty" in {
       prop { (data: List[(String, Boolean, Long)]) =>
-        persistenceImpl.updateMany[List, (String, Boolean, Long)](
+        persistenceImpl.updateMany(
           sql = updateByIdSql,
           values = data).transact(trx).attemptRun must be_\/-[Int].which {
           affectedRows =>
@@ -431,7 +429,7 @@ class PersistenceImplSpec
           case (name, active, id) => (name, !active, id)
         }
 
-        persistenceImpl.updateMany[List, (String, Boolean, Long)](
+        persistenceImpl.updateMany(
           sql = updateByIdSql,
           values = fetchData).transact(trx).attemptRun must be_\/-[Int].which {
           affectedRows =>

@@ -1,7 +1,9 @@
 package com.fortysevendeg.ninecards.services.persistence
 
 import com.fortysevendeg.ninecards.services.free.domain.Installation
+import com.fortysevendeg.ninecards.services.free.domain.Installation.Queries._
 import doobie.contrib.specs2.analysisspec.AnalysisSpec
+import doobie.imports._
 import org.specs2.mutable.Specification
 
 class InstallationsQueriesSpec
@@ -9,16 +11,24 @@ class InstallationsQueriesSpec
     with AnalysisSpec
     with DomainDatabaseContext {
 
-  val getById = persistenceImpl.generateQuery[Long, Installation](Installation.Queries.getById, 1)
-  check(getById)
+  val getByIdQuery = installationPersistenceImpl.generateQuery(
+    sql = getById,
+    values = 1l)
+  check(getByIdQuery)
 
-  val getByUserAndAndroidId = persistenceImpl.generateQuery[(Long, String), Installation](Installation.Queries.getByUserAndAndroidId, (1, "111a-222b-33c-444d13"))
-  check(getByUserAndAndroidId)
+  val getByUserAndAndroidIdQuery = installationPersistenceImpl.generateQuery(
+    sql = getByUserAndAndroidId,
+    values = (1l, "111a-222b-33c-444d13"))
+  check(getByUserAndAndroidIdQuery)
 
-  val insertInstallation = persistenceImpl.generateUpdateWithGeneratedKeys[(Long, Option[String], String), Installation](Installation.Queries.insert, (1, Option("111a-222b-4d13"), "35a4df64a31adf3"))
-  check(insertInstallation)
+  val insertInstallationQuery = installationPersistenceImpl.generateUpdateWithGeneratedKeys(
+    sql = insert,
+    values = (1l, Option("111a-222b-4d13"), "35a4df64a31adf3"))
+  check(insertInstallationQuery)
 
-  val updateDeviceToken = persistenceImpl.generateUpdateWithGeneratedKeys[(Option[String], Long, String), Installation](Installation.Queries.updateDeviceToken, (Option("111a-222b-4d13"), 1, "35a4df64a31adf3"))
-  check(updateDeviceToken)
+  val updateDeviceTokenQuery = installationPersistenceImpl.generateUpdateWithGeneratedKeys(
+    sql = updateDeviceToken,
+    values = (Option("111a-222b-4d13"), 1l, "35a4df64a31adf3"))
+  check(updateDeviceTokenQuery)
 
 }

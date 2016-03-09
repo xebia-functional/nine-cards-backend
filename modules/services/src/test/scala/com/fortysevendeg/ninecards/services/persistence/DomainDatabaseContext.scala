@@ -1,5 +1,6 @@
 package com.fortysevendeg.ninecards.services.persistence
 
+import com.fortysevendeg.ninecards.services.free.domain.{Installation, User}
 import doobie.imports._
 import org.flywaydb.core.Flyway
 import scala.util.Random
@@ -15,7 +16,8 @@ trait DomainDatabaseContext {
 
   val transactor: Transactor[Task] = DriverManagerTransactor[Task](testDriver, testUrl, testUsername, testPassword)
 
-  implicit val persistenceImpl = new PersistenceImpl(supportsSelectForUpdate = false)
+  implicit val userPersistenceImpl = new PersistenceImpl[User](supportsSelectForUpdate = false)
+  implicit val installationPersistenceImpl = new PersistenceImpl[Installation](supportsSelectForUpdate = false)
   val userPersistenceServices = new UserPersistenceServices
 
   val flywaydb = new Flyway
