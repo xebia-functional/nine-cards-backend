@@ -54,7 +54,7 @@ trait NineCardsApiSpecification
 
   trait SuccessfulScope extends BasicScope {
 
-    googleApiProcesses.checkGoogleTokenId(email, oauthToken) returns Free.pure(true)
+    googleApiProcesses.checkGoogleTokenId(email, tokenId) returns Free.pure(true)
 
     userProcesses.checkSessionToken(sessionToken, androidId) returns Free.pure(Option(userId))
 
@@ -67,14 +67,14 @@ trait NineCardsApiSpecification
 
   trait UnsuccessfulScope extends BasicScope {
 
-    googleApiProcesses.checkGoogleTokenId(email, oauthToken) returns Free.pure(false)
+    googleApiProcesses.checkGoogleTokenId(email, tokenId) returns Free.pure(false)
 
     userProcesses.checkSessionToken(sessionToken, androidId) returns Free.pure(None)
   }
 
   trait FailingScope extends BasicScope {
 
-    googleApiProcesses.checkGoogleTokenId(email, oauthToken) returns Free.pure(true)
+    googleApiProcesses.checkGoogleTokenId(email, tokenId) returns Free.pure(true)
 
     userProcesses.checkSessionToken(sessionToken, androidId) returns Free.pure(Option(userId))
 
@@ -105,7 +105,7 @@ trait NineCardsApiContext {
 
   val email = "valid.email@test.com"
 
-  val oauthToken = "6c7b303e-585e-4fe8-8b6f-586547317331-7f9b12dd-8946-4285-a72a-746e482834dd"
+  val tokenId = "6c7b303e-585e-4fe8-8b6f-586547317331-7f9b12dd-8946-4285-a72a-746e482834dd"
 
   val sessionToken = "1d1afeea-c7ec-45d8-a6f8-825b836f2785"
 
@@ -115,11 +115,11 @@ trait NineCardsApiContext {
 
   val userId = 1l
 
-  val apiLoginRequest = ApiLoginRequest(email, androidId, oauthToken)
+  val apiLoginRequest = ApiLoginRequest(email, androidId, tokenId)
 
   val apiUpdateInstallationRequest = ApiUpdateInstallationRequest(deviceToken)
 
-  val loginRequest = LoginRequest(email, androidId, oauthToken)
+  val loginRequest = LoginRequest(email, androidId, tokenId)
 
   val loginResponse = LoginResponse(sessionToken)
 
@@ -185,14 +185,14 @@ class NineCardsApiSpec
     }
     "return a 401 Unauthorized status code if the given email is empty" in new BasicScope {
 
-      Post(loginPath, ApiLoginRequest("", androidId, oauthToken)) ~>
+      Post(loginPath, ApiLoginRequest("", androidId, tokenId)) ~>
         addHeaders(apiRequestHeaders) ~>
         sealRoute(nineCardsApi) ~>
         check {
           status.intValue shouldEqual 401
         }
     }
-    "return a 401 Unauthorized status code if the given oauth token is empty" in new BasicScope {
+    "return a 401 Unauthorized status code if the given tokenId is empty" in new BasicScope {
 
       Post(loginPath, ApiLoginRequest(email, androidId, "")) ~>
         addHeaders(apiRequestHeaders) ~>

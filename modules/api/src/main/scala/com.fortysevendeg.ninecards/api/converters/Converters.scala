@@ -13,7 +13,7 @@ object Converters {
     LoginRequest(
       email = request.email,
       androidId = request.androidId,
-      oauthToken = request.oauthToken)
+      tokenId = request.tokenId)
 
   implicit def toApiLoginResponse(
     response: LoginResponse): ApiLoginResponse =

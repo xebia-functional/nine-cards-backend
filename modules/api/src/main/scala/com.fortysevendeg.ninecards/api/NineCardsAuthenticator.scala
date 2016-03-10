@@ -37,23 +37,19 @@ class NineCardsAuthenticator(
   def authenticateLoginRequest: Directive0 = {
     for {
       request <- entity(as[ApiLoginRequest])
-      _ <- authenticate(validateLoginRequest(request.email, request.oauthToken))
+      _ <- authenticate(validateLoginRequest(request.email, request.tokenId))
     } yield ()
   } flatMap { _ => Directive.Empty }
 
-  /* TODO: We are only checking if the provided email and oauth token are empty. We should
-   * research how to validate the Google Oauth token. See more in:
-   * https://developers.google.com/identity/protocols/OAuth2UserAgent#validatetoken */
-
   def validateLoginRequest(
     email: String,
-    oauthToken: String): Future[Authentication[Boolean]] =
+    tokenId: String): Future[Authentication[Boolean]] =
     Future {
-      (email, oauthToken) match {
+      (email, tokenId) match {
         case (e, o) if e.isEmpty || o.isEmpty =>
           Left(rejectionByCredentialsRejected)
         case _ =>
-          val result: Task[Boolean] = googleApiProcesses.checkGoogleTokenId(email, oauthToken)
+          val result: Task[Boolean] = googleApiProcesses.checkGoogleTokenId(email, tokenId)
           result.attemptRun match {
             case -\/(e) =>
               Left(rejectionByCredentialsRejected)
