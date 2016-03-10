@@ -15,7 +15,11 @@ import scala.concurrent.duration._
 class TaskInterpreterIntegrationTest extends Specification with Specs2RouteTest with TaskMatchers with TestConfig {
 
   val apiEndpoint = NineCardsConfig.getConfigValue("googleplay.api.endpoint")
-  val interpreter = TaskInterpreter.interpreter((new Http4sGooglePlayApiClient(apiEndpoint)).request _, Http4sGooglePlayWebScraper.request)
+  val apiClient = new Http4sGooglePlayApiClient(apiEndpoint)
+  val webEndpoint = NineCardsConfig.getConfigValue("googleplay.web.endpoint")
+  val webClient = new Http4sGooglePlayWebScraper(webEndpoint)
+
+  val interpreter = TaskInterpreter.interpreter(apiClient.request _, webClient.request _)
 
   "Making requests to the Google Play store" should {
     "result in a correctly parsed response for a single package" in {
@@ -61,7 +65,8 @@ class TaskInterpreterIntegrationTest extends Specification with Specs2RouteTest 
         Task.fail(new RuntimeException("Failed request"))
       }
 
-      val interpreter = TaskInterpreter.interpreter((new Http4sGooglePlayApiClient("http://unknown.host.com")).request _, Http4sGooglePlayWebScraper.request)
+
+      val interpreter = TaskInterpreter.interpreter((new Http4sGooglePlayApiClient("http://unknown.host.com")).request _, webClient.request)
 
       val expectedCategory = "EDUCATION"
 

@@ -16,7 +16,7 @@ import org.ccil.cowan.tagsoup.jaxp.SAXFactoryImpl
 import org.xml.sax.InputSource
 import org.http4s.Status.ResponseClass.Successful
 
-object Http4sGooglePlayWebScraper {
+class Http4sGooglePlayWebScraper(url: String) {
 
   val parser = new SAXFactoryImpl().newSAXParser()
   val adapter = new NoBindingFactoryAdapter
@@ -100,11 +100,9 @@ object Http4sGooglePlayWebScraper {
   def request(p: Package, localizationOption: Option[Localization]): Task[Xor[String, Item]] = {
     val client = org.http4s.client.blaze.PooledHttp1Client()
 
-    val googlePlayWebEndpoint = NineCardsConfig.getConfigValue("googleplay.web.endpoint")
-
     val localization = localizationOption.fold("")(l => s"&hl=${l.value}")
 
-    def packageUri(p: Package): Option[Uri] = Uri.fromString(s"$googlePlayWebEndpoint?id=${p.value}${localization}").toOption
+    def packageUri(p: Package): Option[Uri] = Uri.fromString(s"$url?id=${p.value}${localization}").toOption
 
     packageUri(p).fold(Task.now(Xor.left(p.value)): Task[Xor[String, Item]]) {u =>
       val request = new Request(

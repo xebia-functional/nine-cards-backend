@@ -40,7 +40,11 @@ class NineCardsGooglePlayApiIntegrationTest extends Specification with Specs2Rou
   )
 
   val apiEndpoint = NineCardsConfig.getConfigValue("googleplay.api.endpoint")
-  implicit val i = interpreter((new Http4sGooglePlayApiClient(apiEndpoint)).request _, Http4sGooglePlayWebScraper.request _)
+  val apiClient = new Http4sGooglePlayApiClient(apiEndpoint)
+  val webEndpoint = NineCardsConfig.getConfigValue("googleplay.web.endpoint")
+  val webClient = new Http4sGooglePlayWebScraper(webEndpoint)
+
+  implicit val i = interpreter(apiClient.request _, webClient.request _)
 
   val route = new NineCardsGooglePlayApi {
     override def actorRefFactory = system

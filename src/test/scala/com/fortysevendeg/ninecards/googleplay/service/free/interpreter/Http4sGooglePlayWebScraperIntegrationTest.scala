@@ -1,5 +1,6 @@
 package com.fortysevendeg.ninecards.googleplay.service.free.interpreter
 
+import com.fortysevendeg.ninecards.config.NineCardsConfig
 import com.fortysevendeg.ninecards.googleplay.domain.Domain._
 import com.fortysevendeg.ninecards.googleplay.service.GooglePlayDomain._
 import org.specs2.mutable.Specification
@@ -21,6 +22,9 @@ class Http4sGooglePlayWebScraperIntegrationTest extends Specification with Specs
   val expectedDocId = "air.fisherprice.com.shapesAndColors"
   val expectedTitle = "Shapes & Colors Music Show"
 
+  val webEndpoint = NineCardsConfig.getConfigValue("googleplay.web.endpoint")
+  val webClient = new Http4sGooglePlayWebScraper(webEndpoint)
+
   "Parsing the HTML for the play store" should {
     "result in an Item to send to the client" in {
 
@@ -31,7 +35,7 @@ class Http4sGooglePlayWebScraperIntegrationTest extends Specification with Specs
 
       def doc: Node = adapter.loadXML(new InputSource(new FileInputStream(resource.getFile)), parser)
 
-      val parsedItem = Http4sGooglePlayWebScraper.parseResponseToItem(doc).getOrElse(failTest("Item should parse correctly"))
+      val parsedItem = webClient.parseResponseToItem(doc).getOrElse(failTest("Item should parse correctly"))
 
       parsedItem.docV2.details.appDetails.appCategory must_=== expectedCategories
       parsedItem.docV2.docid must_=== expectedDocId
@@ -41,7 +45,7 @@ class Http4sGooglePlayWebScraperIntegrationTest extends Specification with Specs
 
   "Making a scrape request against the Play Store" should {
     "result in an Item for packages that exist" in {
-      val request: Task[Xor[String, Item]] = Http4sGooglePlayWebScraper.request(Package(packageName), Some(Localization("es-ES")))
+      val request: Task[Xor[String, Item]] = webClient.request(Package(packageName), Some(Localization("es-ES")))
       val relevantDetails = request.map { xor =>
         xor.map { i: Item =>
           (i.docV2.docid, i.docV2.details.appDetails.appCategory, i.docV2.title)
@@ -52,7 +56,7 @@ class Http4sGooglePlayWebScraperIntegrationTest extends Specification with Specs
     }
     "result in an error state for packages that do not exist" in {
       val unknownPackage = "com.package.does.not.exist"
-      val request = Http4sGooglePlayWebScraper.request(Package(unknownPackage), Some(Localization("es-ES")))
+      val request = webClient.request(Package(unknownPackage), Some(Localization("es-ES")))
 
       request must returnValue(Xor.left(unknownPackage))
     }

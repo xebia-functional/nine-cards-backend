@@ -25,7 +25,11 @@ class NineCardsGooglePlayActor extends Actor with NineCardsGooglePlayApi {
 
   // todo make a new wiring module
   val apiEndpoint = NineCardsConfig.getConfigValue("googleplay.api.endpoint")
-  implicit val i = interpreter((new Http4sGooglePlayApiClient(apiEndpoint)).request _, Http4sGooglePlayWebScraper.request _)
+  val apiClient = new Http4sGooglePlayApiClient(apiEndpoint)
+  val webEndpoint = NineCardsConfig.getConfigValue("googleplay.web.endpoint")
+  val webClient = new Http4sGooglePlayWebScraper(webEndpoint)
+
+  implicit val i = interpreter(apiClient.request _, webClient.request _)
 
   def receive = runRoute(googlePlayApiRoute[Task])
 }
