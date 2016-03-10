@@ -6,7 +6,7 @@ import com.fortysevendeg.ninecards.api.messages.UserMessages.ApiLoginRequest
 import com.fortysevendeg.ninecards.api.utils.FreeUtils._
 import com.fortysevendeg.ninecards.api.utils.TaskUtils._
 import com.fortysevendeg.ninecards.processes.NineCardsServices.NineCardsServices
-import com.fortysevendeg.ninecards.processes.UserProcesses
+import com.fortysevendeg.ninecards.processes._
 import shapeless._
 import spray.routing.authentication._
 import spray.routing.directives.FutureDirectives._
@@ -19,6 +19,7 @@ import scalaz.{-\/, \/-}
 
 class NineCardsAuthenticator(
   implicit userProcesses: UserProcesses[NineCardsServices],
+  googleApiProcesses: GoogleApiProcesses[NineCardsServices],
   ec: ExecutionContext)
   extends HeaderDirectives
     with MarshallingDirectives
@@ -51,7 +52,15 @@ class NineCardsAuthenticator(
       (email, oauthToken) match {
         case (e, o) if e.isEmpty || o.isEmpty =>
           Left(rejectionByCredentialsRejected)
-        case _ => Right(true)
+        case _ =>
+          val result: Task[Boolean] = googleApiProcesses.checkGoogleTokenId(email, oauthToken)
+          result.attemptRun match {
+            case -\/(e) =>
+              Left(rejectionByCredentialsRejected)
+            case \/-(value) if value => Right(true)
+            case value =>
+              Left(rejectionByCredentialsRejected)
+          }
       }
     }
 
@@ -85,6 +94,7 @@ object NineCardsAuthenticator {
 
   implicit def nineCardsAuthenticator(
     implicit userProcesses: UserProcesses[NineCardsServices],
+    googleApiProcesses: GoogleApiProcesses[NineCardsServices],
     ec: ExecutionContext) = new NineCardsAuthenticator
 
 }

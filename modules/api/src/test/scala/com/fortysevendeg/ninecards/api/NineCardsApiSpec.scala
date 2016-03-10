@@ -7,7 +7,7 @@ import com.fortysevendeg.ninecards.api.NineCardsHeaders._
 import com.fortysevendeg.ninecards.api.messages.InstallationsMessages.ApiUpdateInstallationRequest
 import com.fortysevendeg.ninecards.api.messages.UserMessages.ApiLoginRequest
 import com.fortysevendeg.ninecards.processes.NineCardsServices.NineCardsServices
-import com.fortysevendeg.ninecards.processes.UserProcesses
+import com.fortysevendeg.ninecards.processes.{GoogleApiProcesses, UserProcesses}
 import com.fortysevendeg.ninecards.processes.messages.InstallationsMessages._
 import com.fortysevendeg.ninecards.processes.messages.UserMessages.{LoginRequest, LoginResponse}
 import com.fortysevendeg.ninecards.services.common.TaskOps._
@@ -44,6 +44,8 @@ trait NineCardsApiSpecification
 
     implicit val userProcesses: UserProcesses[NineCardsServices] = mock[UserProcesses[NineCardsServices]]
 
+    implicit val googleApiProcesses: GoogleApiProcesses[NineCardsServices] = mock[GoogleApiProcesses[NineCardsServices]]
+
     val nineCardsApi = new NineCardsApi {
       override implicit def actorRefFactory: ActorRefFactory = NineCardsApiSpecification.this.actorRefFactory
     }.nineCardsApiRoute
@@ -51,6 +53,8 @@ trait NineCardsApiSpecification
   }
 
   trait SuccessfulScope extends BasicScope {
+
+    googleApiProcesses.checkGoogleTokenId(email, oauthToken) returns Free.pure(true)
 
     userProcesses.checkSessionToken(sessionToken, androidId) returns Free.pure(Option(userId))
 
@@ -63,10 +67,14 @@ trait NineCardsApiSpecification
 
   trait UnsuccessfulScope extends BasicScope {
 
+    googleApiProcesses.checkGoogleTokenId(email, oauthToken) returns Free.pure(false)
+
     userProcesses.checkSessionToken(sessionToken, androidId) returns Free.pure(None)
   }
 
   trait FailingScope extends BasicScope {
+
+    googleApiProcesses.checkGoogleTokenId(email, oauthToken) returns Free.pure(true)
 
     userProcesses.checkSessionToken(sessionToken, androidId) returns Free.pure(Option(userId))
 
@@ -193,7 +201,16 @@ class NineCardsApiSpec
           status.intValue shouldEqual 401
         }
     }
-    "return a 200 Ok status code if all the required info is provided" in new SuccessfulScope {
+    "return a 401 Unauthorized status code if the given email address and tokenId are not valid" in new UnsuccessfulScope {
+
+      Post(loginPath, apiLoginRequest) ~>
+        addHeaders(apiRequestHeaders) ~>
+        sealRoute(nineCardsApi) ~>
+        check {
+          status.intValue shouldEqual 401
+        }
+    }
+    "return a 200 Ok status code if the given email address and tokenId are valid" in new SuccessfulScope {
 
       Post(loginPath, apiLoginRequest) ~>
         addHeaders(apiRequestHeaders) ~>

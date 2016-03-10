@@ -9,7 +9,7 @@ import com.fortysevendeg.ninecards.api.messages.UserMessages._
 import com.fortysevendeg.ninecards.api.utils.FreeUtils._
 import com.fortysevendeg.ninecards.api.utils.TaskUtils._
 import com.fortysevendeg.ninecards.processes.NineCardsServices.NineCardsServices
-import com.fortysevendeg.ninecards.processes.UserProcesses
+import com.fortysevendeg.ninecards.processes.{GoogleApiProcesses, UserProcesses}
 import spray.httpx.SprayJsonSupport
 import spray.routing._
 
@@ -33,12 +33,15 @@ trait NineCardsApi
     with JsonFormats {
 
   def nineCardsApiRoute[T](
-    implicit userProcesses: UserProcesses[NineCardsServices]): Route =
+    implicit userProcesses: UserProcesses[NineCardsServices],
+    googleApiProcesses: GoogleApiProcesses[NineCardsServices]): Route =
     userApiRoute ~
       installationsApiRoute ~
       swaggerApiRoute
 
-  private[this] def userApiRoute(implicit userProcesses: UserProcesses[NineCardsServices]) =
+  private[this] def userApiRoute(
+    implicit userProcesses: UserProcesses[NineCardsServices],
+    googleApiProcesses: GoogleApiProcesses[NineCardsServices]) =
     pathPrefix("login") {
       pathEndOrSingleSlash {
         requestLoginHeaders { (appId, apiKey) =>
