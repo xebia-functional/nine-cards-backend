@@ -10,15 +10,12 @@ import com.fortysevendeg.ninecards.googleplay.domain.Domain._
 import cats.data.Xor
 import scalaz.concurrent.Task
 import com.fortysevendeg.ninecards.googleplay.service.GooglePlayDomain._
-import com.fortysevendeg.ninecards.config.NineCardsConfig
 
-object Http4sGooglePlayApiClient {
+class Http4sGooglePlayApiClient(url: String) {
 
   val client = org.http4s.client.blaze.PooledHttp1Client() // todo where is best to create the client?
 
-  val googlePlayApiEndpoint = NineCardsConfig.getConfigValue("googleplay.api.endpoint")
-
-  def packageUri(p: Package): Option[Uri] = Uri.fromString(s"$googlePlayApiEndpoint?doc=${p.value}").toOption
+  def packageUri(p: Package): Option[Uri] = Uri.fromString(s"$url?doc=${p.value}").toOption
 
   implicit def protobufItemDecoder(implicit byteVectorDecoder: EntityDecoder[ByteVector]): EntityDecoder[Item] = byteVectorDecoder map parseResponseToItem
 
@@ -78,7 +75,6 @@ object Http4sGooglePlayApiClient {
     Headers(allHeaders: _*)
   }
 
-  // todo it's expected to change Option[Item] to be something more granular to indicate failure
   def request(pkg: Package, auth: GoogleAuthParams): Task[Xor[String, Item]] = {
 
     val packageName = pkg.value

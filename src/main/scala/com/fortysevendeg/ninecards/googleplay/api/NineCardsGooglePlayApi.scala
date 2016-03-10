@@ -1,5 +1,6 @@
 package com.fortysevendeg.ninecards.googleplay.api
 
+import com.fortysevendeg.ninecards.config.NineCardsConfig
 import com.fortysevendeg.ninecards.googleplay.ninecardsspray._
 import com.fortysevendeg.ninecards.googleplay.domain.Domain._
 import com.fortysevendeg.ninecards.googleplay.service.GooglePlayDomain._
@@ -23,7 +24,8 @@ class NineCardsGooglePlayActor extends Actor with NineCardsGooglePlayApi {
   def actorRefFactory = context
 
   // todo make a new wiring module
-  implicit val i = interpreter(Http4sGooglePlayApiClient.request _, Http4sGooglePlayWebScraper.request _)
+  val apiEndpoint = NineCardsConfig.getConfigValue("googleplay.api.endpoint")
+  implicit val i = interpreter((new Http4sGooglePlayApiClient(apiEndpoint)).request _, Http4sGooglePlayWebScraper.request _)
 
   def receive = runRoute(googlePlayApiRoute[Task])
 }

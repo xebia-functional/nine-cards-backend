@@ -1,5 +1,6 @@
 package com.fortysevendeg.ninecards.googleplay.api
 
+import com.fortysevendeg.ninecards.config.NineCardsConfig
 import com.fortysevendeg.ninecards.googleplay.TestConfig
 import com.fortysevendeg.ninecards.googleplay.domain.Domain._
 import com.fortysevendeg.ninecards.googleplay.service.free.interpreter.{ Http4sGooglePlayApiClient, Http4sGooglePlayWebScraper }
@@ -38,7 +39,8 @@ class NineCardsGooglePlayApiIntegrationTest extends Specification with Specs2Rou
     RawHeader("X-Android-Market-Localization", localization.value)
   )
 
-  implicit val i = interpreter(Http4sGooglePlayApiClient.request _, Http4sGooglePlayWebScraper.request _)
+  val apiEndpoint = NineCardsConfig.getConfigValue("googleplay.api.endpoint")
+  implicit val i = interpreter((new Http4sGooglePlayApiClient(apiEndpoint)).request _, Http4sGooglePlayWebScraper.request _)
 
   val route = new NineCardsGooglePlayApi {
     override def actorRefFactory = system

@@ -20,11 +20,11 @@ object TaskInterpreter {
   ) = {
 
     def composedRequests(pkg: Package, auth: GoogleAuthParams): XorT[Task, String, Item] = {
-      val (t, id, lo) = auth
+      val (_, _, lo) = auth
 
       // Currently this results in the webrequest being called twice
       // if the API request fails and the Web Request returns an Xor.left
-      XorT(apiRequest(pkg, (t, id, lo)).or(webRequest(pkg, lo)))
+      XorT(apiRequest(pkg, auth).or(webRequest(pkg, lo)))
         .orElse(XorT(webRequest(pkg, lo)))
     }
 
