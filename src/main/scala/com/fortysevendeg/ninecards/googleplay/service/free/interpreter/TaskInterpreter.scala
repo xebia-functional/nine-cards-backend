@@ -14,33 +14,38 @@ import cats.syntax.traverse._
 import cats.Foldable
 
 object TaskInterpreter {
-
   def interpreter(
     apiRequest: (Package, GoogleAuthParams) => Task[Xor[String, Item]],
     webRequest: (Package, Option[Localization]) => Task[Xor[String, Item]]
-  ) = new (GooglePlayOps ~> Task) {
-    def apply[A](fa: GooglePlayOps[A]) = fa match {
-      case RequestPackage((token, androidId, localizationOption), pkg) =>
-        // Currently this results in the webrequest being called twice
-        // if the API request fails and the Web Request returns an Xor.left
-        XorT(apiRequest(pkg, (token, androidId, localizationOption)).or(webRequest(pkg, localizationOption)))
-          .orElse(XorT(webRequest(pkg, localizationOption)))
-          .to[Option]
+  ) = {
 
-      case BulkRequestPackage((token, androidId, localizationOption), PackageListRequest(packageNames)) =>
-        val packages: List[Package] = packageNames.map(Package.apply)
+    def composedRequests(pkg: Package, auth: GoogleAuthParams): XorT[Task, String, Item] = {
+      val (t, id, lo) = auth
 
-        val fetched: Task[List[Xor[String, Item]]] = packages.traverse{ p =>
-        XorT(apiRequest(p, (token, androidId, localizationOption)).or(webRequest(p, localizationOption)))
-          .orElse(XorT(webRequest(p, localizationOption)))
-          .value
-        }
+      // Currently this results in the webrequest being called twice
+      // if the API request fails and the Web Request returns an Xor.left
+      XorT(apiRequest(pkg, (t, id, lo)).or(webRequest(pkg, lo)))
+        .orElse(XorT(webRequest(pkg, lo)))
+    }
 
-        fetched.map { (xors: List[Xor[String, Item]]) =>
-          Foldable[List].foldMap(xors) { xor =>
-            xor.fold(e => PackageDetails(List(e), Nil), i => PackageDetails(Nil, List(i)))
+    new (GooglePlayOps ~> Task) {
+      def apply[A](fa: GooglePlayOps[A]) = fa match {
+        case RequestPackage(auth, pkg) =>
+          composedRequests(pkg, auth).to[Option]
+
+        case BulkRequestPackage(auth, PackageListRequest(packageNames)) =>
+          val packages: List[Package] = packageNames.map(Package.apply)
+
+          val fetched: Task[List[Xor[String, Item]]] = packages.traverse{ p =>
+            composedRequests(p, auth).value
           }
-        }
+
+          fetched.map { (xors: List[Xor[String, Item]]) =>
+            Foldable[List].foldMap(xors) { xor =>
+              xor.fold(e => PackageDetails(List(e), Nil), i => PackageDetails(Nil, List(i)))
+            }
+          }
+      }
     }
   }
 }
