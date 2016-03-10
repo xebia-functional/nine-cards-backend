@@ -31,7 +31,9 @@ object TaskInterpreter {
         val packages: List[Package] = packageNames.map(Package.apply)
 
         val fetched: Task[List[Xor[String, Item]]] = packages.traverse{ p =>
-          apiRequest(p, (token, androidId, localizationOption))
+        XorT(apiRequest(p, (token, androidId, localizationOption)).or(webRequest(p, localizationOption)))
+          .orElse(XorT(webRequest(p, localizationOption)))
+          .value
         }
 
         fetched.map { (xors: List[Xor[String, Item]]) =>

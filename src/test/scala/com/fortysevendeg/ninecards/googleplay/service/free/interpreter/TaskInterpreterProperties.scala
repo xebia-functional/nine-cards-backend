@@ -46,6 +46,10 @@ object TaskInterpreterProperties extends Properties("Task interpreter") {
 
   val exceptionalRequest: (Any, Any) => Task[Xor[String, Item]] = ((_, _) => Task.fail(new RuntimeException("API request failed")))
 
+  val failingRequest: (Package, Any) => Task[Xor[String, Item]] = { case (Package(name), _) =>
+    Task.now(Xor.left(name))
+  }
+
   property("Requesting a single package should pass the correct parameters to the client request") = forAll { (pkg: Package, i: Item, t: Token, id: AndroidId, l: Localization, b: Boolean) =>
 
     val lo = if(b) Some(l) else None // well this is horrible
@@ -93,7 +97,7 @@ object TaskInterpreterProperties extends Properties("Task interpreter") {
     (s"Should have successfully returned for each given package: ${packageDetails.items.length}" |: (packageDetails.items.length ?= ps.length))
   }
 
-  property("An unsuccessful API call falls back to the web request") = forAll { (pkg: Package, i: Item, t: Token, id: AndroidId) =>
+  property("An unsuccessful API call for a single package falls back to the web request") = forAll { (pkg: Package, i: Item, t: Token, id: AndroidId) =>
 
     val request = RequestPackage((t, id, None), pkg)
 
@@ -101,7 +105,7 @@ object TaskInterpreterProperties extends Properties("Task interpreter") {
       Task.now(Xor.left(name))
     }
 
-    val webRequest: (Package, Option[Localization]) => Task[Xor[String, Item]] = { (p, _) => // todo
+    val webRequest: (Package, Option[Localization]) => Task[Xor[String, Item]] = { (p, _) =>
       Task.now {
         if (p == pkg) Xor.right(i)
         else Xor.left(p.value)
@@ -115,23 +119,65 @@ object TaskInterpreterProperties extends Properties("Task interpreter") {
     response.run ?= Some(i)
   }
 
+  property("Unsuccessful API calls when working with bulk packages will fall back to the web request") = forAllNoShrink { (rawApiPackages: List[Package], apiItem: Item, rawWebPackages: List[Package], webItem: Item, t: Token, id: AndroidId) =>
+    (apiItem != webItem) ==> {
+
+      // make sure there are no clashes between the two sets of names
+      val apiPackages = rawApiPackages.map{case Package(name) => Package(s"api$name")}
+      val webPackages = rawWebPackages.map{case Package(name) => Package(s"web$name")}
+
+      def makeRequestFunc(ps: List[Package], toReturn: Item): (Package, Any) => Task[Xor[String, Item]] = { (p, _) =>
+        Task.now {
+          if(ps.contains(p)) Xor.right(toReturn)
+          else Xor.left(p.value)
+        }
+      }
+
+      val apiRequest: (Package, GoogleAuthParams) => Task[Xor[String, Item]] = makeRequestFunc(apiPackages, apiItem)
+      val webRequest: (Package, Option[Localization]) => Task[Xor[String, Item]] = makeRequestFunc(webPackages, webItem)
+
+      val packageNames = (apiPackages ::: webPackages).map(_.value)
+      val request = BulkRequestPackage((t, id, None), PackageListRequest(packageNames))
+
+      val interpreter = TaskInterpreter.interpreter(apiRequest, webRequest)
+
+      val response = interpreter(request)
+
+      val PackageDetails(errors, items) = response.run
+
+      val groupedItems = items.groupBy(identity).map{case (k, v) => (k, v.length)}
+      val expectedGrouping = Map(apiItem -> apiPackages.length, webItem -> webPackages.length).filter{case (_, v) => v != 0}
+
+      (errors ?= Nil) &&
+      (groupedItems ?= expectedGrouping)
+    }
+  }
+
   property("Unsuccessful in both the API and web calls results in an unsuccessful response") = forAll { (pkg: Package, t: Token, id: AndroidId) =>
 
     val request = RequestPackage((t, id, None), pkg)
 
-    val failingApiRequest: (Package, GoogleAuthParams) => Task[Xor[String, Item]] = { case (Package(name), _) =>
-      Task.now(Xor.left(name))
-    }
-
-    val failingWebRequest: (Package, Option[Localization]) => Task[Xor[String, Item]] = { case (Package(name), _) => // todo
-      Task.now(Xor.left(name))
-    }
-
-    val interpreter = TaskInterpreter.interpreter(failingApiRequest, failingWebRequest)
+    val interpreter = TaskInterpreter.interpreter(failingRequest, failingRequest)
 
     val response = interpreter(request)
 
     response.run ?= None
+  }
+
+  property("Unsuccessful API and web requests when working with bulk packages results in collected errors in the response") = forAll { (packages: List[Package], t: Token, id: AndroidId) =>
+
+    val packageNames = packages.map(_.value)
+
+    val request = BulkRequestPackage((t, id, None), PackageListRequest(packageNames))
+
+    val interpreter = TaskInterpreter.interpreter(failingRequest, failingRequest)
+
+    val response = interpreter(request)
+
+    val PackageDetails(errors, items) = response.run
+
+    (items ?= Nil) &&
+    (errors ?= packageNames)
   }
 
   property("A failed task in the API call results in the web request being made") = forAll { (pkg: Package, webResponse: Xor[String, Item], t: Token, id: AndroidId) =>
@@ -150,10 +196,3 @@ object TaskInterpreterProperties extends Properties("Task interpreter") {
     response.run ?= webResponse.toOption
   }
 }
-
-/*
- * Scenarios to test
- * The above for both single and bulk
- * 
- * Need to test for failover in a properly wired class
- */
