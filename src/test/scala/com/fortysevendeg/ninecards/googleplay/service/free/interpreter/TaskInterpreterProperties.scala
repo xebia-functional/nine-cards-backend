@@ -94,10 +94,6 @@ object TaskInterpreterProperties extends Properties("Task interpreter") {
 
     val request = RequestPackage(auth, pkg)
 
-    val apiRequest: (Package, GoogleAuthParams) => Task[Xor[String, Item]] = { case (Package(name), _) =>
-      Task.now(Xor.left(name))
-    }
-
     val webRequest: (Package, Option[Localization]) => Task[Xor[String, Item]] = { (p, _) =>
       Task.now {
         if (p == pkg) Xor.right(i)
@@ -105,7 +101,7 @@ object TaskInterpreterProperties extends Properties("Task interpreter") {
       }
     }
 
-    val interpreter = TaskInterpreter.interpreter(apiRequest, webRequest)
+    val interpreter = TaskInterpreter.interpreter(failingRequest, webRequest)
 
     val response = interpreter(request)
 
