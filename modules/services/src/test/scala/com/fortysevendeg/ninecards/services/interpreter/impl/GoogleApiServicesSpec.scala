@@ -6,6 +6,7 @@ import com.fortysevendeg.ninecards.services.free.interpreter.impl._
 import com.fortysevendeg.ninecards.services.utils.{MockServerService, XorMatchers}
 import org.mockserver.model.HttpRequest._
 import org.mockserver.model.HttpResponse._
+import org.mockserver.model.HttpStatusCode
 import org.specs2.matcher.DisjunctionMatchers
 import org.specs2.mutable.Specification
 
@@ -56,7 +57,7 @@ trait MockGoogleApiServer
       .withQueryStringParameter(tokenIdParameterName, validTokenId))
     .respond(
       response
-        .withStatusCode(200)
+        .withStatusCode(HttpStatusCode.OK_200.code)
         .withHeader(jsonHeader)
         .withBody(getTokenInfoValidResponse))
 
@@ -67,7 +68,7 @@ trait MockGoogleApiServer
       .withQueryStringParameter(tokenIdParameterName, wrongTokenId))
     .respond(
       response
-        .withStatusCode(200)
+        .withStatusCode(HttpStatusCode.OK_200.code)
         .withHeader(jsonHeader)
         .withBody(getTokenInfoWrongResponse))
 
@@ -78,7 +79,7 @@ trait MockGoogleApiServer
       .withQueryStringParameter(tokenIdParameterName, failingTokenId))
     .respond(
       response
-        .withStatusCode(500))
+        .withStatusCode(HttpStatusCode.INTERNAL_SERVER_ERROR_500.code))
 }
 
 class GoogleApiServicesSpec

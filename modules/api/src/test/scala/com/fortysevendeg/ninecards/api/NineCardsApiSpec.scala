@@ -18,7 +18,7 @@ import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
 import org.specs2.specification.Scope
 import spray.http.HttpHeaders.RawHeader
-import spray.http.MediaTypes
+import spray.http.{MediaTypes, StatusCodes}
 import spray.routing.HttpService
 import spray.testkit.Specs2RouteTest
 
@@ -158,7 +158,7 @@ class NineCardsApiSpec
       Get(apiDocsPath) ~>
         sealRoute(nineCardsApi) ~>
         check {
-          status should be equalTo 200
+          status should be equalTo StatusCodes.OK.intValue
           mediaType === MediaTypes.`text/html`
           responseAs[String] must contain("Swagger")
         }
@@ -171,7 +171,7 @@ class NineCardsApiSpec
       Post(loginPath) ~>
         sealRoute(nineCardsApi) ~>
         check {
-          status.intValue shouldEqual 401
+          status.intValue shouldEqual StatusCodes.Unauthorized.intValue
         }
     }
     "return a 401 Unauthorized status code if some of the headers aren't provided" in new BasicScope {
@@ -180,7 +180,7 @@ class NineCardsApiSpec
         addHeader(RawHeader(headerAppId, appId)) ~>
         sealRoute(nineCardsApi) ~>
         check {
-          status.intValue shouldEqual 401
+          status.intValue shouldEqual StatusCodes.Unauthorized.intValue
         }
     }
     "return a 401 Unauthorized status code if the given email is empty" in new BasicScope {
@@ -189,7 +189,7 @@ class NineCardsApiSpec
         addHeaders(apiRequestHeaders) ~>
         sealRoute(nineCardsApi) ~>
         check {
-          status.intValue shouldEqual 401
+          status.intValue shouldEqual StatusCodes.Unauthorized.intValue
         }
     }
     "return a 401 Unauthorized status code if the given tokenId is empty" in new BasicScope {
@@ -198,7 +198,7 @@ class NineCardsApiSpec
         addHeaders(apiRequestHeaders) ~>
         sealRoute(nineCardsApi) ~>
         check {
-          status.intValue shouldEqual 401
+          status.intValue shouldEqual StatusCodes.Unauthorized.intValue
         }
     }
     "return a 401 Unauthorized status code if the given email address and tokenId are not valid" in new UnsuccessfulScope {
@@ -207,7 +207,7 @@ class NineCardsApiSpec
         addHeaders(apiRequestHeaders) ~>
         sealRoute(nineCardsApi) ~>
         check {
-          status.intValue shouldEqual 401
+          status.intValue shouldEqual StatusCodes.Unauthorized.intValue
         }
     }
     "return a 200 Ok status code if the given email address and tokenId are valid" in new SuccessfulScope {
@@ -216,7 +216,7 @@ class NineCardsApiSpec
         addHeaders(apiRequestHeaders) ~>
         sealRoute(nineCardsApi) ~>
         check {
-          status.intValue shouldEqual 200
+          status.intValue shouldEqual StatusCodes.OK.intValue
         }
     }
     "return a 500 Internal Server Error status code if a persistence error happens" in new FailingScope {
@@ -225,7 +225,7 @@ class NineCardsApiSpec
         addHeaders(apiRequestHeaders) ~>
         sealRoute(nineCardsApi) ~>
         check {
-          status.intValue shouldEqual 500
+          status.intValue shouldEqual StatusCodes.InternalServerError.intValue
         }
     }
   }
@@ -236,7 +236,7 @@ class NineCardsApiSpec
       Put(installationsPath) ~>
         sealRoute(nineCardsApi) ~>
         check {
-          status.intValue shouldEqual 401
+          status.intValue shouldEqual StatusCodes.Unauthorized.intValue
         }
     }
 
@@ -246,7 +246,7 @@ class NineCardsApiSpec
         addHeader(RawHeader(headerAndroidId, androidId)) ~>
         sealRoute(nineCardsApi) ~>
         check {
-          status.intValue shouldEqual 401
+          status.intValue shouldEqual StatusCodes.Unauthorized.intValue
         }
     }
 
@@ -256,7 +256,7 @@ class NineCardsApiSpec
         addHeaders(userInfoHeaders) ~>
         sealRoute(nineCardsApi) ~>
         check {
-          status.intValue shouldEqual 401
+          status.intValue shouldEqual StatusCodes.Unauthorized.intValue
         }
     }
 
@@ -266,7 +266,7 @@ class NineCardsApiSpec
         addHeaders(failingUserInfoHeaders) ~>
         sealRoute(nineCardsApi) ~>
         check {
-          status.intValue shouldEqual 401
+          status.intValue shouldEqual StatusCodes.Unauthorized.intValue
         }
     }
 
@@ -276,7 +276,7 @@ class NineCardsApiSpec
         addHeaders(userInfoHeaders) ~>
         sealRoute(nineCardsApi) ~>
         check {
-          status.intValue shouldEqual 200
+          status.intValue shouldEqual StatusCodes.OK.intValue
         }
     }
 
@@ -286,7 +286,7 @@ class NineCardsApiSpec
         addHeaders(userInfoHeaders) ~>
         sealRoute(nineCardsApi) ~>
         check {
-          status.intValue shouldEqual 500
+          status.intValue shouldEqual StatusCodes.InternalServerError.intValue
         }
     }
   }
