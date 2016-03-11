@@ -17,8 +17,8 @@ class GoogleApiServices(implicit config: GoogleApiConfiguration) extends GoogleA
     val authority = Authority(host = RegName(config.host), port = config.port)
 
     val getTokenInfoUri = Uri(scheme = Option(config.protocol.ci), authority = Option(authority))
-      .withPath("/oauth2/v3/tokeninfo")
-      .withQueryParam("id_token", tokenId)
+      .withPath(config.tokenInfoUri)
+      .withQueryParam(config.tokenIdQueryParameter, tokenId)
 
     client.getAs[WrongTokenInfo Xor TokenInfo](getTokenInfoUri)
   }

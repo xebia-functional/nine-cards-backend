@@ -12,6 +12,7 @@ object Versions {
   val http4s = "0.12.3"
   val jodaConvert = "1.8.1"
   val jodaTime = "2.9.2"
+  val kindProjector = "0.7.1"
   val mockserver = "3.10.4"
   val scala = "2.11.7"
   val scalacheckShapeless = "0.3.1"

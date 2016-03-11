@@ -90,7 +90,9 @@ class GoogleApiServicesSpec
   implicit val googleApiConfiguration = GoogleApiConfiguration(
     protocol = "http",
     host = "localhost",
-    port = Option(mockServerPort))
+    port = Option(mockServerPort),
+    tokenInfoUri = getTokenInfoPath,
+    tokenIdQueryParameter = tokenIdParameterName)
 
   val googleApiServices = GoogleApiServices.googleApiServices
 

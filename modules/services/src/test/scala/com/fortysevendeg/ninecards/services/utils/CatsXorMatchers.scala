@@ -6,18 +6,32 @@ import org.specs2.matcher.{OptionLikeCheckedMatcher, OptionLikeMatcher, ValueChe
 trait XorMatchers {
 
   def beXorRight[T](t: ValueCheck[T]) = RightXorCheckedMatcher(t)
+
   def beXorRight[T] = RightXorMatcher[T]()
 
   def beXorLeft[T](t: ValueCheck[T]) = LeftXorCheckedMatcher(t)
+
   def beXorLeft[T] = LeftXorMatcher[T]()
 
 }
 
 object XorMatchers extends XorMatchers
 
-case class RightXorMatcher[T]() extends OptionLikeMatcher[({type l[a]= _ Xor a})#l, T, T]("\\/-", (_:Any Xor T).toEither.right.toOption)
-case class RightXorCheckedMatcher[T](check: ValueCheck[T]) extends OptionLikeCheckedMatcher[({type l[a]= _ Xor a})#l, T, T]("\\/-", (_:Any Xor T).toEither.right.toOption, check)
+case class RightXorMatcher[T]() extends OptionLikeMatcher[Any Xor ?, T, T](
+  typeName = "Xor.right",
+  toOption = (_: Any Xor T).toEither.right.toOption)
 
-case class LeftXorMatcher[T]() extends OptionLikeMatcher[({type l[a]= a Xor _})#l, T, T]("-\\/", (_:T Xor Any).toEither.left.toOption)
-case class LeftXorCheckedMatcher[T](check: ValueCheck[T]) extends OptionLikeCheckedMatcher[({type l[a]=a Xor _})#l, T, T]("-\\/", (_: T Xor Any).toEither.left.toOption, check)
+case class RightXorCheckedMatcher[T](
+  check: ValueCheck[T]) extends OptionLikeCheckedMatcher[Any Xor ?, T, T](
+  typeName = "Xor.right",
+  toOption = (_: Any Xor T).toEither.right.toOption, check = check)
+
+case class LeftXorMatcher[T]() extends OptionLikeMatcher[? Xor Any, T, T](
+  typeName = "Xor.left",
+  toOption = (_: T Xor Any).toEither.left.toOption)
+
+case class LeftXorCheckedMatcher[T](
+  check: ValueCheck[T]) extends OptionLikeCheckedMatcher[? Xor Any, T, T](
+  typeName = "Xor.left",
+  toOption = (_: T Xor Any).toEither.left.toOption, check = check)
 
