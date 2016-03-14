@@ -78,7 +78,7 @@ class Http4sGooglePlayWebScraper(url: String) {
             appDetails = AppDetails(
               appCategory = parsedAppCategories,
               numDownloads = "",
-              permission = List()
+              permission = Nil
             )
           ),
           aggregateRating = AggregateRating(
@@ -90,8 +90,8 @@ class Http4sGooglePlayWebScraper(url: String) {
             fiveStarRatings = 0,
             starRating = 0.0
           ),
-          image = List(),
-          offer = List()
+          image = Nil,
+          offer = Nil
         )
       )
     }

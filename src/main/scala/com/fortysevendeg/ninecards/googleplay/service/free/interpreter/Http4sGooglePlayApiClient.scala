@@ -47,8 +47,8 @@ class Http4sGooglePlayApiClient(url: String) {
           fiveStarRatings  = agg.getFiveStarRatings,
           starRating       = agg.getStarRating
         ),
-        image = List(), // TODO
-        offer = List()  // TODO
+        image = Nil,
+        offer = Nil
       )
     )
   }

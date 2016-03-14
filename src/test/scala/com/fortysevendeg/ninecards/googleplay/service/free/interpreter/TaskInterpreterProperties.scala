@@ -15,17 +15,18 @@ object TaskInterpreterProperties extends Properties("Task interpreter") {
 
   implicit val arbItem: Arbitrary[Item] = Arbitrary(for {
     title <- identifier
-    docId <- identifier
+    docid <- identifier
+    appDetails <- listOf(identifier)
   } yield Item(
     DocV2(
       title   = title,
       creator = "",
-      docid   = docId,
+      docid   = docid,
       details = Details(
         appDetails = AppDetails(
-          appCategory  = List(),
+          appCategory  = appDetails,
           numDownloads = "",
-          permission   = List()
+          permission   = Nil
         )
       ),
       aggregateRating = AggregateRating(
@@ -37,8 +38,8 @@ object TaskInterpreterProperties extends Properties("Task interpreter") {
         fiveStarRatings  = 0,
         starRating       = 0.0
       ),
-      image = List(),
-      offer = List()
+      image = Nil,
+      offer = Nil
     )
   ))
 
