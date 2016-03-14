@@ -12,6 +12,7 @@ import io.circe.parser._
 import io.circe.syntax._
 import io.circe.generic.auto._
 import cats.data.Xor
+import cats.syntax.xor._
 
 import scalaz.concurrent.Task
 import com.fortysevendeg.extracats._
@@ -61,7 +62,7 @@ class NineCardsGooglePlayApiIntegrationTest extends Specification with Specs2Rou
 
         val docid = decode[Item](responseAs[String]).map(_.docV2.docid)
 
-        docid must_=== Xor.right(validPackages.head)
+        docid must_=== validPackages.head.right
       }
     }
 
@@ -73,7 +74,7 @@ class NineCardsGooglePlayApiIntegrationTest extends Specification with Specs2Rou
           case PackageDetails(errors, items) => (errors.toSet, items.map(_.docV2.docid).toSet)
         }
 
-        response must_=== Xor.right((invalidPackages.toSet, validPackages.toSet))
+        response must_=== (invalidPackages.toSet, validPackages.toSet).right
       }
     }
   }

@@ -8,6 +8,7 @@ import scala.collection.JavaConversions._
 import com.fortysevendeg.googleplay.proto.GooglePlay.ResponseWrapper
 import com.fortysevendeg.ninecards.googleplay.domain.Domain._
 import cats.data.Xor
+import cats.syntax.xor._
 import scalaz.concurrent.Task
 import com.fortysevendeg.ninecards.googleplay.service.GooglePlayDomain._
 
@@ -81,17 +82,17 @@ class Http4sGooglePlayApiClient(url: String) {
 
     val h = headers(auth)
 
-    packageUri(pkg).fold(Task.now(Xor.left(packageName)): Task[Xor[String, Item]]) {u =>
+    packageUri(pkg).fold(Task.now(packageName.left[Item]): Task[Xor[String, Item]]) {u =>
       val request = new Request(
         method = Method.GET,
         uri = u,
         headers = h
       )
       client.fetch(request) {
-        case Successful(resp) => resp.as[Item].map(i => Xor.right(i))
-        case _ => Task.now(Xor.left(packageName))
+        case Successful(resp) => resp.as[Item].map(i => i.right[String])
+        case _ => Task.now(packageName.left[Item])
       }.handle {
-        case _ => Xor.left(packageName)
+        case _ => packageName.left[Item]
       }
     }
   }

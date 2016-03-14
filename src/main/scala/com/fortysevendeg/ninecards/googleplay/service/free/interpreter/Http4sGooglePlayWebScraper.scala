@@ -7,6 +7,7 @@ import scala.xml.Node
 import cats.data.Xor
 import cats.std.option._
 import cats.syntax.cartesian._
+import cats.syntax.xor._
 import scalaz.concurrent.Task
 import org.http4s._
 import org.http4s.Http4s._
@@ -104,7 +105,7 @@ class Http4sGooglePlayWebScraper(url: String) {
 
     def packageUri(p: Package): Option[Uri] = Uri.fromString(s"$url?id=${p.value}${localization}").toOption
 
-    packageUri(p).fold(Task.now(Xor.left(p.value)): Task[Xor[String, Item]]) {u =>
+    packageUri(p).fold(Task.now(p.value.left[Item])) {u =>
       val request = new Request(
         method = Method.GET,
         uri = u
@@ -112,9 +113,9 @@ class Http4sGooglePlayWebScraper(url: String) {
       client.fetch(request) {
         case Successful(resp) => resp.as[Node].map{ n =>
           val maybeItem = parseResponseToItem(n)
-          maybeItem.fold(Xor.left(p.value): Xor[String, Item])(i => Xor.right(i))
+          maybeItem.fold(p.value.left[Item])(i => i.right[String])
         }
-        case x => Task.now(Xor.left(p.value))
+        case x => Task.now(p.value.left[Item])
       }
     }
   }

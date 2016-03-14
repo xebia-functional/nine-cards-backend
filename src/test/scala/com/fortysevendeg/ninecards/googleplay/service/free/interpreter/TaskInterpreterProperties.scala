@@ -10,6 +10,7 @@ import org.scalacheck.Gen._
 import org.scalacheck.Shapeless._
 import scalaz.concurrent.Task
 import cats.data.Xor
+import cats.syntax.xor._
 
 object TaskInterpreterProperties extends Properties("Task interpreter") {
 
@@ -45,7 +46,7 @@ object TaskInterpreterProperties extends Properties("Task interpreter") {
 
   val exceptionalRequest: (Any, Any) => Task[Xor[String, Item]] = ((_, _) => Task.fail(new RuntimeException("API request failed")))
 
-  val failingRequest: (Package, Any) => Task[Xor[String, Item]] = { case (Package(name), _) => Task.now(Xor.left(name))}
+  val failingRequest: (Package, Any) => Task[Xor[String, Item]] = { case (Package(name), _) => Task.now(name.left)}
 
   property("Requesting a single package should pass the correct parameters to the client request") = forAll { (pkg: Package, i: Item, t: Token, id: AndroidId, lo: Option[Localization]) =>
     val request = RequestPackage((t, id, lo), pkg)
@@ -53,8 +54,8 @@ object TaskInterpreterProperties extends Properties("Task interpreter") {
     val f: (Package, GoogleAuthParams) => Task[Xor[String, Item]] = { case (pkgParam, (tParam, idParam, loParam)) =>
       Task.now {
         (pkgParam, tParam, idParam, loParam) match {
-          case (`pkg`, `t`, `id`, `lo`) => Xor.right(i)
-          case _ => Xor.left(pkgParam.value)
+          case (`pkg`, `t`, `id`, `lo`) => i.right
+          case _ => pkgParam.value.left
         }
       }
     }
@@ -75,8 +76,8 @@ object TaskInterpreterProperties extends Properties("Task interpreter") {
     val f: (Package, GoogleAuthParams) => Task[Xor[String, Item]] = { case (pkgParam, (tParam, idParam, loParam)) =>
       Task.now {
         (tParam, idParam, loParam) match {
-          case (`t`, `id`, `lo`) if(ps.contains(pkgParam)) => Xor.right(i)
-          case _ => Xor.left(pkgParam.value)
+          case (`t`, `id`, `lo`) if(ps.contains(pkgParam)) => i.right
+          case _ => pkgParam.value.left
         }
       }
     }
@@ -97,8 +98,8 @@ object TaskInterpreterProperties extends Properties("Task interpreter") {
 
     val webRequest: (Package, Option[Localization]) => Task[Xor[String, Item]] = { (p, _) =>
       Task.now {
-        if (p == pkg) Xor.right(i)
-        else Xor.left(p.value)
+        if (p == pkg) i.right
+        else p.value.left
       }
     }
 
@@ -118,8 +119,8 @@ object TaskInterpreterProperties extends Properties("Task interpreter") {
 
       def makeRequestFunc(ps: List[Package], toReturn: Item): (Package, Any) => Task[Xor[String, Item]] = { (p, _) =>
         Task.now {
-          if(ps.contains(p)) Xor.right(toReturn)
-          else Xor.left(p.value)
+          if(ps.contains(p)) toReturn.right
+          else p.value.left
         }
       }
 

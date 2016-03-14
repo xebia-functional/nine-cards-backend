@@ -13,6 +13,7 @@ import io.circe.parser._
 import io.circe.generic.auto._
 import cats._
 import cats.syntax.option._
+import cats.syntax.xor._
 import cats.data.Xor
 import org.scalacheck._
 import org.scalacheck.Prop._
@@ -64,7 +65,7 @@ object NineCardsGooglePlayApiProperties extends Properties("Nine Cards Google Pl
     Get(s"/googleplay/package/${pkg.value}") ~> addHeaders(requestHeaders) ~> route ~> check {
       val response = responseAs[String]
 
-      (status ?= OK) && (decode[Item](response) ?= Xor.right(item))
+      (status ?= OK) && (decode[Item](response) ?= item.right)
     }
   }
 
