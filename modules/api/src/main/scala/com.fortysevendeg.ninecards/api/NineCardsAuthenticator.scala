@@ -1,6 +1,5 @@
 package com.fortysevendeg.ninecards.api
 
-import cats.free.Free
 import com.fortysevendeg.ninecards.api.NineCardsHeaders.Domain._
 import com.fortysevendeg.ninecards.api.NineCardsHeaders._
 import com.fortysevendeg.ninecards.api.messages.UserMessages.ApiLoginRequest
