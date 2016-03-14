@@ -42,7 +42,7 @@ class NineCardsAuthenticator(
 
   def validateLoginRequest(
     email: String,
-    tokenId: String): Task[Authentication[Boolean]] =
+    tokenId: String): Task[Authentication[Unit]] =
     (email, tokenId) match {
       case (e, o) if e.isEmpty || o.isEmpty =>
         Task.now(Left(rejectionByCredentialsRejected))
@@ -50,7 +50,7 @@ class NineCardsAuthenticator(
         val task: Task[Boolean] = googleApiProcesses.checkGoogleTokenId(email, tokenId)
 
         task map {
-          case value if value => Right(true)
+          case true => Right(())
           case _ => Left(rejectionByCredentialsRejected)
         } handle {
           case _ => Left(rejectionByCredentialsRejected)

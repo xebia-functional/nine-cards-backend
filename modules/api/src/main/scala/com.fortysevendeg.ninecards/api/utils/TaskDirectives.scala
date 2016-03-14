@@ -27,7 +27,7 @@ trait TaskDirectives {
     * If type ``T`` is already an HList it is directly expanded into the respective
     * number of extractions.
     */
-  def onSuccess(magnet: OnSuccessTaskMagnet): Directive[magnet.Out] = magnet.get
+  def onSuccess(magnet: OnSuccessTaskMagnet): Directive[magnet.Out] = magnet.directive
 
   /**
     * "Unwraps" a ``Task[T]`` and runs its inner route when the task has failed
@@ -57,7 +57,7 @@ object OnCompleteTaskMagnet {
 trait OnSuccessTaskMagnet {
   type Out <: HList
 
-  def get: Directive[Out]
+  def directive: Directive[Out]
 }
 
 object OnSuccessTaskMagnet {
@@ -65,7 +65,7 @@ object OnSuccessTaskMagnet {
     new Directive[hl.Out] with OnSuccessTaskMagnet {
       type Out = hl.Out
 
-      def get = this
+      def directive = this
 
       def happly(f: Out ⇒ Route) = ctx ⇒ task.runAsync {
 
