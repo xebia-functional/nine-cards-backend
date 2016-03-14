@@ -1,7 +1,9 @@
 package com.fortysevendeg.ninecards.googleplay.api
 
+import com.fortysevendeg.ninecards.config.NineCardsConfig
 import com.fortysevendeg.ninecards.googleplay.TestConfig
 import com.fortysevendeg.ninecards.googleplay.domain.Domain._
+import com.fortysevendeg.ninecards.googleplay.service.free.interpreter.{ Http4sGooglePlayApiClient, Http4sGooglePlayWebScraper }
 import org.specs2.mutable.Specification
 import spray.testkit.Specs2RouteTest
 import spray.http.HttpHeaders.RawHeader
@@ -10,6 +12,7 @@ import io.circe.parser._
 import io.circe.syntax._
 import io.circe.generic.auto._
 import cats.data.Xor
+import cats.syntax.xor._
 
 import scalaz.concurrent.Task
 import com.fortysevendeg.extracats._
@@ -37,6 +40,13 @@ class NineCardsGooglePlayApiIntegrationTest extends Specification with Specs2Rou
     RawHeader("X-Android-Market-Localization", localization.value)
   )
 
+  val apiEndpoint = NineCardsConfig.getConfigValue("googleplay.api.endpoint")
+  val apiClient = new Http4sGooglePlayApiClient(apiEndpoint)
+  val webEndpoint = NineCardsConfig.getConfigValue("googleplay.web.endpoint")
+  val webClient = new Http4sGooglePlayWebScraper(webEndpoint)
+
+  implicit val i = interpreter(apiClient.request _, webClient.request _)
+
   val route = new NineCardsGooglePlayApi {
     override def actorRefFactory = system
   }.googlePlayApiRoute[Task]
@@ -52,7 +62,7 @@ class NineCardsGooglePlayApiIntegrationTest extends Specification with Specs2Rou
 
         val docid = decode[Item](responseAs[String]).map(_.docV2.docid)
 
-        docid must_=== Xor.right(validPackages.head)
+        docid must_=== validPackages.head.right
       }
     }
 
@@ -64,7 +74,7 @@ class NineCardsGooglePlayApiIntegrationTest extends Specification with Specs2Rou
           case PackageDetails(errors, items) => (errors.toSet, items.map(_.docV2.docid).toSet)
         }
 
-        response must_=== Xor.right((invalidPackages.toSet, validPackages.toSet))
+        response must_=== (invalidPackages.toSet, validPackages.toSet).right
       }
     }
   }

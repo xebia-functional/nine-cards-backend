@@ -1,11 +1,13 @@
 package com.fortysevendeg.ninecards.googleplay.service.free.interpreter
 
+import com.fortysevendeg.ninecards.config.NineCardsConfig
 import com.fortysevendeg.ninecards.googleplay.domain.Domain._
 import com.fortysevendeg.ninecards.googleplay.service.GooglePlayDomain._
 import scala.xml.Node
 import cats.data.Xor
 import cats.std.option._
 import cats.syntax.cartesian._
+import cats.syntax.xor._
 import scalaz.concurrent.Task
 import org.http4s._
 import org.http4s.Http4s._
@@ -15,7 +17,7 @@ import org.ccil.cowan.tagsoup.jaxp.SAXFactoryImpl
 import org.xml.sax.InputSource
 import org.http4s.Status.ResponseClass.Successful
 
-object Http4sGooglePlayWebScraper {
+class Http4sGooglePlayWebScraper(url: String) {
 
   val parser = new SAXFactoryImpl().newSAXParser()
   val adapter = new NoBindingFactoryAdapter
@@ -77,7 +79,7 @@ object Http4sGooglePlayWebScraper {
             appDetails = AppDetails(
               appCategory = parsedAppCategories,
               numDownloads = "",
-              permission = List()
+              permission = Nil
             )
           ),
           aggregateRating = AggregateRating(
@@ -89,8 +91,8 @@ object Http4sGooglePlayWebScraper {
             fiveStarRatings = 0,
             starRating = 0.0
           ),
-          image = List(),
-          offer = List()
+          image = Nil,
+          offer = Nil
         )
       )
     }
@@ -101,9 +103,9 @@ object Http4sGooglePlayWebScraper {
 
     val localization = localizationOption.fold("")(l => s"&hl=${l.value}")
 
-    def packageUri(p: Package): Option[Uri] = Uri.fromString(s"https://play.google.com/store/apps/details?id=${p.value}${localization}").toOption
+    def packageUri(p: Package): Option[Uri] = Uri.fromString(s"$url?id=${p.value}${localization}").toOption
 
-    packageUri(p).fold(Task.now(Xor.left(p.value)): Task[Xor[String, Item]]) {u =>
+    packageUri(p).fold(Task.now(p.value.left[Item])) {u =>
       val request = new Request(
         method = Method.GET,
         uri = u
@@ -111,9 +113,9 @@ object Http4sGooglePlayWebScraper {
       client.fetch(request) {
         case Successful(resp) => resp.as[Node].map{ n =>
           val maybeItem = parseResponseToItem(n)
-          maybeItem.fold(Xor.left(p.value): Xor[String, Item])(i => Xor.right(i))
+          maybeItem.fold(p.value.left[Item])(i => i.right[String])
         }
-        case x => Task.now(Xor.left(p.value))
+        case x => Task.now(p.value.left[Item])
       }
     }
   }

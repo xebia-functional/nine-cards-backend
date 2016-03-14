@@ -1,5 +1,6 @@
 package com.fortysevendeg.ninecards.googleplay.api
 
+import com.fortysevendeg.ninecards.config.NineCardsConfig
 import com.fortysevendeg.ninecards.googleplay.ninecardsspray._
 import com.fortysevendeg.ninecards.googleplay.domain.Domain._
 import com.fortysevendeg.ninecards.googleplay.service.GooglePlayDomain._
@@ -7,6 +8,7 @@ import com.fortysevendeg.ninecards.googleplay.service.free.algebra.GooglePlay._
 import com.fortysevendeg.extracats._
 import cats.Monad
 import cats.~>
+import com.fortysevendeg.ninecards.googleplay.service.free.interpreter.{ Http4sGooglePlayApiClient, Http4sGooglePlayWebScraper }
 import spray.routing._
 import spray.httpx.marshalling.ToResponseMarshaller
 import akka.actor.Actor
@@ -20,6 +22,14 @@ class NineCardsGooglePlayActor extends Actor with NineCardsGooglePlayApi {
   import TaskInterpreter._
 
   def actorRefFactory = context
+
+  // todo make a new wiring module
+  val apiEndpoint = NineCardsConfig.getConfigValue("googleplay.api.endpoint")
+  val apiClient = new Http4sGooglePlayApiClient(apiEndpoint)
+  val webEndpoint = NineCardsConfig.getConfigValue("googleplay.web.endpoint")
+  val webClient = new Http4sGooglePlayWebScraper(webEndpoint)
+
+  implicit val i = interpreter(apiClient.request _, webClient.request _)
 
   def receive = runRoute(googlePlayApiRoute[Task])
 }

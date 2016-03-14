@@ -8,14 +8,15 @@ import scala.collection.JavaConversions._
 import com.fortysevendeg.googleplay.proto.GooglePlay.ResponseWrapper
 import com.fortysevendeg.ninecards.googleplay.domain.Domain._
 import cats.data.Xor
+import cats.syntax.xor._
 import scalaz.concurrent.Task
 import com.fortysevendeg.ninecards.googleplay.service.GooglePlayDomain._
 
-object Http4sGooglePlayApiClient {
+class Http4sGooglePlayApiClient(url: String) {
 
   val client = org.http4s.client.blaze.PooledHttp1Client() // todo where is best to create the client?
 
-  def packageUri(p: Package): Option[Uri] = Uri.fromString(s"https://android.clients.google.com/fdfe/details?doc=${p.value}").toOption
+  def packageUri(p: Package): Option[Uri] = Uri.fromString(s"$url?doc=${p.value}").toOption
 
   implicit def protobufItemDecoder(implicit byteVectorDecoder: EntityDecoder[ByteVector]): EntityDecoder[Item] = byteVectorDecoder map parseResponseToItem
 
@@ -47,13 +48,16 @@ object Http4sGooglePlayApiClient {
           fiveStarRatings  = agg.getFiveStarRatings,
           starRating       = agg.getStarRating
         ),
-        image = List(), // TODO
-        offer = List()  // TODO
+        image = Nil,
+        offer = Nil
       )
     )
   }
 
-  def headers(t: Token, id: AndroidId, lo: Option[Localization]): Headers = {
+  def headers(auth: GoogleAuthParams): Headers = {
+
+    val (t, id, lo) = auth
+
     val allHeaders = lo.map {
       case Localization(locale) => Header("Accept-Language", locale)
     }.toList ++ List(
@@ -72,20 +76,23 @@ object Http4sGooglePlayApiClient {
     Headers(allHeaders: _*)
   }
 
-  // todo it's expected to change Option[Item] to be something more granular to indicate failure
-  def request(pkg: Package, h: Headers): Task[Xor[String, Item]] = {
+  def request(pkg: Package, auth: GoogleAuthParams): Task[Xor[String, Item]] = {
 
     val packageName = pkg.value
 
-    packageUri(pkg).fold(Task.now(Xor.left(packageName)): Task[Xor[String, Item]]) {u =>
+    val h = headers(auth)
+
+    packageUri(pkg).fold(Task.now(packageName.left[Item]): Task[Xor[String, Item]]) {u =>
       val request = new Request(
         method = Method.GET,
         uri = u,
         headers = h
       )
       client.fetch(request) {
-        case Successful(resp) => resp.as[Item].map(i => Xor.right(i))
-        case x => Task.now(Xor.left(packageName))
+        case Successful(resp) => resp.as[Item].map(i => i.right[String])
+        case _ => Task.now(packageName.left[Item])
+      }.handle {
+        case _ => packageName.left[Item]
       }
     }
   }

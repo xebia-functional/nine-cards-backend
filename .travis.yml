@@ -2,8 +2,10 @@ sudo: false
 language: scala
 scala:
   - 2.11.7
+jdk:
+  - oraclejdk8
 script:
-  - sbt ++$$TRAVIS_SCALA_VERSION clean coverage compile
+  - sbt ++$$TRAVIS_SCALA_VERSION clean coverage test
 addons:
   apt:
     packages:
