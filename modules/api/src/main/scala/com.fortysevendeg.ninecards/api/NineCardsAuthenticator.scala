@@ -4,18 +4,17 @@ import com.fortysevendeg.ninecards.api.NineCardsHeaders.Domain._
 import com.fortysevendeg.ninecards.api.NineCardsHeaders._
 import com.fortysevendeg.ninecards.api.messages.UserMessages.ApiLoginRequest
 import com.fortysevendeg.ninecards.api.utils.FreeUtils._
+import com.fortysevendeg.ninecards.api.utils.TaskDirectives._
 import com.fortysevendeg.ninecards.api.utils.TaskUtils._
 import com.fortysevendeg.ninecards.processes.NineCardsServices.NineCardsServices
 import com.fortysevendeg.ninecards.processes._
 import shapeless._
 import spray.routing.authentication._
-import spray.routing.directives.FutureDirectives._
 import spray.routing.directives._
 import spray.routing.{AuthenticationFailedRejection, Directive, Directive0}
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 import scalaz.concurrent.Task
-import scalaz.{-\/, \/-}
 
 class NineCardsAuthenticator(
   implicit userProcesses: UserProcesses[NineCardsServices],
@@ -26,8 +25,8 @@ class NineCardsAuthenticator(
     with SecurityDirectives
     with JsonFormats {
 
-  implicit def fromFutureAuth[T](
-    auth: => Future[Authentication[T]]): AuthMagnet[T] =
+  implicit def fromTaskAuth[T](
+    auth: => Task[Authentication[T]]): AuthMagnet[T] =
     new AuthMagnet(onSuccess(auth))
 
   val rejectionByCredentialsRejected = AuthenticationFailedRejection(
@@ -43,21 +42,19 @@ class NineCardsAuthenticator(
 
   def validateLoginRequest(
     email: String,
-    tokenId: String): Future[Authentication[Boolean]] =
-    Future {
-      (email, tokenId) match {
-        case (e, o) if e.isEmpty || o.isEmpty =>
-          Left(rejectionByCredentialsRejected)
-        case _ =>
-          val result: Task[Boolean] = googleApiProcesses.checkGoogleTokenId(email, tokenId)
-          result.attemptRun match {
-            case -\/(e) =>
-              Left(rejectionByCredentialsRejected)
-            case \/-(value) if value => Right(true)
-            case value =>
-              Left(rejectionByCredentialsRejected)
-          }
-      }
+    tokenId: String): Task[Authentication[Unit]] =
+    (email, tokenId) match {
+      case (e, o) if e.isEmpty || o.isEmpty =>
+        Task.now(Left(rejectionByCredentialsRejected))
+      case _ =>
+        val task: Task[Boolean] = googleApiProcesses.checkGoogleTokenId(email, tokenId)
+
+        task map {
+          case true => Right(())
+          case _ => Left(rejectionByCredentialsRejected)
+        } handle {
+          case _ => Left(rejectionByCredentialsRejected)
+        }
     }
 
   def authenticateUser: Directive[UserInfo] = for {
@@ -68,19 +65,15 @@ class NineCardsAuthenticator(
 
   def validateUser(
     sessionToken: String,
-    androidId: String): Future[Authentication[Long]] = {
-    val result: Task[Option[Long]] = userProcesses.checkSessionToken(sessionToken, androidId)
+    androidId: String): Task[Authentication[Long]] = {
+    val task: Task[Option[Long]] = userProcesses.checkSessionToken(sessionToken, androidId)
 
-    Future {
-      result.attemptRun match {
-        case -\/(e) =>
-          Left(rejectionByCredentialsRejected)
-        case \/-(value) => value match {
-          case Some(v) => Right(v)
-          case None =>
-            Left(rejectionByCredentialsRejected)
-        }
-      }
+    task map {
+      case Some(v) => Right(v)
+      case None =>
+        Left(rejectionByCredentialsRejected)
+    } handle {
+      case _ => Left(rejectionByCredentialsRejected)
     }
   }
 

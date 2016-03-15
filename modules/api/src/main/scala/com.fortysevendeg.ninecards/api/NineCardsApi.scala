@@ -13,7 +13,7 @@ import com.fortysevendeg.ninecards.processes.{GoogleApiProcesses, UserProcesses}
 import spray.httpx.SprayJsonSupport
 import spray.routing._
 
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.ExecutionContext
 
 class NineCardsApiActor
   extends Actor
@@ -22,6 +22,8 @@ class NineCardsApiActor
     with NineCardsExceptionHandler {
 
   def actorRefFactory = context
+
+  implicit def executionContext = actorRefFactory.dispatcher
 
   def receive = runRoute(nineCardsApiRoute)
 
@@ -34,14 +36,16 @@ trait NineCardsApi
 
   def nineCardsApiRoute[T](
     implicit userProcesses: UserProcesses[NineCardsServices],
-    googleApiProcesses: GoogleApiProcesses[NineCardsServices]): Route =
+    googleApiProcesses: GoogleApiProcesses[NineCardsServices],
+    executionContext: ExecutionContext): Route =
     userApiRoute ~
       installationsApiRoute ~
       swaggerApiRoute
 
   private[this] def userApiRoute(
     implicit userProcesses: UserProcesses[NineCardsServices],
-    googleApiProcesses: GoogleApiProcesses[NineCardsServices]) =
+    googleApiProcesses: GoogleApiProcesses[NineCardsServices],
+    executionContext: ExecutionContext) =
     pathPrefix("login") {
       pathEndOrSingleSlash {
         requestLoginHeaders { (appId, apiKey) =>
@@ -59,7 +63,9 @@ trait NineCardsApi
       }
     }
 
-  private[this] def installationsApiRoute(implicit userProcesses: UserProcesses[NineCardsServices]) =
+  private[this] def installationsApiRoute(
+    implicit userProcesses: UserProcesses[NineCardsServices],
+    executionContext: ExecutionContext) =
     pathPrefix("installations") {
       pathEndOrSingleSlash {
         nineCardsAuthenticator.authenticateUser { (user, androidId) =>
