@@ -21,7 +21,7 @@ class ConvertersSpec
 
         request.androidId shouldEqual apiRequest.androidId
         request.email shouldEqual apiRequest.email
-        request.oauthToken shouldEqual apiRequest.oauthToken
+        request.tokenId shouldEqual apiRequest.tokenId
       }
     }
   }

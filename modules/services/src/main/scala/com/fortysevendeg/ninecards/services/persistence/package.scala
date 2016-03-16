@@ -9,10 +9,10 @@ import scalaz.concurrent.Task
 package object persistence {
 
   implicit lazy val transactor: Transactor[Task] = DriverManagerTransactor[Task](
-    driver = getConfigValue("db.default.driver"),
-    url = getConfigValue("db.default.url"),
-    user = getConfigValue("db.default.user"),
-    pass = getConfigValue("db.default.password"))
+    driver = getString("db.default.driver"),
+    url = getString("db.default.url"),
+    user = getString("db.default.user"),
+    pass = getString("db.default.password"))
 
   implicit def toConnectionIO[T](t: T): ConnectionIO[T] = t.point[ConnectionIO]
 
