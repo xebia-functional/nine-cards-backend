@@ -1,5 +1,6 @@
 package com.fortysevendeg.ninecards.services.persistence
 
+import com.fortysevendeg.ninecards.services.utils.DummyNineCardsConfig
 import doobie.imports._
 import org.scalacheck.{Arbitrary, Gen}
 import org.specs2._
@@ -7,12 +8,11 @@ import org.specs2.matcher.DisjunctionMatchers
 import org.specs2.mutable.Specification
 import org.specs2.specification.BeforeEach
 
-import scalaz.concurrent.Task
 import scalaz.std.iterable._
 
-trait DatabaseContext {
+trait DatabaseContext extends DummyNineCardsConfig {
 
-  def trx = DriverManagerTransactor[Task]("org.h2.Driver", "jdbc:h2:mem:test3;DB_CLOSE_DELAY=-1", "sa", "")
+  val trx = transactor
 
   case class PersistenceItem(id: Long, name: String, active: Boolean)
 
