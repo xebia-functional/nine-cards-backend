@@ -63,7 +63,7 @@ trait GoogleApiProcessesContext {
     sub = "106222693719864970737",
     email_verified = "true",
     azp = "123456789012.apps.googleusercontent.com",
-    hd = "test.com",
+    hd = Option("test.com"),
     email = email,
     iat = "1457529032",
     exp = "1457532632",
