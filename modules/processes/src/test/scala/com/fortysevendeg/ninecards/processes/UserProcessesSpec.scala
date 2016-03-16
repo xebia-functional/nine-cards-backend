@@ -4,8 +4,9 @@ import cats.Monad
 import com.fortysevendeg.ninecards.processes.NineCardsServices._
 import com.fortysevendeg.ninecards.processes.messages.InstallationsMessages._
 import com.fortysevendeg.ninecards.processes.messages.UserMessages.{LoginRequest, LoginResponse}
+import com.fortysevendeg.ninecards.processes.utils.DummyNineCardsConfig
 import com.fortysevendeg.ninecards.services.free.domain.{Installation, User}
-import com.fortysevendeg.ninecards.services.persistence.UserPersistenceServices
+import com.fortysevendeg.ninecards.services.persistence.{UserPersistenceServices, _}
 import doobie.imports._
 import org.mockito.Matchers.{eq => mockEq}
 import org.specs2.ScalaCheck
@@ -22,7 +23,8 @@ trait UserProcessesSpecification
   extends Specification
     with Matchers
     with Mockito
-    with UserProcessesContext {
+    with UserProcessesContext
+    with DummyNineCardsConfig {
 
   implicit def taskMonad = new Monad[Task] {
     override def flatMap[A, B](fa: Task[A])(f: A => Task[B]): Task[B] =
@@ -33,11 +35,6 @@ trait UserProcessesSpecification
 
   trait BasicScope extends Scope {
 
-    implicit val transactor = DriverManagerTransactor[Task](
-      driver = "org.h2.Driver",
-      url = "jdbc:h2:mem:test3;DB_CLOSE_DELAY=-1",
-      user = "sa",
-      pass = "")
     implicit val userPersistenceServices: UserPersistenceServices = mock[UserPersistenceServices]
     implicit val userProcesses = new UserProcesses[NineCardsServices]
 
