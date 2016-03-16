@@ -5,7 +5,7 @@ import shapeless.HNil
 
 import scalaz.Foldable
 
-class PersistenceImpl[K](val supportsSelectForUpdate: Boolean = true) {
+class Persistence[K](val supportsSelectForUpdate: Boolean = true) {
 
   def generateQuery(sql: String)(implicit K: Composite[K]): Query0[K] =
     Query[HNil, K](sql).toQuery0(HNil)
@@ -46,7 +46,7 @@ class PersistenceImpl[K](val supportsSelectForUpdate: Boolean = true) {
     values: A)(
     implicit A: Composite[A]): ConnectionIO[Int] = Update[A](sql).run(values)
 
-  def updateWithGeneratedKeys[L] = new {
+  class UpdateWithGeneratedKeys[L] {
     def apply[A](sql: String, fields: List[String], values: A)(
       implicit A: Composite[A], K: Composite[L]): ConnectionIO[L] = {
       if (supportsSelectForUpdate)
@@ -56,6 +56,8 @@ class PersistenceImpl[K](val supportsSelectForUpdate: Boolean = true) {
     }
   }
 
+  def updateWithGeneratedKeys[L] = new UpdateWithGeneratedKeys[L]
+
   def updateMany[F[_], A](
     sql: String,
     values: F[A])(
@@ -64,7 +66,7 @@ class PersistenceImpl[K](val supportsSelectForUpdate: Boolean = true) {
 
 }
 
-object PersistenceImpl {
+object Persistence {
 
-  implicit def persistenceImpl[K]: PersistenceImpl[K] = new PersistenceImpl
+  implicit def persistence[K]: Persistence[K] = new Persistence
 }

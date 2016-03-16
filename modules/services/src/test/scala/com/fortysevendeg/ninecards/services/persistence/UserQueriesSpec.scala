@@ -9,12 +9,12 @@ class UserQueriesSpec
     with AnalysisSpec
     with DomainDatabaseContext {
 
-  val getUserByEmailQuery = userPersistenceImpl.generateQuery(
+  val getUserByEmailQuery = userPersistence.generateQuery(
     sql = getByEmail,
     values = "hello@47deg.com")
   check(getUserByEmailQuery)
 
-  val insertUserQuery = userPersistenceImpl.generateUpdateWithGeneratedKeys(
+  val insertUserQuery = userPersistence.generateUpdateWithGeneratedKeys(
     sql = insert,
     values = ("hello@47deg.com", "e1e938889-2e2d-49d7-81e7-10606c4ca32f"))
   check(insertUserQuery)
