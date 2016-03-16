@@ -16,7 +16,7 @@ class UserQueriesSpec
 
   val insertUserQuery = userPersistence.generateUpdateWithGeneratedKeys(
     sql = insert,
-    values = ("hello@47deg.com", "e1e938889-2e2d-49d7-81e7-10606c4ca32f"))
+    values = ("hello@47deg.com", "e1e938889-2e2d-49d7-81e7-10606c4ca32f", "7de44327-2e19-4a7f-b02f-cdc0c9d7c21c"))
   check(insertUserQuery)
 
 }

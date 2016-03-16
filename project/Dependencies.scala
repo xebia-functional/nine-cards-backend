@@ -30,9 +30,11 @@ trait Dependencies {
   val circe = "io.circe" %% "circe-core" % Versions.circe
   val circeGeneric = "io.circe" %% "circe-generic" % Versions.circe
   val mockserver = "org.mock-server" % "mockserver-netty" % Versions.mockserver
+  val hasher = "com.roundeights" %% "hasher" % Versions.hasher
 
   val baseDepts = Seq(
     typesafeConfig,
+    hasher,
     specs2Core % "test" exclude("org.scalaz", "*"),
     specs2Mockito % "test",
     specs2Scalacheck % "test",

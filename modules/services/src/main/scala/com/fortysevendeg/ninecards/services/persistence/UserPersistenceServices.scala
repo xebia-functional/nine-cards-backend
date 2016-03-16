@@ -11,11 +11,12 @@ class UserPersistenceServices(
 
   def addUser[K](
     email: String,
+    apiKey: String,
     sessionToken: String)(implicit ev: Composite[K]): ConnectionIO[K] =
     userPersistence.updateWithGeneratedKeys[K](
       sql = UserQueries.insert,
       fields = User.allFields,
-      values = (email, sessionToken))
+      values = (email, sessionToken, apiKey))
 
   def getUserByEmail(
     email: String): ConnectionIO[Option[User]] =

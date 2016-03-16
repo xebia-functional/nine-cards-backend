@@ -26,9 +26,10 @@ class UserPersistenceServicesSpec
 
   "addUser" should {
     "new users can be created" in {
-      prop { (email: Email, sessionToken: SessionToken) =>
+      prop { (apiKey: ApiKey, email: Email, sessionToken: SessionToken) =>
         val id: Long = userPersistenceServices.addUser[Long](
           email = email.value,
+          apiKey = apiKey.value,
           sessionToken = sessionToken.value).transact(transactor).run
 
         val storeUser = userPersistenceServices.getUserByEmail(email.value).transact(transactor).run
@@ -48,18 +49,34 @@ class UserPersistenceServicesSpec
       }
     }
     "return an user if there is an user with the given email in the database" in {
-      prop { (email: Email, sessionToken: SessionToken) =>
-        val id: Long = userPersistenceServices.addUser[Long](email.value, sessionToken.value).transact(transactor).run
+      prop { (apiKey: ApiKey, email: Email, sessionToken: SessionToken) =>
+        val id: Long = userPersistenceServices.addUser[Long](
+          email = email.value,
+          apiKey = apiKey.value,
+          sessionToken = sessionToken.value).transact(transactor).run
         val storeUser = userPersistenceServices.getUserByEmail(email.value).transact(transactor).run
+
         storeUser should beSome[User].which {
-          user => user shouldEqual User(id = id, email = email.value, sessionToken = sessionToken.value, banned = false)
+          user =>
+            val expectedUser = User(
+              id = id,
+              email = email.value,
+              apiKey = apiKey.value,
+              sessionToken = sessionToken.value,
+              banned = false)
+
+            user shouldEqual expectedUser
         }
       }
     }
     "return None if there isn't any user with the given email in the database" in {
-      prop { (email: Email, sessionToken: SessionToken) =>
-        val id: Long = userPersistenceServices.addUser[Long](email.value, sessionToken.value).transact(transactor).run
+      prop { (email: Email, sessionToken: SessionToken, apiKey: ApiKey) =>
+        val id: Long = userPersistenceServices.addUser[Long](
+          email = email.value,
+          apiKey = apiKey.value,
+          sessionToken = sessionToken.value).transact(transactor).run
         val storeUser = userPersistenceServices.getUserByEmail(email.value.reverse).transact(transactor).run
+
         storeUser should beNone
       }
     }
@@ -76,8 +93,10 @@ class UserPersistenceServicesSpec
       }
     }
     "return an user if there is an user with the given sessionToken in the database" in {
-      prop { (email: Email, sessionToken: SessionToken) =>
-        insertItem(User.Queries.insert, (email.value, sessionToken.value)).transact(transactor).run
+      prop { (email: Email, sessionToken: SessionToken, apiKey: ApiKey) =>
+        insertItem(
+          sql = User.Queries.insert,
+          values = (email.value, sessionToken.value, apiKey.value)).transact(transactor).run
 
         val user = userPersistenceServices.getUserBySessionToken(
           sessionToken = sessionToken.value).transact(transactor).run
@@ -86,8 +105,10 @@ class UserPersistenceServicesSpec
       }
     }
     "return None if there isn't any user with the given sessionToken in the database" in {
-      prop { (email: Email, sessionToken: SessionToken) =>
-        insertItem(User.Queries.insert, (email.value, sessionToken.value)).transact(transactor).run
+      prop { (email: Email, sessionToken: SessionToken, apiKey: ApiKey) =>
+        insertItem(
+          sql = User.Queries.insert,
+          values = (email.value, sessionToken.value, apiKey.value)).transact(transactor).run
 
         val user = userPersistenceServices.getUserBySessionToken(
           sessionToken = sessionToken.value.reverse).transact(transactor).run
@@ -99,10 +120,10 @@ class UserPersistenceServicesSpec
 
   "createInstallation" should {
     "new installation can be created" in {
-      prop { (androidId: AndroidId, email: Email, sessionToken: SessionToken) =>
+      prop { (androidId: AndroidId, email: Email, sessionToken: SessionToken, apiKey: ApiKey) =>
         val userId = insertItem(
           sql = User.Queries.insert,
-          values = (email.value, sessionToken.value)).transact(transactor).run
+          values = (email.value, sessionToken.value, apiKey.value)).transact(transactor).run
 
         val id = userPersistenceServices.createInstallation[Long](
           userId = userId,
@@ -130,10 +151,10 @@ class UserPersistenceServicesSpec
       }
     }
     "installations can be queried by their userId and androidId" in {
-      prop { (androidId: AndroidId, email: Email, sessionToken: SessionToken) =>
+      prop { (androidId: AndroidId, email: Email, sessionToken: SessionToken, apiKey: ApiKey) =>
         val userId = insertItem(
           sql = User.Queries.insert,
-          values = (email.value, sessionToken.value)).transact(transactor).run
+          values = (email.value, sessionToken.value, apiKey.value)).transact(transactor).run
 
         val id = insertItem(
           sql = Installation.Queries.insert,
@@ -149,10 +170,10 @@ class UserPersistenceServicesSpec
       }
     }
     "return None if there isn't any installation with the given userId and androidId in the database" in {
-      prop { (androidId: AndroidId, email: Email, sessionToken: SessionToken) =>
+      prop { (androidId: AndroidId, email: Email, sessionToken: SessionToken, apiKey: ApiKey) =>
         val userId = insertItem(
           sql = User.Queries.insert,
-          values = (email.value, sessionToken.value)).transact(transactor).run
+          values = (email.value, sessionToken.value, apiKey.value)).transact(transactor).run
         val id = insertItem(
           sql = Installation.Queries.insert,
           values = (userId, emptyDeviceToken, androidId.value)).transact(transactor).run
