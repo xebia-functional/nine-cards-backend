@@ -7,7 +7,7 @@ case class TokenInfo(
   sub: String,
   email_verified: String,
   azp: String,
-  hd: String,
+  hd: Option[String],
   email: String,
   iat: String,
   exp: String,
