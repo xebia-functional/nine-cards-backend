@@ -5,6 +5,8 @@ import org.scalacheck.{Arbitrary, Gen}
 
 object NineCardsGenEntities {
 
+  case class ApiKey(value: String) extends AnyVal
+
   case class Email(value: String) extends AnyVal
 
   case class SessionToken(value: String) extends AnyVal
@@ -31,6 +33,8 @@ trait NineCardsScalacheckGen {
   val uuidGenerator: Gen[String] = Gen.uuid.map(_.toString)
 
   implicit def abAndroidId: Arbitrary[AndroidId] = Arbitrary(uuidGenerator.map(AndroidId.apply))
+
+  implicit def abApiKey: Arbitrary[ApiKey] = Arbitrary(uuidGenerator.map(ApiKey.apply))
 
   implicit def abEmail: Arbitrary[Email] = Arbitrary(emailGenerator.map(Email.apply))
 

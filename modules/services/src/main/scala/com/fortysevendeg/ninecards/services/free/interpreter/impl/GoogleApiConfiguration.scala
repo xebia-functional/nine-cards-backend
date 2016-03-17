@@ -1,6 +1,6 @@
 package com.fortysevendeg.ninecards.services.free.interpreter.impl
 
-import com.fortysevendeg.ninecards.services.common.NineCardsConfig._
+import com.fortysevendeg.ninecards.services.common.NineCardsConfig
 
 case class GoogleApiConfiguration(
   protocol: String,
@@ -10,11 +10,12 @@ case class GoogleApiConfiguration(
   tokenIdQueryParameter: String)
 
 object GoogleApiConfiguration {
-  implicit def googleApiConfiguration: GoogleApiConfiguration = GoogleApiConfiguration(
-    protocol = getString("googleapi.protocol"),
-    host = getString("googleapi.host"),
-    port = getOptionalInt("googleapi.port"),
-    tokenInfoUri = getString("googleapi.tokenInfo.uri"),
-    tokenIdQueryParameter = getString("googleapi.tokenInfo.tokenIdQueryParameter")
-  )
+  implicit def googleApiConfiguration(implicit config: NineCardsConfig): GoogleApiConfiguration =
+    GoogleApiConfiguration(
+      protocol = config.getString("googleapi.protocol"),
+      host = config.getString("googleapi.host"),
+      port = config.getOptionalInt("googleapi.port"),
+      tokenInfoUri = config.getString("googleapi.tokenInfo.uri"),
+      tokenIdQueryParameter = config.getString("googleapi.tokenInfo.tokenIdQueryParameter")
+    )
 }

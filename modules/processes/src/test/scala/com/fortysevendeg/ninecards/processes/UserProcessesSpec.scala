@@ -4,8 +4,9 @@ import cats.Monad
 import com.fortysevendeg.ninecards.processes.NineCardsServices._
 import com.fortysevendeg.ninecards.processes.messages.InstallationsMessages._
 import com.fortysevendeg.ninecards.processes.messages.UserMessages.{LoginRequest, LoginResponse}
+import com.fortysevendeg.ninecards.processes.utils.DummyNineCardsConfig
 import com.fortysevendeg.ninecards.services.free.domain.{Installation, User}
-import com.fortysevendeg.ninecards.services.persistence.UserPersistenceServices
+import com.fortysevendeg.ninecards.services.persistence.{UserPersistenceServices, _}
 import doobie.imports._
 import org.mockito.Matchers.{eq => mockEq}
 import org.specs2.ScalaCheck
@@ -22,7 +23,8 @@ trait UserProcessesSpecification
   extends Specification
     with Matchers
     with Mockito
-    with UserProcessesContext {
+    with UserProcessesContext
+    with DummyNineCardsConfig {
 
   implicit def taskMonad = new Monad[Task] {
     override def flatMap[A, B](fa: Task[A])(f: A => Task[B]): Task[B] =
@@ -33,11 +35,6 @@ trait UserProcessesSpecification
 
   trait BasicScope extends Scope {
 
-    implicit val transactor = DriverManagerTransactor[Task](
-      driver = "org.h2.Driver",
-      url = "jdbc:h2:mem:test3;DB_CLOSE_DELAY=-1",
-      user = "sa",
-      pass = "")
     implicit val userPersistenceServices: UserPersistenceServices = mock[UserPersistenceServices]
     implicit val userProcesses = new UserProcesses[NineCardsServices]
 
@@ -69,7 +66,7 @@ trait UserProcessesSpecification
 
     userPersistenceServices.getUserByEmail(email) returns nonExistingUser.point[ConnectionIO]
 
-    userPersistenceServices.addUser[User](mockEq(email), any[String])(any) returns user.point[ConnectionIO]
+    userPersistenceServices.addUser[User](mockEq(email), any[String], any[String])(any) returns user.point[ConnectionIO]
 
     userPersistenceServices.createInstallation[Installation](mockEq(userId), mockEq(None), mockEq(androidId))(any) returns installation.point[ConnectionIO]
 
@@ -84,11 +81,13 @@ trait UserProcessesContext {
 
   val userId = 1l
 
+  val apiKey = "60b32e59-0d87-4705-a454-2e5b38bec13b"
+
   val sessionToken = "1d1afeea-c7ec-45d8-a6f8-825b836f2785"
 
   val banned = false
 
-  val user = User(userId, email, sessionToken, banned)
+  val user = User(userId, email, sessionToken, apiKey, banned)
 
   val nonExistingUser: Option[User] = None
 
@@ -102,7 +101,7 @@ trait UserProcessesContext {
 
   val loginRequest = LoginRequest(email, androidId, outhToken)
 
-  val loginResponse = LoginResponse(sessionToken)
+  val loginResponse = LoginResponse(apiKey, sessionToken)
 
   val updateInstallationRequest = UpdateInstallationRequest(userId, androidId, Option(deviceToken))
 

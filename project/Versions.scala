@@ -9,6 +9,7 @@ object Versions {
   val circe = "0.3.0"
   val doobie = "0.2.4-SNAPSHOT"
   val flywaydb = "3.2.1"
+  val hasher = "1.2.0"
   val http4s = "0.12.3"
   val jodaConvert = "1.8.1"
   val jodaTime = "2.9.2"

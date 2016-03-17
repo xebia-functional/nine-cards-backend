@@ -107,6 +107,8 @@ trait NineCardsApiContext {
 
   val tokenId = "6c7b303e-585e-4fe8-8b6f-586547317331-7f9b12dd-8946-4285-a72a-746e482834dd"
 
+  val apiToken = "a7db875d-f11e-4b0c-8d7a-db210fd93e1b"
+
   val sessionToken = "1d1afeea-c7ec-45d8-a6f8-825b836f2785"
 
   val failingSessionToken = "a439c00e-9a01-4b0e-a446-1d8410229072"
@@ -121,7 +123,7 @@ trait NineCardsApiContext {
 
   val loginRequest = LoginRequest(email, androidId, tokenId)
 
-  val loginResponse = LoginResponse(sessionToken)
+  val loginResponse = LoginResponse(apiToken, sessionToken)
 
   val updateInstallationRequest = UpdateInstallationRequest(userId, androidId, deviceToken)
 
