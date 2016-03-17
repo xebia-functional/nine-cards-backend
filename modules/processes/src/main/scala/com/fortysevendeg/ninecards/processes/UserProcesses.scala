@@ -6,6 +6,7 @@ import cats.free.Free
 import com.fortysevendeg.ninecards.processes.converters.Converters._
 import com.fortysevendeg.ninecards.processes.messages.InstallationsMessages._
 import com.fortysevendeg.ninecards.processes.messages.UserMessages._
+import com.fortysevendeg.ninecards.processes.utils.HashUtils
 import com.fortysevendeg.ninecards.services.common.TaskOps._
 import com.fortysevendeg.ninecards.services.free.algebra.DBResult.DBOps
 import com.fortysevendeg.ninecards.services.free.domain._
@@ -17,6 +18,7 @@ import scalaz.concurrent.Task
 
 class UserProcesses[F[_]](
   implicit userPersistenceServices: UserPersistenceServices,
+  hashUtils: HashUtils,
   transactor: Transactor[Task],
   dbOps: DBOps[F]) {
 
@@ -25,8 +27,11 @@ class UserProcesses[F[_]](
       case Some(user) =>
         signUpInstallation(loginRequest, user)
       case None =>
+        val sessionToken = UUID.randomUUID.toString
+        val apiKey = hashUtils.hashValue(sessionToken)
+
         for {
-          newUser <- userPersistenceServices.addUser[User](loginRequest.email, UUID.randomUUID.toString)
+          newUser <- userPersistenceServices.addUser[User](loginRequest.email, apiKey, sessionToken)
           installation <- userPersistenceServices.createInstallation[Installation](
             userId = newUser.id,
             deviceToken = None,
@@ -72,6 +77,7 @@ object UserProcesses {
 
   implicit def userProcesses[F[_]](
     implicit userPersistenceServices: UserPersistenceServices,
+    hashUtils: HashUtils,
     dbOps: DBOps[F]) = new UserProcesses
 
 }

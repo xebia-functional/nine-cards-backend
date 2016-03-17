@@ -14,7 +14,7 @@ trait JsonFormats
 
   implicit val apiLoginRequestFormat = jsonFormat3(ApiLoginRequest)
 
-  implicit val apiLoginResponseFormat = jsonFormat1(ApiLoginResponse)
+  implicit val apiLoginResponseFormat = jsonFormat2(ApiLoginResponse)
 
   implicit val updateInstallationRequestFormat = jsonFormat1(ApiUpdateInstallationRequest)
 

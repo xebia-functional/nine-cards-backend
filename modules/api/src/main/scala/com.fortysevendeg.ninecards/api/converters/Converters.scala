@@ -18,6 +18,7 @@ object Converters {
   implicit def toApiLoginResponse(
     response: LoginResponse): ApiLoginResponse =
     ApiLoginResponse(
+      apiKey = response.apiKey,
       sessionToken = response.sessionToken)
 
   implicit def toUpdateInstallationRequest(

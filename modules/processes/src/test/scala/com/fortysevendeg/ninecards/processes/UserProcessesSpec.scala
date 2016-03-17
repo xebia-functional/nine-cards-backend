@@ -66,7 +66,7 @@ trait UserProcessesSpecification
 
     userPersistenceServices.getUserByEmail(email) returns nonExistingUser.point[ConnectionIO]
 
-    userPersistenceServices.addUser[User](mockEq(email), any[String])(any) returns user.point[ConnectionIO]
+    userPersistenceServices.addUser[User](mockEq(email), any[String], any[String])(any) returns user.point[ConnectionIO]
 
     userPersistenceServices.createInstallation[Installation](mockEq(userId), mockEq(None), mockEq(androidId))(any) returns installation.point[ConnectionIO]
 
@@ -81,11 +81,13 @@ trait UserProcessesContext {
 
   val userId = 1l
 
+  val apiKey = "60b32e59-0d87-4705-a454-2e5b38bec13b"
+
   val sessionToken = "1d1afeea-c7ec-45d8-a6f8-825b836f2785"
 
   val banned = false
 
-  val user = User(userId, email, sessionToken, banned)
+  val user = User(userId, email, sessionToken, apiKey, banned)
 
   val nonExistingUser: Option[User] = None
 
@@ -99,7 +101,7 @@ trait UserProcessesContext {
 
   val loginRequest = LoginRequest(email, androidId, outhToken)
 
-  val loginResponse = LoginResponse(sessionToken)
+  val loginResponse = LoginResponse(apiKey, sessionToken)
 
   val updateInstallationRequest = UpdateInstallationRequest(userId, androidId, Option(deviceToken))
 

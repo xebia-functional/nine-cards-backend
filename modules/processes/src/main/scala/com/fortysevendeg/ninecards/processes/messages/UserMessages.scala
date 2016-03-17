@@ -8,6 +8,7 @@ object UserMessages {
     tokenId: String)
 
   case class LoginResponse(
+    apiKey: String,
     sessionToken: String)
 
 }
