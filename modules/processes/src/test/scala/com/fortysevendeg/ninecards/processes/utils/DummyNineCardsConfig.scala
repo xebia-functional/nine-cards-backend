@@ -14,7 +14,7 @@ trait DummyNineCardsConfig {
   val nineCardsSecretKey = "b91064c433a3d4723a622869273bf0d8"
   val nineCardsSalt = "ca349dde5a53d225eeb17074858465d5"
 
-  val dummyConfigJson =
+  val dummyConfigHocon =
     s"""
        |db {
        |  default {
@@ -28,6 +28,6 @@ trait DummyNineCardsConfig {
        |ninecards.salt = "$nineCardsSalt"
      """.stripMargin
 
-  implicit val dummyConfig = new NineCardsConfig(Option(dummyConfigJson))
+  implicit val dummyConfig = new NineCardsConfig(Option(dummyConfigHocon))
 
 }

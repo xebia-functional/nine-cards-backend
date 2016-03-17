@@ -7,7 +7,7 @@ class NineCardsConfigSpec extends Specification {
   val intValue = 123
   val stringValue = "abc"
 
-  val dummyConfig =
+  val dummyConfigHocon =
     s"""
        |nineCards {
        |  intValue = $intValue
@@ -15,7 +15,7 @@ class NineCardsConfigSpec extends Specification {
        |}
      """.stripMargin
 
-  val config = new NineCardsConfig(Option(dummyConfig))
+  val config = new NineCardsConfig(Option(dummyConfigHocon))
 
   "getInt" should {
     "return an Int value if the key exists in the config file" in {

@@ -3,9 +3,9 @@ package com.fortysevendeg.ninecards.services.common
 import com.fortysevendeg.ninecards.services.common.NineCardsConfig._
 import com.typesafe.config.{Config, ConfigFactory}
 
-class NineCardsConfig(json: Option[String] = None) {
+class NineCardsConfig(hocon: Option[String] = None) {
 
-  val config = json.fold(ConfigFactory.load)(ConfigFactory.parseString)
+  val config = hocon.fold(ConfigFactory.load)(ConfigFactory.parseString)
 
   def getInt(key: String) = sys.props.getOrElse(key, config.getInt(key))
 

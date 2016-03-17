@@ -17,7 +17,7 @@ trait DummyNineCardsConfig {
   val googleApiTokenInfoUri = "/oauth2/v3/tokeninfo"
   val googleApiTokenIdParameterName = "id_token"
 
-  val dummyConfigJson =
+  val dummyConfigHocon =
     s"""
        |db {
        |  default {
@@ -38,6 +38,6 @@ trait DummyNineCardsConfig {
        |}
      """.stripMargin
 
-  implicit val dummyConfig = new NineCardsConfig(Option(dummyConfigJson))
+  implicit val dummyConfig = new NineCardsConfig(Option(dummyConfigHocon))
 
 }
