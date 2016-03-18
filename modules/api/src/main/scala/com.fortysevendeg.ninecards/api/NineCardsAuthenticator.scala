@@ -65,7 +65,7 @@ class NineCardsAuthenticator(
     androidId <- headerValueByName(headerAndroidId)
     authToken <- headerValueByName(headerAuthToken)
     userId <- authenticate(validateUser(sessionToken, androidId, authToken, uri))
-  } yield UserId(userId) :: AndroidId(androidId) :: HNil
+  } yield UserContext(UserId(userId), AndroidId(androidId)) :: HNil
 
   def validateUser(
     sessionToken: String,

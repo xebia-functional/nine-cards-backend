@@ -73,8 +73,9 @@ class UserProcesses[F[_]](
           salt = None)
 
         if (expectedAuthToken.equals(authToken))
-          userPersistenceServices.getInstallationByUserAndAndroidId(user.id, androidId).map(
-            installation => installation map (_ => user.id))
+          userPersistenceServices.getInstallationByUserAndAndroidId(
+            userId = user.id,
+            androidId = androidId).map(_ map (_ => user.id))
         else
           None
       case _ => None

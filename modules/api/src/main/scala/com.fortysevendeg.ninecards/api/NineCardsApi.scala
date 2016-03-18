@@ -3,6 +3,7 @@ package com.fortysevendeg.ninecards.api
 import akka.actor.Actor
 import com.fortysevendeg.ninecards.api.NineCardsApiHeaderCommons._
 import com.fortysevendeg.ninecards.api.NineCardsAuthenticator._
+import com.fortysevendeg.ninecards.api.NineCardsHeaders.Domain.UserContext
 import com.fortysevendeg.ninecards.api.converters.Converters._
 import com.fortysevendeg.ninecards.api.messages.InstallationsMessages._
 import com.fortysevendeg.ninecards.api.messages.UserMessages._
@@ -13,7 +14,7 @@ import com.fortysevendeg.ninecards.processes.{GoogleApiProcesses, UserProcesses}
 import spray.httpx.SprayJsonSupport
 import spray.routing._
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 
 class NineCardsApiActor
   extends Actor
@@ -23,7 +24,7 @@ class NineCardsApiActor
 
   def actorRefFactory = context
 
-  implicit def executionContext = actorRefFactory.dispatcher
+  implicit def executionContext: ExecutionContext = actorRefFactory.dispatcher
 
   def receive = runRoute(nineCardsApiRoute)
 
@@ -67,12 +68,9 @@ trait NineCardsApi
     executionContext: ExecutionContext) =
     pathPrefix("installations") {
       pathEndOrSingleSlash {
-        nineCardsAuthenticator.authenticateUser { (user, androidId) =>
+        nineCardsAuthenticator.authenticateUser { implicit userContext: UserContext =>
           put {
             entity(as[ApiUpdateInstallationRequest]) { request =>
-              implicit val deviceAndroidId = androidId
-              implicit val userId = user
-
               complete {
                 userProcesses.updateInstallation(request) map toApiUpdateInstallationResponse
               }
