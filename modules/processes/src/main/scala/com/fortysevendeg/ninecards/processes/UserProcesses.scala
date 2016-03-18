@@ -60,13 +60,23 @@ class UserProcesses[F[_]](
     result.liftF[F] map toUpdateInstallationResponse
   }
 
-  def checkSessionToken(
+  def checkAuthToken(
     sessionToken: String,
-    androidId: String): Free[F, Option[Long]] = {
+    androidId: String,
+    authToken: String,
+    requestUri: String): Free[F, Option[Long]] = {
     val result: ConnectionIO[Option[Long]] = userPersistenceServices.getUserBySessionToken(sessionToken) flatMap {
       case Some(user) =>
-        userPersistenceServices.getInstallationByUserAndAndroidId(user.id, androidId).map(
-          installation => installation map (_ => user.id))
+        val expectedAuthToken = hashUtils.hashValue(
+          text = requestUri,
+          secretKey = user.apiKey,
+          salt = None)
+
+        if (expectedAuthToken.equals(authToken))
+          userPersistenceServices.getInstallationByUserAndAndroidId(user.id, androidId).map(
+            installation => installation map (_ => user.id))
+        else
+          None
       case _ => None
     }
     result

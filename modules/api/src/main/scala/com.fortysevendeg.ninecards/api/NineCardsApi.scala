@@ -51,11 +51,10 @@ trait NineCardsApi
         requestLoginHeaders { (appId, apiKey) =>
           nineCardsAuthenticator.authenticateLoginRequest {
             post {
-              entity(as[ApiLoginRequest]) {
-                request =>
-                  complete {
-                    userProcesses.signUpUser(request) map toApiLoginResponse
-                  }
+              entity(as[ApiLoginRequest]) { request =>
+                complete {
+                  userProcesses.signUpUser(request) map toApiLoginResponse
+                }
               }
             }
           }
@@ -70,14 +69,13 @@ trait NineCardsApi
       pathEndOrSingleSlash {
         nineCardsAuthenticator.authenticateUser { (user, androidId) =>
           put {
-            entity(as[ApiUpdateInstallationRequest]) {
-              request =>
-                implicit val deviceAndroidId = androidId
-                implicit val userId = user
+            entity(as[ApiUpdateInstallationRequest]) { request =>
+              implicit val deviceAndroidId = androidId
+              implicit val userId = user
 
-                complete {
-                  userProcesses.updateInstallation(request) map toApiUpdateInstallationResponse
-                }
+              complete {
+                userProcesses.updateInstallation(request) map toApiUpdateInstallationResponse
+              }
             }
           }
         }

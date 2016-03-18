@@ -7,9 +7,9 @@ import com.fortysevendeg.ninecards.api.NineCardsHeaders._
 import com.fortysevendeg.ninecards.api.messages.InstallationsMessages.ApiUpdateInstallationRequest
 import com.fortysevendeg.ninecards.api.messages.UserMessages.ApiLoginRequest
 import com.fortysevendeg.ninecards.processes.NineCardsServices.NineCardsServices
-import com.fortysevendeg.ninecards.processes.{GoogleApiProcesses, UserProcesses}
 import com.fortysevendeg.ninecards.processes.messages.InstallationsMessages._
 import com.fortysevendeg.ninecards.processes.messages.UserMessages.{LoginRequest, LoginResponse}
+import com.fortysevendeg.ninecards.processes.{GoogleApiProcesses, UserProcesses}
 import com.fortysevendeg.ninecards.services.common.TaskOps._
 import com.fortysevendeg.ninecards.services.persistence.PersistenceExceptions.PersistenceException
 import org.mockito.Matchers.{eq => mockEq}
@@ -56,7 +56,11 @@ trait NineCardsApiSpecification
 
     googleApiProcesses.checkGoogleTokenId(email, tokenId) returns Free.pure(true)
 
-    userProcesses.checkSessionToken(sessionToken, androidId) returns Free.pure(Option(userId))
+    userProcesses.checkAuthToken(
+      sessionToken = mockEq(sessionToken),
+      androidId = mockEq(androidId),
+      authToken = mockEq(authToken),
+      requestUri = any[String]) returns Free.pure(Option(userId))
 
     userProcesses.signUpUser(loginRequest) returns Free.pure(loginResponse)
 
@@ -69,16 +73,28 @@ trait NineCardsApiSpecification
 
     googleApiProcesses.checkGoogleTokenId(email, tokenId) returns Free.pure(false)
 
-    userProcesses.checkSessionToken(sessionToken, androidId) returns Free.pure(None)
+    userProcesses.checkAuthToken(
+      sessionToken = mockEq(sessionToken),
+      androidId = mockEq(androidId),
+      authToken = mockEq(authToken),
+      requestUri = any[String]) returns Free.pure(None)
   }
 
   trait FailingScope extends BasicScope {
 
     googleApiProcesses.checkGoogleTokenId(email, tokenId) returns Free.pure(true)
 
-    userProcesses.checkSessionToken(sessionToken, androidId) returns Free.pure(Option(userId))
+    userProcesses.checkAuthToken(
+      sessionToken = mockEq(sessionToken),
+      androidId = mockEq(androidId),
+      authToken = mockEq(authToken),
+      requestUri = any[String]) returns Free.pure(Option(userId))
 
-    userProcesses.checkSessionToken(failingSessionToken, androidId) returns checkSessionTokenTask.liftF[NineCardsServices]
+    userProcesses.checkAuthToken(
+      sessionToken = mockEq(sessionToken),
+      androidId = mockEq(androidId),
+      authToken = mockEq(failingAuthToken),
+      requestUri = any[String]) returns checkAuthTokenTask.liftF[NineCardsServices]
 
     userProcesses.signUpUser(loginRequest) returns loginTask.liftF[NineCardsServices]
 
@@ -109,9 +125,11 @@ trait NineCardsApiContext {
 
   val apiToken = "a7db875d-f11e-4b0c-8d7a-db210fd93e1b"
 
-  val sessionToken = "1d1afeea-c7ec-45d8-a6f8-825b836f2785"
+  val authToken = "c8abd539-d912-4eff-8d3c-679307defc71"
 
-  val failingSessionToken = "a439c00e-9a01-4b0e-a446-1d8410229072"
+  val failingAuthToken = "a439c00e-9a01-4b0e-a446-1d8410229072"
+
+  val sessionToken = "1d1afeea-c7ec-45d8-a6f8-825b836f2785"
 
   val deviceToken = Option("d897b6f1-c6a9-42bd-bf42-c787883c7d3e")
 
@@ -133,7 +151,7 @@ trait NineCardsApiContext {
     message = "Test error",
     cause = Option(new RuntimeException("Test error")))
 
-  val checkSessionTokenTask: Task[Option[Long]] = Task.fail(persistenceException)
+  val checkAuthTokenTask: Task[Option[Long]] = Task.fail(persistenceException)
 
   val loginTask: Task[LoginResponse] = Task.fail(persistenceException)
 
@@ -145,11 +163,13 @@ trait NineCardsApiContext {
 
   val userInfoHeaders = List(
     RawHeader(headerAndroidId, androidId),
-    RawHeader(headerSessionToken, sessionToken))
+    RawHeader(headerSessionToken, sessionToken),
+    RawHeader(headerAuthToken, authToken))
 
   val failingUserInfoHeaders = List(
     RawHeader(headerAndroidId, androidId),
-    RawHeader(headerSessionToken, failingSessionToken))
+    RawHeader(headerSessionToken, sessionToken),
+    RawHeader(headerAuthToken, failingAuthToken))
 }
 
 class NineCardsApiSpec
