@@ -32,7 +32,7 @@ CREATE TABLE SharedCollections (
 CREATE TABLE SharedCollectionPackages (
  id serial NOT NULL PRIMARY KEY,
  sharedCollectionId BIGINT NOT NULL REFERENCES SharedCollections(id),
- packageName character varying(100) NOT NULL
+ packageName character varying(256) NOT NULL
 );
 
 CREATE TABLE SharedCollectionSubscriptions (
