@@ -8,32 +8,35 @@ CREATE TABLE Users (
 
 CREATE TABLE Installations (
   id serial NOT NULL PRIMARY KEY,
-  userId BIGINT NOT NULL REFERENCES Users(id) ,
+  userId BIGINT NOT NULL REFERENCES Users(id),
   deviceToken character varying(100),
   androidId character varying(100) NOT NULL,
   unique (userId, androidId)
 );
 
-CREATE TABLE ShareCollection (
+CREATE TABLE SharedCollections (
   id serial NOT NULL PRIMARY KEY,
-  sharedCollectionId BIGINT NOT NULL,
+  sharedCollectionId character varying(100) NOT NULL,
+  userId BIGINT REFERENCES Users(id),
   publishedOn date,
   description character varying(100),
   author character varying(100) NOT NULL,
   name character varying(100) NOT NULL,
-  shareLink character varying(100) NOT NULL,
-  packages text ARRAY,
-  lat double precision NOT NULL DEFAULT 0,
-  lng double precision NOT NULL DEFAULT 0,
-  alt double precision NOT NULL DEFAULT 0,
-  views INTEGER NOT NULL,
+  installations INTEGER NOT NULL DEFAULT 0,
+  views INTEGER NOT NULL DEFAULT 0,
   category character varying(100),
   icon character varying(100),
   community BOOLEAN NOT NULL DEFAULT FALSE
 );
 
-CREATE TABLE SharedCollectionSubscription(
+CREATE TABLE SharedCollectionPackages (
  id serial NOT NULL PRIMARY KEY,
- sharedCollectionId BIGINT NOT NULL,
- userId BIGINT NOT NULL
+ sharedCollectionId BIGINT NOT NULL REFERENCES SharedCollections(id),
+ packageName character varying(100) NOT NULL
+);
+
+CREATE TABLE SharedCollectionSubscriptions (
+ id serial NOT NULL PRIMARY KEY,
+ sharedCollectionId BIGINT NOT NULL REFERENCES SharedCollections(id),
+ userId BIGINT NOT NULL REFERENCES Users(id)
 );
