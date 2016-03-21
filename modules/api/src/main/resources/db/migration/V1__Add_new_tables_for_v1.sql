@@ -2,6 +2,7 @@ CREATE TABLE Users (
   id serial NOT NULL PRIMARY KEY,
   email character varying(100) NOT NULL,
   sessionToken character varying(100) NOT NULL,
+  apiKey character varying(256) NOT NULL,
   banned BOOLEAN NOT NULL DEFAULT FALSE
 );
 
