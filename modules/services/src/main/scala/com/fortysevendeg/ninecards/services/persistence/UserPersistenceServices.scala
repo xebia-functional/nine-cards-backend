@@ -6,16 +6,17 @@ import com.fortysevendeg.ninecards.services.free.domain._
 import doobie.imports._
 
 class UserPersistenceServices(
-  implicit userPersistence: PersistenceImpl[User],
-  installationPersistence: PersistenceImpl[Installation]) {
+  implicit userPersistence: Persistence[User],
+  installationPersistence: Persistence[Installation]) {
 
   def addUser[K](
     email: String,
+    apiKey: String,
     sessionToken: String)(implicit ev: Composite[K]): ConnectionIO[K] =
     userPersistence.updateWithGeneratedKeys[K](
       sql = UserQueries.insert,
       fields = User.allFields,
-      values = (email, sessionToken))
+      values = (email, sessionToken, apiKey))
 
   def getUserByEmail(
     email: String): ConnectionIO[Option[User]] =
@@ -58,7 +59,7 @@ class UserPersistenceServices(
 
 object UserPersistenceServices {
 
-  implicit def userPersistenceImpl(
-    implicit userPersistence: PersistenceImpl[User],
-    installationPersistence: PersistenceImpl[Installation]) = new UserPersistenceServices
+  implicit def userPersistenceServices(
+    implicit userPersistence: Persistence[User],
+    installationPersistence: Persistence[Installation]) = new UserPersistenceServices
 }

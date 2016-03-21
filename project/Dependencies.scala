@@ -25,9 +25,16 @@ trait Dependencies {
   val typesafeConfig = "com.typesafe" % "config" % Versions.typesafeConfig
   val flywaydbCore = "org.flywaydb" % "flyway-core" % Versions.flywaydb
   val scalacheckShapeless = "com.github.alexarchambault" %% "scalacheck-shapeless_1.12" % Versions.scalacheckShapeless
+  val http4sClient = "org.http4s" %% "http4s-blaze-client" % Versions.http4s
+  val http4sCirce = "org.http4s" %% "http4s-circe" % Versions.http4s
+  val circe = "io.circe" %% "circe-core" % Versions.circe
+  val circeGeneric = "io.circe" %% "circe-generic" % Versions.circe
+  val mockserver = "org.mock-server" % "mockserver-netty" % Versions.mockserver
+  val hasher = "com.roundeights" %% "hasher" % Versions.hasher
 
   val baseDepts = Seq(
     typesafeConfig,
+    hasher,
     specs2Core % "test" exclude("org.scalaz", "*"),
     specs2Mockito % "test",
     specs2Scalacheck % "test",
@@ -59,5 +66,10 @@ trait Dependencies {
     scalaz,
     scalazConcurrent,
     sprayJson,
-    flywaydbCore % "test"))
+    flywaydbCore % "test",
+    mockserver % "test",
+    http4sClient,
+    http4sCirce,
+    circe,
+    circeGeneric))
 }

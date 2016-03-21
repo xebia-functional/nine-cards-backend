@@ -20,5 +20,4 @@ trait DatabaseScope extends Scope {
     user = "sa",
     pass = "")
 
-  val persistenceImpl = new PersistenceImpl
 }

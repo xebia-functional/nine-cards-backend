@@ -4,6 +4,7 @@ case class User(
   id: Long,
   email: String,
   sessionToken: String,
+  apiKey: String,
   banned: Boolean)
 
 case class Installation(
@@ -13,12 +14,12 @@ case class Installation(
   androidId: String)
 
 object User {
-  val allFields = List("id", "email", "sessiontoken", "banned")
+  val allFields = List("id", "email", "sessiontoken", "apikey", "banned")
 
   object Queries {
     val getByEmail = "select * from users where email=?"
     val getBySessionToken = "select * from users where sessiontoken=?"
-    val insert = "insert into users(email,sessiontoken) values(?,?)"
+    val insert = "insert into users(email,sessiontoken,apikey) values(?,?,?)"
   }
 
 }

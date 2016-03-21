@@ -23,6 +23,7 @@ object Converters {
   def toLoginResponse(info: (UserAppServices, InstallationServices)): LoginResponse = {
     val (user, _) = info
     LoginResponse(
+      apiKey = user.apiKey,
       sessionToken = user.sessionToken)
   }
 
