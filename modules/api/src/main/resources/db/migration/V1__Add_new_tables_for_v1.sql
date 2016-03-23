@@ -17,7 +17,7 @@ CREATE TABLE Installations (
 CREATE TABLE SharedCollections (
   id serial NOT NULL PRIMARY KEY,
   publicIdentifier character varying(100) NOT NULL,
-  userId BIGINT NOT NULL REFERENCES Users(id),
+  userId BIGINT REFERENCES Users(id),
   publishedOn date NOT NULL,
   description character varying(100),
   author character varying(100) NOT NULL,
