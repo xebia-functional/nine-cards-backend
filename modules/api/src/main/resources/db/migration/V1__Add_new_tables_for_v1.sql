@@ -16,16 +16,16 @@ CREATE TABLE Installations (
 
 CREATE TABLE SharedCollections (
   id serial NOT NULL PRIMARY KEY,
-  sharedCollectionId character varying(100) NOT NULL,
-  userId BIGINT REFERENCES Users(id),
-  publishedOn date,
+  publicIdentifier character varying(100) NOT NULL,
+  userId BIGINT NOT NULL REFERENCES Users(id),
+  publishedOn date NOT NULL,
   description character varying(100),
   author character varying(100) NOT NULL,
   name character varying(100) NOT NULL,
   installations INTEGER NOT NULL DEFAULT 0,
   views INTEGER NOT NULL DEFAULT 0,
-  category character varying(100),
-  icon character varying(100),
+  category character varying(100) NOT NULL,
+  icon character varying(100) NOT NULL,
   community BOOLEAN NOT NULL DEFAULT FALSE
 );
 
