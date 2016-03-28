@@ -3,12 +3,12 @@ package com.fortysevendeg.ninecards.services.free.domain.queries
 import java.sql.Timestamp
 import java.time.LocalDateTime
 
-import com.fortysevendeg.ninecards.services.common.TupleGeneric
 import com.fortysevendeg.ninecards.services.free.domain.SharedCollection.Queries._
 import com.fortysevendeg.ninecards.services.persistence.DomainDatabaseContext
 import com.fortysevendeg.ninecards.services.persistence.SharedCollectionPersistenceServices.SharedCollectionData
 import doobie.contrib.specs2.analysisspec.AnalysisSpec
 import org.specs2.mutable.Specification
+import shapeless.syntax.std.product._
 
 class SharedCollectionQueriesSpec
   extends Specification
@@ -44,7 +44,7 @@ class SharedCollectionQueriesSpec
 
   val insertCollectionQuery = collectionPersistence.generateUpdateWithGeneratedKeys(
     sql = insert,
-    values = TupleGeneric[SharedCollectionData].to(data))
+    values = data.toTuple)
   check(insertCollectionQuery)
 
 }

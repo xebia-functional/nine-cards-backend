@@ -6,9 +6,8 @@ import com.fortysevendeg.ninecards.services.free.domain.SharedCollection.{Querie
 import com.fortysevendeg.ninecards.services.free.domain.SharedCollectionPackage.{Queries => PackageQueries}
 import com.fortysevendeg.ninecards.services.free.domain._
 import com.fortysevendeg.ninecards.services.persistence.SharedCollectionPersistenceServices.SharedCollectionData
-import com.fortysevendeg.ninecards.services.common.TupleGeneric
 import doobie.imports._
-import org.joda.time.DateTime
+import shapeless.syntax.std.product._
 
 import scalaz.std.iterable._
 
@@ -21,7 +20,7 @@ class SharedCollectionPersistenceServices(
     collectionPersistence.updateWithGeneratedKeys[K](
       sql = CollectionQueries.insert,
       fields = SharedCollection.allFields,
-      values = TupleGeneric[SharedCollectionData].to(data))
+      values = data.toTuple)
 
   def getCollectionById(
     id: Long): ConnectionIO[Option[SharedCollection]] =
