@@ -1,6 +1,6 @@
 package com.fortysevendeg.ninecards.services.persistence
 
-import com.fortysevendeg.ninecards.services.free.domain.{Installation, User}
+import com.fortysevendeg.ninecards.services.free.domain._
 import doobie.imports._
 import org.flywaydb.core.Flyway
 
@@ -21,6 +21,9 @@ trait DomainDatabaseContext {
 
   implicit val userPersistence = new Persistence[User](supportsSelectForUpdate = false)
   implicit val installationPersistence = new Persistence[Installation](supportsSelectForUpdate = false)
+  implicit val collectionPersistence = new Persistence[SharedCollection](supportsSelectForUpdate = false)
+  implicit val collectionPackagePersistence = new Persistence[SharedCollectionPackage](supportsSelectForUpdate = false)
+  implicit val collectionSubscriptionPersistence = new Persistence[SharedCollectionSubscription](supportsSelectForUpdate = false)
   val userPersistenceServices = new UserPersistenceServices
 
   val flywaydb = new Flyway

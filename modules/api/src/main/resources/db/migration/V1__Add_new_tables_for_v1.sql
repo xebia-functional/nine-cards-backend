@@ -18,7 +18,7 @@ CREATE TABLE SharedCollections (
   id serial NOT NULL PRIMARY KEY,
   publicIdentifier character varying(100) NOT NULL,
   userId BIGINT REFERENCES Users(id),
-  publishedOn date NOT NULL,
+  publishedOn timestamp NOT NULL,
   description character varying(100),
   author character varying(100) NOT NULL,
   name character varying(100) NOT NULL,
