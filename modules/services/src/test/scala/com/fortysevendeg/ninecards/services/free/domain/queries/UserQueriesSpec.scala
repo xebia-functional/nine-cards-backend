@@ -1,6 +1,7 @@
-package com.fortysevendeg.ninecards.services.persistence
+package com.fortysevendeg.ninecards.services.free.domain.queries
 
 import com.fortysevendeg.ninecards.services.free.domain.User.Queries._
+import com.fortysevendeg.ninecards.services.persistence.DomainDatabaseContext
 import doobie.contrib.specs2.analysisspec.AnalysisSpec
 import org.specs2.mutable.Specification
 

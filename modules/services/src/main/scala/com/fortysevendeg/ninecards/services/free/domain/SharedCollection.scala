@@ -1,54 +1,62 @@
 package com.fortysevendeg.ninecards.services.free.domain
 
-import org.joda.time.DateTime
-
-
-case class SharedCollectionList(items: Seq[SharedCollection])
+import java.sql.Timestamp
 
 case class SharedCollection(
-  _id: Option[String] = None,
-  sharedCollectionId: Option[String],
-  publishedOn: Option[DateTime] = None,
-  description: Option[String] = None,
-  screenshots: Seq[AssetResponse] = Nil,
-  author: Option[String] = None,
-  tags: Seq[String] = Nil,
+  id: Long,
+  publicIdentifier: String,
+  userId: Option[Long],
+  publishedOn: Timestamp,
+  description: Option[String],
+  author: String,
   name: String,
-  shareLink: Option[String] = None,
-  packages: Seq[String] = Nil,
-  resolvedPackages: Seq[SharedCollectionPackage],
-  occurrence: Seq[UserConfigTimeSlot] = Nil,
-  lat: Option[Double] = None,
-  lng: Option[Double] = None,
-  alt: Option[Double] = None,
-  views: Option[Int] = None,
-  category: Option[String] = None,
-  icon: Option[String] = None,
-  community: Boolean = false)
+  installations: Int,
+  views: Int,
+  category: String,
+  icon: String,
+  community: Boolean)
 
 case class SharedCollectionPackage(
-  packageName: String,
-  title: String,
-  description: String,
-  icon: String,
-  stars: Double,
-  downloads: String,
-  free: Boolean)
+  id: Long,
+  sharedCollectionId: Long,
+  packageName: String)
 
 case class SharedCollectionSubscription(
-  _id: Option[String] = None,
-  sharedCollectionId: String,
-  userId: String)
+  id: Long,
+  sharedCollectionId: Long,
+  userId: Long)
 
-case class AssetResponse(
-  uri: String,
-  title: Option[String] = None,
-  description: Option[String] = None,
-  contentType: Option[String] = None,
-  thumbs: Seq[AssetThumbResponse] = Nil)
+object SharedCollection {
+  val allFields = List("id", "publicidentifier", "userid", "publishedon", "description", "author",
+    "name", "installations", "views", "category", "icon", "community")
 
-case class AssetThumbResponse(
-  url: String,
-  width: Option[Int] = None,
-  height: Option[Int] = None,
-  `type`: Option[String] = None)
+  object Queries {
+    val getById = "select * from sharedcollections where id=?"
+    val getByPublicIdentifier = "select * from sharedcollections where publicidentifier=?"
+    val insert = "insert into sharedcollections(publicidentifier,userid,publishedon,description,author,name,installations,views,category,icon,community) values(?,?,?,?,?,?,?,?,?,?,?)"
+  }
+}
+
+object SharedCollectionPackage {
+  val allFields = List("id", "sharedcollectionid", "packagename")
+
+  object Queries {
+    val getById = "select * from sharedcollectionpackages where id=?"
+    val getBySharedCollection = "select * from sharedcollectionpackages where sharedcollectionid=?"
+    val insert = "insert into sharedcollectionpackages(sharedcollectionid,packagename) values(?,?)"
+  }
+}
+
+object SharedCollectionSubscription {
+  val allFields = List("id", "sharedcollectionid", "userid")
+
+  object Queries {
+    val getById = "select * from sharedcollectionsubscriptions where id=?"
+    val getByCollection = "select * from sharedcollectionsubscriptions where sharedcollectionid=?"
+    val getByCollectionAndUser = "select * from sharedcollectionsubscriptions where sharedcollectionid=? and userid=?"
+    val getByUser = "select * from sharedcollectionsubscriptions where userid=?"
+    val insert = "insert into sharedcollectionsubscriptions(sharedcollectionid,userid) values(?,?)"
+    val delete = "delete from sharedcollectionsubscriptions where id=?"
+    val deleteByCollectionAndUser = "delete from sharedcollectionsubscriptions where sharedcollectionid=? and userid=?"
+  }
+}
