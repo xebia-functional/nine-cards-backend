@@ -59,6 +59,11 @@ class UserPersistenceServices(
 
 object UserPersistenceServices {
 
+  case class UserData(
+    email: String,
+    apiKey: String,
+    sessionToken: String)
+
   implicit def userPersistenceServices(
     implicit userPersistence: Persistence[User],
     installationPersistence: Persistence[Installation]) = new UserPersistenceServices

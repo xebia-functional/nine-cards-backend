@@ -38,10 +38,13 @@ class SharedCollectionPersistenceServices(
       fields = SharedCollectionPackage.allFields,
       values = (collectionId, packageName))
 
-  def addPackages(data: List[(Long, String)]): ConnectionIO[Int] =
+  def addPackages(collectionId: Long, packagesName: List[String]): ConnectionIO[Int] = {
+    val packages = packagesName map { (collectionId, _) }
+
     collectionPackagePersistence.updateMany(
       sql = PackageQueries.insert,
-      values = data)
+      values = packages)
+  }
 
   def getPackagesByCollection(
     collectionId: Long): ConnectionIO[List[SharedCollectionPackage]] =
