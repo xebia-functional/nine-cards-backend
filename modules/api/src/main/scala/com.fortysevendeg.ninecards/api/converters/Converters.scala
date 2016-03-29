@@ -23,10 +23,10 @@ object Converters {
 
   implicit def toUpdateInstallationRequest(
     request: ApiUpdateInstallationRequest)(
-    implicit userId: UserId, androidId: AndroidId): UpdateInstallationRequest =
+    implicit userContext: UserContext): UpdateInstallationRequest =
     UpdateInstallationRequest(
-      userId = userId.value,
-      androidId = androidId.value,
+      userId = userContext.userId.value,
+      androidId = userContext.androidId.value,
       deviceToken = request.deviceToken)
 
   implicit def toApiUpdateInstallationResponse(

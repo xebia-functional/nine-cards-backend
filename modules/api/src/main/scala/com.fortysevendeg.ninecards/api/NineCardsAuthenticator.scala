@@ -9,9 +9,10 @@ import com.fortysevendeg.ninecards.api.utils.TaskUtils._
 import com.fortysevendeg.ninecards.processes.NineCardsServices.NineCardsServices
 import com.fortysevendeg.ninecards.processes._
 import shapeless._
+import spray.http.Uri
+import spray.routing._
 import spray.routing.authentication._
 import spray.routing.directives._
-import spray.routing.{AuthenticationFailedRejection, Directive, Directive0}
 
 import scala.concurrent.ExecutionContext
 import scalaz.concurrent.Task
@@ -22,6 +23,7 @@ class NineCardsAuthenticator(
   ec: ExecutionContext)
   extends HeaderDirectives
     with MarshallingDirectives
+    with MiscDirectives
     with SecurityDirectives
     with JsonFormats {
 
@@ -58,15 +60,23 @@ class NineCardsAuthenticator(
     }
 
   def authenticateUser: Directive[UserInfo] = for {
+    uri <- requestUri
     sessionToken <- headerValueByName(headerSessionToken)
     androidId <- headerValueByName(headerAndroidId)
-    userId <- authenticate(validateUser(sessionToken, androidId))
-  } yield UserId(userId) :: AndroidId(androidId) :: HNil
+    authToken <- headerValueByName(headerAuthToken)
+    userId <- authenticate(validateUser(sessionToken, androidId, authToken, uri))
+  } yield UserContext(UserId(userId), AndroidId(androidId)) :: HNil
 
   def validateUser(
     sessionToken: String,
-    androidId: String): Task[Authentication[Long]] = {
-    val task: Task[Option[Long]] = userProcesses.checkSessionToken(sessionToken, androidId)
+    androidId: String,
+    authToken: String,
+    requestUri: Uri): Task[Authentication[Long]] = {
+    val task: Task[Option[Long]] = userProcesses.checkAuthToken(
+      sessionToken = sessionToken,
+      androidId = androidId,
+      authToken = authToken,
+      requestUri = requestUri.toString)
 
     task map {
       case Some(v) => Right(v)
