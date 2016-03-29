@@ -24,10 +24,14 @@ object EncryptionAlgorithm {
 
 class HashUtils(implicit config: NineCardsConfig) {
 
-  lazy val salt: Option[String] = config.getOptionalString("ninecards.salt")
-  lazy val secretKey: String = config.getString("ninecards.secretKey")
+  lazy val nineCardsSalt: Option[String] = config.getOptionalString("ninecards.salt")
+  lazy val nineCardsSecretKey: String = config.getString("ninecards.secretKey")
 
-  def hashValue(text: String, algorithm: Algorithm = HMacSha512) = {
+  def hashValue(
+    text: String,
+    secretKey: String = nineCardsSecretKey,
+    salt: Option[String] = nineCardsSalt,
+    algorithm: Algorithm = HMacSha512) = {
 
     val hasher = salt.fold(Hasher(text))(Hasher(text).salt(_))
 

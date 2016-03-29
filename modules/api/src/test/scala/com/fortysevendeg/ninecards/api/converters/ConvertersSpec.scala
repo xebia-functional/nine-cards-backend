@@ -1,6 +1,6 @@
 package com.fortysevendeg.ninecards.api.converters
 
-import com.fortysevendeg.ninecards.api.NineCardsHeaders.Domain.{AndroidId, UserId}
+import com.fortysevendeg.ninecards.api.NineCardsHeaders.Domain.{AndroidId, UserContext, UserId}
 import com.fortysevendeg.ninecards.api.messages.InstallationsMessages._
 import com.fortysevendeg.ninecards.api.messages.UserMessages._
 import com.fortysevendeg.ninecards.processes.messages.InstallationsMessages._
@@ -41,7 +41,9 @@ class ConvertersSpec
     "convert an ApiUpdateInstallationRequest to a UpdateInstallationRequest object" in {
       prop { (apiRequest: ApiUpdateInstallationRequest, userId: UserId, androidId: AndroidId) =>
 
-        val request = Converters.toUpdateInstallationRequest(apiRequest)(userId, androidId)
+        implicit val userContext = UserContext(userId, androidId)
+
+        val request = Converters.toUpdateInstallationRequest(apiRequest)
 
         request.androidId shouldEqual androidId.value
         request.deviceToken shouldEqual apiRequest.deviceToken
