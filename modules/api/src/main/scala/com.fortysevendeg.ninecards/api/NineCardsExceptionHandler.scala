@@ -1,5 +1,6 @@
 package com.fortysevendeg.ninecards.api
 
+import com.fortysevendeg.ninecards.processes.ProcessesExceptions.SharedCollectionNotFoundException
 import com.fortysevendeg.ninecards.services.persistence.PersistenceExceptions.PersistenceException
 import spray.http.StatusCodes._
 import spray.routing.{ExceptionHandler, HttpService}
@@ -13,6 +14,12 @@ trait NineCardsExceptionHandler extends HttpService {
           uri =>
             log.warning("Request to {} could not be handled normally", uri)
             complete(InternalServerError, e.getMessage)
+        }
+      case e: SharedCollectionNotFoundException =>
+        requestUri {
+          uri =>
+            log.warning("Shared collection not found: {}", uri)
+            complete(NotFound, e.getMessage)
         }
     }
 }

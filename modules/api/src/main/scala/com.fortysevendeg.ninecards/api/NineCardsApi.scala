@@ -8,13 +8,14 @@ import com.fortysevendeg.ninecards.api.converters.Converters._
 import com.fortysevendeg.ninecards.api.messages.InstallationsMessages._
 import com.fortysevendeg.ninecards.api.messages.UserMessages._
 import com.fortysevendeg.ninecards.api.utils.FreeUtils._
-import com.fortysevendeg.ninecards.api.utils.TaskUtils._
+import com.fortysevendeg.ninecards.api.utils.SprayMarshallers._
+import com.fortysevendeg.ninecards.api.utils.SprayMatchers._
 import com.fortysevendeg.ninecards.processes.NineCardsServices.NineCardsServices
-import com.fortysevendeg.ninecards.processes.{GoogleApiProcesses, UserProcesses}
+import com.fortysevendeg.ninecards.processes._
 import spray.httpx.SprayJsonSupport
 import spray.routing._
 
-import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
+import scala.concurrent.ExecutionContext
 
 class NineCardsApiActor
   extends Actor
@@ -41,6 +42,7 @@ trait NineCardsApi
     executionContext: ExecutionContext): Route =
     userApiRoute ~
       installationsApiRoute ~
+      sharedCollectionsApiRoute ~
       swaggerApiRoute
 
   private[this] def userApiRoute(
@@ -74,6 +76,22 @@ trait NineCardsApi
               complete {
                 userProcesses.updateInstallation(request) map toApiUpdateInstallationResponse
               }
+            }
+          }
+        }
+      }
+    }
+
+  private[this] def sharedCollectionsApiRoute(
+    implicit sharedCollectionProcesses: SharedCollectionProcesses[NineCardsServices],
+    executionContext: ExecutionContext) =
+    pathPrefix("collections") {
+      path(PublicIdentifierSegment) { publicIdentifier =>
+        nineCardsAuthenticator.authenticateUser { implicit userContext: UserContext =>
+          get {
+            complete {
+              sharedCollectionProcesses.getCollectionByPublicIdentifier(
+                publicIdentifier.value) map toApiGetCollectionByPublicIdentifierResponse
             }
           }
         }
