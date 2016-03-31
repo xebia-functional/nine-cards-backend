@@ -9,9 +9,11 @@ import org.joda.time.format.ISODateTimeFormat
 import spray.httpx.SprayJsonSupport
 import spray.json._
 
+import scala.util.{Success, Try}
+
 trait JsonFormats
   extends DefaultJsonProtocol
-  with SprayJsonSupport {
+    with SprayJsonSupport {
 
   implicit object DateTimeFormat extends RootJsonFormat[DateTime] {
 
@@ -22,14 +24,13 @@ trait JsonFormats
     }
 
     def read(json: JsValue): DateTime = json match {
-      case JsString(s) => try {
-        formatter.parseDateTime(s)
-      }
-      catch {
-        case t: Throwable => error(s)
-      }
+      case JsString(s) =>
+        Try(formatter.parseDateTime(s)) match {
+          case Success(d) => d
+          case _ => error(s)
+        }
       case _ =>
-        error(json.toString())
+        error(json.toString)
     }
 
     def error(v: Any): DateTime = {
