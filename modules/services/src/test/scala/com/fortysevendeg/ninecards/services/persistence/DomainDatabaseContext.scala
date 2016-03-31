@@ -5,6 +5,7 @@ import doobie.imports._
 import org.flywaydb.core.Flyway
 
 import scala.util.Random
+import scalaz.Foldable
 import scalaz.concurrent.Task
 
 
@@ -25,6 +26,8 @@ trait DomainDatabaseContext {
   implicit val collectionPackagePersistence = new Persistence[SharedCollectionPackage](supportsSelectForUpdate = false)
   implicit val collectionSubscriptionPersistence = new Persistence[SharedCollectionSubscription](supportsSelectForUpdate = false)
   val userPersistenceServices = new UserPersistenceServices
+  val sharedCollectionPersistenceServices = new SharedCollectionPersistenceServices
+  val scSubscriptionPersistenceServices = new SharedCollectionSubscriptionPersistenceServices
 
   val flywaydb = new Flyway
   flywaydb.setDataSource(testUrl, testUsername, testPassword)
@@ -34,4 +37,9 @@ trait DomainDatabaseContext {
     sql: String,
     values: A)(implicit ev: Composite[A]): ConnectionIO[Long] =
     Update[A](sql).toUpdate0(values).withUniqueGeneratedKeys[Long]("id")
+
+  def insertItems[F[_], A](
+    sql: String,
+    values: F[A])(implicit ev: Composite[A], F: Foldable[F]): ConnectionIO[Int] =
+    Update[A](sql).updateMany(values)
 }
