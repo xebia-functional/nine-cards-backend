@@ -6,7 +6,7 @@ import com.fortysevendeg.ninecards.api.messages.UserMessages.ApiLoginRequest
 import com.fortysevendeg.ninecards.api.utils.FreeUtils._
 import com.fortysevendeg.ninecards.api.utils.TaskDirectives._
 import com.fortysevendeg.ninecards.api.utils.SprayMarshallers._
-import com.fortysevendeg.ninecards.processes.NineCardsServices.NineCardsServices
+import com.fortysevendeg.ninecards.processes.NineCardsServices._
 import com.fortysevendeg.ninecards.processes._
 import shapeless._
 import spray.http.Uri
