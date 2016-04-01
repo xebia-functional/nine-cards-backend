@@ -3,7 +3,7 @@ package com.fortysevendeg.ninecards.api
 import akka.actor.Actor
 import com.fortysevendeg.ninecards.api.NineCardsApiHeaderCommons._
 import com.fortysevendeg.ninecards.api.NineCardsAuthenticator._
-import com.fortysevendeg.ninecards.api.NineCardsHeaders.Domain.UserContext
+import com.fortysevendeg.ninecards.api.NineCardsHeaders.Domain._
 import com.fortysevendeg.ninecards.api.converters.Converters._
 import com.fortysevendeg.ninecards.api.messages.InstallationsMessages._
 import com.fortysevendeg.ninecards.api.messages.UserMessages._
@@ -35,7 +35,7 @@ trait NineCardsApi
     with SprayJsonSupport
     with JsonFormats {
 
-  def nineCardsApiRoute[T](
+  def nineCardsApiRoute(
     implicit userProcesses: UserProcesses[NineCardsServices],
     googleApiProcesses: GoogleApiProcesses[NineCardsServices],
     executionContext: ExecutionContext): Route =
@@ -85,7 +85,7 @@ trait NineCardsApi
     implicit sharedCollectionProcesses: SharedCollectionProcesses[NineCardsServices],
     executionContext: ExecutionContext) =
     pathPrefix("collections") {
-      path(PublicIdentifierSegment) { publicIdentifier =>
+      path(TypedSegment[PublicIdentifier]) { publicIdentifier =>
         nineCardsAuthenticator.authenticateUser { implicit userContext: UserContext =>
           get {
             complete {

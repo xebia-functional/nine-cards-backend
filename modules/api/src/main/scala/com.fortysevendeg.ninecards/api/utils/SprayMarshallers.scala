@@ -3,6 +3,7 @@ package com.fortysevendeg.ninecards.api.utils
 import cats._
 import cats.data.Xor
 import cats.free.Free
+import com.fortysevendeg.ninecards.processes.NineCardsServices._
 import shapeless.Lazy
 import spray.httpx.marshalling.ToResponseMarshaller
 
@@ -37,10 +38,9 @@ object SprayMarshallers {
         }
     }
 
-  implicit def freeTaskMarshaller[S[_], A](
-    implicit interpreters: S ~> Task,
-    taskMarshaller: Lazy[ToResponseMarshaller[Task[A]]]): ToResponseMarshaller[Free[S, A]] =
-    ToResponseMarshaller[Free[S, A]] {
+  implicit def freeTaskMarshaller[A](
+    implicit taskMarshaller: Lazy[ToResponseMarshaller[Task[A]]]): ToResponseMarshaller[Free[NineCardsServices, A]] =
+    ToResponseMarshaller[Free[NineCardsServices, A]] {
       (free, ctx) =>
         taskMarshaller.value(free.foldMap(interpreters), ctx)
     }

@@ -20,7 +20,7 @@ trait JsonFormats
     val dateExample = formatter.print(0)
 
     def error(v: String) = deserializationError(
-      s"'$v' is not a valid date value. Dates must be in compact ISO-8601 format, e.g. '$dateExample'")
+      s"'$v' is not a valid date value. The format for dates must be: '$dateExample'")
 
     val decodeDateTime: Decoder[DateTime] = Decoder.instance { cursor =>
       cursor.as[String].flatMap {
