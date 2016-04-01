@@ -12,6 +12,6 @@ object NineCardsServices {
 
   type NineCardsServices[A] = Coproduct[DBResult, GoogleApiOps, A]
 
-  val interpreters: NineCardsServices ~> Task = DBResultInterpreter or GoogleAPIServicesInterpreter
+  implicit val interpreters: NineCardsServices ~> Task = DBResultInterpreter or GoogleAPIServicesInterpreter
 
 }

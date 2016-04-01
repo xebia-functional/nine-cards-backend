@@ -12,7 +12,7 @@ object SprayMatchers extends ImplicitPathMatcherConstruction {
 
   object PublicIdentifierSegment extends TypedSegment[PublicIdentifier]
 
-  abstract class TypedSegment[T](implicit gen: Generic.Aux[T, String :: HNil]) extends PathMatcher1[T] {
+  class TypedSegment[T](implicit gen: Generic.Aux[T, String :: HNil]) extends PathMatcher1[T] {
     def apply(path: Path) = path match {
       case Path.Segment(segment, tail) => Matched(tail, gen.from(segment :: HNil) :: HNil)
       case _ => Unmatched
