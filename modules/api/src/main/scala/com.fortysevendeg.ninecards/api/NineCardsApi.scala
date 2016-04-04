@@ -38,6 +38,7 @@ trait NineCardsApi
   def nineCardsApiRoute(
     implicit userProcesses: UserProcesses[NineCardsServices],
     googleApiProcesses: GoogleApiProcesses[NineCardsServices],
+    sharedCollectionProcesses: SharedCollectionProcesses[NineCardsServices],
     executionContext: ExecutionContext): Route =
     userApiRoute ~
       installationsApiRoute ~
@@ -82,7 +83,8 @@ trait NineCardsApi
     }
 
   private[this] def sharedCollectionsApiRoute(
-    implicit sharedCollectionProcesses: SharedCollectionProcesses[NineCardsServices],
+    implicit userProcesses: UserProcesses[NineCardsServices],
+    sharedCollectionProcesses: SharedCollectionProcesses[NineCardsServices],
     executionContext: ExecutionContext) =
     pathPrefix("collections") {
       path(TypedSegment[PublicIdentifier]) { publicIdentifier =>

@@ -16,7 +16,6 @@ import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
 import org.specs2.specification.Scope
 
-import scala.collection.mutable.HashTable
 import scalaz.Scalaz._
 import scalaz.concurrent.Task
 

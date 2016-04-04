@@ -3,15 +3,19 @@ package com.fortysevendeg.ninecards.api
 import akka.actor.{ActorRefFactory, ActorSystem}
 import akka.testkit._
 import cats.free.Free
+import cats.syntax.xor._
 import com.fortysevendeg.ninecards.api.NineCardsHeaders._
 import com.fortysevendeg.ninecards.api.messages.InstallationsMessages.ApiUpdateInstallationRequest
 import com.fortysevendeg.ninecards.api.messages.UserMessages.ApiLoginRequest
 import com.fortysevendeg.ninecards.processes.NineCardsServices.NineCardsServices
+import com.fortysevendeg.ninecards.processes.ProcessesExceptions.SharedCollectionNotFoundException
 import com.fortysevendeg.ninecards.processes.messages.InstallationsMessages._
-import com.fortysevendeg.ninecards.processes.messages.UserMessages.{LoginRequest, LoginResponse}
-import com.fortysevendeg.ninecards.processes.{GoogleApiProcesses, UserProcesses}
+import com.fortysevendeg.ninecards.processes.messages.SharedCollectionMessages._
+import com.fortysevendeg.ninecards.processes.messages.UserMessages._
+import com.fortysevendeg.ninecards.processes._
 import com.fortysevendeg.ninecards.services.common.TaskOps._
 import com.fortysevendeg.ninecards.services.persistence.PersistenceExceptions.PersistenceException
+import org.joda.time.DateTime
 import org.mockito.Matchers.{eq => mockEq}
 import org.specs2.matcher.Matchers
 import org.specs2.mock.Mockito
@@ -46,27 +50,31 @@ trait NineCardsApiSpecification
 
     implicit val googleApiProcesses: GoogleApiProcesses[NineCardsServices] = mock[GoogleApiProcesses[NineCardsServices]]
 
+    implicit val sharedCollectionProcesses: SharedCollectionProcesses[NineCardsServices] = mock[SharedCollectionProcesses[NineCardsServices]]
+
     val nineCardsApi = new NineCardsApi {
       override implicit def actorRefFactory: ActorRefFactory = NineCardsApiSpecification.this.actorRefFactory
     }.nineCardsApiRoute
-
-  }
-
-  trait SuccessfulScope extends BasicScope {
-
-    googleApiProcesses.checkGoogleTokenId(email, tokenId) returns Free.pure(true)
 
     userProcesses.checkAuthToken(
       sessionToken = mockEq(sessionToken),
       androidId = mockEq(androidId),
       authToken = mockEq(authToken),
       requestUri = any[String]) returns Free.pure(Option(userId))
+  }
+
+  trait SuccessfulScope extends BasicScope {
+
+    googleApiProcesses.checkGoogleTokenId(email, tokenId) returns Free.pure(true)
 
     userProcesses.signUpUser(loginRequest) returns Free.pure(loginResponse)
 
     userProcesses.updateInstallation(
       mockEq(updateInstallationRequest))(
       any) returns Free.pure(updateInstallationResponse)
+
+    sharedCollectionProcesses.getCollectionByPublicIdentifier(
+      any[String])(any) returns Free.pure(getCollectionByPublicIdentifierResponse.right)
   }
 
   trait UnsuccessfulScope extends BasicScope {
@@ -76,19 +84,16 @@ trait NineCardsApiSpecification
     userProcesses.checkAuthToken(
       sessionToken = mockEq(sessionToken),
       androidId = mockEq(androidId),
-      authToken = mockEq(authToken),
+      authToken = mockEq(failingAuthToken),
       requestUri = any[String]) returns Free.pure(None)
+
+    sharedCollectionProcesses.getCollectionByPublicIdentifier(
+      any[String])(any) returns Free.pure(sharedCollectionNotFoundException.left)
   }
 
   trait FailingScope extends BasicScope {
 
     googleApiProcesses.checkGoogleTokenId(email, tokenId) returns Free.pure(true)
-
-    userProcesses.checkAuthToken(
-      sessionToken = mockEq(sessionToken),
-      androidId = mockEq(androidId),
-      authToken = mockEq(authToken),
-      requestUri = any[String]) returns Free.pure(Option(userId))
 
     userProcesses.checkAuthToken(
       sessionToken = mockEq(sessionToken),
@@ -101,6 +106,9 @@ trait NineCardsApiSpecification
     userProcesses.updateInstallation(
       mockEq(updateInstallationRequest))(
       any) returns updateInstallationTask.liftF[NineCardsServices]
+
+    sharedCollectionProcesses.getCollectionByPublicIdentifier(
+      any[String])(any) returns getCollectionByIdTask.liftF[NineCardsServices]
   }
 
 }
@@ -110,6 +118,8 @@ trait NineCardsApiContext {
   val loginPath = "/login"
 
   val installationsPath = "/installations"
+
+  val collectionByIdPath = "/collections/40daf308-fecf-4228-9262-a712d783cf49"
 
   val apiDocsPath = "/apiDocs/index.html"
 
@@ -135,6 +145,30 @@ trait NineCardsApiContext {
 
   val userId = 1l
 
+  val publicIdentifier = "40daf308-fecf-4228-9262-a712d783cf49"
+
+  val collectionId = 1l
+
+  val now = DateTime.now
+
+  val description = Option("Description about the collection")
+
+  val author = "John Doe"
+
+  val name = "The best social media apps"
+
+  val installations = 1
+
+  val views = 1
+
+  val category = "SOCIAL"
+
+  val icon = "path-to-icon"
+
+  val community = true
+
+  val sharedLink = ""
+
   val apiLoginRequest = ApiLoginRequest(email, androidId, tokenId)
 
   val apiUpdateInstallationRequest = ApiUpdateInstallationRequest(deviceToken)
@@ -147,7 +181,29 @@ trait NineCardsApiContext {
 
   val updateInstallationResponse = UpdateInstallationResponse(androidId, deviceToken)
 
+  val sharedCollectionInfo = SharedCollectionInfo(
+    publicIdentifier = publicIdentifier,
+    publishedOn = now,
+    description = description,
+    author = author,
+    name = name,
+    sharedLink = sharedLink,
+    installations = installations,
+    views = views,
+    category = category,
+    icon = icon,
+    community = community,
+    packages = List.empty,
+    resolvedPackages = List.empty)
+
+  val getCollectionByPublicIdentifierResponse = GetCollectionByPublicIdentifierResponse(
+    data = sharedCollectionInfo)
+
   val persistenceException = PersistenceException(
+    message = "Test error",
+    cause = Option(new RuntimeException("Test error")))
+
+  val sharedCollectionNotFoundException = SharedCollectionNotFoundException(
     message = "Test error",
     cause = Option(new RuntimeException("Test error")))
 
@@ -156,6 +212,8 @@ trait NineCardsApiContext {
   val loginTask: Task[LoginResponse] = Task.fail(persistenceException)
 
   val updateInstallationTask: Task[UpdateInstallationResponse] = Task.fail(persistenceException)
+
+  val getCollectionByIdTask: Task[XorGetCollectionByPublicId] = Task.now(persistenceException.left)
 
   val apiRequestHeaders = List(
     RawHeader(headerAppId, appId),
@@ -275,7 +333,7 @@ class NineCardsApiSpec
     "return a 401 Unauthorized status code if a wrong credential is provided" in new UnsuccessfulScope {
 
       Put(installationsPath) ~>
-        addHeaders(userInfoHeaders) ~>
+        addHeaders(failingUserInfoHeaders) ~>
         sealRoute(nineCardsApi) ~>
         check {
           status.intValue shouldEqual StatusCodes.Unauthorized.intValue
@@ -305,6 +363,77 @@ class NineCardsApiSpec
     "return a 500 Internal Server Error status code if a persistence error happens" in new FailingScope {
 
       Put(installationsPath, apiUpdateInstallationRequest) ~>
+        addHeaders(userInfoHeaders) ~>
+        sealRoute(nineCardsApi) ~>
+        check {
+          status.intValue shouldEqual StatusCodes.InternalServerError.intValue
+        }
+    }
+  }
+
+  "GET /collections/collectionId" should {
+    "return a 401 Unauthorized status code if no headers are provided" in new BasicScope {
+
+      Get(collectionByIdPath) ~>
+        sealRoute(nineCardsApi) ~>
+        check {
+          status.intValue shouldEqual StatusCodes.Unauthorized.intValue
+        }
+    }
+
+    "return a 401 Unauthorized status code if some of the headers aren't provided" in new BasicScope {
+
+      Get(collectionByIdPath) ~>
+        addHeader(RawHeader(headerAndroidId, androidId)) ~>
+        sealRoute(nineCardsApi) ~>
+        check {
+          status.intValue shouldEqual StatusCodes.Unauthorized.intValue
+        }
+    }
+
+    "return a 401 Unauthorized status code if a wrong credential is provided" in new UnsuccessfulScope {
+
+      Get(collectionByIdPath) ~>
+        addHeaders(failingUserInfoHeaders) ~>
+        sealRoute(nineCardsApi) ~>
+        check {
+          status.intValue shouldEqual StatusCodes.Unauthorized.intValue
+        }
+    }
+
+    "return a 401 Unauthorized status code if a persistence error happens" in new FailingScope {
+
+      Get(collectionByIdPath) ~>
+        addHeaders(failingUserInfoHeaders) ~>
+        sealRoute(nineCardsApi) ~>
+        check {
+          status.intValue shouldEqual StatusCodes.Unauthorized.intValue
+        }
+    }
+
+    "return a 200 Ok status code if a valid credential is provided" in new SuccessfulScope {
+
+      Get(collectionByIdPath) ~>
+        addHeaders(userInfoHeaders) ~>
+        sealRoute(nineCardsApi) ~>
+        check {
+          status.intValue shouldEqual StatusCodes.OK.intValue
+        }
+    }
+
+    "return a 404 Not found status code if the shared collection doesn't exist" in new UnsuccessfulScope {
+
+      Get(collectionByIdPath) ~>
+        addHeaders(userInfoHeaders) ~>
+        sealRoute(nineCardsApi) ~>
+        check {
+          status.intValue shouldEqual StatusCodes.NotFound.intValue
+        }
+    }
+
+    "return a 500 Internal Server Error status code if a persistence error happens" in new FailingScope {
+
+      Get(collectionByIdPath) ~>
         addHeaders(userInfoHeaders) ~>
         sealRoute(nineCardsApi) ~>
         check {
