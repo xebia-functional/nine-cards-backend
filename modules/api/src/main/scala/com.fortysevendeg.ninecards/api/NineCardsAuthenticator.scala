@@ -3,10 +3,9 @@ package com.fortysevendeg.ninecards.api
 import com.fortysevendeg.ninecards.api.NineCardsHeaders.Domain._
 import com.fortysevendeg.ninecards.api.NineCardsHeaders._
 import com.fortysevendeg.ninecards.api.messages.UserMessages.ApiLoginRequest
-import com.fortysevendeg.ninecards.api.utils.FreeUtils._
+import com.fortysevendeg.ninecards.api.utils.SprayMarshallers._
 import com.fortysevendeg.ninecards.api.utils.TaskDirectives._
-import com.fortysevendeg.ninecards.api.utils.TaskUtils._
-import com.fortysevendeg.ninecards.processes.NineCardsServices.NineCardsServices
+import com.fortysevendeg.ninecards.processes.NineCardsServices._
 import com.fortysevendeg.ninecards.processes._
 import shapeless._
 import spray.http.Uri
@@ -49,9 +48,7 @@ class NineCardsAuthenticator(
       case (e, o) if e.isEmpty || o.isEmpty =>
         Task.now(Left(rejectionByCredentialsRejected))
       case _ =>
-        val task: Task[Boolean] = googleApiProcesses.checkGoogleTokenId(email, tokenId)
-
-        task map {
+        googleApiProcesses.checkGoogleTokenId(email, tokenId).foldMap(interpreters) map {
           case true => Right(())
           case _ => Left(rejectionByCredentialsRejected)
         } handle {
@@ -71,21 +68,18 @@ class NineCardsAuthenticator(
     sessionToken: String,
     androidId: String,
     authToken: String,
-    requestUri: Uri): Task[Authentication[Long]] = {
-    val task: Task[Option[Long]] = userProcesses.checkAuthToken(
+    requestUri: Uri): Task[Authentication[Long]] =
+    userProcesses.checkAuthToken(
       sessionToken = sessionToken,
       androidId = androidId,
       authToken = authToken,
-      requestUri = requestUri.toString)
-
-    task map {
+      requestUri = requestUri.toString).foldMap(interpreters) map {
       case Some(v) => Right(v)
       case None =>
         Left(rejectionByCredentialsRejected)
     } handle {
       case _ => Left(rejectionByCredentialsRejected)
     }
-  }
 
 }
 

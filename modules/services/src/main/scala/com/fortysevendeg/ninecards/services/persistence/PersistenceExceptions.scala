@@ -4,8 +4,8 @@ object PersistenceExceptions {
 
   case class PersistenceException(
     message: String,
-    cause: Option[Throwable] = None) extends RuntimeException(message) {
-    cause map initCause
+    cause: Option[Throwable] = None) extends Throwable(message) {
+    cause foreach initCause
   }
 
 }

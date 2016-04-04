@@ -1,13 +1,15 @@
 package com.fortysevendeg.ninecards.api.utils
 
 import cats._
+import cats.data.Xor
 import cats.free.Free
+import com.fortysevendeg.ninecards.processes.NineCardsServices._
 import shapeless.Lazy
 import spray.httpx.marshalling.ToResponseMarshaller
 
 import scalaz.concurrent.Task
 
-object TaskUtils {
+object SprayMarshallers {
 
   implicit def taskMonad = new Monad[Task] {
     override def flatMap[A, B](fa: Task[A])(f: A => Task[B]): Task[B] =
@@ -15,6 +17,15 @@ object TaskUtils {
 
     override def pure[A](a: A): Task[A] = Task.now(a)
   }
+
+  implicit def catsXorMarshaller[T <: Throwable, A](
+    implicit m: ToResponseMarshaller[A]): ToResponseMarshaller[Xor[T, A]] =
+    ToResponseMarshaller[Xor[T, A]] {
+      (xor, ctx) =>
+        xor.fold(
+          left => ctx.handleError(left),
+          right => m(right, ctx))
+    }
 
   implicit def tasksMarshaller[A](
     implicit m: ToResponseMarshaller[A]): ToResponseMarshaller[Task[A]] =
@@ -27,10 +38,9 @@ object TaskUtils {
         }
     }
 
-  implicit def freeTaskMarshaller[S[_], A](
-    implicit interpreters: S ~> Task,
-    taskMarshaller: Lazy[ToResponseMarshaller[Task[A]]]): ToResponseMarshaller[Free[S, A]] =
-    ToResponseMarshaller[Free[S, A]] {
+  implicit def freeTaskMarshaller[A](
+    implicit taskMarshaller: Lazy[ToResponseMarshaller[Task[A]]]): ToResponseMarshaller[Free[NineCardsServices, A]] =
+    ToResponseMarshaller[Free[NineCardsServices, A]] {
       (free, ctx) =>
         taskMarshaller.value(free.foldMap(interpreters), ctx)
     }

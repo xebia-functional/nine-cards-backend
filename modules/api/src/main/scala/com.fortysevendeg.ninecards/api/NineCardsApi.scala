@@ -3,18 +3,18 @@ package com.fortysevendeg.ninecards.api
 import akka.actor.Actor
 import com.fortysevendeg.ninecards.api.NineCardsApiHeaderCommons._
 import com.fortysevendeg.ninecards.api.NineCardsAuthenticator._
-import com.fortysevendeg.ninecards.api.NineCardsHeaders.Domain.UserContext
+import com.fortysevendeg.ninecards.api.NineCardsHeaders.Domain._
 import com.fortysevendeg.ninecards.api.converters.Converters._
 import com.fortysevendeg.ninecards.api.messages.InstallationsMessages._
 import com.fortysevendeg.ninecards.api.messages.UserMessages._
-import com.fortysevendeg.ninecards.api.utils.FreeUtils._
-import com.fortysevendeg.ninecards.api.utils.TaskUtils._
-import com.fortysevendeg.ninecards.processes.NineCardsServices.NineCardsServices
-import com.fortysevendeg.ninecards.processes.{GoogleApiProcesses, UserProcesses}
+import com.fortysevendeg.ninecards.api.utils.SprayMarshallers._
+import com.fortysevendeg.ninecards.api.utils.SprayMatchers._
+import com.fortysevendeg.ninecards.processes.NineCardsServices._
+import com.fortysevendeg.ninecards.processes._
 import spray.httpx.SprayJsonSupport
 import spray.routing._
 
-import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
+import scala.concurrent.ExecutionContext
 
 class NineCardsApiActor
   extends Actor
@@ -35,12 +35,13 @@ trait NineCardsApi
     with SprayJsonSupport
     with JsonFormats {
 
-  def nineCardsApiRoute[T](
+  def nineCardsApiRoute(
     implicit userProcesses: UserProcesses[NineCardsServices],
     googleApiProcesses: GoogleApiProcesses[NineCardsServices],
     executionContext: ExecutionContext): Route =
     userApiRoute ~
       installationsApiRoute ~
+      sharedCollectionsApiRoute ~
       swaggerApiRoute
 
   private[this] def userApiRoute(
@@ -74,6 +75,22 @@ trait NineCardsApi
               complete {
                 userProcesses.updateInstallation(request) map toApiUpdateInstallationResponse
               }
+            }
+          }
+        }
+      }
+    }
+
+  private[this] def sharedCollectionsApiRoute(
+    implicit sharedCollectionProcesses: SharedCollectionProcesses[NineCardsServices],
+    executionContext: ExecutionContext) =
+    pathPrefix("collections") {
+      path(TypedSegment[PublicIdentifier]) { publicIdentifier =>
+        nineCardsAuthenticator.authenticateUser { implicit userContext: UserContext =>
+          get {
+            complete {
+              sharedCollectionProcesses.getCollectionByPublicIdentifier(
+                publicIdentifier.value) map toApiGetCollectionByPublicIdentifierResponse
             }
           }
         }
