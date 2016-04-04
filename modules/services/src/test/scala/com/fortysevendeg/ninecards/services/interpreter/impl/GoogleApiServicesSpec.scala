@@ -57,7 +57,7 @@ trait GoogleApiServerResponse {
 }
 
 trait MockGoogleApiServer
-  extends MockServerService
+    extends MockServerService
     with GoogleApiServerResponse {
 
   val getTokenInfoPath = "/oauth2/v3/tokeninfo"
@@ -72,57 +72,66 @@ trait MockGoogleApiServer
     request
       .withMethod("GET")
       .withPath(getTokenInfoPath)
-      .withQueryStringParameter(tokenIdParameterName, validTokenId))
+      .withQueryStringParameter(tokenIdParameterName, validTokenId)
+  )
     .respond(
       response
         .withStatusCode(HttpStatusCode.OK_200.code)
         .withHeader(jsonHeader)
-        .withBody(getTokenInfoValidResponse))
+        .withBody(getTokenInfoValidResponse)
+    )
 
   mockServer.when(
     request
       .withMethod("GET")
       .withPath(getTokenInfoPath)
-      .withQueryStringParameter(tokenIdParameterName, otherTokenId))
+      .withQueryStringParameter(tokenIdParameterName, otherTokenId)
+  )
     .respond(
       response
         .withStatusCode(HttpStatusCode.OK_200.code)
         .withHeader(jsonHeader)
-        .withBody(getTokenInfoValidResponseWithoutHd))
+        .withBody(getTokenInfoValidResponseWithoutHd)
+    )
 
   mockServer.when(
     request
       .withMethod("GET")
       .withPath(getTokenInfoPath)
-      .withQueryStringParameter(tokenIdParameterName, wrongTokenId))
+      .withQueryStringParameter(tokenIdParameterName, wrongTokenId)
+  )
     .respond(
       response
         .withStatusCode(HttpStatusCode.OK_200.code)
         .withHeader(jsonHeader)
-        .withBody(getTokenInfoWrongResponse))
+        .withBody(getTokenInfoWrongResponse)
+    )
 
   mockServer.when(
     request
       .withMethod("GET")
       .withPath(getTokenInfoPath)
-      .withQueryStringParameter(tokenIdParameterName, failingTokenId))
+      .withQueryStringParameter(tokenIdParameterName, failingTokenId)
+  )
     .respond(
       response
-        .withStatusCode(HttpStatusCode.INTERNAL_SERVER_ERROR_500.code))
+        .withStatusCode(HttpStatusCode.INTERNAL_SERVER_ERROR_500.code)
+    )
 }
 
 class GoogleApiServicesSpec
-  extends Specification
+    extends Specification
     with DisjunctionMatchers
     with XorMatchers
     with MockGoogleApiServer {
 
   implicit val googleApiConfiguration = GoogleApiConfiguration(
-    protocol = "http",
-    host = "localhost",
-    port = Option(mockServerPort),
-    tokenInfoUri = getTokenInfoPath,
-    tokenIdQueryParameter = tokenIdParameterName)
+    protocol              = "http",
+    host                  = "localhost",
+    port                  = Option(mockServerPort),
+    tokenInfoUri          = getTokenInfoPath,
+    tokenIdQueryParameter = tokenIdParameterName
+  )
 
   val googleApiServices = GoogleApiServices.googleApiServices
 
@@ -131,24 +140,24 @@ class GoogleApiServicesSpec
       val response = googleApiServices.getTokenInfo(validTokenId)
 
       response.attemptRun should be_\/-[WrongTokenInfo Xor TokenInfo].which {
-        content =>
+        content ⇒
           content should beXorRight[TokenInfo]
       }
     }
     "return the TokenInfo object when a valid token id is provided and the hd field isn't" +
       "included into the response" in {
-      val response = googleApiServices.getTokenInfo(otherTokenId)
+        val response = googleApiServices.getTokenInfo(otherTokenId)
 
-      response.attemptRun should be_\/-[WrongTokenInfo Xor TokenInfo].which {
-        content =>
-          content should beXorRight[TokenInfo]
+        response.attemptRun should be_\/-[WrongTokenInfo Xor TokenInfo].which {
+          content ⇒
+            content should beXorRight[TokenInfo]
+        }
       }
-    }
     "return a WrongTokenInfo object when a wrong token id is provided" in {
       val result = googleApiServices.getTokenInfo(wrongTokenId)
 
       result.attemptRun should be_\/-[WrongTokenInfo Xor TokenInfo].which {
-        content =>
+        content ⇒
           content should beXorLeft[WrongTokenInfo]
       }
     }

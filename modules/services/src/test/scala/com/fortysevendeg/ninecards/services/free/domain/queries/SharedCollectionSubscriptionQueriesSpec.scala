@@ -6,7 +6,7 @@ import doobie.contrib.specs2.analysisspec.AnalysisSpec
 import org.specs2.mutable.Specification
 
 class SharedCollectionSubscriptionQueriesSpec
-  extends Specification
+    extends Specification
     with AnalysisSpec
     with DomainDatabaseContext {
 
@@ -15,37 +15,44 @@ class SharedCollectionSubscriptionQueriesSpec
   val userId = 34567l
 
   val getSubscriptionByIdQuery = collectionSubscriptionPersistence.generateQuery(
-    sql = getById,
-    values = id)
+    sql    = getById,
+    values = id
+  )
   check(getSubscriptionByIdQuery)
 
   val getByCollectionQuery = collectionSubscriptionPersistence.generateQuery(
-    sql = getByCollection,
-    values = collectionId)
+    sql    = getByCollection,
+    values = collectionId
+  )
   check(getByCollectionQuery)
 
   val getByCollectionAndUserQuery = collectionSubscriptionPersistence.generateQuery(
-    sql = getByCollectionAndUser,
-    values = (collectionId, userId))
+    sql    = getByCollectionAndUser,
+    values = (collectionId, userId)
+  )
   check(getByCollectionAndUserQuery)
 
   val getByUserQuery = collectionSubscriptionPersistence.generateQuery(
-    sql = getByUser,
-    values = userId)
+    sql    = getByUser,
+    values = userId
+  )
   check(getByUserQuery)
 
   val insertQuery = collectionSubscriptionPersistence.generateUpdateWithGeneratedKeys(
-    sql = insert,
-    values = (collectionId, userId))
+    sql    = insert,
+    values = (collectionId, userId)
+  )
   check(insertQuery)
 
   val deleteQuery = collectionSubscriptionPersistence.generateUpdateWithGeneratedKeys(
-    sql = delete,
-    values = id)
+    sql    = delete,
+    values = id
+  )
   check(deleteQuery)
 
   val deleteByCollectionAndUserQuery = collectionSubscriptionPersistence.generateUpdateWithGeneratedKeys(
-    sql = deleteByCollectionAndUser,
-    values = (collectionId, userId))
+    sql    = deleteByCollectionAndUser,
+    values = (collectionId, userId)
+  )
   check(deleteByCollectionAndUserQuery)
 }

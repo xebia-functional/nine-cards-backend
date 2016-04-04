@@ -12,36 +12,44 @@ import scalaz.concurrent.Task
 object SprayMarshallers {
 
   implicit def taskMonad = new Monad[Task] {
-    override def flatMap[A, B](fa: Task[A])(f: A => Task[B]): Task[B] =
+    override def flatMap[A, B](fa: Task[A])(f: A ⇒ Task[B]): Task[B] =
       fa.flatMap(f)
 
     override def pure[A](a: A): Task[A] = Task.now(a)
   }
 
   implicit def catsXorMarshaller[T <: Throwable, A](
-    implicit m: ToResponseMarshaller[A]): ToResponseMarshaller[Xor[T, A]] =
+    implicit
+    m: ToResponseMarshaller[A]
+  ): ToResponseMarshaller[Xor[T, A]] =
     ToResponseMarshaller[Xor[T, A]] {
-      (xor, ctx) =>
+      (xor, ctx) ⇒
         xor.fold(
-          left => ctx.handleError(left),
-          right => m(right, ctx))
+          left ⇒ ctx.handleError(left),
+          right ⇒ m(right, ctx)
+        )
     }
 
   implicit def tasksMarshaller[A](
-    implicit m: ToResponseMarshaller[A]): ToResponseMarshaller[Task[A]] =
+    implicit
+    m: ToResponseMarshaller[A]
+  ): ToResponseMarshaller[Task[A]] =
     ToResponseMarshaller[Task[A]] {
-      (task, ctx) =>
+      (task, ctx) ⇒
         task.runAsync {
           _.fold(
-            left => ctx.handleError(left),
-            right => m(right, ctx))
+            left ⇒ ctx.handleError(left),
+            right ⇒ m(right, ctx)
+          )
         }
     }
 
   implicit def freeTaskMarshaller[A](
-    implicit taskMarshaller: Lazy[ToResponseMarshaller[Task[A]]]): ToResponseMarshaller[Free[NineCardsServices, A]] =
+    implicit
+    taskMarshaller: Lazy[ToResponseMarshaller[Task[A]]]
+  ): ToResponseMarshaller[Free[NineCardsServices, A]] =
     ToResponseMarshaller[Free[NineCardsServices, A]] {
-      (free, ctx) =>
+      (free, ctx) ⇒
         taskMarshaller.value(free.foldMap(interpreters), ctx)
     }
 }

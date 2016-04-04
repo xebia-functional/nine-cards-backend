@@ -9,15 +9,15 @@ import spray.util.LoggingContext
 trait NineCardsExceptionHandler extends HttpService {
   implicit def exceptionHandler(implicit log: LoggingContext) =
     ExceptionHandler {
-      case e: PersistenceException =>
+      case e: PersistenceException ⇒
         requestUri {
-          uri =>
+          uri ⇒
             log.warning("Request to {} could not be handled normally", uri)
             complete(InternalServerError, e.getMessage)
         }
-      case e: SharedCollectionNotFoundException =>
+      case e: SharedCollectionNotFoundException ⇒
         requestUri {
-          uri =>
+          uri ⇒
             log.warning("Shared collection not found: {}", uri)
             complete(NotFound, e.getMessage)
         }

@@ -31,17 +31,18 @@ class HashUtils(implicit config: NineCardsConfig) {
     text: String,
     secretKey: String = nineCardsSecretKey,
     salt: Option[String] = nineCardsSalt,
-    algorithm: Algorithm = HMacSha512) = {
+    algorithm: Algorithm = HMacSha512
+  ) = {
 
     val hasher = salt.fold(Hasher(text))(Hasher(text).salt(_))
 
     val digest = algorithm match {
-      case Md5 => hasher.md5
-      case Sha256 => hasher.sha256
-      case Sha512 => hasher.sha512
-      case HMacMd5 => hasher.hmac(secretKey).md5
-      case HMacSha256 => hasher.hmac(secretKey).sha256
-      case HMacSha512 => hasher.hmac(secretKey).sha512
+      case Md5        ⇒ hasher.md5
+      case Sha256     ⇒ hasher.sha256
+      case Sha512     ⇒ hasher.sha512
+      case HMacMd5    ⇒ hasher.hmac(secretKey).md5
+      case HMacSha256 ⇒ hasher.hmac(secretKey).sha256
+      case HMacSha512 ⇒ hasher.hmac(secretKey).sha512
     }
 
     digest.hex

@@ -12,7 +12,7 @@ import com.fortysevendeg.ninecards.processes.messages.UserMessages.{LoginRequest
 import com.fortysevendeg.ninecards.processes.{GoogleApiProcesses, UserProcesses}
 import com.fortysevendeg.ninecards.services.common.TaskOps._
 import com.fortysevendeg.ninecards.services.persistence.PersistenceExceptions.PersistenceException
-import org.mockito.Matchers.{eq => mockEq}
+import org.mockito.Matchers.{eq ⇒ mockEq}
 import org.specs2.matcher.Matchers
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
@@ -26,7 +26,7 @@ import scala.concurrent.duration.DurationInt
 import scalaz.concurrent.Task
 
 trait NineCardsApiSpecification
-  extends Specification
+    extends Specification
     with AuthHeadersRejectionHandler
     with HttpService
     with JsonFormats
@@ -58,15 +58,18 @@ trait NineCardsApiSpecification
 
     userProcesses.checkAuthToken(
       sessionToken = mockEq(sessionToken),
-      androidId = mockEq(androidId),
-      authToken = mockEq(authToken),
-      requestUri = any[String]) returns Free.pure(Option(userId))
+      androidId    = mockEq(androidId),
+      authToken    = mockEq(authToken),
+      requestUri   = any[String]
+    ) returns Free.pure(Option(userId))
 
     userProcesses.signUpUser(loginRequest) returns Free.pure(loginResponse)
 
     userProcesses.updateInstallation(
-      mockEq(updateInstallationRequest))(
-      any) returns Free.pure(updateInstallationResponse)
+      mockEq(updateInstallationRequest)
+    )(
+        any
+      ) returns Free.pure(updateInstallationResponse)
   }
 
   trait UnsuccessfulScope extends BasicScope {
@@ -75,9 +78,10 @@ trait NineCardsApiSpecification
 
     userProcesses.checkAuthToken(
       sessionToken = mockEq(sessionToken),
-      androidId = mockEq(androidId),
-      authToken = mockEq(authToken),
-      requestUri = any[String]) returns Free.pure(None)
+      androidId    = mockEq(androidId),
+      authToken    = mockEq(authToken),
+      requestUri   = any[String]
+    ) returns Free.pure(None)
   }
 
   trait FailingScope extends BasicScope {
@@ -86,21 +90,25 @@ trait NineCardsApiSpecification
 
     userProcesses.checkAuthToken(
       sessionToken = mockEq(sessionToken),
-      androidId = mockEq(androidId),
-      authToken = mockEq(authToken),
-      requestUri = any[String]) returns Free.pure(Option(userId))
+      androidId    = mockEq(androidId),
+      authToken    = mockEq(authToken),
+      requestUri   = any[String]
+    ) returns Free.pure(Option(userId))
 
     userProcesses.checkAuthToken(
       sessionToken = mockEq(sessionToken),
-      androidId = mockEq(androidId),
-      authToken = mockEq(failingAuthToken),
-      requestUri = any[String]) returns checkAuthTokenTask.liftF[NineCardsServices]
+      androidId    = mockEq(androidId),
+      authToken    = mockEq(failingAuthToken),
+      requestUri   = any[String]
+    ) returns checkAuthTokenTask.liftF[NineCardsServices]
 
     userProcesses.signUpUser(loginRequest) returns loginTask.liftF[NineCardsServices]
 
     userProcesses.updateInstallation(
-      mockEq(updateInstallationRequest))(
-      any) returns updateInstallationTask.liftF[NineCardsServices]
+      mockEq(updateInstallationRequest)
+    )(
+        any
+      ) returns updateInstallationTask.liftF[NineCardsServices]
   }
 
 }
@@ -149,7 +157,8 @@ trait NineCardsApiContext {
 
   val persistenceException = PersistenceException(
     message = "Test error",
-    cause = Option(new RuntimeException("Test error")))
+    cause   = Option(new RuntimeException("Test error"))
+  )
 
   val checkAuthTokenTask: Task[Option[Long]] = Task.fail(persistenceException)
 
@@ -159,21 +168,24 @@ trait NineCardsApiContext {
 
   val apiRequestHeaders = List(
     RawHeader(headerAppId, appId),
-    RawHeader(headerApiKey, appKey))
+    RawHeader(headerApiKey, appKey)
+  )
 
   val userInfoHeaders = List(
     RawHeader(headerAndroidId, androidId),
     RawHeader(headerSessionToken, sessionToken),
-    RawHeader(headerAuthToken, authToken))
+    RawHeader(headerAuthToken, authToken)
+  )
 
   val failingUserInfoHeaders = List(
     RawHeader(headerAndroidId, androidId),
     RawHeader(headerSessionToken, sessionToken),
-    RawHeader(headerAuthToken, failingAuthToken))
+    RawHeader(headerAuthToken, failingAuthToken)
+  )
 }
 
 class NineCardsApiSpec
-  extends NineCardsApiSpecification {
+    extends NineCardsApiSpecification {
 
   "nineCardsApi" should {
     "grant access to Swagger documentation" in new BasicScope {

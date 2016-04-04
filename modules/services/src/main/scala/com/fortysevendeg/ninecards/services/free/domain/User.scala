@@ -5,13 +5,15 @@ case class User(
   email: String,
   sessionToken: String,
   apiKey: String,
-  banned: Boolean)
+  banned: Boolean
+)
 
 case class Installation(
   id: Long,
   userId: Long,
   deviceToken: Option[String] = None,
-  androidId: String)
+  androidId: String
+)
 
 object User {
   val allFields = List("id", "email", "sessiontoken", "apikey", "banned")

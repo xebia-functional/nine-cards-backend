@@ -8,7 +8,6 @@ import scala.util.Random
 import scalaz.Foldable
 import scalaz.concurrent.Task
 
-
 trait DomainDatabaseContext {
 
   val emptyDeviceToken: Option[String] = None
@@ -35,11 +34,13 @@ trait DomainDatabaseContext {
 
   def insertItem[A](
     sql: String,
-    values: A)(implicit ev: Composite[A]): ConnectionIO[Long] =
+    values: A
+  )(implicit ev: Composite[A]): ConnectionIO[Long] =
     Update[A](sql).toUpdate0(values).withUniqueGeneratedKeys[Long]("id")
 
   def insertItems[F[_], A](
     sql: String,
-    values: F[A])(implicit ev: Composite[A], F: Foldable[F]): ConnectionIO[Int] =
+    values: F[A]
+  )(implicit ev: Composite[A], F: Foldable[F]): ConnectionIO[Int] =
     Update[A](sql).updateMany(values)
 }

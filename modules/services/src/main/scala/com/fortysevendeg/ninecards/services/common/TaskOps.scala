@@ -14,24 +14,28 @@ object TaskOps {
 
   implicit class TaskOps[A](task: Task[A]) {
     def liftF[F[_]](implicit dbOps: DBOps[F]): cats.free.Free[F, A] = task.attemptRun match {
-      case \/-(value) => dbOps.success(value)
-      case -\/(e) =>
+      case \/-(value) ⇒ dbOps.success(value)
+      case -\/(e) ⇒
         dbOps.failure(
           PersistenceException(
             message = "An error was found while accessing to database",
-            cause = Option(e)))
+            cause   = Option(e)
+          )
+        )
     }
   }
 
   implicit class ConnectionIOOps[A](c: ConnectionIO[A]) {
     def liftF[F[_]](implicit dbOps: DBOps[F], transactor: Transactor[Task]): cats.free.Free[F, A] =
       c.transact(transactor).attemptRun match {
-        case \/-(value) => dbOps.success(value)
-        case -\/(e) =>
+        case \/-(value) ⇒ dbOps.success(value)
+        case -\/(e) ⇒
           dbOps.failure(
             PersistenceException(
               message = "An error was found while accessing to database",
-              cause = Option(e)))
+              cause   = Option(e)
+            )
+          )
       }
   }
 

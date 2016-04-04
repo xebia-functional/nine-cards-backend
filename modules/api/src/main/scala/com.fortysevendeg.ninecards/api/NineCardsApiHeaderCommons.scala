@@ -10,15 +10,15 @@ import spray.routing.{HttpService, MissingHeaderRejection, RejectionHandler}
 object NineCardsApiHeaderCommons {
 
   def requestLoginHeaders = for {
-    appId <- headerValueByName(headerAppId)
-    apiKey <- headerValueByName(headerApiKey)
+    appId ← headerValueByName(headerAppId)
+    apiKey ← headerValueByName(headerApiKey)
   } yield appId :: apiKey :: HNil
 
 }
 
 trait AuthHeadersRejectionHandler extends HttpService {
   implicit val authHeadersRejectionHandler = RejectionHandler {
-    case MissingHeaderRejection(headerName: String) :: _ =>
+    case MissingHeaderRejection(headerName: String) :: _ ⇒
       complete(StatusCodes.Unauthorized, "Missing authorization headers needed for this request")
   }
 }

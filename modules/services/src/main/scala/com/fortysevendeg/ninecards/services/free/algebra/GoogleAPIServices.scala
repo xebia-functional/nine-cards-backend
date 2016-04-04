@@ -13,14 +13,17 @@ object GoogleApiServices {
   class GoogleApiServices[F[_]](implicit I: Inject[GoogleApiOps, F]) {
 
     def getTokenInfo(
-      tokenId: String): Free[F, WrongTokenInfo Xor TokenInfo] = Free.inject[GoogleApiOps, F](GetTokenInfo(tokenId))
+      tokenId: String
+    ): Free[F, WrongTokenInfo Xor TokenInfo] = Free.inject[GoogleApiOps, F](GetTokenInfo(tokenId))
 
   }
 
   object GoogleApiServices {
 
     implicit def googleAPIServices[F[_]](
-      implicit I: Inject[GoogleApiOps, F]): GoogleApiServices[F] = new GoogleApiServices
+      implicit
+      I: Inject[GoogleApiOps, F]
+    ): GoogleApiServices[F] = new GoogleApiServices
 
   }
 

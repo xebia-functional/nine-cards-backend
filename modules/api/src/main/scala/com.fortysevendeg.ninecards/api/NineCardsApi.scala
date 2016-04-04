@@ -17,7 +17,7 @@ import spray.routing._
 import scala.concurrent.ExecutionContext
 
 class NineCardsApiActor
-  extends Actor
+    extends Actor
     with NineCardsApi
     with AuthHeadersRejectionHandler
     with NineCardsExceptionHandler {
@@ -31,29 +31,33 @@ class NineCardsApiActor
 }
 
 trait NineCardsApi
-  extends HttpService
+    extends HttpService
     with SprayJsonSupport
     with JsonFormats {
 
   def nineCardsApiRoute(
-    implicit userProcesses: UserProcesses[NineCardsServices],
+    implicit
+    userProcesses: UserProcesses[NineCardsServices],
     googleApiProcesses: GoogleApiProcesses[NineCardsServices],
-    executionContext: ExecutionContext): Route =
+    executionContext: ExecutionContext
+  ): Route =
     userApiRoute ~
       installationsApiRoute ~
       sharedCollectionsApiRoute ~
       swaggerApiRoute
 
   private[this] def userApiRoute(
-    implicit userProcesses: UserProcesses[NineCardsServices],
+    implicit
+    userProcesses: UserProcesses[NineCardsServices],
     googleApiProcesses: GoogleApiProcesses[NineCardsServices],
-    executionContext: ExecutionContext) =
+    executionContext: ExecutionContext
+  ) =
     pathPrefix("login") {
       pathEndOrSingleSlash {
-        requestLoginHeaders { (appId, apiKey) =>
+        requestLoginHeaders { (appId, apiKey) ⇒
           nineCardsAuthenticator.authenticateLoginRequest {
             post {
-              entity(as[ApiLoginRequest]) { request =>
+              entity(as[ApiLoginRequest]) { request ⇒
                 complete {
                   userProcesses.signUpUser(request) map toApiLoginResponse
                 }
@@ -65,13 +69,15 @@ trait NineCardsApi
     }
 
   private[this] def installationsApiRoute(
-    implicit userProcesses: UserProcesses[NineCardsServices],
-    executionContext: ExecutionContext) =
+    implicit
+    userProcesses: UserProcesses[NineCardsServices],
+    executionContext: ExecutionContext
+  ) =
     pathPrefix("installations") {
       pathEndOrSingleSlash {
-        nineCardsAuthenticator.authenticateUser { implicit userContext: UserContext =>
+        nineCardsAuthenticator.authenticateUser { implicit userContext: UserContext ⇒
           put {
-            entity(as[ApiUpdateInstallationRequest]) { request =>
+            entity(as[ApiUpdateInstallationRequest]) { request ⇒
               complete {
                 userProcesses.updateInstallation(request) map toApiUpdateInstallationResponse
               }
@@ -82,15 +88,18 @@ trait NineCardsApi
     }
 
   private[this] def sharedCollectionsApiRoute(
-    implicit sharedCollectionProcesses: SharedCollectionProcesses[NineCardsServices],
-    executionContext: ExecutionContext) =
+    implicit
+    sharedCollectionProcesses: SharedCollectionProcesses[NineCardsServices],
+    executionContext: ExecutionContext
+  ) =
     pathPrefix("collections") {
-      path(TypedSegment[PublicIdentifier]) { publicIdentifier =>
-        nineCardsAuthenticator.authenticateUser { implicit userContext: UserContext =>
+      path(TypedSegment[PublicIdentifier]) { publicIdentifier ⇒
+        nineCardsAuthenticator.authenticateUser { implicit userContext: UserContext ⇒
           get {
             complete {
               sharedCollectionProcesses.getCollectionByPublicIdentifier(
-                publicIdentifier.value) map toApiGetCollectionByPublicIdentifierResponse
+                publicIdentifier.value
+              ) map toApiGetCollectionByPublicIdentifierResponse
             }
           }
         }
@@ -98,8 +107,8 @@ trait NineCardsApi
     }
 
   private[this] def swaggerApiRoute =
-  // This path prefix grants access to the Swagger documentation.
-  // Both /apiDocs/ and /apiDocs/index.html are valid paths to load Swagger-UI.
+    // This path prefix grants access to the Swagger documentation.
+    // Both /apiDocs/ and /apiDocs/index.html are valid paths to load Swagger-UI.
     pathPrefix("apiDocs") {
       pathEndOrSingleSlash {
         getFromResource("apiDocs/index.html")

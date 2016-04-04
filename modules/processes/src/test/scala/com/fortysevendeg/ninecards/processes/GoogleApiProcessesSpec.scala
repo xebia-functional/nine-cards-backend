@@ -15,13 +15,13 @@ import org.specs2.specification.Scope
 import scalaz.concurrent.Task
 
 trait GoogleApiProcessesSpecification
-  extends Specification
+    extends Specification
     with Matchers
     with Mockito
     with GoogleApiProcessesContext {
 
   implicit def taskMonad = new Monad[Task] {
-    override def flatMap[A, B](fa: Task[A])(f: A => Task[B]): Task[B] =
+    override def flatMap[A, B](fa: Task[A])(f: A ⇒ Task[B]): Task[B] =
       fa.flatMap(f)
 
     override def pure[A](a: A): Task[A] = Task.now(a)
@@ -57,24 +57,25 @@ trait GoogleApiProcessesContext {
   val tokenId = "eyJhbGciOiJSUzI1NiIsImtpZCI6IjcxMjI3MjFlZWQwYjQ1YmUxNWUzMGI2YThhOThjOTM3ZTJlNmQxN"
 
   val tokenInfo = TokenInfo(
-    iss = "accounts.google.com",
-    at_hash = "rXE2xjjK6YP9QtfKXTBZmQ",
-    aud = "123456789012.apps.googleusercontent.com",
-    sub = "106222693719864970737",
+    iss            = "accounts.google.com",
+    at_hash        = "rXE2xjjK6YP9QtfKXTBZmQ",
+    aud            = "123456789012.apps.googleusercontent.com",
+    sub            = "106222693719864970737",
     email_verified = "true",
-    azp = "123456789012.apps.googleusercontent.com",
-    hd = Option("test.com"),
-    email = email,
-    iat = "1457529032",
-    exp = "1457532632",
-    alg = "RS256",
-    kid = "7122721eed0b45be15e30b6a8a98c937e2e6d16d")
+    azp            = "123456789012.apps.googleusercontent.com",
+    hd             = Option("test.com"),
+    email          = email,
+    iat            = "1457529032",
+    exp            = "1457532632",
+    alg            = "RS256",
+    kid            = "7122721eed0b45be15e30b6a8a98c937e2e6d16d"
+  )
 
   val wrongTokenInfo = WrongTokenInfo(error_description = "Invalid Value")
 }
 
 class GoogleApiProcessesSpec
-  extends GoogleApiProcessesSpecification
+    extends GoogleApiProcessesSpecification
     with ScalaCheck {
 
   "checkGoogleTokenId" should {
