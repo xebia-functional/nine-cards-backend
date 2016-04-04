@@ -10,6 +10,31 @@ import spray.revolver.RevolverPlugin
 trait Settings {
   this: Build =>
 
+  lazy val scalariformSettings = {
+    import scalariform.formatter.preferences._
+    import com.typesafe.sbt.SbtScalariform
+    import com.typesafe.sbt.SbtScalariform.ScalariformKeys
+
+    SbtScalariform.scalariformSettings ++ Seq(
+      SbtScalariform.ScalariformKeys.preferences := ScalariformKeys.preferences.value
+        .setPreference(AlignArguments, true)
+        .setPreference(AlignParameters, false)
+        .setPreference(AlignSingleLineCaseStatements, true)
+        .setPreference(CompactStringConcatenation,false)
+        .setPreference(CompactControlReadability, false)
+        .setPreference(DanglingCloseParenthesis,Force)
+        .setPreference(DoubleIndentClassDeclaration, true)
+        .setPreference(MultilineScaladocCommentsStartOnFirstLine, false)
+        .setPreference(PlaceScaladocAsterisksBeneathSecondAsterisk, true)
+        .setPreference(PreserveSpaceBeforeArguments, false)
+        .setPreference(RewriteArrowSymbols, true)
+        .setPreference(SpaceBeforeColon, false)
+        .setPreference(SpacesAroundMultiImports,false)
+        .setPreference(SpaceInsideParentheses, false)
+        .setPreference(SpaceInsideBrackets, false)
+    )
+  }
+
   lazy val projectSettings: Seq[Def.Setting[_]] = Seq(
     addCompilerPlugin("org.spire-math" %% "kind-projector" % Versions.kindProjector),
     scalaVersion := Versions.scala,
@@ -35,7 +60,7 @@ trait Settings {
       "RoundEights" at "http://maven.spikemark.net/roundeights"
     ),
     doc in Compile <<= target.map(_ / "none")
-  )
+  ) ++ scalariformSettings
 
   lazy val apiSettings = projectSettings ++
     Seq(
