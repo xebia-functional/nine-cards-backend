@@ -5,55 +5,73 @@ import com.fortysevendeg.ninecards.services.free.domain._
 import doobie.imports._
 
 class SharedCollectionSubscriptionPersistenceServices(
-  implicit subscriptionPersistence: Persistence[SharedCollectionSubscription]) {
+    implicit
+    subscriptionPersistence: Persistence[SharedCollectionSubscription]
+) {
 
   def addSubscription[K](
     collectionId: Long,
-    userId: Long)(implicit ev: Composite[K]): ConnectionIO[K] =
+    userId:       Long
+  )(implicit ev: Composite[K]): ConnectionIO[K] =
     subscriptionPersistence.updateWithGeneratedKeys[K](
-      sql = insert,
+      sql    = insert,
       fields = SharedCollection.allFields,
-      values = (collectionId, userId))
+      values = (collectionId, userId)
+    )
 
   def getSubscriptionsByCollection(
-    collectionId: Long): ConnectionIO[List[SharedCollectionSubscription]] =
+    collectionId: Long
+  ): ConnectionIO[List[SharedCollectionSubscription]] =
     subscriptionPersistence.fetchList(
-      sql = getByCollection,
-      values = collectionId)
+      sql    = getByCollection,
+      values = collectionId
+    )
 
   def getSubscriptionByCollectionAndUser(
     collectionId: Long,
-    userId: Long): ConnectionIO[Option[SharedCollectionSubscription]] =
+    userId:       Long
+  ): ConnectionIO[Option[SharedCollectionSubscription]] =
     subscriptionPersistence.fetchOption(
-      sql = getByCollectionAndUser,
-      values = (collectionId, userId))
+      sql    = getByCollectionAndUser,
+      values = (collectionId, userId)
+    )
 
   def getSubscriptionById(
-    subscriptionId: Long): ConnectionIO[Option[SharedCollectionSubscription]] =
+    subscriptionId: Long
+  ): ConnectionIO[Option[SharedCollectionSubscription]] =
     subscriptionPersistence.fetchOption(
-      sql = getById,
-      values = subscriptionId)
+      sql    = getById,
+      values = subscriptionId
+    )
 
   def getSubscriptionsByUser(
-    userId: Long): ConnectionIO[List[SharedCollectionSubscription]] =
+    userId: Long
+  ): ConnectionIO[List[SharedCollectionSubscription]] =
     subscriptionPersistence.fetchList(
-      sql = getByUser,
-      values = userId)
+      sql    = getByUser,
+      values = userId
+    )
 
   def removeSubscription[K](
-    subscriptionId: Long): ConnectionIO[Int] = subscriptionPersistence.update(
-      sql = delete,
-      values = subscriptionId)
+    subscriptionId: Long
+  ): ConnectionIO[Int] = subscriptionPersistence.update(
+    sql    = delete,
+    values = subscriptionId
+  )
 
   def removeSubscriptionByCollectionAndUser(
     collectionId: Long,
-    userId: Long): ConnectionIO[Int] = subscriptionPersistence.update(
-      sql = deleteByCollectionAndUser,
-      values = (collectionId, userId))
+    userId:       Long
+  ): ConnectionIO[Int] = subscriptionPersistence.update(
+    sql    = deleteByCollectionAndUser,
+    values = (collectionId, userId)
+  )
 }
 
 object SharedCollectionSubscriptionPersistenceServices {
   implicit def sharedCollectionSubscriptionPersistenceServices(
-    implicit subscriptionPersistence: Persistence[SharedCollectionSubscription]) =
+    implicit
+    subscriptionPersistence: Persistence[SharedCollectionSubscription]
+  ) =
     new SharedCollectionSubscriptionPersistenceServices
 }

@@ -11,15 +11,15 @@ object Interpreters {
 
   object DBResultInterpreter extends (DBResult ~> Task) {
     def apply[A](fa: DBResult[A]) = fa match {
-      case DBSuccess(value) => Task.now(value)
-      case DBFailure(e) => Task.fail(e)
+      case DBSuccess(value) ⇒ Task.now(value)
+      case DBFailure(e)     ⇒ Task.fail(e)
     }
   }
 
   object GoogleAPIServicesInterpreter extends (GoogleApiOps ~> Task) {
 
     def apply[A](fa: GoogleApiOps[A]) = fa match {
-      case GetTokenInfo(tokenId: String) =>
+      case GetTokenInfo(tokenId: String) ⇒
         googleApiServices.getTokenInfo(tokenId)
     }
   }

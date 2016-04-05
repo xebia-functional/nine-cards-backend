@@ -9,7 +9,7 @@ import com.fortysevendeg.ninecards.services.free.domain.{Installation, User}
 import com.fortysevendeg.ninecards.services.persistence.{UserPersistenceServices, _}
 import com.roundeights.hasher.Hasher
 import doobie.imports._
-import org.mockito.Matchers.{eq => mockEq}
+import org.mockito.Matchers.{eq ⇒ mockEq}
 import org.specs2.ScalaCheck
 import org.specs2.matcher.Matchers
 import org.specs2.mock.Mockito
@@ -20,16 +20,15 @@ import scala.collection.mutable.HashTable
 import scalaz.Scalaz._
 import scalaz.concurrent.Task
 
-
 trait UserProcessesSpecification
-  extends Specification
+    extends Specification
     with Matchers
     with Mockito
     with UserProcessesContext
     with DummyNineCardsConfig {
 
   implicit def taskMonad = new Monad[Task] {
-    override def flatMap[A, B](fa: Task[A])(f: A => Task[B]): Task[B] =
+    override def flatMap[A, B](fa: Task[A])(f: A ⇒ Task[B]): Task[B] =
       fa.flatMap(f)
 
     override def pure[A](a: A): Task[A] = Task.now(a)
@@ -126,9 +125,8 @@ trait UserProcessesContext {
   val wrongAuthToken = Hasher(dummyUrl).hmac(wrongApiKey).sha512.hex
 }
 
-
 class UserProcessesSpec
-  extends UserProcessesSpecification
+    extends UserProcessesSpecification
     with ScalaCheck {
 
   "signUpUser" should {
@@ -158,21 +156,23 @@ class UserProcessesSpec
   "checkAuthToken" should {
     "return the userId if there is a user with the given sessionToken and androidId and the " +
       "auth token is valid" in new UserAndInstallationSuccessfulScope {
-      val checkAuthToken = userProcesses.checkAuthToken(
-        sessionToken = sessionToken,
-        androidId = androidId,
-        authToken = validAuthToken,
-        requestUri = dummyUrl)
+        val checkAuthToken = userProcesses.checkAuthToken(
+          sessionToken = sessionToken,
+          androidId    = androidId,
+          authToken    = validAuthToken,
+          requestUri   = dummyUrl
+        )
 
-      checkAuthToken.foldMap(interpreters).run shouldEqual checkAuthTokenResponse
-    }
+        checkAuthToken.foldMap(interpreters).run shouldEqual checkAuthTokenResponse
+      }
 
     "return the userId when a wrong auth token is given" in new UserAndInstallationSuccessfulScope {
       val checkAuthToken = userProcesses.checkAuthToken(
         sessionToken = sessionToken,
-        androidId = androidId,
-        authToken = wrongAuthToken,
-        requestUri = dummyUrl)
+        androidId    = androidId,
+        authToken    = wrongAuthToken,
+        requestUri   = dummyUrl
+      )
 
       checkAuthToken.foldMap(interpreters).run shouldEqual None
     }
@@ -181,9 +181,10 @@ class UserProcessesSpec
       new UserAndInstallationFailingScope {
         val checkAuthToken = userProcesses.checkAuthToken(
           sessionToken = sessionToken,
-          androidId = androidId,
-          authToken = validAuthToken,
-          requestUri = dummyUrl)
+          androidId    = androidId,
+          authToken    = validAuthToken,
+          requestUri   = dummyUrl
+        )
 
         checkAuthToken.foldMap(interpreters).run should beNone
       }
@@ -192,9 +193,10 @@ class UserProcessesSpec
       new UserSuccessfulAndInstallationFailingScope {
         val checkAuthToken = userProcesses.checkAuthToken(
           sessionToken = sessionToken,
-          androidId = androidId,
-          authToken = validAuthToken,
-          requestUri = dummyUrl)
+          androidId    = androidId,
+          authToken    = validAuthToken,
+          requestUri   = dummyUrl
+        )
 
         checkAuthToken.foldMap(interpreters).run should beNone
       }

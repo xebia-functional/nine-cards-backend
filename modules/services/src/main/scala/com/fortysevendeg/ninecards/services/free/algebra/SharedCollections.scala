@@ -33,7 +33,9 @@ object SharedCollections {
   object SharedCollectionServices {
 
     implicit def dataSource[F[_]](
-      implicit I: Inject[SharedCollectionOps, F]): SharedCollectionServices[F] =
+      implicit
+      I: Inject[SharedCollectionOps, F]
+    ): SharedCollectionServices[F] =
       new SharedCollectionServices[F]
 
   }
@@ -60,7 +62,9 @@ object SharedCollectionSubscriptions {
   object SharedCollectionSubscriptionServices {
 
     implicit def dataSource[F[_]](
-      implicit I: Inject[SharedCollectionSubscriptionOps, F]): SharedCollectionSubscriptionServices[F] =
+      implicit
+      I: Inject[SharedCollectionSubscriptionOps, F]
+    ): SharedCollectionSubscriptionServices[F] =
       new SharedCollectionSubscriptionServices[F]
 
   }

@@ -12,7 +12,7 @@ import spray.httpx.SprayJsonSupport
 import spray.json._
 
 trait JsonFormats
-  extends DefaultJsonProtocol
+    extends DefaultJsonProtocol
     with SprayJsonSupport {
 
   implicit object JodaDateTimeFormat extends RootJsonFormat[DateTime] {
@@ -20,23 +20,24 @@ trait JsonFormats
     val dateExample = formatter.print(0)
 
     def error(v: String) = deserializationError(
-      s"'$v' is not a valid date value. The format for dates must be: '$dateExample'")
+      s"'$v' is not a valid date value. The format for dates must be: '$dateExample'"
+    )
 
-    val decodeDateTime: Decoder[DateTime] = Decoder.instance { cursor =>
+    val decodeDateTime: Decoder[DateTime] = Decoder.instance { cursor ⇒
       cursor.as[String].flatMap {
-        case dateTime => Xor.right(DateTime.parse(dateTime, formatter))
+        case dateTime ⇒ Xor.right(DateTime.parse(dateTime, formatter))
       }
     }
 
-    val encodeDateTime: Encoder[DateTime] = Encoder.instance { dateTime: DateTime =>
+    val encodeDateTime: Encoder[DateTime] = Encoder.instance { dateTime: DateTime ⇒
       Json.string(formatter.print(dateTime))
     }
 
     def write(obj: DateTime): JsValue = JsString(encodeDateTime(obj).noSpaces)
 
     def read(json: JsValue): DateTime = json match {
-      case JsString(s) => decodeDateTime(Json.string(s).hcursor).fold(error(s), d => d)
-      case _ => error(json.toString)
+      case JsString(s) ⇒ decodeDateTime(Json.string(s).hcursor).fold(error(s), d ⇒ d)
+      case _           ⇒ error(json.toString)
     }
 
   }

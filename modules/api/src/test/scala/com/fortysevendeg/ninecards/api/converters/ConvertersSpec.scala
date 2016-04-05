@@ -10,12 +10,12 @@ import org.specs2.ScalaCheck
 import org.specs2.mutable.Specification
 
 class ConvertersSpec
-  extends Specification
+    extends Specification
     with ScalaCheck {
 
   "toLoginRequest" should {
     "convert an ApiLoginRequest to a LoginRequest object" in {
-      prop { apiRequest: ApiLoginRequest =>
+      prop { apiRequest: ApiLoginRequest ⇒
 
         val request = Converters.toLoginRequest(apiRequest)
 
@@ -28,7 +28,7 @@ class ConvertersSpec
 
   "toApiLoginResponse" should {
     "convert a LoginResponse to an ApiLoginResponse object" in {
-      prop { response: LoginResponse =>
+      prop { response: LoginResponse ⇒
 
         val apiLoginResponse = Converters.toApiLoginResponse(response)
 
@@ -39,7 +39,7 @@ class ConvertersSpec
 
   "toUpdateInstallationRequest" should {
     "convert an ApiUpdateInstallationRequest to a UpdateInstallationRequest object" in {
-      prop { (apiRequest: ApiUpdateInstallationRequest, userId: UserId, androidId: AndroidId) =>
+      prop { (apiRequest: ApiUpdateInstallationRequest, userId: UserId, androidId: AndroidId) ⇒
 
         implicit val userContext = UserContext(userId, androidId)
 
@@ -54,7 +54,7 @@ class ConvertersSpec
 
   "toApiUpdateInstallationResponse" should {
     "convert an UpdateInstallationResponse to an ApiUpdateInstallationResponse object" in {
-      prop { (response: UpdateInstallationResponse) =>
+      prop { (response: UpdateInstallationResponse) ⇒
 
         val apiResponse = Converters.toApiUpdateInstallationResponse(response)
 

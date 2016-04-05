@@ -9,8 +9,8 @@ import org.http4s.circe._
 trait GoogleApiDecoders {
 
   implicit val tokenInfoDecoder: Decoder[WrongTokenInfo Xor TokenInfo] =
-    Decoder[TokenInfo].map(t => Xor.right(t)).or(
-      Decoder[WrongTokenInfo].map(w => Xor.left(w))
+    Decoder[TokenInfo].map(t ⇒ Xor.right(t)).or(
+      Decoder[WrongTokenInfo].map(w ⇒ Xor.left(w))
     )
 
   implicit val tokenInfoEntityDecoder = jsonOf[WrongTokenInfo Xor TokenInfo](tokenInfoDecoder)

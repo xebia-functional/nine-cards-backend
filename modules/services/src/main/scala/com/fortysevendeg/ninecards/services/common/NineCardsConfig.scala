@@ -10,19 +10,21 @@ class NineCardsConfig(hocon: Option[String] = None) {
   def getInt(key: String) = sys.props.getOrElse(key, config.getInt(key))
 
   def getOptionalInt(
-    key: String) = sys.props.get(key).fold(config.getOptionalInt(key))(i => Option(i.toInt))
+    key: String
+  ) = sys.props.get(key).fold(config.getOptionalInt(key))(i ⇒ Option(i.toInt))
 
   def getString(key: String) = sys.props.getOrElse(key, config.getString(key))
 
   def getOptionalString(
-    key: String) = sys.props.get(key).fold(config.getOptionalString(key))(Option(_))
+    key: String
+  ) = sys.props.get(key).fold(config.getOptionalString(key))(Option(_))
 }
 
 object NineCardsConfig {
 
   implicit class ConfigOps(val config: Config) {
 
-    def getOptionalValue[T](path: String)(f: String => T) =
+    def getOptionalValue[T](path: String)(f: String ⇒ T) =
       if (config.hasPath(path)) {
         Option(f(path))
       } else {

@@ -13,7 +13,8 @@ class GoogleApiServices(implicit config: GoogleApiConfiguration) extends GoogleA
   val client = org.http4s.client.blaze.PooledHttp1Client()
 
   def getTokenInfo(
-    tokenId: String): Task[WrongTokenInfo Xor TokenInfo] = {
+    tokenId: String
+  ): Task[WrongTokenInfo Xor TokenInfo] = {
     val authority = Authority(host = RegName(config.host), port = config.port)
 
     val getTokenInfoUri = Uri(scheme = Option(config.protocol.ci), authority = Option(authority))
