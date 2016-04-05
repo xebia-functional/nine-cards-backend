@@ -40,7 +40,7 @@ object Converters {
 
   def toGetCollectionByPublicIdentifierResponse(
     collection: SharedCollectionServices,
-    packages: List[SharedCollectionPackageServices]
+    packages:   List[SharedCollectionPackageServices]
   ): GetCollectionByPublicIdentifierResponse =
     GetCollectionByPublicIdentifierResponse(
       SharedCollectionInfo(

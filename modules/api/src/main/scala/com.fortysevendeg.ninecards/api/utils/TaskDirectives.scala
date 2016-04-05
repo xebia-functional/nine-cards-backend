@@ -13,14 +13,12 @@ import scalaz.concurrent.Task
 
 trait TaskDirectives {
 
-  /**
-    * "Unwraps" a ``Task[T]`` and runs its inner route after future
+  /** "Unwraps" a ``Task[T]`` and runs its inner route after future
     * completion with the task's value as an extraction of type ``Throwable \/ T``.
     */
   def onComplete[T](magnet: OnCompleteTaskMagnet[T]): Directive1[Throwable \/ T] = magnet
 
-  /**
-    * "Unwraps" a ``Task[T]`` and runs its inner route after future
+  /** "Unwraps" a ``Task[T]`` and runs its inner route after future
     * completion with the task's value as an extraction of type ``T``.
     * If the task fails its failure throwable is bubbled up to the nearest
     * ExceptionHandler.
@@ -29,8 +27,7 @@ trait TaskDirectives {
     */
   def onSuccess(magnet: OnSuccessTaskMagnet): Directive[magnet.Out] = magnet.directive
 
-  /**
-    * "Unwraps" a ``Task[T]`` and runs its inner route when the task has failed
+  /** "Unwraps" a ``Task[T]`` and runs its inner route when the task has failed
     * with the task's failure exception as an extraction of type ``Throwable``.
     * If the task succeeds the request is completed using the values marshaller
     * (This directive therefore requires a marshaller for the task type to be

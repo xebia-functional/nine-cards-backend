@@ -33,13 +33,13 @@ trait DomainDatabaseContext {
   flywaydb.migrate()
 
   def insertItem[A](
-    sql: String,
+    sql:    String,
     values: A
   )(implicit ev: Composite[A]): ConnectionIO[Long] =
     Update[A](sql).toUpdate0(values).withUniqueGeneratedKeys[Long]("id")
 
   def insertItems[F[_], A](
-    sql: String,
+    sql:    String,
     values: F[A]
   )(implicit ev: Composite[A], F: Foldable[F]): ConnectionIO[Int] =
     Update[A](sql).updateMany(values)

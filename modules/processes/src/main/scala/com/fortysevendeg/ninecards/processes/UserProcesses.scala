@@ -19,9 +19,9 @@ import scalaz.concurrent.Task
 class UserProcesses[F[_]](
     implicit
     userPersistenceServices: UserPersistenceServices,
-    hashUtils: HashUtils,
-    transactor: Transactor[Task],
-    dbOps: DBOps[F]
+    hashUtils:               HashUtils,
+    transactor:              Transactor[Task],
+    dbOps:                   DBOps[F]
 ) {
 
   def signUpUser(loginRequest: LoginRequest): Free[F, LoginResponse] = {
@@ -69,9 +69,9 @@ class UserProcesses[F[_]](
 
   def checkAuthToken(
     sessionToken: String,
-    androidId: String,
-    authToken: String,
-    requestUri: String
+    androidId:    String,
+    authToken:    String,
+    requestUri:   String
   ): Free[F, Option[Long]] = {
     val result: ConnectionIO[Option[Long]] = userPersistenceServices.getUserBySessionToken(sessionToken) flatMap {
       case Some(user) ⇒
@@ -99,8 +99,8 @@ object UserProcesses {
   implicit def userProcesses[F[_]](
     implicit
     userPersistenceServices: UserPersistenceServices,
-    hashUtils: HashUtils,
-    dbOps: DBOps[F]
+    hashUtils:               HashUtils,
+    dbOps:                   DBOps[F]
   ) = new UserProcesses
 
 }

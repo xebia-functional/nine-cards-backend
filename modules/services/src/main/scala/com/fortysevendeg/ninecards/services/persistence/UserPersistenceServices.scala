@@ -7,13 +7,13 @@ import doobie.imports._
 
 class UserPersistenceServices(
     implicit
-    userPersistence: Persistence[User],
+    userPersistence:         Persistence[User],
     installationPersistence: Persistence[Installation]
 ) {
 
   def addUser[K](
-    email: String,
-    apiKey: String,
+    email:        String,
+    apiKey:       String,
     sessionToken: String
   )(implicit ev: Composite[K]): ConnectionIO[K] =
     userPersistence.updateWithGeneratedKeys[K](
@@ -33,9 +33,9 @@ class UserPersistenceServices(
     userPersistence.fetchOption(UserQueries.getBySessionToken, sessionToken)
 
   def createInstallation[K](
-    userId: Long,
+    userId:      Long,
     deviceToken: Option[String],
-    androidId: String
+    androidId:   String
   )(implicit ev: Composite[K]): ConnectionIO[K] =
     userPersistence.updateWithGeneratedKeys[K](
       sql    = InstallationQueries.insert,
@@ -44,7 +44,7 @@ class UserPersistenceServices(
     )
 
   def getInstallationByUserAndAndroidId(
-    userId: Long,
+    userId:    Long,
     androidId: String
   ): ConnectionIO[Option[Installation]] =
     installationPersistence.fetchOption(
@@ -58,9 +58,9 @@ class UserPersistenceServices(
     installationPersistence.fetchOption(InstallationQueries.getById, id)
 
   def updateInstallation[K](
-    userId: Long,
+    userId:      Long,
     deviceToken: Option[String],
-    androidId: String
+    androidId:   String
   )(implicit ev: Composite[K]): ConnectionIO[K] =
     userPersistence.updateWithGeneratedKeys[K](
       sql    = InstallationQueries.updateDeviceToken,
@@ -73,14 +73,14 @@ class UserPersistenceServices(
 object UserPersistenceServices {
 
   case class UserData(
-    email: String,
-    apiKey: String,
+    email:        String,
+    apiKey:       String,
     sessionToken: String
   )
 
   implicit def userPersistenceServices(
     implicit
-    userPersistence: Persistence[User],
+    userPersistence:         Persistence[User],
     installationPersistence: Persistence[Installation]
   ) = new UserPersistenceServices
 }

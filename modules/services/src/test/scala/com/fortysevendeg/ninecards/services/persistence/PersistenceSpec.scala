@@ -37,7 +37,7 @@ trait DatabaseContext extends DummyNineCardsConfig {
   def dropTable: ConnectionIO[Int] = sql"""DROP TABLE IF EXISTS persistence""".update.run
 
   def insertItem(
-    name: String,
+    name:   String,
     active: Boolean
   ): ConnectionIO[Long] =
     sql"INSERT INTO persistence (name, active) VALUES ($name,$active)".update.withUniqueGeneratedKeys[Long]("id")

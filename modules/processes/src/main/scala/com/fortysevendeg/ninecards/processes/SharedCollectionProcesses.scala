@@ -18,8 +18,8 @@ import scalaz.syntax.applicative._
 class SharedCollectionProcesses[F[_]](
     implicit
     sharedCollectionPersistenceServices: SharedCollectionPersistenceServices,
-    transactor: Transactor[Task],
-    dbOps: DBOps[F]
+    transactor:                          Transactor[Task],
+    dbOps:                               DBOps[F]
 ) {
 
   val sharedCollectionNotFoundException = SharedCollectionNotFoundException(
@@ -59,7 +59,7 @@ object SharedCollectionProcesses {
   implicit def sharedCollectionProcesses[F[_]](
     implicit
     sharedCollectionPersistenceServices: SharedCollectionPersistenceServices,
-    dbOps: DBOps[F]
+    dbOps:                               DBOps[F]
   ) = new SharedCollectionProcesses
 
 }

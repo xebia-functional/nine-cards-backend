@@ -18,13 +18,13 @@ trait Settings {
     SbtScalariform.scalariformSettings ++ Seq(
       SbtScalariform.ScalariformKeys.preferences := ScalariformKeys.preferences.value
         .setPreference(AlignArguments, true)
-        .setPreference(AlignParameters, false)
+        .setPreference(AlignParameters, true)
         .setPreference(AlignSingleLineCaseStatements, true)
         .setPreference(CompactStringConcatenation,false)
         .setPreference(CompactControlReadability, false)
         .setPreference(DanglingCloseParenthesis,Force)
         .setPreference(DoubleIndentClassDeclaration, true)
-        .setPreference(MultilineScaladocCommentsStartOnFirstLine, false)
+        .setPreference(MultilineScaladocCommentsStartOnFirstLine, true)
         .setPreference(PlaceScaladocAsterisksBeneathSecondAsterisk, true)
         .setPreference(PreserveSpaceBeforeArguments, false)
         .setPreference(RewriteArrowSymbols, true)

@@ -13,7 +13,7 @@ import scalaz.std.iterable._
 
 class SharedCollectionPersistenceServices(
     implicit
-    collectionPersistence: Persistence[SharedCollection],
+    collectionPersistence:        Persistence[SharedCollection],
     collectionPackagePersistence: Persistence[SharedCollectionPackage]
 ) {
 
@@ -38,7 +38,7 @@ class SharedCollectionPersistenceServices(
 
   def addPackage[K](
     collectionId: Long,
-    packageName: String
+    packageName:  String
   )(implicit ev: Composite[K]): ConnectionIO[K] =
     collectionPackagePersistence.updateWithGeneratedKeys[K](
       sql    = PackageQueries.insert,
@@ -65,21 +65,21 @@ object SharedCollectionPersistenceServices {
 
   case class SharedCollectionData(
     publicIdentifier: String,
-    userId: Option[Long],
-    publishedOn: Timestamp,
-    description: Option[String],
-    author: String,
-    name: String,
-    installations: Int,
-    views: Int,
-    category: String,
-    icon: String,
-    community: Boolean
+    userId:           Option[Long],
+    publishedOn:      Timestamp,
+    description:      Option[String],
+    author:           String,
+    name:             String,
+    installations:    Int,
+    views:            Int,
+    category:         String,
+    icon:             String,
+    community:        Boolean
   )
 
   implicit def sharedCollectionPersistenceServices(
     implicit
-    collectionPersistence: Persistence[SharedCollection],
+    collectionPersistence:        Persistence[SharedCollection],
     collectionPackagePersistence: Persistence[SharedCollectionPackage]
   ) =
     new SharedCollectionPersistenceServices

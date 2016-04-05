@@ -3,30 +3,30 @@ package com.fortysevendeg.ninecards.services.free.domain
 import java.sql.Timestamp
 
 case class SharedCollection(
-  id: Long,
+  id:               Long,
   publicIdentifier: String,
-  userId: Option[Long],
-  publishedOn: Timestamp,
-  description: Option[String],
-  author: String,
-  name: String,
-  installations: Int,
-  views: Int,
-  category: String,
-  icon: String,
-  community: Boolean
+  userId:           Option[Long],
+  publishedOn:      Timestamp,
+  description:      Option[String],
+  author:           String,
+  name:             String,
+  installations:    Int,
+  views:            Int,
+  category:         String,
+  icon:             String,
+  community:        Boolean
 )
 
 case class SharedCollectionPackage(
-  id: Long,
+  id:                 Long,
   sharedCollectionId: Long,
-  packageName: String
+  packageName:        String
 )
 
 case class SharedCollectionSubscription(
-  id: Long,
+  id:                 Long,
   sharedCollectionId: Long,
-  userId: Long
+  userId:             Long
 )
 
 object SharedCollection {

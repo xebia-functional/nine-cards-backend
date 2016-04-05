@@ -3,13 +3,13 @@ package com.fortysevendeg.ninecards.processes.messages
 object UserMessages {
 
   case class LoginRequest(
-    email: String,
+    email:     String,
     androidId: String,
-    tokenId: String
+    tokenId:   String
   )
 
   case class LoginResponse(
-    apiKey: String,
+    apiKey:       String,
     sessionToken: String
   )
 

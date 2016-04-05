@@ -18,9 +18,9 @@ import scalaz.concurrent.Task
 
 class NineCardsAuthenticator(
   implicit
-  userProcesses: UserProcesses[NineCardsServices],
+  userProcesses:      UserProcesses[NineCardsServices],
   googleApiProcesses: GoogleApiProcesses[NineCardsServices],
-  ec: ExecutionContext
+  ec:                 ExecutionContext
 )
     extends HeaderDirectives
     with MarshallingDirectives
@@ -46,7 +46,7 @@ class NineCardsAuthenticator(
   } flatMap { _ ⇒ Directive.Empty }
 
   def validateLoginRequest(
-    email: String,
+    email:   String,
     tokenId: String
   ): Task[Authentication[Unit]] =
     (email, tokenId) match {
@@ -71,9 +71,9 @@ class NineCardsAuthenticator(
 
   def validateUser(
     sessionToken: String,
-    androidId: String,
-    authToken: String,
-    requestUri: Uri
+    androidId:    String,
+    authToken:    String,
+    requestUri:   Uri
   ): Task[Authentication[Long]] =
     userProcesses.checkAuthToken(
       sessionToken = sessionToken,
@@ -94,9 +94,9 @@ object NineCardsAuthenticator {
 
   implicit def nineCardsAuthenticator(
     implicit
-    userProcesses: UserProcesses[NineCardsServices],
+    userProcesses:      UserProcesses[NineCardsServices],
     googleApiProcesses: GoogleApiProcesses[NineCardsServices],
-    ec: ExecutionContext
+    ec:                 ExecutionContext
   ) = new NineCardsAuthenticator
 
 }

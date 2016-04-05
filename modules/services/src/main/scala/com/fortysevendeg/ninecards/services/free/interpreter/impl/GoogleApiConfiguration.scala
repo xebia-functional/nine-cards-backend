@@ -3,10 +3,10 @@ package com.fortysevendeg.ninecards.services.free.interpreter.impl
 import com.fortysevendeg.ninecards.services.common.NineCardsConfig
 
 case class GoogleApiConfiguration(
-  protocol: String,
-  host: String,
-  port: Option[Int],
-  tokenInfoUri: String,
+  protocol:              String,
+  host:                  String,
+  port:                  Option[Int],
+  tokenInfoUri:          String,
   tokenIdQueryParameter: String
 )
 

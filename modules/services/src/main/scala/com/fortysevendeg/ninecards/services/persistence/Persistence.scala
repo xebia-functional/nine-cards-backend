@@ -41,7 +41,7 @@ class Persistence[K](val supportsSelectForUpdate: Boolean = true) {
   ): ConnectionIO[List[K]] = Query[A, K](sql).to[List](values)
 
   def fetchOption[A](
-    sql: String,
+    sql:    String,
     values: A
   )(
     implicit
@@ -60,7 +60,7 @@ class Persistence[K](val supportsSelectForUpdate: Boolean = true) {
   def update(sql: String): ConnectionIO[Int] = Update[HNil](sql).run(HNil)
 
   def update[A](
-    sql: String,
+    sql:    String,
     values: A
   )(
     implicit
@@ -82,7 +82,7 @@ class Persistence[K](val supportsSelectForUpdate: Boolean = true) {
   def updateWithGeneratedKeys[L] = new UpdateWithGeneratedKeys[L]
 
   def updateMany[F[_], A](
-    sql: String,
+    sql:    String,
     values: F[A]
   )(
     implicit

@@ -11,7 +11,7 @@ class SharedCollectionSubscriptionPersistenceServices(
 
   def addSubscription[K](
     collectionId: Long,
-    userId: Long
+    userId:       Long
   )(implicit ev: Composite[K]): ConnectionIO[K] =
     subscriptionPersistence.updateWithGeneratedKeys[K](
       sql    = insert,
@@ -29,7 +29,7 @@ class SharedCollectionSubscriptionPersistenceServices(
 
   def getSubscriptionByCollectionAndUser(
     collectionId: Long,
-    userId: Long
+    userId:       Long
   ): ConnectionIO[Option[SharedCollectionSubscription]] =
     subscriptionPersistence.fetchOption(
       sql    = getByCollectionAndUser,
@@ -61,7 +61,7 @@ class SharedCollectionSubscriptionPersistenceServices(
 
   def removeSubscriptionByCollectionAndUser(
     collectionId: Long,
-    userId: Long
+    userId:       Long
   ): ConnectionIO[Int] = subscriptionPersistence.update(
     sql    = deleteByCollectionAndUser,
     values = (collectionId, userId)

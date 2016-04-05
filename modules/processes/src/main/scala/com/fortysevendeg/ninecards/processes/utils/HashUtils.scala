@@ -28,10 +28,10 @@ class HashUtils(implicit config: NineCardsConfig) {
   lazy val nineCardsSecretKey: String = config.getString("ninecards.secretKey")
 
   def hashValue(
-    text: String,
-    secretKey: String = nineCardsSecretKey,
-    salt: Option[String] = nineCardsSalt,
-    algorithm: Algorithm = HMacSha512
+    text:      String,
+    secretKey: String         = nineCardsSecretKey,
+    salt:      Option[String] = nineCardsSalt,
+    algorithm: Algorithm      = HMacSha512
   ) = {
 
     val hasher = salt.fold(Hasher(text))(Hasher(text).salt(_))
