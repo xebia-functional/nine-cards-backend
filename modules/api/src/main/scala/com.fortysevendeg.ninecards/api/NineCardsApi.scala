@@ -1,6 +1,6 @@
 package com.fortysevendeg.ninecards.api
 
-import akka.actor.Actor
+import akka.actor.{Actor, ActorRefFactory}
 import com.fortysevendeg.ninecards.api.NineCardsApiHeaderCommons._
 import com.fortysevendeg.ninecards.api.NineCardsAuthenticator._
 import com.fortysevendeg.ninecards.api.NineCardsHeaders.Domain._
@@ -19,107 +19,112 @@ import scala.concurrent.ExecutionContext
 
 class NineCardsApiActor
   extends Actor
-    with NineCardsApi
+    with HttpService
     with AuthHeadersRejectionHandler
     with NineCardsExceptionHandler {
 
-  def actorRefFactory = context
+  override val actorRefFactory = context
 
-  implicit def executionContext: ExecutionContext = actorRefFactory.dispatcher
+  implicit val executionContext: ExecutionContext = actorRefFactory.dispatcher
 
-  def receive = runRoute(nineCardsApiRoute)
+  def receive = runRoute( new NineCardsRoutes().nineCardsRoutes )
 
 }
 
-trait NineCardsApi
-  extends HttpService
-    with SprayJsonSupport
-    with JsonFormats {
+class NineCardsRoutes(
+  implicit
+  userProcesses: UserProcesses[NineCardsServices],
+  googleApiProcesses: GoogleApiProcesses[NineCardsServices],
+  sharedCollectionProcesses: SharedCollectionProcesses[NineCardsServices],
+  refFactory: ActorRefFactory,
+  executionContext: ExecutionContext) {
 
-  def nineCardsApiRoute(
-    implicit userProcesses: UserProcesses[NineCardsServices],
-    googleApiProcesses: GoogleApiProcesses[NineCardsServices],
-    sharedCollectionProcesses: SharedCollectionProcesses[NineCardsServices],
-    executionContext: ExecutionContext): Route =
-    userApiRoute ~
-      installationsApiRoute ~
-      sharedCollectionsApiRoute ~
-      swaggerApiRoute
+  import Directives._
+  import JsonFormats._
 
-  private[this] def userApiRoute(
-    implicit userProcesses: UserProcesses[NineCardsServices],
-    googleApiProcesses: GoogleApiProcesses[NineCardsServices],
-    executionContext: ExecutionContext) =
-    pathPrefix("login") {
-      pathEndOrSingleSlash {
-        requestLoginHeaders { (appId, apiKey) =>
-          nineCardsAuthenticator.authenticateLoginRequest {
-            post {
-              entity(as[ApiLoginRequest]) { request =>
-                complete {
-                  userProcesses.signUpUser(request) map toApiLoginResponse
-                }
-              }
-            }
-          }
-        }
-      }
-    }
+  val nineCardsRoutes: Route = pathPrefix(Segment) {
+    case "apiDocs"       => swaggerRoute
+    case "collections"   => sharedCollectionsRoute
+    case "installations" => installationsRoute
+    case "login"         => userRoute 
+  }
 
-  private[this] def installationsApiRoute(
-    implicit userProcesses: UserProcesses[NineCardsServices],
-    executionContext: ExecutionContext) =
-    pathPrefix("installations") {
-      pathEndOrSingleSlash {
-        nineCardsAuthenticator.authenticateUser { implicit userContext: UserContext =>
-          put {
-            entity(as[ApiUpdateInstallationRequest]) { request =>
-              complete {
-                userProcesses.updateInstallation(request) map toApiUpdateInstallationResponse
-              }
-            }
-          }
-        }
-      }
-    }
-
-  private[this] def sharedCollectionsApiRoute(
-    implicit userProcesses: UserProcesses[NineCardsServices],
-    sharedCollectionProcesses: SharedCollectionProcesses[NineCardsServices],
-    executionContext: ExecutionContext) =
-    pathPrefix("collections") {
-      pathEndOrSingleSlash {
-        nineCardsAuthenticator.authenticateUser { implicit userContext: UserContext =>
+  private[this] lazy val userRoute =
+    pathEndOrSingleSlash {
+      requestLoginHeaders { (appId, apiKey) =>
+        nineCardsAuthenticator.authenticateLoginRequest {
           post {
-            entity(as[ApiCreateCollectionRequest]) { request =>
+            entity(as[ApiLoginRequest]) { request =>
               complete {
-                sharedCollectionProcesses.createCollection(
-                  request) map toApiCreateCollectionResponse
+                userProcesses.signUpUser( toLoginRequest(request)) map toApiLoginResponse
               }
             }
+          }
+        }
+      }
+    }
+
+  private[this] lazy val installationsRoute =
+    nineCardsAuthenticator.authenticateUser { userContext: UserContext =>
+      pathEndOrSingleSlash {
+        put {
+          entity(as[ApiUpdateInstallationRequest]) { request =>
+            complete ( updateInstallation(request, userContext) )
+          }
+        }
+      }
+    }
+
+  private[this] lazy val sharedCollectionsRoute  =
+    nineCardsAuthenticator.authenticateUser { userContext: UserContext =>
+      pathEndOrSingleSlash {
+        post {
+          entity(as[ApiCreateCollectionRequest]) { request =>
+            complete ( createCollection( request, userContext)  )
           }
         }
       } ~
-      path(TypedSegment[PublicIdentifier]) { publicIdentifier =>
-        nineCardsAuthenticator.authenticateUser { implicit userContext: UserContext =>
-          get {
-            complete {
-              sharedCollectionProcesses.getCollectionByPublicIdentifier(
-                publicIdentifier.value) map toApiGetCollectionByPublicIdentifierResponse
-            }
-          }
+      pathPrefix(TypedSegment[PublicIdentifier]) { publicIdentifier =>
+        pathEndOrSingleSlash {
+          get( complete ( getCollection( publicIdentifier) ) )
+        } ~
+        path("subscribe"){
+          put ( complete( subscribe(publicIdentifier, userContext) ))
         }
       }
     }
 
-  private[this] def swaggerApiRoute =
-  // This path prefix grants access to the Swagger documentation.
-  // Both /apiDocs/ and /apiDocs/index.html are valid paths to load Swagger-UI.
-    pathPrefix("apiDocs") {
-      pathEndOrSingleSlash {
-        getFromResource("apiDocs/index.html")
-      } ~ {
-        getFromResourceDirectory("apiDocs")
-      }
+  private[this] lazy val swaggerRoute =
+    // This path prefix grants access to the Swagger documentation.
+    // Both /apiDocs/ and /apiDocs/index.html are valid paths to load Swagger-UI.
+    pathEndOrSingleSlash {
+      getFromResource("apiDocs/index.html")
+    } ~ {
+      getFromResourceDirectory("apiDocs")
     }
+
+  @inline
+  private[this] def updateInstallation( request: ApiUpdateInstallationRequest, userContext: UserContext) = 
+    userProcesses
+      .updateInstallation(toUpdateInstallationRequest(request, userContext))
+      .map(toApiUpdateInstallationResponse)
+
+  @inline
+  private[this] def getCollection( publicId: PublicIdentifier ) =
+    sharedCollectionProcesses
+      .getCollectionByPublicIdentifier(publicId.value)
+      .map( toApiGetCollectionByPublicIdentifierResponse )
+
+  @inline
+  private[this] def createCollection( request: ApiCreateCollectionRequest, userContext: UserContext) =
+    sharedCollectionProcesses
+      .createCollection( toCreateCollectionRequest(request, userContext) )
+      .map(toApiCreateCollectionResponse)
+  
+  @inline
+  private[this] def subscribe(publicId: PublicIdentifier, userContext: UserContext) =
+    sharedCollectionProcesses
+      .subscribe(publicId.value, userContext.userId.value)
+      .map(toApiXorSubscribeResponse)
+
 }

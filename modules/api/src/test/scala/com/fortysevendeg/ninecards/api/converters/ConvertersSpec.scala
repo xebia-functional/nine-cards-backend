@@ -43,7 +43,7 @@ class ConvertersSpec
 
         implicit val userContext = UserContext(userId, androidId)
 
-        val request = Converters.toUpdateInstallationRequest(apiRequest)
+        val request = Converters.toUpdateInstallationRequest(apiRequest, userContext)
 
         request.androidId shouldEqual androidId.value
         request.deviceToken shouldEqual apiRequest.deviceToken

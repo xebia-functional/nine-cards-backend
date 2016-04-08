@@ -55,4 +55,8 @@ object SharedCollectionMessages {
     resolvedPackages: List[ApiResolvedPackageInfo])
 
   type XorApiGetCollectionByPublicId = Xor[Throwable, ApiGetCollectionByPublicIdentifierResponse]
+
+  case class ApiSubscribeResponse()
+
+  type XorApiSubscribeResponse = Xor[Throwable, ApiSubscribeResponse]
 }

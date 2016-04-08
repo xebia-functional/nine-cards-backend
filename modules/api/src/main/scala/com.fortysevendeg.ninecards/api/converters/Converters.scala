@@ -10,20 +10,18 @@ import com.fortysevendeg.ninecards.processes.messages.UserMessages._
 
 object Converters {
 
-  implicit def toLoginRequest(
-    request: ApiLoginRequest): LoginRequest =
+  def toLoginRequest(request: ApiLoginRequest): LoginRequest =
     LoginRequest(
       email = request.email,
       androidId = request.androidId,
       tokenId = request.tokenId)
 
-  implicit def toApiLoginResponse(
-    response: LoginResponse): ApiLoginResponse =
+  def toApiLoginResponse(response: LoginResponse): ApiLoginResponse =
     ApiLoginResponse(
       apiKey = response.apiKey,
       sessionToken = response.sessionToken)
 
-  implicit def toApiCreateCollectionResponse(
+  def toApiCreateCollectionResponse(
     response: CreateCollectionResponse): ApiCreateCollectionResponse =
     ApiCreateCollectionResponse(
       publicIdentifier = response.data.publicIdentifier,
@@ -39,9 +37,9 @@ object Converters {
       community = response.data.community,
       packages = response.data.packages)
 
-  implicit def toCreateCollectionRequest(
-    request: ApiCreateCollectionRequest)(
-    implicit userContext: UserContext): CreateCollectionRequest =
+  def toCreateCollectionRequest(
+    request: ApiCreateCollectionRequest,
+    userContext: UserContext): CreateCollectionRequest =
     CreateCollectionRequest(
       collection = SharedCollectionData(
         userId = Option(userContext.userId.value),
@@ -53,8 +51,7 @@ object Converters {
         category = request.category,
         icon = request.icon,
         community = request.community),
-      packages = request.packages
-    )
+      packages = request.packages )
 
   def toApiResolvedPackageInfo(resolvedPackageInfo: ResolvedPackageInfo) =
     ApiResolvedPackageInfo(
@@ -66,36 +63,44 @@ object Converters {
       stars = resolvedPackageInfo.stars,
       downloads = resolvedPackageInfo.downloads)
 
-  implicit def toApiGetCollectionByPublicIdentifierResponse(
-    response: XorGetCollectionByPublicId): XorApiGetCollectionByPublicId =
-    response map (r =>
-      ApiGetCollectionByPublicIdentifierResponse(
-        publicIdentifier = r.data.publicIdentifier,
-        publishedOn = r.data.publishedOn,
-        description = r.data.description,
-        author = r.data.author,
-        name = r.data.name,
-        sharedLink = r.data.sharedLink,
-        installations = r.data.installations,
-        views = r.data.views,
-        category = r.data.category,
-        icon = r.data.icon,
-        community = r.data.community,
-        packages = r.data.packages,
-        resolvedPackages = r.data.resolvedPackages map toApiResolvedPackageInfo))
+  def toApiGetCollectionByPublicIdentifierResponse(r: GetCollectionByPublicIdentifierResponse) =
+    ApiGetCollectionByPublicIdentifierResponse(
+      publicIdentifier = r.data.publicIdentifier,
+      publishedOn = r.data.publishedOn,
+      description = r.data.description,
+      author = r.data.author,
+      name = r.data.name,
+      sharedLink = r.data.sharedLink,
+      installations = r.data.installations,
+      views = r.data.views,
+      category = r.data.category,
+      icon = r.data.icon,
+      community = r.data.community,
+      packages = r.data.packages,
+      resolvedPackages = r.data.resolvedPackages map toApiResolvedPackageInfo)
 
-  implicit def toUpdateInstallationRequest(
-    request: ApiUpdateInstallationRequest)(
-    implicit userContext: UserContext): UpdateInstallationRequest =
+  def toApiGetCollectionByPublicIdentifierResponse(
+      response: XorGetCollectionByPublicId): XorApiGetCollectionByPublicId =
+    response map toApiGetCollectionByPublicIdentifierResponse
+
+  def toUpdateInstallationRequest(
+    request: ApiUpdateInstallationRequest, 
+    userContext: UserContext): UpdateInstallationRequest =
     UpdateInstallationRequest(
       userId = userContext.userId.value,
       androidId = userContext.androidId.value,
       deviceToken = request.deviceToken)
 
-  implicit def toApiUpdateInstallationResponse(
+  def toApiUpdateInstallationResponse(
     response: UpdateInstallationResponse): ApiUpdateInstallationResponse =
     ApiUpdateInstallationResponse(
       androidId = response.androidId,
       deviceToken = response.deviceToken)
+
+  def toApiSubscribeResponse(_x: SubscribeResponse): ApiSubscribeResponse = 
+    ApiSubscribeResponse()
+
+  def toApiXorSubscribeResponse( response: XorSubscribeResponse): XorApiSubscribeResponse =
+    response map toApiSubscribeResponse
 
 }

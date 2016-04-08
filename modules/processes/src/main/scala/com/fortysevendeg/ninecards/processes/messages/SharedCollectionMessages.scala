@@ -49,4 +49,10 @@ object SharedCollectionMessages {
   case class GetCollectionByPublicIdentifierResponse(data: SharedCollectionInfo)
 
   type XorGetCollectionByPublicId = Xor[Throwable, GetCollectionByPublicIdentifierResponse]
+
+  case class SubscribeResponse()
+
+  type XorSubscribeResponse = Xor[Throwable, SubscribeResponse]
+
+
 }

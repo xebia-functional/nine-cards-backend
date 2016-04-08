@@ -7,16 +7,13 @@ import doobie.imports._
 class SharedCollectionSubscriptionPersistenceServices(
   implicit subscriptionPersistence: Persistence[SharedCollectionSubscription]) {
 
-  def addSubscription[K](
-    collectionId: Long,
-    userId: Long)(implicit ev: Composite[K]): ConnectionIO[K] =
+  def addSubscription[K: Composite]( collectionId: Long, userId: Long): ConnectionIO[K] =
     subscriptionPersistence.updateWithGeneratedKeys[K](
       sql = insert,
       fields = SharedCollection.allFields,
       values = (collectionId, userId))
 
-  def getSubscriptionsByCollection(
-    collectionId: Long): ConnectionIO[List[SharedCollectionSubscription]] =
+  def getSubscriptionsByCollection(collectionId: Long): ConnectionIO[List[SharedCollectionSubscription]] =
     subscriptionPersistence.fetchList(
       sql = getByCollection,
       values = collectionId)
