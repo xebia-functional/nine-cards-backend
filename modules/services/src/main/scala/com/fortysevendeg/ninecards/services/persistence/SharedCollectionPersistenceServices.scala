@@ -57,7 +57,7 @@ object SharedCollectionPersistenceServices {
     publicIdentifier: String,
     userId: Option[Long],
     publishedOn: Timestamp,
-    description: Option[String],
+    description: Option[String] = None,
     author: String,
     name: String,
     installations: Int,

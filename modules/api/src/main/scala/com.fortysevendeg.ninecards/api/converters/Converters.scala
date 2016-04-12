@@ -23,6 +23,39 @@ object Converters {
       apiKey = response.apiKey,
       sessionToken = response.sessionToken)
 
+  implicit def toApiCreateCollectionResponse(
+    response: CreateCollectionResponse): ApiCreateCollectionResponse =
+    ApiCreateCollectionResponse(
+      publicIdentifier = response.data.publicIdentifier,
+      publishedOn = response.data.publishedOn,
+      description = response.data.description,
+      author = response.data.author,
+      name = response.data.name,
+      sharedLink = response.data.sharedLink,
+      installations = response.data.installations,
+      views = response.data.views,
+      category = response.data.category,
+      icon = response.data.icon,
+      community = response.data.community,
+      packages = response.data.packages)
+
+  implicit def toCreateCollectionRequest(
+    request: ApiCreateCollectionRequest)(
+    implicit userContext: UserContext): CreateCollectionRequest =
+    CreateCollectionRequest(
+      collection = SharedCollectionData(
+        userId = Option(userContext.userId.value),
+        description = request.description,
+        author = request.author,
+        name = request.name,
+        installations = request.installations,
+        views = request.views,
+        category = request.category,
+        icon = request.icon,
+        community = request.community),
+      packages = request.packages
+    )
+
   def toApiResolvedPackageInfo(resolvedPackageInfo: ResolvedPackageInfo) =
     ApiResolvedPackageInfo(
       packageName = resolvedPackageInfo.packageName,
