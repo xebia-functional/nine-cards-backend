@@ -15,5 +15,5 @@ object NineCardsServices {
 
   implicit val taskMonadInstance: Monad[Task] = taskMonad
 
-  val interpreters: NineCardsServices ~> Task = DBResultInterpreter or GoogleAPIServicesInterpreter
+  val interpreters: NineCardsServices ~> Task = dBResultInterpreter or googleAPIServicesInterpreter
 }
