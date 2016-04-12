@@ -1,6 +1,5 @@
 package com.fortysevendeg.ninecards.processes
 
-import cats.Monad
 import com.fortysevendeg.ninecards.processes.NineCardsServices._
 import com.fortysevendeg.ninecards.processes.messages.InstallationsMessages._
 import com.fortysevendeg.ninecards.processes.messages.UserMessages.{LoginRequest, LoginResponse}
@@ -17,7 +16,6 @@ import org.specs2.mutable.Specification
 import org.specs2.specification.Scope
 
 import scalaz.Scalaz._
-import scalaz.concurrent.Task
 
 
 trait UserProcessesSpecification
@@ -26,13 +24,6 @@ trait UserProcessesSpecification
     with Mockito
     with UserProcessesContext
     with DummyNineCardsConfig {
-
-  implicit def taskMonad = new Monad[Task] {
-    override def flatMap[A, B](fa: Task[A])(f: A => Task[B]): Task[B] =
-      fa.flatMap(f)
-
-    override def pure[A](a: A): Task[A] = Task.now(a)
-  }
 
   trait BasicScope extends Scope {
 
@@ -131,20 +122,23 @@ class UserProcessesSpec
     with ScalaCheck {
 
   "signUpUser" should {
-    "return LoginResponse object when the user exists and installation" in new UserAndInstallationSuccessfulScope {
-      val signUpUser = userProcesses.signUpUser(loginRequest)
-      signUpUser.foldMap(interpreters).run shouldEqual loginResponse
-    }
+    "return LoginResponse object when the user exists and installation" in
+      new UserAndInstallationSuccessfulScope {
+        val signUpUser = userProcesses.signUpUser(loginRequest)
+        signUpUser.foldMap(interpreters).run shouldEqual loginResponse
+      }
 
-    "return LoginResponse object when the user exists but not installation" in new UserSuccessfulAndInstallationFailingScope {
-      val signUpUser = userProcesses.signUpUser(loginRequest)
-      signUpUser.foldMap(interpreters).run shouldEqual loginResponse
-    }
+    "return LoginResponse object when the user exists but not installation" in
+      new UserSuccessfulAndInstallationFailingScope {
+        val signUpUser = userProcesses.signUpUser(loginRequest)
+        signUpUser.foldMap(interpreters).run shouldEqual loginResponse
+      }
 
-    "return LoginResponse object when there isn't user or installation" in new UserAndInstallationFailingScope {
-      val signUpUser = userProcesses.signUpUser(loginRequest)
-      signUpUser.foldMap(interpreters).run shouldEqual loginResponse
-    }
+    "return LoginResponse object when there isn't user or installation" in
+      new UserAndInstallationFailingScope {
+        val signUpUser = userProcesses.signUpUser(loginRequest)
+        signUpUser.foldMap(interpreters).run shouldEqual loginResponse
+      }
   }
 
   "updateInstallation" should {

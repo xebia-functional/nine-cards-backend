@@ -3,7 +3,6 @@ package com.fortysevendeg.ninecards.processes
 import java.sql.Timestamp
 import java.time.Instant
 
-import cats.Monad
 import com.fortysevendeg.ninecards.processes.NineCardsServices._
 import com.fortysevendeg.ninecards.processes.ProcessesExceptions._
 import com.fortysevendeg.ninecards.processes.messages.SharedCollectionMessages._
@@ -19,22 +18,14 @@ import org.specs2.mutable.Specification
 import org.specs2.specification.Scope
 
 import scalaz.Scalaz._
-import scalaz.concurrent.Task
 
 trait SharedCollectionProcessesSpecification
   extends Specification
     with Matchers
     with Mockito
-  with DummyNineCardsConfig
+    with DummyNineCardsConfig
     with SharedCollectionProcessesContext
     with XorMatchers {
-
-  implicit def taskMonad = new Monad[Task] {
-    override def flatMap[A, B](fa: Task[A])(f: A => Task[B]): Task[B] =
-      fa.flatMap(f)
-
-    override def pure[A](a: A): Task[A] = Task.now(a)
-  }
 
   trait BasicScope extends Scope {
 
