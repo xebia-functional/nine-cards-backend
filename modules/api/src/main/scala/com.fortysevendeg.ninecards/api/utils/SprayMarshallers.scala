@@ -1,6 +1,5 @@
 package com.fortysevendeg.ninecards.api.utils
 
-import cats._
 import cats.data.Xor
 import cats.free.Free
 import com.fortysevendeg.ninecards.processes.NineCardsServices._
@@ -10,13 +9,6 @@ import spray.httpx.marshalling.ToResponseMarshaller
 import scalaz.concurrent.Task
 
 object SprayMarshallers {
-
-  implicit def taskMonad = new Monad[Task] {
-    override def flatMap[A, B](fa: Task[A])(f: A => Task[B]): Task[B] =
-      fa.flatMap(f)
-
-    override def pure[A](a: A): Task[A] = Task.now(a)
-  }
 
   implicit def catsXorMarshaller[T <: Throwable, A](
     implicit m: ToResponseMarshaller[A]): ToResponseMarshaller[Xor[T, A]] =

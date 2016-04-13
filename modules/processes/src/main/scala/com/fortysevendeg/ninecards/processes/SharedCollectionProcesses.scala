@@ -1,6 +1,5 @@
 package com.fortysevendeg.ninecards.processes
 
-import cats.data.Xor
 import cats.free.Free
 import cats.syntax.xor._
 import com.fortysevendeg.ninecards.processes.ProcessesExceptions.SharedCollectionNotFoundException
