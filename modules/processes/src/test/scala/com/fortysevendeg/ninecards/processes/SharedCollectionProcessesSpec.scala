@@ -77,7 +77,7 @@ trait SharedCollectionProcessesContext {
 
   val community = true
 
-  val sharedLink = ""
+  val sharedLink = s"http://localhost:8080/collections/$publicIdentifier"
 
   val collection = SharedCollection(
     id = collectionId,
