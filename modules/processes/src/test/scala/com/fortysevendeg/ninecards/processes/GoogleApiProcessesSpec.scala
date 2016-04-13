@@ -1,6 +1,5 @@
 package com.fortysevendeg.ninecards.processes
 
-import cats.Monad
 import cats.data.Xor
 import cats.free.Free
 import com.fortysevendeg.ninecards.processes.NineCardsServices._
@@ -12,20 +11,11 @@ import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
 import org.specs2.specification.Scope
 
-import scalaz.concurrent.Task
-
 trait GoogleApiProcessesSpecification
   extends Specification
     with Matchers
     with Mockito
     with GoogleApiProcessesContext {
-
-  implicit def taskMonad = new Monad[Task] {
-    override def flatMap[A, B](fa: Task[A])(f: A => Task[B]): Task[B] =
-      fa.flatMap(f)
-
-    override def pure[A](a: A): Task[A] = Task.now(a)
-  }
 
   trait BasicScope extends Scope {
 
