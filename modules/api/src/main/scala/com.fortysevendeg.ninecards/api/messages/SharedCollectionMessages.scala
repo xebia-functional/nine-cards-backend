@@ -5,6 +5,31 @@ import org.joda.time.DateTime
 
 object SharedCollectionMessages {
 
+  case class ApiCreateCollectionRequest(
+    description: Option[String],
+    author: String,
+    name: String,
+    installations: Option[Int] = None,
+    views: Option[Int] = None,
+    category: String,
+    icon: String,
+    community: Boolean,
+    packages: List[String])
+
+  case class ApiCreateCollectionResponse(
+    publicIdentifier: String,
+    publishedOn: DateTime,
+    description: Option[String],
+    author: String,
+    name: String,
+    sharedLink: String,
+    installations: Int,
+    views: Int,
+    category: String,
+    icon: String,
+    community: Boolean,
+    packages: List[String])
+
   case class ApiResolvedPackageInfo(
     packageName: String,
     title: String,

@@ -14,6 +14,17 @@ object SharedCollectionMessages {
     stars: Double,
     downloads: String)
 
+  case class SharedCollectionData(
+    userId: Option[Long],
+    description: Option[String],
+    author: String,
+    name: String,
+    installations: Option[Int] = None,
+    views: Option[Int] = None,
+    category: String,
+    icon: String,
+    community: Boolean)
+
   case class SharedCollectionInfo(
     publicIdentifier: String,
     publishedOn: DateTime,
@@ -28,6 +39,12 @@ object SharedCollectionMessages {
     community: Boolean,
     packages: List[String],
     resolvedPackages: List[ResolvedPackageInfo])
+
+  case class CreateCollectionRequest(
+    collection: SharedCollectionData,
+    packages: List[String])
+
+  case class CreateCollectionResponse(data: SharedCollectionInfo)
 
   case class GetCollectionByPublicIdentifierResponse(data: SharedCollectionInfo)
 

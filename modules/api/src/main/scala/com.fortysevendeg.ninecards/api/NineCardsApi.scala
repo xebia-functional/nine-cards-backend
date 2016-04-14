@@ -6,6 +6,7 @@ import com.fortysevendeg.ninecards.api.NineCardsAuthenticator._
 import com.fortysevendeg.ninecards.api.NineCardsHeaders.Domain._
 import com.fortysevendeg.ninecards.api.converters.Converters._
 import com.fortysevendeg.ninecards.api.messages.InstallationsMessages._
+import com.fortysevendeg.ninecards.api.messages.SharedCollectionMessages._
 import com.fortysevendeg.ninecards.api.messages.UserMessages._
 import com.fortysevendeg.ninecards.api.utils.SprayMarshallers._
 import com.fortysevendeg.ninecards.api.utils.SprayMatchers._
@@ -87,6 +88,18 @@ trait NineCardsApi
     sharedCollectionProcesses: SharedCollectionProcesses[NineCardsServices],
     executionContext: ExecutionContext) =
     pathPrefix("collections") {
+      pathEndOrSingleSlash {
+        nineCardsAuthenticator.authenticateUser { implicit userContext: UserContext =>
+          post {
+            entity(as[ApiCreateCollectionRequest]) { request =>
+              complete {
+                sharedCollectionProcesses.createCollection(
+                  request) map toApiCreateCollectionResponse
+              }
+            }
+          }
+        }
+      } ~
       path(TypedSegment[PublicIdentifier]) { publicIdentifier =>
         nineCardsAuthenticator.authenticateUser { implicit userContext: UserContext =>
           get {
