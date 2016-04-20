@@ -8,7 +8,6 @@ import scala.util.Random
 import scalaz.Foldable
 import scalaz.concurrent.Task
 
-
 trait DomainDatabaseContext {
 
   val emptyDeviceToken: Option[String] = None
@@ -33,13 +32,9 @@ trait DomainDatabaseContext {
   flywaydb.setDataSource(testUrl, testUsername, testPassword)
   flywaydb.migrate()
 
-  def insertItem[A](
-    sql: String,
-    values: A)(implicit ev: Composite[A]): ConnectionIO[Long] =
+  def insertItem[A: Composite](sql: String, values: A): ConnectionIO[Long] =
     Update[A](sql).toUpdate0(values).withUniqueGeneratedKeys[Long]("id")
 
-  def insertItems[F[_], A](
-    sql: String,
-    values: F[A])(implicit ev: Composite[A], F: Foldable[F]): ConnectionIO[Int] =
+  def insertItems[F[_]: Foldable, A: Composite](sql: String, values: F[A]): ConnectionIO[Int] =
     Update[A](sql).updateMany(values)
 }

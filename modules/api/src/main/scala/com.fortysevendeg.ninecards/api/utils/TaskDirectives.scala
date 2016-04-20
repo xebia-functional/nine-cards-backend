@@ -1,14 +1,14 @@
 package com.fortysevendeg.ninecards.api.utils
 
-import shapeless.{::, HList, HNil}
+import shapeless.{ ::, HList, HNil }
 import spray.httpx.marshalling.ToResponseMarshaller
 import spray.routing.directives.OnCompleteFutureMagnet
-import spray.routing.{Directive, HListable, _}
+import spray.routing.{ Directive, HListable, _ }
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ ExecutionContext, Future }
 import scala.util.control.NonFatal
-import scala.util.{Failure, Success, Try}
-import scalaz.{-\/, \/, \/-}
+import scala.util.{ Failure, Success, Try }
+import scalaz.{ -\/, \/, \/- }
 import scalaz.concurrent.Task
 
 trait TaskDirectives {

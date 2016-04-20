@@ -1,6 +1,6 @@
 package com.fortysevendeg.ninecards.api
 
-import akka.actor.{ActorRefFactory, ActorSystem}
+import akka.actor.{ ActorRefFactory, ActorSystem }
 import akka.testkit._
 import cats.free.Free
 import cats.syntax.xor._
@@ -16,13 +16,13 @@ import com.fortysevendeg.ninecards.processes._
 import com.fortysevendeg.ninecards.services.common.TaskOps._
 import com.fortysevendeg.ninecards.services.persistence.PersistenceExceptions.PersistenceException
 import org.joda.time.DateTime
-import org.mockito.Matchers.{eq => mockEq}
+import org.mockito.Matchers.{ eq ⇒ mockEq }
 import org.specs2.matcher.Matchers
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
 import org.specs2.specification.Scope
 import spray.http.HttpHeaders.RawHeader
-import spray.http.{MediaTypes, StatusCodes}
+import spray.http.{ MediaTypes, StatusCodes }
 import spray.routing.HttpService
 import spray.testkit.Specs2RouteTest
 
@@ -31,14 +31,14 @@ import scalaz.concurrent.Task
 
 trait NineCardsApiSpecification
   extends Specification
-    with AuthHeadersRejectionHandler
-    with HttpService
-    with JsonFormats
-    with Matchers
-    with Mockito
-    with NineCardsApiContext
-    with NineCardsExceptionHandler
-    with Specs2RouteTest {
+  with AuthHeadersRejectionHandler
+  with HttpService
+  with JsonFormats
+  with Matchers
+  with Mockito
+  with NineCardsApiContext
+  with NineCardsExceptionHandler
+  with Specs2RouteTest {
 
   implicit def default(implicit system: ActorSystem) = RouteTestTimeout(20.second dilated system)
 
@@ -58,9 +58,10 @@ trait NineCardsApiSpecification
 
     userProcesses.checkAuthToken(
       sessionToken = mockEq(sessionToken),
-      androidId = mockEq(androidId),
-      authToken = mockEq(authToken),
-      requestUri = any[String]) returns Free.pure(Option(userId))
+      androidId    = mockEq(androidId),
+      authToken    = mockEq(authToken),
+      requestUri   = any[String]
+    ) returns Free.pure(Option(userId))
   }
 
   trait SuccessfulScope extends BasicScope {
@@ -69,12 +70,11 @@ trait NineCardsApiSpecification
 
     userProcesses.signUpUser(loginRequest) returns Free.pure(loginResponse)
 
-    userProcesses.updateInstallation(
-      mockEq(updateInstallationRequest))(
-      any) returns Free.pure(updateInstallationResponse)
+    userProcesses.updateInstallation(mockEq(updateInstallationRequest))(any) returns
+      Free.pure(updateInstallationResponse)
 
-    sharedCollectionProcesses.getCollectionByPublicIdentifier(
-      any[String])(any) returns Free.pure(getCollectionByPublicIdentifierResponse.right)
+    sharedCollectionProcesses.getCollectionByPublicIdentifier(any[String])(any) returns
+      Free.pure(getCollectionByPublicIdentifierResponse.right)
   }
 
   trait UnsuccessfulScope extends BasicScope {
@@ -83,12 +83,13 @@ trait NineCardsApiSpecification
 
     userProcesses.checkAuthToken(
       sessionToken = mockEq(sessionToken),
-      androidId = mockEq(androidId),
-      authToken = mockEq(failingAuthToken),
-      requestUri = any[String]) returns Free.pure(None)
+      androidId    = mockEq(androidId),
+      authToken    = mockEq(failingAuthToken),
+      requestUri   = any[String]
+    ) returns Free.pure(None)
 
-    sharedCollectionProcesses.getCollectionByPublicIdentifier(
-      any[String])(any) returns Free.pure(sharedCollectionNotFoundException.left)
+    sharedCollectionProcesses.getCollectionByPublicIdentifier(any[String])(any) returns
+      Free.pure(sharedCollectionNotFoundException.left)
   }
 
   trait FailingScope extends BasicScope {
@@ -97,18 +98,18 @@ trait NineCardsApiSpecification
 
     userProcesses.checkAuthToken(
       sessionToken = mockEq(sessionToken),
-      androidId = mockEq(androidId),
-      authToken = mockEq(failingAuthToken),
-      requestUri = any[String]) returns checkAuthTokenTask.liftF[NineCardsServices]
+      androidId    = mockEq(androidId),
+      authToken    = mockEq(failingAuthToken),
+      requestUri   = any[String]
+    ) returns checkAuthTokenTask.liftF[NineCardsServices]
 
     userProcesses.signUpUser(loginRequest) returns loginTask.liftF[NineCardsServices]
 
-    userProcesses.updateInstallation(
-      mockEq(updateInstallationRequest))(
-      any) returns updateInstallationTask.liftF[NineCardsServices]
+    userProcesses.updateInstallation(mockEq(updateInstallationRequest))(any) returns
+      updateInstallationTask.liftF[NineCardsServices]
 
-    sharedCollectionProcesses.getCollectionByPublicIdentifier(
-      any[String])(any) returns getCollectionByIdTask.liftF[NineCardsServices]
+    sharedCollectionProcesses.getCollectionByPublicIdentifier(any[String])(any) returns
+      getCollectionByIdTask.liftF[NineCardsServices]
   }
 
 }
@@ -183,29 +184,33 @@ trait NineCardsApiContext {
 
   val sharedCollectionInfo = SharedCollectionInfo(
     publicIdentifier = publicIdentifier,
-    publishedOn = now,
-    description = description,
-    author = author,
-    name = name,
-    sharedLink = sharedLink,
-    installations = installations,
-    views = views,
-    category = category,
-    icon = icon,
-    community = community,
-    packages = List.empty,
-    resolvedPackages = List.empty)
+    publishedOn      = now,
+    description      = description,
+    author           = author,
+    name             = name,
+    sharedLink       = sharedLink,
+    installations    = installations,
+    views            = views,
+    category         = category,
+    icon             = icon,
+    community        = community,
+    packages         = List.empty,
+    resolvedPackages = List.empty
+  )
 
   val getCollectionByPublicIdentifierResponse = GetCollectionByPublicIdentifierResponse(
-    data = sharedCollectionInfo)
+    data = sharedCollectionInfo
+  )
 
   val persistenceException = PersistenceException(
     message = "Test error",
-    cause = Option(new RuntimeException("Test error")))
+    cause   = Option(new RuntimeException("Test error"))
+  )
 
   val sharedCollectionNotFoundException = SharedCollectionNotFoundException(
     message = "Test error",
-    cause = Option(new RuntimeException("Test error")))
+    cause   = Option(new RuntimeException("Test error"))
+  )
 
   val checkAuthTokenTask: Task[Option[Long]] = Task.fail(persistenceException)
 
@@ -217,17 +222,20 @@ trait NineCardsApiContext {
 
   val apiRequestHeaders = List(
     RawHeader(headerAppId, appId),
-    RawHeader(headerApiKey, appKey))
+    RawHeader(headerApiKey, appKey)
+  )
 
   val userInfoHeaders = List(
     RawHeader(headerAndroidId, androidId),
     RawHeader(headerSessionToken, sessionToken),
-    RawHeader(headerAuthToken, authToken))
+    RawHeader(headerAuthToken, authToken)
+  )
 
   val failingUserInfoHeaders = List(
     RawHeader(headerAndroidId, androidId),
     RawHeader(headerSessionToken, sessionToken),
-    RawHeader(headerAuthToken, failingAuthToken))
+    RawHeader(headerAuthToken, failingAuthToken)
+  )
 }
 
 class NineCardsApiSpec
