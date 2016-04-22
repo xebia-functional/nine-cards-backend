@@ -2,8 +2,9 @@ package com.fortysevendeg.ninecards.api
 
 import akka.actor.Actor
 import com.fortysevendeg.ninecards.api.NineCardsApiHeaderCommons._
-import com.fortysevendeg.ninecards.api.NineCardsAuthenticator._
+import com.fortysevendeg.ninecards.api.NineCardsDirectives._
 import com.fortysevendeg.ninecards.api.NineCardsHeaders.Domain._
+import com.fortysevendeg.ninecards.api.NineCardsHeaders.NewSharedCollectionData
 import com.fortysevendeg.ninecards.api.converters.Converters._
 import com.fortysevendeg.ninecards.api.messages.InstallationsMessages._
 import com.fortysevendeg.ninecards.api.messages.SharedCollectionMessages._
@@ -53,7 +54,7 @@ trait NineCardsApi
     pathPrefix("login") {
       pathEndOrSingleSlash {
         requestLoginHeaders { (appId, apiKey) =>
-          nineCardsAuthenticator.authenticateLoginRequest {
+          nineCardsDirectives.authenticateLoginRequest { implicit sessionToken: SessionToken =>
             post {
               entity(as[ApiLoginRequest]) { request =>
                 complete {
@@ -71,7 +72,7 @@ trait NineCardsApi
     executionContext: ExecutionContext) =
     pathPrefix("installations") {
       pathEndOrSingleSlash {
-        nineCardsAuthenticator.authenticateUser { implicit userContext: UserContext =>
+        nineCardsDirectives.authenticateUser { implicit userContext: UserContext =>
           put {
             entity(as[ApiUpdateInstallationRequest]) { request =>
               complete {
@@ -89,19 +90,21 @@ trait NineCardsApi
     executionContext: ExecutionContext) =
     pathPrefix("collections") {
       pathEndOrSingleSlash {
-        nineCardsAuthenticator.authenticateUser { implicit userContext: UserContext =>
-          post {
-            entity(as[ApiCreateCollectionRequest]) { request =>
-              complete {
-                sharedCollectionProcesses.createCollection(
-                  request) map toApiCreateCollectionResponse
+        nineCardsDirectives.authenticateUser { implicit userContext: UserContext =>
+          nineCardsDirectives.getNewSharedCollectionData { implicit newCollectionData: NewSharedCollectionInfo =>
+            post {
+              entity(as[ApiCreateCollectionRequest]) { request =>
+                complete {
+                  sharedCollectionProcesses.createCollection(
+                    request) map toApiCreateCollectionResponse
+                }
               }
             }
           }
         }
       } ~
       path(TypedSegment[PublicIdentifier]) { publicIdentifier =>
-        nineCardsAuthenticator.authenticateUser { implicit userContext: UserContext =>
+        nineCardsDirectives.authenticateUser { implicit userContext: UserContext =>
           get {
             complete {
               sharedCollectionProcesses.getCollectionByPublicIdentifier(

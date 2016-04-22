@@ -95,7 +95,7 @@ trait UserProcessesContext {
 
   val installationId = 1l
 
-  val loginRequest = LoginRequest(email, androidId, googleTokenId)
+  val loginRequest = LoginRequest(email, androidId, sessionToken, googleTokenId)
 
   val loginResponse = LoginResponse(apiKey, sessionToken)
 

@@ -1,7 +1,5 @@
 package com.fortysevendeg.ninecards.processes
 
-import java.util.UUID
-
 import cats.free.Free
 import cats.syntax.xor._
 import com.fortysevendeg.ninecards.processes.ProcessesExceptions.SharedCollectionNotFoundException
@@ -12,7 +10,6 @@ import com.fortysevendeg.ninecards.services.free.algebra.DBResult.DBOps
 import com.fortysevendeg.ninecards.services.free.domain.{Installation, SharedCollection}
 import com.fortysevendeg.ninecards.services.persistence.{SharedCollectionPersistenceServices, _}
 import doobie.imports._
-import org.joda.time.DateTime
 
 import scalaz.concurrent.Task
 import scalaz.syntax.applicative._
@@ -26,13 +23,8 @@ class SharedCollectionProcesses[F[_]](
     message = "The required shared collection doesn't exist")
 
   def createCollection(request: CreateCollectionRequest): Free[F, CreateCollectionResponse] = {
-    val collectionData = toSharedCollectionDataServices(
-      publicIdentifier = UUID.randomUUID.toString,
-      publishedOn = DateTime.now,
-      data = request.collection)
-
     for {
-      sharedCollection <- sharedCollectionPersistenceServices.addCollection[SharedCollection](collectionData)
+      sharedCollection <- sharedCollectionPersistenceServices.addCollection[SharedCollection](request.collection)
       response <- sharedCollectionPersistenceServices.addPackages(sharedCollection.id, request.packages)
     } yield toCreateCollectionResponse(sharedCollection, request.packages)
   }.liftF[F]

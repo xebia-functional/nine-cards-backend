@@ -1,7 +1,5 @@
 package com.fortysevendeg.ninecards.processes
 
-import java.util.UUID
-
 import cats.free.Free
 import com.fortysevendeg.ninecards.processes.converters.Converters._
 import com.fortysevendeg.ninecards.processes.messages.InstallationsMessages._
@@ -27,11 +25,13 @@ class UserProcesses[F[_]](
       case Some(user) =>
         signUpInstallation(loginRequest, user)
       case None =>
-        val sessionToken = UUID.randomUUID.toString
-        val apiKey = hashUtils.hashValue(sessionToken)
+        val apiKey = hashUtils.hashValue(loginRequest.sessionToken)
 
         for {
-          newUser <- userPersistenceServices.addUser[User](loginRequest.email, apiKey, sessionToken)
+          newUser <- userPersistenceServices.addUser[User](
+            email = loginRequest.email,
+            apiKey = apiKey,
+            sessionToken = loginRequest.sessionToken)
           installation <- userPersistenceServices.createInstallation[Installation](
             userId = newUser.id,
             deviceToken = None,

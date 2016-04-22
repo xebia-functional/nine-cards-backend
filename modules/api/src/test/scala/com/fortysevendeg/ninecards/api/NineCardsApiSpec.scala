@@ -67,7 +67,8 @@ trait NineCardsApiSpecification
 
     googleApiProcesses.checkGoogleTokenId(email, tokenId) returns Free.pure(true)
 
-    userProcesses.signUpUser(loginRequest) returns Free.pure(loginResponse)
+    userProcesses.signUpUser(
+      LoginRequest(email, androidId, tokenId, any)) returns Free.pure(loginResponse)
 
     userProcesses.updateInstallation(
       mockEq(updateInstallationRequest))(
@@ -101,7 +102,8 @@ trait NineCardsApiSpecification
       authToken = mockEq(failingAuthToken),
       requestUri = any[String]) returns checkAuthTokenTask.liftF[NineCardsServices]
 
-    userProcesses.signUpUser(loginRequest) returns loginTask.liftF[NineCardsServices]
+    userProcesses.signUpUser(
+      LoginRequest(email, androidId, tokenId, any)) returns loginTask.liftF[NineCardsServices]
 
     userProcesses.updateInstallation(
       mockEq(updateInstallationRequest))(
@@ -172,8 +174,6 @@ trait NineCardsApiContext {
   val apiLoginRequest = ApiLoginRequest(email, androidId, tokenId)
 
   val apiUpdateInstallationRequest = ApiUpdateInstallationRequest(deviceToken)
-
-  val loginRequest = LoginRequest(email, androidId, tokenId)
 
   val loginResponse = LoginResponse(apiToken, sessionToken)
 

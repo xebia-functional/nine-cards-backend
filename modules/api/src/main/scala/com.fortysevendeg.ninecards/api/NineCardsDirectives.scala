@@ -1,12 +1,14 @@
 package com.fortysevendeg.ninecards.api
 
+import java.util.UUID
+
 import com.fortysevendeg.ninecards.api.NineCardsHeaders.Domain._
 import com.fortysevendeg.ninecards.api.NineCardsHeaders._
 import com.fortysevendeg.ninecards.api.messages.UserMessages.ApiLoginRequest
-import com.fortysevendeg.ninecards.api.utils.SprayMarshallers._
 import com.fortysevendeg.ninecards.api.utils.TaskDirectives._
 import com.fortysevendeg.ninecards.processes.NineCardsServices._
 import com.fortysevendeg.ninecards.processes._
+import org.joda.time.DateTime
 import shapeless._
 import spray.http.Uri
 import spray.routing._
@@ -16,11 +18,12 @@ import spray.routing.directives._
 import scala.concurrent.ExecutionContext
 import scalaz.concurrent.Task
 
-class NineCardsAuthenticator(
+class NineCardsDirectives(
   implicit userProcesses: UserProcesses[NineCardsServices],
   googleApiProcesses: GoogleApiProcesses[NineCardsServices],
   ec: ExecutionContext)
-  extends HeaderDirectives
+  extends BasicDirectives
+    with HeaderDirectives
     with MarshallingDirectives
     with MiscDirectives
     with SecurityDirectives
@@ -34,12 +37,11 @@ class NineCardsAuthenticator(
     cause = AuthenticationFailedRejection.CredentialsRejected,
     challengeHeaders = Nil)
 
-  def authenticateLoginRequest: Directive0 = {
-    for {
-      request <- entity(as[ApiLoginRequest])
-      _ <- authenticate(validateLoginRequest(request.email, request.tokenId))
-    } yield ()
-  } flatMap { _ => Directive.Empty }
+  def authenticateLoginRequest: Directive[NewUserData] = for {
+    request <- entity(as[ApiLoginRequest])
+    _ <- authenticate(validateLoginRequest(request.email, request.tokenId))
+    newUserData <- getNewUserData
+  } yield newUserData
 
   def validateLoginRequest(
     email: String,
@@ -81,13 +83,19 @@ class NineCardsAuthenticator(
       case _ => Left(rejectionByCredentialsRejected)
     }
 
+  def getNewSharedCollectionData: Directive[NewSharedCollectionData] = for {
+    currentDateTime <- provide(CurrentDateTime(DateTime.now))
+    publicIdentifier <- provide(PublicIdentifier(UUID.randomUUID.toString))
+  } yield NewSharedCollectionInfo(currentDateTime, publicIdentifier) :: HNil
+
+  def getNewUserData: Directive[NewUserData] = provide(SessionToken(UUID.randomUUID.toString))
 }
 
-object NineCardsAuthenticator {
+object NineCardsDirectives {
 
-  implicit def nineCardsAuthenticator(
+  implicit def nineCardsDirectives(
     implicit userProcesses: UserProcesses[NineCardsServices],
     googleApiProcesses: GoogleApiProcesses[NineCardsServices],
-    ec: ExecutionContext) = new NineCardsAuthenticator
+    ec: ExecutionContext) = new NineCardsDirectives
 
 }

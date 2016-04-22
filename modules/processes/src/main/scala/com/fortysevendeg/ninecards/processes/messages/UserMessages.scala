@@ -5,6 +5,7 @@ object UserMessages {
   case class LoginRequest(
     email: String,
     androidId: String,
+    sessionToken: String,
     tokenId: String)
 
   case class LoginResponse(

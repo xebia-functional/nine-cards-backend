@@ -15,7 +15,9 @@ object SharedCollectionMessages {
     downloads: String)
 
   case class SharedCollectionData(
+    publicIdentifier: String,
     userId: Option[Long],
+    publishedOn: DateTime,
     description: Option[String],
     author: String,
     name: String,

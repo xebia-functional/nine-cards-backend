@@ -66,13 +66,11 @@ object Converters {
       deviceToken = installation.deviceToken)
 
   implicit def toSharedCollectionDataServices(
-    publicIdentifier: String,
-    publishedOn: DateTime,
     data: SharedCollectionData): SharedCollectionDataServices =
     SharedCollectionDataServices(
-      publicIdentifier = publicIdentifier,
+      publicIdentifier = data.publicIdentifier,
       userId = data.userId,
-      publishedOn = publishedOn,
+      publishedOn = data.publishedOn,
       description = data.description,
       author = data.author,
       name = data.name,
