@@ -45,9 +45,9 @@ object Converters {
     implicit collectionInfo: NewSharedCollectionInfo, userContext: UserContext): CreateCollectionRequest =
     CreateCollectionRequest(
       collection = SharedCollectionData(
-        publicIdentifier = collectionInfo.publicIdentifier.value,
+        publicIdentifier = collectionInfo.identifier.value,
         userId = Option(userContext.userId.value),
-        publishedOn = collectionInfo.currentDateTime.value,
+        publishedOn = collectionInfo.currentDate.value,
         description = request.description,
         author = request.author,
         name = request.name,

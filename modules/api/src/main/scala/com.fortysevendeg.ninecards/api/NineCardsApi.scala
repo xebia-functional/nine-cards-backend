@@ -4,7 +4,6 @@ import akka.actor.Actor
 import com.fortysevendeg.ninecards.api.NineCardsApiHeaderCommons._
 import com.fortysevendeg.ninecards.api.NineCardsDirectives._
 import com.fortysevendeg.ninecards.api.NineCardsHeaders.Domain._
-import com.fortysevendeg.ninecards.api.NineCardsHeaders.NewSharedCollectionData
 import com.fortysevendeg.ninecards.api.converters.Converters._
 import com.fortysevendeg.ninecards.api.messages.InstallationsMessages._
 import com.fortysevendeg.ninecards.api.messages.SharedCollectionMessages._
@@ -91,7 +90,7 @@ trait NineCardsApi
     pathPrefix("collections") {
       pathEndOrSingleSlash {
         nineCardsDirectives.authenticateUser { implicit userContext: UserContext =>
-          nineCardsDirectives.getNewSharedCollectionData { implicit newCollectionData: NewSharedCollectionInfo =>
+          nineCardsDirectives.generateNewCollectionInfo { implicit c: NewSharedCollectionInfo =>
             post {
               entity(as[ApiCreateCollectionRequest]) { request =>
                 complete {

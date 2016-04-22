@@ -37,11 +37,11 @@ class NineCardsDirectives(
     cause = AuthenticationFailedRejection.CredentialsRejected,
     challengeHeaders = Nil)
 
-  def authenticateLoginRequest: Directive[NewUserData] = for {
+  def authenticateLoginRequest: Directive1[SessionToken] = for {
     request <- entity(as[ApiLoginRequest])
     _ <- authenticate(validateLoginRequest(request.email, request.tokenId))
-    newUserData <- getNewUserData
-  } yield newUserData
+    sessionToken <- generateSessionToken
+  } yield sessionToken
 
   def validateLoginRequest(
     email: String,
@@ -58,7 +58,7 @@ class NineCardsDirectives(
         }
     }
 
-  def authenticateUser: Directive[UserInfo] = for {
+  def authenticateUser: Directive1[UserContext] = for {
     uri <- requestUri
     sessionToken <- headerValueByName(headerSessionToken)
     androidId <- headerValueByName(headerAndroidId)
@@ -83,12 +83,12 @@ class NineCardsDirectives(
       case _ => Left(rejectionByCredentialsRejected)
     }
 
-  def getNewSharedCollectionData: Directive[NewSharedCollectionData] = for {
+  def generateNewCollectionInfo: Directive1[NewSharedCollectionInfo] = for {
     currentDateTime <- provide(CurrentDateTime(DateTime.now))
     publicIdentifier <- provide(PublicIdentifier(UUID.randomUUID.toString))
   } yield NewSharedCollectionInfo(currentDateTime, publicIdentifier) :: HNil
 
-  def getNewUserData: Directive[NewUserData] = provide(SessionToken(UUID.randomUUID.toString))
+  def generateSessionToken: Directive1[SessionToken] = provide(SessionToken(UUID.randomUUID.toString))
 }
 
 object NineCardsDirectives {
