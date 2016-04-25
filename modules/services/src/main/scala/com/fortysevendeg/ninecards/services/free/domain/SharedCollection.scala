@@ -14,17 +14,20 @@ case class SharedCollection(
   views: Int,
   category: String,
   icon: String,
-  community: Boolean)
+  community: Boolean
+)
 
 case class SharedCollectionPackage(
   id: Long,
   sharedCollectionId: Long,
-  packageName: String)
+  packageName: String
+)
 
 case class SharedCollectionSubscription(
   id: Long,
   sharedCollectionId: Long,
-  userId: Long)
+  userId: Long
+)
 
 object SharedCollection {
   val allFields = List("id", "publicidentifier", "userid", "publishedon", "description", "author",

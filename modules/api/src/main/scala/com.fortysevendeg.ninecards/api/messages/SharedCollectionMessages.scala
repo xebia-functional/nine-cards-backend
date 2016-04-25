@@ -14,7 +14,8 @@ object SharedCollectionMessages {
     category: String,
     icon: String,
     community: Boolean,
-    packages: List[String])
+    packages: List[String]
+  )
 
   case class ApiCreateCollectionResponse(
     publicIdentifier: String,
@@ -28,7 +29,8 @@ object SharedCollectionMessages {
     category: String,
     icon: String,
     community: Boolean,
-    packages: List[String])
+    packages: List[String]
+  )
 
   case class ApiResolvedPackageInfo(
     packageName: String,
@@ -37,7 +39,8 @@ object SharedCollectionMessages {
     free: Boolean,
     icon: String,
     stars: Double,
-    downloads: String)
+    downloads: String
+  )
 
   case class ApiGetCollectionByPublicIdentifierResponse(
     publicIdentifier: String,
@@ -52,7 +55,8 @@ object SharedCollectionMessages {
     icon: String,
     community: Boolean,
     packages: List[String],
-    resolvedPackages: List[ApiResolvedPackageInfo])
+    resolvedPackages: List[ApiResolvedPackageInfo]
+  )
 
   type XorApiGetCollectionByPublicId = Xor[Throwable, ApiGetCollectionByPublicIdentifierResponse]
 }

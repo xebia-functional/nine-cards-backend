@@ -7,4 +7,5 @@ case class GooglePlayApp(
   numDownloads: String,
   starRating: Double,
   ratingCount: Int,
-  commentCount: Int)
+  commentCount: Int
+)

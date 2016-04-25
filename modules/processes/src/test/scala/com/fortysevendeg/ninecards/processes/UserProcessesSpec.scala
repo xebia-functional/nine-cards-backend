@@ -2,13 +2,13 @@ package com.fortysevendeg.ninecards.processes
 
 import com.fortysevendeg.ninecards.processes.NineCardsServices._
 import com.fortysevendeg.ninecards.processes.messages.InstallationsMessages._
-import com.fortysevendeg.ninecards.processes.messages.UserMessages.{LoginRequest, LoginResponse}
+import com.fortysevendeg.ninecards.processes.messages.UserMessages.{ LoginRequest, LoginResponse }
 import com.fortysevendeg.ninecards.processes.utils.DummyNineCardsConfig
-import com.fortysevendeg.ninecards.services.free.domain.{Installation, User}
-import com.fortysevendeg.ninecards.services.persistence.{UserPersistenceServices, _}
+import com.fortysevendeg.ninecards.services.free.domain.{ Installation, User }
+import com.fortysevendeg.ninecards.services.persistence.{ UserPersistenceServices, _ }
 import com.roundeights.hasher.Hasher
 import doobie.imports._
-import org.mockito.Matchers.{eq => mockEq}
+import org.mockito.Matchers.{ eq ⇒ mockEq }
 import org.specs2.ScalaCheck
 import org.specs2.matcher.Matchers
 import org.specs2.mock.Mockito
@@ -17,13 +17,12 @@ import org.specs2.specification.Scope
 
 import scalaz.Scalaz._
 
-
 trait UserProcessesSpecification
   extends Specification
-    with Matchers
-    with Mockito
-    with UserProcessesContext
-    with DummyNineCardsConfig {
+  with Matchers
+  with Mockito
+  with UserProcessesContext
+  with DummyNineCardsConfig {
 
   trait BasicScope extends Scope {
 
@@ -116,10 +115,9 @@ trait UserProcessesContext {
   val wrongAuthToken = Hasher(dummyUrl).hmac(wrongApiKey).sha512.hex
 }
 
-
 class UserProcessesSpec
   extends UserProcessesSpecification
-    with ScalaCheck {
+  with ScalaCheck {
 
   "signUpUser" should {
     "return LoginResponse object when the user exists and installation" in
@@ -151,21 +149,23 @@ class UserProcessesSpec
   "checkAuthToken" should {
     "return the userId if there is a user with the given sessionToken and androidId and the " +
       "auth token is valid" in new UserAndInstallationSuccessfulScope {
-      val checkAuthToken = userProcesses.checkAuthToken(
-        sessionToken = sessionToken,
-        androidId = androidId,
-        authToken = validAuthToken,
-        requestUri = dummyUrl)
+        val checkAuthToken = userProcesses.checkAuthToken(
+          sessionToken = sessionToken,
+          androidId    = androidId,
+          authToken    = validAuthToken,
+          requestUri   = dummyUrl
+        )
 
-      checkAuthToken.foldMap(interpreters).run shouldEqual checkAuthTokenResponse
-    }
+        checkAuthToken.foldMap(interpreters).run shouldEqual checkAuthTokenResponse
+      }
 
     "return the userId when a wrong auth token is given" in new UserAndInstallationSuccessfulScope {
       val checkAuthToken = userProcesses.checkAuthToken(
         sessionToken = sessionToken,
-        androidId = androidId,
-        authToken = wrongAuthToken,
-        requestUri = dummyUrl)
+        androidId    = androidId,
+        authToken    = wrongAuthToken,
+        requestUri   = dummyUrl
+      )
 
       checkAuthToken.foldMap(interpreters).run shouldEqual None
     }
@@ -174,9 +174,10 @@ class UserProcessesSpec
       new UserAndInstallationFailingScope {
         val checkAuthToken = userProcesses.checkAuthToken(
           sessionToken = sessionToken,
-          androidId = androidId,
-          authToken = validAuthToken,
-          requestUri = dummyUrl)
+          androidId    = androidId,
+          authToken    = validAuthToken,
+          requestUri   = dummyUrl
+        )
 
         checkAuthToken.foldMap(interpreters).run should beNone
       }
@@ -185,9 +186,10 @@ class UserProcessesSpec
       new UserSuccessfulAndInstallationFailingScope {
         val checkAuthToken = userProcesses.checkAuthToken(
           sessionToken = sessionToken,
-          androidId = androidId,
-          authToken = validAuthToken,
-          requestUri = dummyUrl)
+          androidId    = androidId,
+          authToken    = validAuthToken,
+          requestUri   = dummyUrl
+        )
 
         checkAuthToken.foldMap(interpreters).run should beNone
       }

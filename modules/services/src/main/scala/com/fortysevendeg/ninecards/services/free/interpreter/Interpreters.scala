@@ -11,15 +11,15 @@ class Interpreters[M[_]](implicit A: ApplicativeError[M, Throwable]) {
 
   def dBResultInterpreter: (DBResult ~> M) = new (DBResult ~> M) {
     def apply[A](fa: DBResult[A]) = fa match {
-      case DBSuccess(value) => A.pureEval(Eval.later(value))
-      case DBFailure(e) => A.raiseError(e)
+      case DBSuccess(value) ⇒ A.pureEval(Eval.later(value))
+      case DBFailure(e) ⇒ A.raiseError(e)
     }
   }
 
   def googleAPIServicesInterpreter: (GoogleApiOps ~> Task) = new (GoogleApiOps ~> Task) {
 
     def apply[A](fa: GoogleApiOps[A]) = fa match {
-      case GetTokenInfo(tokenId: String) =>
+      case GetTokenInfo(tokenId: String) ⇒
         googleApiServices.getTokenInfo(tokenId)
     }
   }
