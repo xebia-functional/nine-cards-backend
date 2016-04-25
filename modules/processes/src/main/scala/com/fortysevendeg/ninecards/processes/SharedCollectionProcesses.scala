@@ -2,12 +2,13 @@ package com.fortysevendeg.ninecards.processes
 
 import java.util.UUID
 
-import cats.data.{ Xor, XorT }
+import cats.data.Xor
 import cats.free.Free
 import cats.syntax.xor._
 import com.fortysevendeg.ninecards.processes.ProcessesExceptions.SharedCollectionNotFoundException
 import com.fortysevendeg.ninecards.processes.converters.Converters._
 import com.fortysevendeg.ninecards.processes.messages.SharedCollectionMessages._
+import com.fortysevendeg.ninecards.processes.utils.XorCIO._
 import com.fortysevendeg.ninecards.services.common.TaskOps._
 import com.fortysevendeg.ninecards.services.free.algebra.DBResult.DBOps
 import com.fortysevendeg.ninecards.services.free.domain.{ Installation, SharedCollection, SharedCollectionSubscription }
@@ -78,14 +79,6 @@ class SharedCollectionProcesses[F[_]](
 
     subscriptionInfo.liftF[F]
   }
-
-  type XorCIO[A, B] = ConnectionIO[Xor[A, B]]
-
-  private[this] def flatMapXorCIO[A, B, C](xorCIO: XorCIO[A, B], fun: B ⇒ ConnectionIO[C]): XorCIO[A, C] =
-    xorCIO flatMap {
-      case left @ Xor.Left(a) ⇒ (left: Xor[A, C]).point[ConnectionIO]
-      case Xor.Right(b) ⇒ fun(b) map (_.right)
-    }
 
   private[this] def findCollection(publicId: String): XorCIO[Throwable, SharedCollection] =
     collectionPersistence
