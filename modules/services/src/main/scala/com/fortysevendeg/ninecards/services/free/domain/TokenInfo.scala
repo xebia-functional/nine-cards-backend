@@ -12,6 +12,7 @@ case class TokenInfo(
   iat: String,
   exp: String,
   alg: String,
-  kid: String)
+  kid: String
+)
 
 case class WrongTokenInfo(error_description: String)

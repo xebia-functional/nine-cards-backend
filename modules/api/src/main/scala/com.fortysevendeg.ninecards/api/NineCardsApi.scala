@@ -1,6 +1,6 @@
 package com.fortysevendeg.ninecards.api
 
-import akka.actor.{Actor, ActorRefFactory}
+import akka.actor.{ Actor, ActorRefFactory }
 import com.fortysevendeg.ninecards.api.NineCardsApiHeaderCommons._
 import com.fortysevendeg.ninecards.api.NineCardsAuthenticator._
 import com.fortysevendeg.ninecards.api.NineCardsHeaders.Domain._
@@ -19,15 +19,15 @@ import scala.concurrent.ExecutionContext
 
 class NineCardsApiActor
   extends Actor
-    with HttpService
-    with AuthHeadersRejectionHandler
-    with NineCardsExceptionHandler {
+  with AuthHeadersRejectionHandler
+  with HttpService
+  with NineCardsExceptionHandler {
 
   override val actorRefFactory = context
 
   implicit val executionContext: ExecutionContext = actorRefFactory.dispatcher
 
-  def receive = runRoute( new NineCardsRoutes().nineCardsRoutes )
+  def receive = runRoute(new NineCardsRoutes().nineCardsRoutes)
 
 }
 
@@ -37,26 +37,27 @@ class NineCardsRoutes(
   googleApiProcesses: GoogleApiProcesses[NineCardsServices],
   sharedCollectionProcesses: SharedCollectionProcesses[NineCardsServices],
   refFactory: ActorRefFactory,
-  executionContext: ExecutionContext) {
+  executionContext: ExecutionContext
+) {
 
   import Directives._
   import JsonFormats._
 
   val nineCardsRoutes: Route = pathPrefix(Segment) {
-    case "apiDocs"       => swaggerRoute
-    case "collections"   => sharedCollectionsRoute
-    case "installations" => installationsRoute
-    case "login"         => userRoute 
+    case "apiDocs" ⇒ swaggerRoute
+    case "collections" ⇒ sharedCollectionsRoute
+    case "installations" ⇒ installationsRoute
+    case "login" ⇒ userRoute
   }
 
   private[this] lazy val userRoute =
     pathEndOrSingleSlash {
-      requestLoginHeaders { (appId, apiKey) =>
+      requestLoginHeaders { (appId, apiKey) ⇒
         nineCardsAuthenticator.authenticateLoginRequest {
           post {
-            entity(as[ApiLoginRequest]) { request =>
+            entity(as[ApiLoginRequest]) { request ⇒
               complete {
-                userProcesses.signUpUser( toLoginRequest(request)) map toApiLoginResponse
+                userProcesses.signUpUser(toLoginRequest(request)) map toApiLoginResponse
               }
             }
           }
@@ -65,33 +66,33 @@ class NineCardsRoutes(
     }
 
   private[this] lazy val installationsRoute =
-    nineCardsAuthenticator.authenticateUser { userContext: UserContext =>
+    nineCardsAuthenticator.authenticateUser { userContext: UserContext ⇒
       pathEndOrSingleSlash {
         put {
-          entity(as[ApiUpdateInstallationRequest]) { request =>
-            complete ( updateInstallation(request, userContext) )
+          entity(as[ApiUpdateInstallationRequest]) { request ⇒
+            complete(updateInstallation(request, userContext))
           }
         }
       }
     }
 
-  private[this] lazy val sharedCollectionsRoute  =
-    nineCardsAuthenticator.authenticateUser { userContext: UserContext =>
+  private[this] lazy val sharedCollectionsRoute =
+    nineCardsAuthenticator.authenticateUser { userContext: UserContext ⇒
       pathEndOrSingleSlash {
         post {
-          entity(as[ApiCreateCollectionRequest]) { request =>
-            complete ( createCollection( request, userContext)  )
+          entity(as[ApiCreateCollectionRequest]) { request ⇒
+            complete(createCollection(request, userContext))
           }
         }
       } ~
-      pathPrefix(TypedSegment[PublicIdentifier]) { publicIdentifier =>
-        pathEndOrSingleSlash {
-          get( complete ( getCollection( publicIdentifier) ) )
-        } ~
-        path("subscribe"){
-          put ( complete( subscribe(publicIdentifier, userContext) ))
+        pathPrefix(TypedSegment[PublicIdentifier]) { publicIdentifier ⇒
+          pathEndOrSingleSlash {
+            get(complete(getCollection(publicIdentifier)))
+          } ~
+            path("subscribe") {
+              put(complete(subscribe(publicIdentifier, userContext)))
+            }
         }
-      }
     }
 
   private[this] lazy val swaggerRoute =
@@ -104,23 +105,23 @@ class NineCardsRoutes(
     }
 
   @inline
-  private[this] def updateInstallation( request: ApiUpdateInstallationRequest, userContext: UserContext) = 
+  private[this] def updateInstallation(request: ApiUpdateInstallationRequest, userContext: UserContext) =
     userProcesses
       .updateInstallation(toUpdateInstallationRequest(request, userContext))
       .map(toApiUpdateInstallationResponse)
 
   @inline
-  private[this] def getCollection( publicId: PublicIdentifier ) =
+  private[this] def getCollection(publicId: PublicIdentifier) =
     sharedCollectionProcesses
       .getCollectionByPublicIdentifier(publicId.value)
-      .map( toApiGetCollectionByPublicIdentifierResponse )
+      .map(toApiGetCollectionByPublicIdentifierResponse)
 
   @inline
-  private[this] def createCollection( request: ApiCreateCollectionRequest, userContext: UserContext) =
+  private[this] def createCollection(request: ApiCreateCollectionRequest, userContext: UserContext) =
     sharedCollectionProcesses
-      .createCollection( toCreateCollectionRequest(request, userContext) )
+      .createCollection(toCreateCollectionRequest(request, userContext))
       .map(toApiCreateCollectionResponse)
-  
+
   @inline
   private[this] def subscribe(publicId: PublicIdentifier, userContext: UserContext) =
     sharedCollectionProcesses

@@ -8,7 +8,7 @@ import com.fortysevendeg.ninecards.services.persistence.SharedCollectionPersiste
 import com.fortysevendeg.ninecards.services.persistence.UserPersistenceServices.UserData
 import org.scalacheck.Gen.Parameters
 import org.scalacheck.Gen.Parameters.default
-import org.scalacheck.{Arbitrary, Gen}
+import org.scalacheck.{ Arbitrary, Gen }
 
 object NineCardsGenEntities {
 
@@ -27,52 +27,54 @@ trait NineCardsScalacheckGen {
   def nonEmptyString(maxSize: Int) =
     Gen.resize(
       s = maxSize,
-      g = Gen.nonEmptyListOf(Gen.alphaNumChar).map(_.mkString))
+      g = Gen.nonEmptyListOf(Gen.alphaNumChar).map(_.mkString)
+    )
 
   def fixedLengthString(size: Int) = Gen.listOfN(size, Gen.alphaChar).map(_.mkString)
 
   val stringGenerator = Arbitrary.arbitrary[String]
 
   val emailGenerator: Gen[String] = for {
-    mailbox <- nonEmptyString(50)
-    topLevelDomain <- nonEmptyString(45)
-    domain <- fixedLengthString(3)
+    mailbox ← nonEmptyString(50)
+    topLevelDomain ← nonEmptyString(45)
+    domain ← fixedLengthString(3)
   } yield s"$mailbox@$topLevelDomain.$domain"
 
-  val timestampGenerator: Gen[Timestamp] = Gen.choose(0l, 253402300799l) map { seconds =>
+  val timestampGenerator: Gen[Timestamp] = Gen.choose(0l, 253402300799l) map { seconds ⇒
     Timestamp.from(Instant.ofEpochSecond(seconds))
   }
 
   val uuidGenerator: Gen[String] = Gen.uuid.map(_.toString)
 
   val sharedCollectionDataGenerator: Gen[SharedCollectionData] = for {
-    publicIdentifier <- uuidGenerator
-    publishedOn <- timestampGenerator
-    description <- Gen.option[String](stringGenerator)
-    author <- stringGenerator
-    name <- stringGenerator
-    installations <- Gen.posNum[Int]
-    views <- Gen.posNum[Int]
-    category <- stringGenerator
-    icon <- stringGenerator
-    community <- Gen.oneOf(true, false)
+    publicIdentifier ← uuidGenerator
+    publishedOn ← timestampGenerator
+    description ← Gen.option[String](stringGenerator)
+    author ← stringGenerator
+    name ← stringGenerator
+    installations ← Gen.posNum[Int]
+    views ← Gen.posNum[Int]
+    category ← stringGenerator
+    icon ← stringGenerator
+    community ← Gen.oneOf(true, false)
   } yield SharedCollectionData(
     publicIdentifier,
     None,
     publishedOn,
-    description = description,
-    author = author,
-    name = name,
+    description   = description,
+    author        = author,
+    name          = name,
     installations = installations,
-    views = views,
-    category = category,
-    icon = icon,
-    community = community)
+    views         = views,
+    category      = category,
+    icon          = icon,
+    community     = community
+  )
 
   val userDataGenerator: Gen[UserData] = for {
-    email <- emailGenerator
-    apiKey <- uuidGenerator
-    sessionToken <- uuidGenerator
+    email ← emailGenerator
+    apiKey ← uuidGenerator
+    sessionToken ← uuidGenerator
   } yield UserData(email, apiKey, sessionToken)
 
   implicit val abAndroidId: Arbitrary[AndroidId] = Arbitrary(uuidGenerator.map(AndroidId.apply))

@@ -1,7 +1,7 @@
 package com.fortysevendeg.ninecards.services.free.algebra
 
-import cats.free.{Free, Inject}
-import com.fortysevendeg.ninecards.services.free.domain.{SharedCollection, SharedCollectionSubscription}
+import cats.free.{ Free, Inject }
+import com.fortysevendeg.ninecards.services.free.domain.{ SharedCollection, SharedCollectionSubscription }
 
 object SharedCollections {
 
@@ -32,8 +32,7 @@ object SharedCollections {
 
   object SharedCollectionServices {
 
-    implicit def dataSource[F[_]](
-      implicit I: Inject[SharedCollectionOps, F]): SharedCollectionServices[F] =
+    implicit def dataSource[F[_]](implicit I: Inject[SharedCollectionOps, F]): SharedCollectionServices[F] =
       new SharedCollectionServices[F]
 
   }
@@ -60,7 +59,9 @@ object SharedCollectionSubscriptions {
   object SharedCollectionSubscriptionServices {
 
     implicit def dataSource[F[_]](
-      implicit I: Inject[SharedCollectionSubscriptionOps, F]): SharedCollectionSubscriptionServices[F] =
+      implicit
+      I: Inject[SharedCollectionSubscriptionOps, F]
+    ): SharedCollectionSubscriptionServices[F] =
       new SharedCollectionSubscriptionServices[F]
 
   }

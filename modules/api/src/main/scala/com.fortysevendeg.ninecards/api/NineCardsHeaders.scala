@@ -1,7 +1,7 @@
 package com.fortysevendeg.ninecards.api
 
 import com.fortysevendeg.ninecards.api.NineCardsHeaders.Domain._
-import shapeless.{::, HNil}
+import shapeless.{ ::, HNil }
 
 object NineCardsHeaders {
 
