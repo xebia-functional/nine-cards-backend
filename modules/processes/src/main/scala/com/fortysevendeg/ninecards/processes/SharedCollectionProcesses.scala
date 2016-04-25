@@ -30,8 +30,7 @@ class SharedCollectionProcesses[F[_]](
   }.liftF[F]
 
   def getCollectionByPublicIdentifier(
-    publicIdentifier: String)(
-    implicit ev: Composite[Installation]): Free[F, XorGetCollectionByPublicId] = {
+    publicIdentifier: String): Free[F, XorGetCollectionByPublicId] = {
 
     val sharedCollectionInfo = for {
       sharedCollection <- sharedCollectionPersistenceServices.getCollectionByPublicIdentifier(
