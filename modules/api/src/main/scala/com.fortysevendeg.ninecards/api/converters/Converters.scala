@@ -117,4 +117,10 @@ object Converters {
   def toApiXorSubscribeResponse(response: XorSubscribeResponse): XorApiSubscribeResponse =
     response map toApiSubscribeResponse
 
+  def toApiUnsubscribeResponse(_x: UnsubscribeResponse): ApiUnsubscribeResponse =
+    ApiUnsubscribeResponse()
+
+  def toApiXorUnsubscribeResponse(response: XorUnsubscribeResponse): XorApiUnsubscribeResponse =
+    response map toApiUnsubscribeResponse
+
 }

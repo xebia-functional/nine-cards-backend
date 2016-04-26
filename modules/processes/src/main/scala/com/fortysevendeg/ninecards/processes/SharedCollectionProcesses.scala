@@ -58,11 +58,9 @@ class SharedCollectionProcesses[F[_]](
 
   /**
     * This process changes the application state to one where the user is subscribed to the collection.
-    *
     */
   def subscribe(publicIdentifier: String, userId: Long): Free[F, Xor[Throwable, SubscribeResponse]] = {
 
-    // Now: if already subscribed, you should do nothing
     def addSubscription(collection: SharedCollection): ConnectionIO[SubscribeResponse] =
       for {
         oldOpt ← subscriptionPersistence.getSubscriptionByCollectionAndUser(collection.id, userId)
@@ -78,6 +76,19 @@ class SharedCollectionProcesses[F[_]](
     val subscriptionInfo: XorCIO[Throwable, SubscribeResponse] = flatMapXorCIO(sh1, addSubscription)
 
     subscriptionInfo.liftF[F]
+  }
+
+  def unsubscribe(publicIdentifier: String, userId: Long): Free[F, Xor[Throwable, UnsubscribeResponse]] = {
+
+    def removeSubscription(collection: SharedCollection): ConnectionIO[UnsubscribeResponse] =
+      for {
+        _ ← subscriptionPersistence.removeSubscriptionByCollectionAndUser(collection.id, userId)
+      } yield UnsubscribeResponse()
+
+    val sh1: XorCIO[Throwable, SharedCollection] = findCollection(publicIdentifier)
+    val unsubscribeInfo: XorCIO[Throwable, UnsubscribeResponse] = flatMapXorCIO(sh1, removeSubscription)
+
+    unsubscribeInfo.liftF[F]
   }
 
   private[this] def findCollection(publicId: String): XorCIO[Throwable, SharedCollection] =
