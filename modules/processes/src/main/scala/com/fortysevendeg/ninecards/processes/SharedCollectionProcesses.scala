@@ -17,7 +17,9 @@ import doobie.imports._
 import org.joda.time.DateTime
 
 import scalaz.concurrent.Task
+import scalaz.std.list.listInstance
 import scalaz.syntax.applicative._
+import scalaz.syntax.traverse.ToTraverseOps
 
 class SharedCollectionProcesses[F[_]](
   implicit
@@ -45,14 +47,9 @@ class SharedCollectionProcesses[F[_]](
   }.liftF[F]
 
   def getCollectionByPublicIdentifier(publicIdentifier: String): Free[F, XorGetCollectionByPublicId] = {
-    def getPackages(collection: SharedCollection): ConnectionIO[GetCollectionByPublicIdentifierResponse] =
-      for {
-        packages ← collectionPersistence.getPackagesByCollection(collection.id)
-      } yield toGetCollectionByPublicIdentifierResponse(collection, packages)
-
     val sh1: XorCIO[Throwable, SharedCollection] = findCollection(publicIdentifier)
     val sharedCollectionInfo: XorCIO[Throwable, GetCollectionByPublicIdentifierResponse] =
-      flatMapXorCIO(sh1, getPackages)
+      flatMapXorCIO(sh1, getCollectionInfo) map (_.map(GetCollectionByPublicIdentifierResponse.apply))
     sharedCollectionInfo.liftF[F]
   }
 
@@ -91,10 +88,24 @@ class SharedCollectionProcesses[F[_]](
     unsubscribeInfo.liftF[F]
   }
 
+  def getPublishedCollections(userId: Long): Free[F, GetPublishedCollectionsResponse] = {
+    val publishedCollections = for {
+      collections ← collectionPersistence.getCollectionsByUserId(userId)
+      infos ← collections.traverse(getCollectionInfo)
+    } yield GetPublishedCollectionsResponse(infos)
+
+    publishedCollections.liftF[F]
+  }
+
   private[this] def findCollection(publicId: String): XorCIO[Throwable, SharedCollection] =
     collectionPersistence
       .getCollectionByPublicIdentifier(publicId)
       .map(Xor.fromOption(_, sharedCollectionNotFoundException))
+
+  private[this] def getCollectionInfo(collection: SharedCollection): ConnectionIO[SharedCollectionInfo] =
+    for {
+      packages ← collectionPersistence.getPackagesByCollection(collection.id)
+    } yield toSharedCollectionInfo(collection, packages map (_.packageName))
 
 }
 

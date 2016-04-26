@@ -8,9 +8,13 @@ import org.specs2.ScalaCheck
 import org.specs2.matcher.DisjunctionMatchers
 import org.specs2.mutable.Specification
 import org.specs2.specification.BeforeEach
-import shapeless.syntax.std.product._
+import scala.annotation.tailrec
+import scala.collection.immutable.List
 
-import scalaz.std.iterable._
+import scalaz.syntax.traverse.ToTraverseOps // F[A] => TraverseOps[F, A]
+import scalaz.std.list.listInstance // Traverse[List]
+
+import shapeless.syntax.std.product._
 
 class SharedCollectionPersistenceServicesSpec
   extends Specification
@@ -31,7 +35,7 @@ class SharedCollectionPersistenceServicesSpec
     "create a new shared collection when an existing user id is given" in {
       prop { (userData: UserData, collectionData: SharedCollectionData) ⇒
         val id = (for {
-          u ← insertItem(User.Queries.insert, userData.toTuple)
+          u ← createUser(userData)
           c ← sharedCollectionPersistenceServices.addCollection[Long](
             collectionData.copy(userId = Option(u))
           )
@@ -151,12 +155,68 @@ class SharedCollectionPersistenceServicesSpec
     }
   }
 
+  "getCollectionsByUserId" should {
+
+    def divideList[A](n: Int, list: List[A]): List[List[A]] = {
+      def merge(heads: List[A], tails: List[List[A]]): List[List[A]] = (heads, tails) match {
+        case (Nil, Nil) ⇒ Nil
+        case (h :: hs, Nil) ⇒ throw new Exception("This should not happen")
+        case (Nil, t :: ts) ⇒ tails
+        case (h :: hs, t :: ts) ⇒ (h :: t) :: merge(hs, ts)
+      }
+
+      @tailrec
+      def divideAux(xs: List[A], results: List[List[A]]): List[List[A]] =
+        if (xs.isEmpty)
+          results map (_.reverse)
+        else {
+          val (pre, post) = xs.splitAt(n)
+          divideAux(post, merge(pre, results))
+        }
+
+      divideAux(list, List.fill(n)(Nil))
+    }
+
+    "return the List of Collections created by the User" in {
+
+      prop { (ownerData: UserData, otherData: UserData, collectionData: List[SharedCollectionData]) ⇒
+        val List(ownedData, disownedData, foreignData) = divideList[SharedCollectionData](3, collectionData)
+
+        val setupTrans = for {
+          ownerId ← createUser(ownerData)
+          otherId ← createUser(otherData)
+          owned ← ownedData traverse (createCollectionWithUser(_, Option(ownerId)))
+          foreign ← foreignData traverse (createCollectionWithUser(_, Option(otherId)))
+          disowned ← disownedData traverse (createCollectionWithUser(_, None))
+        } yield (ownerId, otherId, owned, disowned, foreign)
+
+        val (ownerId, otherId, owned, disowned, foreign) = setupTrans.transact(transactor).run
+
+        val response: List[SharedCollection] =
+          sharedCollectionPersistenceServices
+            .getCollectionsByUserId(ownerId)
+            .transact(transactor).run
+
+        (response map (_.id)) must containTheSameElementsAs(owned)
+      }
+    }
+  }
+
+  def createCollectionWithUser(collectionData: SharedCollectionData, userId: Option[Long]): ConnectionIO[Long] =
+    insertItem(SharedCollection.Queries.insert, collectionData.copy(userId = userId))
+
+  def createUser(userData: UserData): ConnectionIO[Long] =
+    insertItem(User.Queries.insert, userData.toTuple)
+
+  def createPackages(collectionId: Long, packageNames: List[String]): ConnectionIO[Int] =
+    insertItems(SharedCollectionPackage.Queries.insert, packageNames map { (collectionId, _) })
+
   "addPackage" should {
     "create a new package associated with an existing shared collection" in {
       prop { (userData: UserData, collectionData: SharedCollectionData, packageName: String) ⇒
         val collectionId = (for {
-          u ← insertItem(User.Queries.insert, userData.toTuple)
-          c ← insertItem(SharedCollection.Queries.insert, collectionData.copy(userId = Option(u)).toTuple)
+          u ← createUser(userData)
+          c ← createCollectionWithUser(collectionData, Option(u))
         } yield c).transact(transactor).run
 
         val packageId = sharedCollectionPersistenceServices.addPackage[Long](
@@ -179,8 +239,8 @@ class SharedCollectionPersistenceServicesSpec
     "create new packages associated with an existing shared collection" in {
       prop { (userData: UserData, collectionData: SharedCollectionData, packagesName: List[String]) ⇒
         val collectionId = (for {
-          u ← insertItem(User.Queries.insert, userData.toTuple)
-          c ← insertItem(SharedCollection.Queries.insert, collectionData.copy(userId = Option(u)).toTuple)
+          u ← createUser(userData)
+          c ← createCollectionWithUser(collectionData, Option(u))
         } yield c).transact(transactor).run
 
         val created = sharedCollectionPersistenceServices.addPackages(
@@ -204,11 +264,12 @@ class SharedCollectionPersistenceServicesSpec
       }
     }
     "return a list of packages associated with the given shared collection" in {
+
       prop { (userData: UserData, collectionData: SharedCollectionData, packagesName: List[String]) ⇒
         val collectionId = (for {
-          u ← insertItem(User.Queries.insert, userData.toTuple)
-          c ← insertItem(SharedCollection.Queries.insert, collectionData.copy(userId = Option(u)).toTuple)
-          _ ← insertItems(SharedCollectionPackage.Queries.insert, packagesName map { (c, _) })
+          u ← createUser(userData)
+          c ← createCollectionWithUser(collectionData, Option(u))
+          _ ← createPackages(c, packagesName)
         } yield c).transact(transactor).run
 
         val packages = sharedCollectionPersistenceServices.getPackagesByCollection(
@@ -225,9 +286,9 @@ class SharedCollectionPersistenceServicesSpec
     "return an empty list if there isn't any package associated with the given collection" in {
       prop { (userData: UserData, collectionData: SharedCollectionData, packagesName: List[String]) ⇒
         val collectionId = (for {
-          u ← insertItem(User.Queries.insert, userData.toTuple)
-          c ← insertItem(SharedCollection.Queries.insert, collectionData.copy(userId = Option(u)).toTuple)
-          _ ← insertItems(SharedCollectionPackage.Queries.insert, packagesName map { (c, _) })
+          u ← createUser(userData)
+          c ← createCollectionWithUser(collectionData, Option(u))
+          _ ← createPackages(c, packagesName)
         } yield c).transact(transactor).run
 
         val packages = sharedCollectionPersistenceServices.getPackagesByCollection(

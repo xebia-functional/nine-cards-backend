@@ -30,6 +30,9 @@ class SharedCollectionPersistenceServices(
   def getCollectionByPublicIdentifier(publicIdentifier: String): ConnectionIO[Option[SharedCollection]] =
     collectionPersistence.fetchOption(CollectionQueries.getByPublicIdentifier, publicIdentifier)
 
+  def getCollectionsByUserId(userId: Long): ConnectionIO[List[SharedCollection]] =
+    collectionPersistence.fetchList(CollectionQueries.getByUser, userId)
+
   def addPackage[K: Composite](collectionId: Long, packageName: String): ConnectionIO[K] =
     collectionPackagePersistence.updateWithGeneratedKeys[K](
       sql    = PackageQueries.insert,

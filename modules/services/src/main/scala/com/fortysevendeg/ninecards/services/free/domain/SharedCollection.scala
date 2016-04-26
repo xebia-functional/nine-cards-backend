@@ -36,6 +36,7 @@ object SharedCollection {
   object Queries {
     val getById = "select * from sharedcollections where id=?"
     val getByPublicIdentifier = "select * from sharedcollections where publicidentifier=?"
+    val getByUser = "select * from sharedcollections where userId=?"
     val insert = "insert into sharedcollections(publicidentifier,userid,publishedon,description,author,name,installations,views,category,icon,community) values(?,?,?,?,?,?,?,?,?,?,?)"
   }
 }

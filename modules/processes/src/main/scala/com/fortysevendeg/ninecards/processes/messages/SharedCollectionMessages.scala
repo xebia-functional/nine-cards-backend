@@ -61,4 +61,7 @@ object SharedCollectionMessages {
   case class UnsubscribeResponse()
 
   type XorUnsubscribeResponse = Xor[Throwable, UnsubscribeResponse]
+
+  case class GetPublishedCollectionsResponse(collections: List[SharedCollectionInfo])
+
 }
