@@ -126,6 +126,6 @@ class NineCardsRoutes(
   private[this] def subscribe(publicId: PublicIdentifier, userContext: UserContext) =
     sharedCollectionProcesses
       .subscribe(publicId.value, userContext.userId.value)
-      .map(toApiXorSubscribeResponse)
+      .map(_.map(toApiSubscribeResponse))
 
 }
