@@ -111,16 +111,10 @@ object Converters {
       deviceToken = response.deviceToken
     )
 
-  def toApiSubscribeResponse(_x: SubscribeResponse): ApiSubscribeResponse =
+  def toApiSubscribeResponse(response: SubscribeResponse): ApiSubscribeResponse =
     ApiSubscribeResponse()
 
-  def toApiXorSubscribeResponse(response: XorSubscribeResponse): XorApiSubscribeResponse =
-    response map toApiSubscribeResponse
-
-  def toApiUnsubscribeResponse(_x: UnsubscribeResponse): ApiUnsubscribeResponse =
+  def toApiUnsubscribeResponse(response: UnsubscribeResponse): ApiUnsubscribeResponse =
     ApiUnsubscribeResponse()
-
-  def toApiXorUnsubscribeResponse(response: XorUnsubscribeResponse): XorApiUnsubscribeResponse =
-    response map toApiUnsubscribeResponse
 
 }
