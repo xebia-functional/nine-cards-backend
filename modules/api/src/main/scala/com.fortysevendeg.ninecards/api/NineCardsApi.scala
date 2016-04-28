@@ -106,37 +106,31 @@ class NineCardsRoutes(
       getFromResourceDirectory("apiDocs")
     }
 
-  @inline
   private[this] def updateInstallation(request: ApiUpdateInstallationRequest, userContext: UserContext) =
     userProcesses
       .updateInstallation(toUpdateInstallationRequest(request, userContext))
       .map(toApiUpdateInstallationResponse)
 
-  @inline
   private[this] def getCollection(publicId: PublicIdentifier) =
     sharedCollectionProcesses
       .getCollectionByPublicIdentifier(publicId.value)
       .map(toXorApiSharedCollection)
 
-  @inline
   private[this] def createCollection(request: ApiCreateCollectionRequest, userContext: UserContext) =
     sharedCollectionProcesses
       .createCollection(toCreateCollectionRequest(request, userContext))
       .map(toApiCreateCollectionResponse)
 
-  @inline
   private[this] def subscribe(publicId: PublicIdentifier, userContext: UserContext) =
     sharedCollectionProcesses
       .subscribe(publicId.value, userContext.userId.value)
-      .map(toApiXorSubscribeResponse)
+      .map(_.map(toApiSubscribeResponse))
 
-  @inline
   private[this] def unsubscribe(publicId: PublicIdentifier, userContext: UserContext) =
     sharedCollectionProcesses
       .unsubscribe(publicId.value, userContext.userId.value)
-      .map(toApiXorUnsubscribeResponse)
+      .map(_.map(toApiUnsubscribeResponse))
 
-  @inline
   private[this] def getPublishedCollections(userContext: UserContext) =
     sharedCollectionProcesses
       .getPublishedCollections(userContext.userId.value)

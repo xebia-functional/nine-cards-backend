@@ -62,9 +62,6 @@ object SharedCollectionMessages {
 
   case class ApiSubscribeResponse()
 
-  type XorApiSubscribeResponse = Xor[Throwable, ApiSubscribeResponse]
-
   case class ApiUnsubscribeResponse()
 
-  type XorApiUnsubscribeResponse = Xor[Throwable, ApiUnsubscribeResponse]
 }
