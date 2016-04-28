@@ -29,13 +29,13 @@ class NineCardsDirectives(
     with SecurityDirectives
     with JsonFormats {
 
-  implicit def fromTaskAuth[T](
-    auth: => Task[Authentication[T]]): AuthMagnet[T] =
+  implicit def fromTaskAuth[T](auth: ⇒ Task[Authentication[T]]): AuthMagnet[T] =
     new AuthMagnet(onSuccess(auth))
 
   val rejectionByCredentialsRejected = AuthenticationFailedRejection(
-    cause = AuthenticationFailedRejection.CredentialsRejected,
-    challengeHeaders = Nil)
+    cause            = AuthenticationFailedRejection.CredentialsRejected,
+    challengeHeaders = Nil
+  )
 
   def authenticateLoginRequest: Directive1[SessionToken] = for {
     request <- entity(as[ApiLoginRequest])
@@ -43,18 +43,16 @@ class NineCardsDirectives(
     sessionToken <- generateSessionToken
   } yield sessionToken
 
-  def validateLoginRequest(
-    email: String,
-    tokenId: String): Task[Authentication[Unit]] =
+  def validateLoginRequest(email: String, tokenId: String): Task[Authentication[Unit]] =
     (email, tokenId) match {
-      case (e, o) if e.isEmpty || o.isEmpty =>
+      case (e, o) if e.isEmpty || o.isEmpty ⇒
         Task.now(Left(rejectionByCredentialsRejected))
-      case _ =>
+      case _ ⇒
         googleApiProcesses.checkGoogleTokenId(email, tokenId).foldMap(interpreters) map {
-          case true => Right(())
-          case _ => Left(rejectionByCredentialsRejected)
+          case true ⇒ Right(())
+          case _ ⇒ Left(rejectionByCredentialsRejected)
         } handle {
-          case _ => Left(rejectionByCredentialsRejected)
+          case _ ⇒ Left(rejectionByCredentialsRejected)
         }
     }
 
@@ -70,17 +68,19 @@ class NineCardsDirectives(
     sessionToken: String,
     androidId: String,
     authToken: String,
-    requestUri: Uri): Task[Authentication[Long]] =
+    requestUri: Uri
+  ): Task[Authentication[Long]] =
     userProcesses.checkAuthToken(
       sessionToken = sessionToken,
-      androidId = androidId,
-      authToken = authToken,
-      requestUri = requestUri.toString).foldMap(interpreters) map {
-      case Some(v) => Right(v)
-      case None =>
+      androidId    = androidId,
+      authToken    = authToken,
+      requestUri   = requestUri.toString
+    ).foldMap(interpreters) map {
+      case Some(v) ⇒ Right(v)
+      case None ⇒
         Left(rejectionByCredentialsRejected)
     } handle {
-      case _ => Left(rejectionByCredentialsRejected)
+      case _ ⇒ Left(rejectionByCredentialsRejected)
     }
 
   def generateNewCollectionInfo: Directive1[NewSharedCollectionInfo] = for {

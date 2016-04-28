@@ -12,7 +12,8 @@ object SharedCollectionMessages {
     free: Boolean,
     icon: String,
     stars: Double,
-    downloads: String)
+    downloads: String
+  )
 
   case class SharedCollectionData(
     publicIdentifier: String,
@@ -25,7 +26,8 @@ object SharedCollectionMessages {
     views: Option[Int] = None,
     category: String,
     icon: String,
-    community: Boolean)
+    community: Boolean
+  )
 
   case class SharedCollectionInfo(
     publicIdentifier: String,
@@ -40,11 +42,13 @@ object SharedCollectionMessages {
     icon: String,
     community: Boolean,
     packages: List[String],
-    resolvedPackages: List[ResolvedPackageInfo])
+    resolvedPackages: List[ResolvedPackageInfo]
+  )
 
   case class CreateCollectionRequest(
     collection: SharedCollectionData,
-    packages: List[String])
+    packages: List[String]
+  )
 
   case class CreateCollectionResponse(data: SharedCollectionInfo)
 

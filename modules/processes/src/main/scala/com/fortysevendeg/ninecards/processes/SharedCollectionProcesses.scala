@@ -7,20 +7,23 @@ import com.fortysevendeg.ninecards.processes.converters.Converters._
 import com.fortysevendeg.ninecards.processes.messages.SharedCollectionMessages._
 import com.fortysevendeg.ninecards.services.common.TaskOps._
 import com.fortysevendeg.ninecards.services.free.algebra.DBResult.DBOps
-import com.fortysevendeg.ninecards.services.free.domain.{Installation, SharedCollection}
-import com.fortysevendeg.ninecards.services.persistence.{SharedCollectionPersistenceServices, _}
+import com.fortysevendeg.ninecards.services.free.domain.{ Installation, SharedCollection }
+import com.fortysevendeg.ninecards.services.persistence.{ SharedCollectionPersistenceServices, _ }
 import doobie.imports._
 
 import scalaz.concurrent.Task
 import scalaz.syntax.applicative._
 
 class SharedCollectionProcesses[F[_]](
-  implicit sharedCollectionPersistenceServices: SharedCollectionPersistenceServices,
+  implicit
+  sharedCollectionPersistenceServices: SharedCollectionPersistenceServices,
   transactor: Transactor[Task],
-  dbOps: DBOps[F]) {
+  dbOps: DBOps[F]
+) {
 
   val sharedCollectionNotFoundException = SharedCollectionNotFoundException(
-    message = "The required shared collection doesn't exist")
+    message = "The required shared collection doesn't exist"
+  )
 
   def createCollection(request: CreateCollectionRequest): Free[F, CreateCollectionResponse] = {
     for {
@@ -30,13 +33,17 @@ class SharedCollectionProcesses[F[_]](
   }.liftF[F]
 
   def getCollectionByPublicIdentifier(
-    publicIdentifier: String)(
-    implicit ev: Composite[Installation]): Free[F, XorGetCollectionByPublicId] = {
+    publicIdentifier: String
+  )(
+    implicit
+    ev: Composite[Installation]
+  ): Free[F, XorGetCollectionByPublicId] = {
 
     val sharedCollectionInfo = for {
-      sharedCollection <- sharedCollectionPersistenceServices.getCollectionByPublicIdentifier(
-        publicIdentifier = publicIdentifier)
-      response <- getPackagesByCollection(sharedCollection)
+      sharedCollection ← sharedCollectionPersistenceServices.getCollectionByPublicIdentifier(
+        publicIdentifier = publicIdentifier
+      )
+      response ← getPackagesByCollection(sharedCollection)
     } yield response
 
     sharedCollectionInfo.liftF[F]
@@ -45,8 +52,8 @@ class SharedCollectionProcesses[F[_]](
   private[this] def getPackagesByCollection(collection: Option[SharedCollection]) = {
     val throwable: XorGetCollectionByPublicId = sharedCollectionNotFoundException.left
 
-    collection.fold(throwable.point[ConnectionIO]) { c =>
-      sharedCollectionPersistenceServices.getPackagesByCollection(c.id) map { packages =>
+    collection.fold(throwable.point[ConnectionIO]) { c ⇒
+      sharedCollectionPersistenceServices.getPackagesByCollection(c.id) map { packages ⇒
         toGetCollectionByPublicIdentifierResponse(c, packages).right
       }
     }
@@ -56,7 +63,9 @@ class SharedCollectionProcesses[F[_]](
 object SharedCollectionProcesses {
 
   implicit def sharedCollectionProcesses[F[_]](
-    implicit sharedCollectionPersistenceServices: SharedCollectionPersistenceServices,
-    dbOps: DBOps[F]) = new SharedCollectionProcesses
+    implicit
+    sharedCollectionPersistenceServices: SharedCollectionPersistenceServices,
+    dbOps: DBOps[F]
+  ) = new SharedCollectionProcesses
 
 }

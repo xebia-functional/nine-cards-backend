@@ -1,6 +1,6 @@
 package com.fortysevendeg.ninecards.services.free.algebra
 
-import cats.free.{Free, Inject}
+import cats.free.{ Free, Inject }
 
 object DBResult {
 

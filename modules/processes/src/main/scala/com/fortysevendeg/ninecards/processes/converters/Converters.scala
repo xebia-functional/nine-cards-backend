@@ -8,13 +8,15 @@ import com.fortysevendeg.ninecards.processes.messages.SharedCollectionMessages._
 import com.fortysevendeg.ninecards.processes.messages.UserMessages.LoginResponse
 import com.fortysevendeg.ninecards.services.common.NineCardsConfig.defaultConfig
 import com.fortysevendeg.ninecards.services.free.domain.{
-GooglePlayApp => GooglePlayAppServices,
-Installation => InstallationServices,
-SharedCollection => SharedCollectionServices,
-SharedCollectionPackage => SharedCollectionPackageServices,
-User => UserAppServices}
+  GooglePlayApp ⇒ GooglePlayAppServices,
+  Installation ⇒ InstallationServices,
+  SharedCollection ⇒ SharedCollectionServices,
+  SharedCollectionPackage ⇒ SharedCollectionPackageServices,
+  User ⇒ UserAppServices
+}
 import com.fortysevendeg.ninecards.services.persistence.SharedCollectionPersistenceServices.{
-SharedCollectionData => SharedCollectionDataServices}
+  SharedCollectionData ⇒ SharedCollectionDataServices
+}
 import org.http4s.Uri
 import org.joda.time.DateTime
 
@@ -25,45 +27,53 @@ object Converters {
   implicit def toTimestamp(datetime: DateTime): Timestamp = new Timestamp(datetime.getMillis)
 
   def generateSharedCollectionLink(publicIdentifier: String) =
-    Uri.fromString(defaultConfig.getString("ninecards.sharedCollectionsBaseUrl")) map { uri =>
+    Uri.fromString(defaultConfig.getString("ninecards.sharedCollectionsBaseUrl")) map { uri ⇒
       uri./(publicIdentifier).renderString
-    } fold(
-      error => "", //TODO: Maybe we should return an error if the url is malformed
-      uri => uri)
+    } fold (
+      error ⇒ "", //TODO: Maybe we should return an error if the url is malformed
+      uri ⇒ uri
+    )
 
   def toGooglePlayApp(app: GooglePlayAppServices): GooglePlayApp =
     GooglePlayApp(
-      packageName = app.packageName,
-      appType = app.appType,
-      appCategory = app.appCategory,
+      packageName  = app.packageName,
+      appType      = app.appType,
+      appCategory  = app.appCategory,
       numDownloads = app.numDownloads,
-      starRating = app.starRating,
-      ratingCount = app.ratingCount,
-      commentCount = app.commentCount)
+      starRating   = app.starRating,
+      ratingCount  = app.ratingCount,
+      commentCount = app.commentCount
+    )
 
   def toLoginResponse(info: (UserAppServices, InstallationServices)): LoginResponse = {
     val (user, _) = info
     LoginResponse(
-      apiKey = user.apiKey,
-      sessionToken = user.sessionToken)
+      apiKey       = user.apiKey,
+      sessionToken = user.sessionToken
+    )
   }
 
   def toGetCollectionByPublicIdentifierResponse(
     collection: SharedCollectionServices,
-    packages: List[SharedCollectionPackageServices]): GetCollectionByPublicIdentifierResponse =
+    packages: List[SharedCollectionPackageServices]
+  ): GetCollectionByPublicIdentifierResponse =
     GetCollectionByPublicIdentifierResponse(
-      toSharedCollectionInfo(collection, packages map (_.packageName)))
+      toSharedCollectionInfo(collection, packages map (_.packageName))
+    )
 
   def toCreateCollectionResponse(
     collection: SharedCollectionServices,
-    packages: List[String]): CreateCollectionResponse =
+    packages: List[String]
+  ): CreateCollectionResponse =
     CreateCollectionResponse(
-      toSharedCollectionInfo(collection, packages))
+      toSharedCollectionInfo(collection, packages)
+    )
 
   def toUpdateInstallationResponse(installation: InstallationServices): UpdateInstallationResponse =
     UpdateInstallationResponse(
-      androidId = installation.androidId,
-      deviceToken = installation.deviceToken)
+      androidId   = installation.androidId,
+      deviceToken = installation.deviceToken
+    )
 
   implicit def toSharedCollectionDataServices(
     data: SharedCollectionData): SharedCollectionDataServices =
@@ -82,27 +92,30 @@ object Converters {
 
   def toSharedCollectionInfo(
     collection: SharedCollectionServices,
-    packages: List[String]): SharedCollectionInfo =
+    packages: List[String]
+  ): SharedCollectionInfo =
     SharedCollectionInfo(
       publicIdentifier = collection.publicIdentifier,
-      publishedOn = collection.publishedOn,
-      description = collection.description,
-      author = collection.author,
-      name = collection.name,
-      sharedLink = generateSharedCollectionLink(collection.publicIdentifier),
-      installations = collection.installations,
-      views = collection.views,
-      category = collection.category,
-      icon = collection.icon,
-      community = collection.community,
-      packages = packages,
-      resolvedPackages = packages map (p => //TODO: Get the information about packages from Google
+      publishedOn      = collection.publishedOn,
+      description      = collection.description,
+      author           = collection.author,
+      name             = collection.name,
+      sharedLink       = generateSharedCollectionLink(collection.publicIdentifier),
+      installations    = collection.installations,
+      views            = collection.views,
+      category         = collection.category,
+      icon             = collection.icon,
+      community        = collection.community,
+      packages         = packages,
+      resolvedPackages = packages map (p ⇒ //TODO: Get the information about packages from Google
         ResolvedPackageInfo(
           packageName = p,
-          title = "Title of the app",
+          title       = "Title of the app",
           description = "Description of the app",
-          free = true,
-          icon = "url-to-the-icon",
-          stars = 4.5,
-          downloads = "100.000.000+")))
+          free        = true,
+          icon        = "url-to-the-icon",
+          stars       = 4.5,
+          downloads   = "100.000.000+"
+        ))
+    )
 }

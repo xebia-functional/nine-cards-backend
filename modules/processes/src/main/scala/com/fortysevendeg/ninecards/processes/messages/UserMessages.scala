@@ -10,6 +10,7 @@ object UserMessages {
 
   case class LoginResponse(
     apiKey: String,
-    sessionToken: String)
+    sessionToken: String
+  )
 
 }
