@@ -7,7 +7,7 @@ import com.fortysevendeg.ninecards.processes.NineCardsServices._
 import com.fortysevendeg.ninecards.processes.ProcessesExceptions._
 import com.fortysevendeg.ninecards.processes.converters.Converters
 import com.fortysevendeg.ninecards.processes.messages.SharedCollectionMessages._
-import com.fortysevendeg.ninecards.processes.utils.{DummyNineCardsConfig, XorMatchers}
+import com.fortysevendeg.ninecards.processes.utils.{ DummyNineCardsConfig, XorMatchers }
 import com.fortysevendeg.ninecards.services.free.domain._
 import com.fortysevendeg.ninecards.services.persistence.SharedCollectionPersistenceServices.{SharedCollectionData => SharedCollectionDataServices}
 import com.fortysevendeg.ninecards.services.persistence._
@@ -25,11 +25,11 @@ import scalaz.Scalaz._
 
 trait SharedCollectionProcessesSpecification
   extends Specification
-    with Matchers
-    with Mockito
-    with DummyNineCardsConfig
-    with SharedCollectionProcessesContext
-    with XorMatchers {
+  with Matchers
+  with Mockito
+  with DummyNineCardsConfig
+  with SharedCollectionProcessesContext
+  with XorMatchers {
 
   trait BasicScope extends Scope {
 
@@ -48,10 +48,12 @@ trait SharedCollectionProcessesSpecification
       packagesName = packagesName) returns packagesSize.point[ConnectionIO]
 
     sharedCollectionPersistenceServices.getCollectionByPublicIdentifier(
-      publicIdentifier = publicIdentifier) returns Option(collection).point[ConnectionIO]
+      publicIdentifier = publicIdentifier
+    ) returns Option(collection).point[ConnectionIO]
 
     sharedCollectionPersistenceServices.getPackagesByCollection(
-      collectionId = collectionId) returns List.empty[SharedCollectionPackage].point[ConnectionIO]
+      collectionId = collectionId
+    ) returns List.empty[SharedCollectionPackage].point[ConnectionIO]
   }
 
   trait SharedCollectionUnsuccessfulScope extends BasicScope {
@@ -99,7 +101,7 @@ trait SharedCollectionProcessesContext {
   val packagesSize = 0
 
   val collection = SharedCollection(
-    id = collectionId,
+    id               = collectionId,
     publicIdentifier = publicIdentifier,
     userId = userId,
     publishedOn = publishedOnTimestamp,
@@ -162,16 +164,17 @@ trait SharedCollectionProcessesContext {
   val createCollectionResponse = CreateCollectionResponse(data = sharedCollectionInfo)
 
   val getCollectionByPublicIdentifierResponse = GetCollectionByPublicIdentifierResponse(
-    data = sharedCollectionInfo)
+    data = sharedCollectionInfo
+  )
 
   val sharedCollectionNotFoundException = SharedCollectionNotFoundException(
-    message = "The required shared collection doesn't exist")
+    message = "The required shared collection doesn't exist"
+  )
 }
-
 
 class SharedCollectionProcessesSpec
   extends SharedCollectionProcessesSpecification
-    with ScalaCheck {
+  with ScalaCheck {
 
   "createCollection" should {
     "return a valid response info when the shared collection is created" in
@@ -187,7 +190,8 @@ class SharedCollectionProcessesSpec
     "return a valid shared collection info when the shared collection exists" in
       new SharedCollectionSuccessfulScope {
         val collectionInfo = sharedCollectionProcesses.getCollectionByPublicIdentifier(
-          publicIdentifier = publicIdentifier)
+          publicIdentifier = publicIdentifier
+        )
 
         collectionInfo.foldMap(testInterpreters) must beXorRight(getCollectionByPublicIdentifierResponse)
       }
@@ -195,7 +199,8 @@ class SharedCollectionProcessesSpec
     "return a SharedCollectionNotFoundException when the shared collection doesn't exist" in
       new SharedCollectionUnsuccessfulScope {
         val collectionInfo = sharedCollectionProcesses.getCollectionByPublicIdentifier(
-          publicIdentifier = publicIdentifier)
+          publicIdentifier = publicIdentifier
+        )
 
         collectionInfo.foldMap(testInterpreters) must beXorLeft(sharedCollectionNotFoundException)
       }

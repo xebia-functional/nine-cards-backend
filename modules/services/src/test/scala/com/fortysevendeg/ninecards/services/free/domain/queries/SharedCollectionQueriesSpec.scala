@@ -12,8 +12,8 @@ import shapeless.syntax.std.product._
 
 class SharedCollectionQueriesSpec
   extends Specification
-    with AnalysisSpec
-    with DomainDatabaseContext {
+  with AnalysisSpec
+  with DomainDatabaseContext {
 
   val id = 12345l
   val publicIdentifier = "7a2a4c1c-5260-40a5-ba06-db009a3ef7c4"
@@ -21,30 +21,34 @@ class SharedCollectionQueriesSpec
 
   val data = SharedCollectionData(
     publicIdentifier = publicIdentifier,
-    userId = Option(23456l),
-    publishedOn = now,
-    description = Option("Description about the collection"),
-    author = "John Doe",
-    name = "The name of the collection",
-    installations = 1,
-    views = 1,
-    category = "SOCIAL",
-    icon = "path-to-icon",
-    community = true)
+    userId           = Option(23456l),
+    publishedOn      = now,
+    description      = Option("Description about the collection"),
+    author           = "John Doe",
+    name             = "The name of the collection",
+    installations    = 1,
+    views            = 1,
+    category         = "SOCIAL",
+    icon             = "path-to-icon",
+    community        = true
+  )
 
   val getCollectionByIdQuery = collectionPersistence.generateQuery(
-    sql = getById,
-    values = id)
+    sql    = getById,
+    values = id
+  )
   check(getCollectionByIdQuery)
 
   val getPublicIdentifierQuery = collectionPersistence.generateQuery(
-    sql = getByPublicIdentifier,
-    values = publicIdentifier)
+    sql    = getByPublicIdentifier,
+    values = publicIdentifier
+  )
   check(getPublicIdentifierQuery)
 
   val insertCollectionQuery = collectionPersistence.generateUpdateWithGeneratedKeys(
-    sql = insert,
-    values = data.toTuple)
+    sql    = insert,
+    values = data.toTuple
+  )
   check(insertCollectionQuery)
 
 }
