@@ -19,15 +19,17 @@ import scala.concurrent.ExecutionContext
 import scalaz.concurrent.Task
 
 class NineCardsDirectives(
-  implicit userProcesses: UserProcesses[NineCardsServices],
+  implicit
+  userProcesses: UserProcesses[NineCardsServices],
   googleApiProcesses: GoogleApiProcesses[NineCardsServices],
-  ec: ExecutionContext)
+  ec: ExecutionContext
+)
   extends BasicDirectives
-    with HeaderDirectives
-    with MarshallingDirectives
-    with MiscDirectives
-    with SecurityDirectives
-    with JsonFormats {
+  with HeaderDirectives
+  with MarshallingDirectives
+  with MiscDirectives
+  with SecurityDirectives
+  with JsonFormats {
 
   implicit def fromTaskAuth[T](auth: ⇒ Task[Authentication[T]]): AuthMagnet[T] =
     new AuthMagnet(onSuccess(auth))
@@ -38,9 +40,9 @@ class NineCardsDirectives(
   )
 
   def authenticateLoginRequest: Directive1[SessionToken] = for {
-    request <- entity(as[ApiLoginRequest])
-    _ <- authenticate(validateLoginRequest(request.email, request.tokenId))
-    sessionToken <- generateSessionToken
+    request ← entity(as[ApiLoginRequest])
+    _ ← authenticate(validateLoginRequest(request.email, request.tokenId))
+    sessionToken ← generateSessionToken
   } yield sessionToken
 
   def validateLoginRequest(email: String, tokenId: String): Task[Authentication[Unit]] =
@@ -57,11 +59,11 @@ class NineCardsDirectives(
     }
 
   def authenticateUser: Directive1[UserContext] = for {
-    uri <- requestUri
-    sessionToken <- headerValueByName(headerSessionToken)
-    androidId <- headerValueByName(headerAndroidId)
-    authToken <- headerValueByName(headerAuthToken)
-    userId <- authenticate(validateUser(sessionToken, androidId, authToken, uri))
+    uri ← requestUri
+    sessionToken ← headerValueByName(headerSessionToken)
+    androidId ← headerValueByName(headerAndroidId)
+    authToken ← headerValueByName(headerAuthToken)
+    userId ← authenticate(validateUser(sessionToken, androidId, authToken, uri))
   } yield UserContext(UserId(userId), AndroidId(androidId)) :: HNil
 
   def validateUser(
@@ -84,8 +86,8 @@ class NineCardsDirectives(
     }
 
   def generateNewCollectionInfo: Directive1[NewSharedCollectionInfo] = for {
-    currentDateTime <- provide(CurrentDateTime(DateTime.now))
-    publicIdentifier <- provide(PublicIdentifier(UUID.randomUUID.toString))
+    currentDateTime ← provide(CurrentDateTime(DateTime.now))
+    publicIdentifier ← provide(PublicIdentifier(UUID.randomUUID.toString))
   } yield NewSharedCollectionInfo(currentDateTime, publicIdentifier) :: HNil
 
   def generateSessionToken: Directive1[SessionToken] = provide(SessionToken(UUID.randomUUID.toString))
@@ -94,8 +96,10 @@ class NineCardsDirectives(
 object NineCardsDirectives {
 
   implicit def nineCardsDirectives(
-    implicit userProcesses: UserProcesses[NineCardsServices],
+    implicit
+    userProcesses: UserProcesses[NineCardsServices],
     googleApiProcesses: GoogleApiProcesses[NineCardsServices],
-    ec: ExecutionContext) = new NineCardsDirectives
+    ec: ExecutionContext
+  ) = new NineCardsDirectives
 
 }

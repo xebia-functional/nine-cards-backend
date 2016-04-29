@@ -56,8 +56,8 @@ trait NineCardsApi
   ) =
     pathPrefix("login") {
       pathEndOrSingleSlash {
-        requestLoginHeaders { (appId, apiKey) =>
-          nineCardsDirectives.authenticateLoginRequest { implicit sessionToken: SessionToken =>
+        requestLoginHeaders { (appId, apiKey) ⇒
+          nineCardsDirectives.authenticateLoginRequest { implicit sessionToken: SessionToken ⇒
             post {
               entity(as[ApiLoginRequest]) { request ⇒
                 complete {
@@ -77,7 +77,7 @@ trait NineCardsApi
   ) =
     pathPrefix("installations") {
       pathEndOrSingleSlash {
-        nineCardsDirectives.authenticateUser { implicit userContext: UserContext =>
+        nineCardsDirectives.authenticateUser { implicit userContext: UserContext ⇒
           put {
             entity(as[ApiUpdateInstallationRequest]) { request ⇒
               complete {
@@ -97,29 +97,31 @@ trait NineCardsApi
   ) =
     pathPrefix("collections") {
       pathEndOrSingleSlash {
-        nineCardsDirectives.authenticateUser { implicit userContext: UserContext =>
-          nineCardsDirectives.generateNewCollectionInfo { implicit c: NewSharedCollectionInfo =>
+        nineCardsDirectives.authenticateUser { implicit userContext: UserContext ⇒
+          nineCardsDirectives.generateNewCollectionInfo { implicit c: NewSharedCollectionInfo ⇒
             post {
-              entity(as[ApiCreateCollectionRequest]) { request =>
+              entity(as[ApiCreateCollectionRequest]) { request ⇒
                 complete {
                   sharedCollectionProcesses.createCollection(
-                    request) map toApiCreateCollectionResponse
+                    request
+                  ) map toApiCreateCollectionResponse
                 }
               }
             }
           }
         }
       } ~
-      path(TypedSegment[PublicIdentifier]) { publicIdentifier =>
-        nineCardsDirectives.authenticateUser { implicit userContext: UserContext =>
-          get {
-            complete {
-              sharedCollectionProcesses.getCollectionByPublicIdentifier(
-                publicIdentifier.value) map toApiGetCollectionByPublicIdentifierResponse
+        path(TypedSegment[PublicIdentifier]) { publicIdentifier ⇒
+          nineCardsDirectives.authenticateUser { implicit userContext: UserContext ⇒
+            get {
+              complete {
+                sharedCollectionProcesses.getCollectionByPublicIdentifier(
+                  publicIdentifier.value
+                ) map toApiGetCollectionByPublicIdentifierResponse
+              }
             }
           }
         }
-      }
     }
 
   private[this] def swaggerApiRoute =

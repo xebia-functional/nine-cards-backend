@@ -26,16 +26,17 @@ class UserProcesses[F[_]](
     userPersistenceServices.getUserByEmail(loginRequest.email) flatMap {
       case Some(user) ⇒
         signUpInstallation(loginRequest, user)
-      case None =>
+      case None ⇒
         val apiKey = hashUtils.hashValue(loginRequest.sessionToken)
 
         for {
-          newUser <- userPersistenceServices.addUser[User](
-            email = loginRequest.email,
-            apiKey = apiKey,
-            sessionToken = loginRequest.sessionToken)
-          installation <- userPersistenceServices.createInstallation[Installation](
-            userId = newUser.id,
+          newUser ← userPersistenceServices.addUser[User](
+            email        = loginRequest.email,
+            apiKey       = apiKey,
+            sessionToken = loginRequest.sessionToken
+          )
+          installation ← userPersistenceServices.createInstallation[Installation](
+            userId      = newUser.id,
             deviceToken = None,
             androidId   = loginRequest.androidId
           )

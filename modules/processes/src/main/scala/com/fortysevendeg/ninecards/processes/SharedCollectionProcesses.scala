@@ -27,8 +27,8 @@ class SharedCollectionProcesses[F[_]](
 
   def createCollection(request: CreateCollectionRequest): Free[F, CreateCollectionResponse] = {
     for {
-      sharedCollection <- sharedCollectionPersistenceServices.addCollection[SharedCollection](request.collection)
-      response <- sharedCollectionPersistenceServices.addPackages(sharedCollection.id, request.packages)
+      sharedCollection ← sharedCollectionPersistenceServices.addCollection[SharedCollection](request.collection)
+      response ← sharedCollectionPersistenceServices.addPackages(sharedCollection.id, request.packages)
     } yield toCreateCollectionResponse(sharedCollection, request.packages)
   }.liftF[F]
 

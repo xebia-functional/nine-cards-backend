@@ -76,19 +76,21 @@ object Converters {
     )
 
   implicit def toSharedCollectionDataServices(
-    data: SharedCollectionData): SharedCollectionDataServices =
+    data: SharedCollectionData
+  ): SharedCollectionDataServices =
     SharedCollectionDataServices(
       publicIdentifier = data.publicIdentifier,
-      userId = data.userId,
-      publishedOn = data.publishedOn,
-      description = data.description,
-      author = data.author,
-      name = data.name,
-      installations = data.installations.getOrElse(0),
-      views = data.views.getOrElse(0),
-      category = data.category,
-      icon = data.icon,
-      community = data.community)
+      userId           = data.userId,
+      publishedOn      = data.publishedOn,
+      description      = data.description,
+      author           = data.author,
+      name             = data.name,
+      installations    = data.installations.getOrElse(0),
+      views            = data.views.getOrElse(0),
+      category         = data.category,
+      icon             = data.icon,
+      community        = data.community
+    )
 
   def toSharedCollectionInfo(
     collection: SharedCollectionServices,

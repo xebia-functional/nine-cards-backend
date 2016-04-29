@@ -69,7 +69,8 @@ trait NineCardsApiSpecification
     googleApiProcesses.checkGoogleTokenId(email, tokenId) returns Free.pure(true)
 
     userProcesses.signUpUser(
-      LoginRequest(email, androidId, tokenId, any)) returns Free.pure(loginResponse)
+      LoginRequest(email, androidId, tokenId, any)
+    ) returns Free.pure(loginResponse)
 
     userProcesses.updateInstallation(mockEq(updateInstallationRequest))(any) returns
       Free.pure(updateInstallationResponse)
@@ -105,7 +106,8 @@ trait NineCardsApiSpecification
     ) returns checkAuthTokenTask.liftF[NineCardsServices]
 
     userProcesses.signUpUser(
-      LoginRequest(email, androidId, tokenId, any)) returns loginTask.liftF[NineCardsServices]
+      LoginRequest(email, androidId, tokenId, any)
+    ) returns loginTask.liftF[NineCardsServices]
 
     userProcesses.updateInstallation(mockEq(updateInstallationRequest))(any) returns
       updateInstallationTask.liftF[NineCardsServices]
