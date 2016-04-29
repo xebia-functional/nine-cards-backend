@@ -15,7 +15,8 @@ trait GoogleApiProcessesSpecification
   extends Specification
   with Matchers
   with Mockito
-  with GoogleApiProcessesContext {
+  with GoogleApiProcessesContext
+  with TestInterpreters {
 
   trait BasicScope extends Scope {
 

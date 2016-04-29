@@ -209,15 +209,16 @@ trait NineCardsApiContext {
   )
 
   val apiCreateCollectionRequest = ApiCreateCollectionRequest(
-    description = description,
-    author = author,
-    name = name,
+    description   = description,
+    author        = author,
+    name          = name,
     installations = Option(installations),
-    views = Option(views),
-    category = category,
-    icon = icon,
-    community = community,
-    packages = List.empty)
+    views         = Option(views),
+    category      = category,
+    icon          = icon,
+    community     = community,
+    packages      = List.empty
+  )
 
   val createCollectionResponse = CreateCollectionResponse(data = sharedCollectionInfo)
 

@@ -5,6 +5,7 @@ import com.fortysevendeg.ninecards.services.free.algebra.DBResult._
 import com.fortysevendeg.ninecards.services.free.algebra.GoogleApiServices._
 import com.fortysevendeg.ninecards.services.free.interpreter.impl.GoogleApiServices._
 
+import scala.util.{ Failure, Success, Try }
 import scalaz.concurrent.Task
 
 abstract class Interpreters[M[_]](implicit A: ApplicativeError[M, Throwable]) {
@@ -20,14 +21,16 @@ abstract class Interpreters[M[_]](implicit A: ApplicativeError[M, Throwable]) {
 
   def googleAPIServicesInterpreter: (GoogleApiOps ~> M) = new (GoogleApiOps ~> M) {
     def apply[A](fa: GoogleApiOps[A]) = fa match {
-      case GetTokenInfo(tokenId: String) => task2M(googleApiServices.getTokenInfo(tokenId))
+      case GetTokenInfo(tokenId: String) ⇒ task2M(googleApiServices.getTokenInfo(tokenId))
     }
   }
 }
 
 trait IdInstances {
   implicit def idApplicativeError(
-    implicit I: Applicative[cats.Id]): ApplicativeError[cats.Id, Throwable] =
+    implicit
+    I: Applicative[cats.Id]
+  ): ApplicativeError[cats.Id, Throwable] =
     new ApplicativeError[Id, Throwable] {
 
       override def pure[A](x: A): Id[A] = I.pure(x)
@@ -40,13 +43,11 @@ trait IdInstances {
 
       override def raiseError[A](e: Throwable): Id[A] = throw e
 
-      override def handleErrorWith[A](fa: Id[A])(f: Throwable ⇒ Id[A]): Id[A] = {
-        try {
-          fa
-        } catch {
-          case e: Exception ⇒ f(e)
+      override def handleErrorWith[A](fa: Id[A])(f: Throwable ⇒ Id[A]): Id[A] =
+        Try(fa) match {
+          case Success(v) ⇒ v
+          case Failure(e) ⇒ f(e)
         }
-      }
     }
 }
 
@@ -73,7 +74,7 @@ trait TaskInstances {
     }
 }
 
-object Interpreters extends IdInstances with TaskInstances  {
+object Interpreters extends IdInstances with TaskInstances {
 
   val taskInterpreters = new Interpreters[Task] {
     override val task2M: (Task ~> Task) = new (Task ~> Task) {
@@ -84,8 +85,8 @@ object Interpreters extends IdInstances with TaskInstances  {
   val idInterpreters = new Interpreters[Id] {
     override val task2M: (Task ~> Id) = new (Task ~> Id) {
       override def apply[A](fa: Task[A]): Id[A] = fa.attemptRun.fold(
-        error => idApplicativeError.raiseError(error),
-        value => idApplicativeError.pure(value)
+        error ⇒ idApplicativeError.raiseError(error),
+        value ⇒ idApplicativeError.pure(value)
       )
     }
   }

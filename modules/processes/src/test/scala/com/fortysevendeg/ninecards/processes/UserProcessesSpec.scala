@@ -22,7 +22,8 @@ trait UserProcessesSpecification
   with Matchers
   with Mockito
   with UserProcessesContext
-  with DummyNineCardsConfig {
+  with DummyNineCardsConfig
+  with TestInterpreters {
 
   trait BasicScope extends Scope {
 
@@ -156,8 +157,8 @@ class UserProcessesSpec
           requestUri   = dummyUrl
         )
 
-      checkAuthToken.foldMap(testInterpreters) shouldEqual checkAuthTokenResponse
-    }
+        checkAuthToken.foldMap(testInterpreters) shouldEqual checkAuthTokenResponse
+      }
 
     "return the userId when a wrong auth token is given" in new UserAndInstallationSuccessfulScope {
       val checkAuthToken = userProcesses.checkAuthToken(

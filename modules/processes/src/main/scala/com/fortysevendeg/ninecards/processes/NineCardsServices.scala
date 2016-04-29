@@ -1,7 +1,7 @@
 package com.fortysevendeg.ninecards.processes
 
 import cats.data.Coproduct
-import cats.{Id, Monad, ~>}
+import cats.{ Id, Monad, ~> }
 import com.fortysevendeg.ninecards.services.free.algebra.DBResult.DBResult
 import com.fortysevendeg.ninecards.services.free.algebra.GoogleApiServices.GoogleApiOps
 import com.fortysevendeg.ninecards.services.free.interpreter.Interpreters._
@@ -16,7 +16,4 @@ object NineCardsServices {
 
   val prodInterpreters: NineCardsServices ~> Task =
     taskInterpreters.dBResultInterpreter or taskInterpreters.googleAPIServicesInterpreter
-
-  val testInterpreters: NineCardsServices ~> Id =
-    idInterpreters.dBResultInterpreter or idInterpreters.googleAPIServicesInterpreter
 }

@@ -41,7 +41,7 @@ object SprayMarshallers {
     taskMarshaller: Lazy[ToResponseMarshaller[Task[A]]]
   ): ToResponseMarshaller[Free[NineCardsServices, A]] =
     ToResponseMarshaller[Free[NineCardsServices, A]] {
-      (free, ctx) =>
+      (free, ctx) ⇒
         taskMarshaller.value(free.foldMap(prodInterpreters), ctx)
     }
 }
