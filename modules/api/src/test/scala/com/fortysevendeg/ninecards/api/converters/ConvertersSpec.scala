@@ -1,10 +1,11 @@
 package com.fortysevendeg.ninecards.api.converters
 
-import com.fortysevendeg.ninecards.api.NineCardsHeaders.Domain.{ AndroidId, UserContext, UserId }
+import com.fortysevendeg.ninecards.api.NineCardsHeaders.Domain._
 import com.fortysevendeg.ninecards.api.messages.InstallationsMessages._
 import com.fortysevendeg.ninecards.api.messages.UserMessages._
 import com.fortysevendeg.ninecards.processes.messages.InstallationsMessages._
 import com.fortysevendeg.ninecards.processes.messages.UserMessages._
+import org.scalacheck.{ Arbitrary, Gen }
 import org.scalacheck.Shapeless._
 import org.specs2.ScalaCheck
 import org.specs2.mutable.Specification
@@ -13,14 +14,18 @@ class ConvertersSpec
   extends Specification
   with ScalaCheck {
 
+  val uuidGenerator: Gen[String] = Gen.uuid.map(_.toString)
+  implicit val abSessionToken: Arbitrary[SessionToken] = Arbitrary(uuidGenerator.map(SessionToken.apply))
+
   "toLoginRequest" should {
     "convert an ApiLoginRequest to a LoginRequest object" in {
-      prop { apiRequest: ApiLoginRequest ⇒
+      prop { (apiRequest: ApiLoginRequest, sessionToken: SessionToken) ⇒
 
-        val request = Converters.toLoginRequest(apiRequest)
+        val request = Converters.toLoginRequest(apiRequest)(sessionToken)
 
         request.androidId shouldEqual apiRequest.androidId
         request.email shouldEqual apiRequest.email
+        request.sessionToken shouldEqual sessionToken.value
         request.tokenId shouldEqual apiRequest.tokenId
       }
     }

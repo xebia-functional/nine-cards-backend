@@ -4,10 +4,8 @@ import java.sql.Timestamp
 import java.time.Instant
 
 import com.fortysevendeg.ninecards.services.persistence.NineCardsGenEntities._
-import com.fortysevendeg.ninecards.services.persistence.SharedCollectionPersistenceServices.SharedCollectionData
+import com.fortysevendeg.ninecards.services.persistence.SharedCollectionPersistenceServices._
 import com.fortysevendeg.ninecards.services.persistence.UserPersistenceServices.UserData
-import org.scalacheck.Gen.Parameters
-import org.scalacheck.Gen.Parameters.default
 import org.scalacheck.{ Arbitrary, Gen }
 
 object NineCardsGenEntities {
@@ -44,10 +42,8 @@ trait NineCardsScalacheckGen {
     Timestamp.from(Instant.ofEpochSecond(seconds))
   }
 
-  val uuidGenerator: Gen[String] = Gen.uuid.map(_.toString)
-
   val sharedCollectionDataGenerator: Gen[SharedCollectionData] = for {
-    publicIdentifier ← uuidGenerator
+    publicIdentifier ← Gen.uuid
     publishedOn ← timestampGenerator
     description ← Gen.option[String](stringGenerator)
     author ← stringGenerator
@@ -58,32 +54,32 @@ trait NineCardsScalacheckGen {
     icon ← stringGenerator
     community ← Gen.oneOf(true, false)
   } yield SharedCollectionData(
-    publicIdentifier,
-    None,
-    publishedOn,
-    description   = description,
-    author        = author,
-    name          = name,
-    installations = installations,
-    views         = views,
-    category      = category,
-    icon          = icon,
-    community     = community
+    publicIdentifier = publicIdentifier.toString,
+    userId           = None,
+    publishedOn      = publishedOn,
+    description      = description,
+    author           = author,
+    name             = name,
+    installations    = installations,
+    views            = views,
+    category         = category,
+    icon             = icon,
+    community        = community
   )
 
   val userDataGenerator: Gen[UserData] = for {
     email ← emailGenerator
-    apiKey ← uuidGenerator
-    sessionToken ← uuidGenerator
-  } yield UserData(email, apiKey, sessionToken)
+    apiKey ← Gen.uuid
+    sessionToken ← Gen.uuid
+  } yield UserData(email, apiKey.toString, sessionToken.toString)
 
-  implicit val abAndroidId: Arbitrary[AndroidId] = Arbitrary(uuidGenerator.map(AndroidId.apply))
+  implicit val abAndroidId: Arbitrary[AndroidId] = Arbitrary(Gen.uuid.map(u ⇒ AndroidId(u.toString)))
 
-  implicit val abApiKey: Arbitrary[ApiKey] = Arbitrary(uuidGenerator.map(ApiKey.apply))
+  implicit val abApiKey: Arbitrary[ApiKey] = Arbitrary(Gen.uuid.map(u ⇒ ApiKey(u.toString)))
 
   implicit val abEmail: Arbitrary[Email] = Arbitrary(emailGenerator.map(Email.apply))
 
-  implicit val abSessionToken: Arbitrary[SessionToken] = Arbitrary(uuidGenerator.map(SessionToken.apply))
+  implicit val abSessionToken: Arbitrary[SessionToken] = Arbitrary(Gen.uuid.map(u ⇒ SessionToken(u.toString)))
 
   implicit val abSharedCollectionData: Arbitrary[SharedCollectionData] = Arbitrary(sharedCollectionDataGenerator)
 

@@ -10,11 +10,17 @@ import com.fortysevendeg.ninecards.processes.messages.UserMessages._
 
 object Converters {
 
-  implicit def toLoginRequest(request: ApiLoginRequest): LoginRequest =
+  implicit def toLoginRequest(
+    request: ApiLoginRequest
+  )(
+    implicit
+    sessionToken: SessionToken
+  ): LoginRequest =
     LoginRequest(
-      email     = request.email,
-      androidId = request.androidId,
-      tokenId   = request.tokenId
+      email        = request.email,
+      androidId    = request.androidId,
+      sessionToken = sessionToken.value,
+      tokenId      = request.tokenId
     )
 
   implicit def toApiLoginResponse(response: LoginResponse): ApiLoginResponse =
@@ -43,19 +49,21 @@ object Converters {
     request: ApiCreateCollectionRequest
   )(
     implicit
-    userContext: UserContext
+    collectionInfo: NewSharedCollectionInfo, userContext: UserContext
   ): CreateCollectionRequest =
     CreateCollectionRequest(
       collection = SharedCollectionData(
-        userId        = Option(userContext.userId.value),
-        description   = request.description,
-        author        = request.author,
-        name          = request.name,
-        installations = request.installations,
-        views         = request.views,
-        category      = request.category,
-        icon          = request.icon,
-        community     = request.community
+        publicIdentifier = collectionInfo.identifier.value,
+        userId           = Option(userContext.userId.value),
+        publishedOn      = collectionInfo.currentDate.value,
+        description      = request.description,
+        author           = request.author,
+        name             = request.name,
+        installations    = request.installations,
+        views            = request.views,
+        category         = request.category,
+        icon             = request.icon,
+        community        = request.community
       ),
       packages   = request.packages
     )

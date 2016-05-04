@@ -1,12 +1,14 @@
 package com.fortysevendeg.ninecards.api
 
+import java.util.UUID
+
 import com.fortysevendeg.ninecards.api.NineCardsHeaders.Domain._
 import com.fortysevendeg.ninecards.api.NineCardsHeaders._
 import com.fortysevendeg.ninecards.api.messages.UserMessages.ApiLoginRequest
-import com.fortysevendeg.ninecards.api.utils.SprayMarshallers._
 import com.fortysevendeg.ninecards.api.utils.TaskDirectives._
 import com.fortysevendeg.ninecards.processes.NineCardsServices._
 import com.fortysevendeg.ninecards.processes._
+import org.joda.time.DateTime
 import shapeless._
 import spray.http.Uri
 import spray.routing._
@@ -16,12 +18,14 @@ import spray.routing.directives._
 import scala.concurrent.ExecutionContext
 import scalaz.concurrent.Task
 
-class NineCardsAuthenticator(
+class NineCardsDirectives(
   implicit
   userProcesses: UserProcesses[NineCardsServices],
   googleApiProcesses: GoogleApiProcesses[NineCardsServices],
   ec: ExecutionContext
-) extends HeaderDirectives
+)
+  extends BasicDirectives
+  with HeaderDirectives
   with MarshallingDirectives
   with MiscDirectives
   with SecurityDirectives
@@ -35,19 +39,18 @@ class NineCardsAuthenticator(
     challengeHeaders = Nil
   )
 
-  def authenticateLoginRequest: Directive0 = {
-    for {
-      request ← entity(as[ApiLoginRequest])
-      _ ← authenticate(validateLoginRequest(request.email, request.tokenId))
-    } yield ()
-  } flatMap { _ ⇒ Directive.Empty }
+  def authenticateLoginRequest: Directive1[SessionToken] = for {
+    request ← entity(as[ApiLoginRequest])
+    _ ← authenticate(validateLoginRequest(request.email, request.tokenId))
+    sessionToken ← generateSessionToken
+  } yield sessionToken
 
   def validateLoginRequest(email: String, tokenId: String): Task[Authentication[Unit]] =
     (email, tokenId) match {
       case (e, o) if e.isEmpty || o.isEmpty ⇒
         Task.now(Left(rejectionByCredentialsRejected))
       case _ ⇒
-        googleApiProcesses.checkGoogleTokenId(email, tokenId).foldMap(interpreters) map {
+        googleApiProcesses.checkGoogleTokenId(email, tokenId).foldMap(prodInterpreters) map {
           case true ⇒ Right(())
           case _ ⇒ Left(rejectionByCredentialsRejected)
         } handle {
@@ -55,7 +58,7 @@ class NineCardsAuthenticator(
         }
     }
 
-  def authenticateUser: Directive[UserInfo] = for {
+  def authenticateUser: Directive1[UserContext] = for {
     uri ← requestUri
     sessionToken ← headerValueByName(headerSessionToken)
     androidId ← headerValueByName(headerAndroidId)
@@ -74,7 +77,7 @@ class NineCardsAuthenticator(
       androidId    = androidId,
       authToken    = authToken,
       requestUri   = requestUri.toString
-    ).foldMap(interpreters) map {
+    ).foldMap(prodInterpreters) map {
       case Some(v) ⇒ Right(v)
       case None ⇒
         Left(rejectionByCredentialsRejected)
@@ -82,15 +85,21 @@ class NineCardsAuthenticator(
       case _ ⇒ Left(rejectionByCredentialsRejected)
     }
 
+  def generateNewCollectionInfo: Directive1[NewSharedCollectionInfo] = for {
+    currentDateTime ← provide(CurrentDateTime(DateTime.now))
+    publicIdentifier ← provide(PublicIdentifier(UUID.randomUUID.toString))
+  } yield NewSharedCollectionInfo(currentDateTime, publicIdentifier) :: HNil
+
+  def generateSessionToken: Directive1[SessionToken] = provide(SessionToken(UUID.randomUUID.toString))
 }
 
-object NineCardsAuthenticator {
+object NineCardsDirectives {
 
-  implicit def nineCardsAuthenticator(
+  implicit def nineCardsDirectives(
     implicit
     userProcesses: UserProcesses[NineCardsServices],
     googleApiProcesses: GoogleApiProcesses[NineCardsServices],
     ec: ExecutionContext
-  ) = new NineCardsAuthenticator
+  ) = new NineCardsDirectives
 
 }
