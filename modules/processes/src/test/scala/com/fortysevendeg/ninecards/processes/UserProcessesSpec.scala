@@ -22,7 +22,8 @@ trait UserProcessesSpecification
   with Matchers
   with Mockito
   with UserProcessesContext
-  with DummyNineCardsConfig {
+  with DummyNineCardsConfig
+  with TestInterpreters {
 
   trait BasicScope extends Scope {
 
@@ -123,26 +124,26 @@ class UserProcessesSpec
     "return LoginResponse object when the user exists and installation" in
       new UserAndInstallationSuccessfulScope {
         val signUpUser = userProcesses.signUpUser(loginRequest)
-        signUpUser.foldMap(interpreters).run shouldEqual loginResponse
+        signUpUser.foldMap(testInterpreters) shouldEqual loginResponse
       }
 
     "return LoginResponse object when the user exists but not installation" in
       new UserSuccessfulAndInstallationFailingScope {
         val signUpUser = userProcesses.signUpUser(loginRequest)
-        signUpUser.foldMap(interpreters).run shouldEqual loginResponse
+        signUpUser.foldMap(testInterpreters) shouldEqual loginResponse
       }
 
     "return LoginResponse object when there isn't user or installation" in
       new UserAndInstallationFailingScope {
         val signUpUser = userProcesses.signUpUser(loginRequest)
-        signUpUser.foldMap(interpreters).run shouldEqual loginResponse
+        signUpUser.foldMap(testInterpreters) shouldEqual loginResponse
       }
   }
 
   "updateInstallation" should {
     "return UpdateInstallationResponse object" in new UserAndInstallationSuccessfulScope {
       val signUpInstallation = userProcesses.updateInstallation(updateInstallationRequest)
-      signUpInstallation.foldMap(interpreters).run shouldEqual updateInstallationResponse
+      signUpInstallation.foldMap(testInterpreters) shouldEqual updateInstallationResponse
     }
   }
 
@@ -156,7 +157,7 @@ class UserProcessesSpec
           requestUri   = dummyUrl
         )
 
-        checkAuthToken.foldMap(interpreters).run shouldEqual checkAuthTokenResponse
+        checkAuthToken.foldMap(testInterpreters) shouldEqual checkAuthTokenResponse
       }
 
     "return the userId when a wrong auth token is given" in new UserAndInstallationSuccessfulScope {
@@ -167,7 +168,7 @@ class UserProcessesSpec
         requestUri   = dummyUrl
       )
 
-      checkAuthToken.foldMap(interpreters).run shouldEqual None
+      checkAuthToken.foldMap(testInterpreters) shouldEqual None
     }
 
     "return None if there is no user with the given sessionToken" in
@@ -179,7 +180,7 @@ class UserProcessesSpec
           requestUri   = dummyUrl
         )
 
-        checkAuthToken.foldMap(interpreters).run should beNone
+        checkAuthToken.foldMap(testInterpreters) should beNone
       }
 
     "return None if there is no installation with the given androidId that belongs to the user" in
@@ -191,7 +192,7 @@ class UserProcessesSpec
           requestUri   = dummyUrl
         )
 
-        checkAuthToken.foldMap(interpreters).run should beNone
+        checkAuthToken.foldMap(testInterpreters) should beNone
       }
   }
 }

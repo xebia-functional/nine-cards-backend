@@ -50,7 +50,7 @@ class NineCardsDirectives(
       case (e, o) if e.isEmpty || o.isEmpty ⇒
         Task.now(Left(rejectionByCredentialsRejected))
       case _ ⇒
-        googleApiProcesses.checkGoogleTokenId(email, tokenId).foldMap(interpreters) map {
+        googleApiProcesses.checkGoogleTokenId(email, tokenId).foldMap(prodInterpreters) map {
           case true ⇒ Right(())
           case _ ⇒ Left(rejectionByCredentialsRejected)
         } handle {
@@ -77,7 +77,7 @@ class NineCardsDirectives(
       androidId    = androidId,
       authToken    = authToken,
       requestUri   = requestUri.toString
-    ).foldMap(interpreters) map {
+    ).foldMap(prodInterpreters) map {
       case Some(v) ⇒ Right(v)
       case None ⇒
         Left(rejectionByCredentialsRejected)
