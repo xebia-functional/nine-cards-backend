@@ -15,7 +15,8 @@ trait GoogleApiProcessesSpecification
   extends Specification
   with Matchers
   with Mockito
-  with GoogleApiProcessesContext {
+  with GoogleApiProcessesContext
+  with TestInterpreters {
 
   trait BasicScope extends Scope {
 
@@ -72,19 +73,19 @@ class GoogleApiProcessesSpec
     "return true if the given tokenId is valid" in new SuccessfulScope {
       val tokenIdValidation = googleApiProcesses.checkGoogleTokenId(email, tokenId)
 
-      tokenIdValidation.foldMap(interpreters).run should beTrue
+      tokenIdValidation.foldMap(testInterpreters) should beTrue
     }
 
     "return false if the given tokenId is valid but the given email address is different" in new SuccessfulScope {
       val tokenIdValidation = googleApiProcesses.checkGoogleTokenId(wrongEmail, tokenId)
 
-      tokenIdValidation.foldMap(interpreters).run should beFalse
+      tokenIdValidation.foldMap(testInterpreters) should beFalse
     }
 
     "return false if the given tokenId is not valid" in new UnsuccessfulScope {
       val tokenIdValidation = googleApiProcesses.checkGoogleTokenId(email, tokenId)
 
-      tokenIdValidation.foldMap(interpreters).run should beFalse
+      tokenIdValidation.foldMap(testInterpreters) should beFalse
     }
   }
 }

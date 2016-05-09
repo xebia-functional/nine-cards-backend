@@ -16,7 +16,9 @@ object SharedCollectionMessages {
   )
 
   case class SharedCollectionData(
+    publicIdentifier: String,
     userId: Option[Long],
+    publishedOn: DateTime,
     description: Option[String],
     author: String,
     name: String,
@@ -56,11 +58,7 @@ object SharedCollectionMessages {
 
   case class SubscribeResponse()
 
-  type XorSubscribeResponse = Xor[Throwable, SubscribeResponse]
-
   case class UnsubscribeResponse()
-
-  type XorUnsubscribeResponse = Xor[Throwable, UnsubscribeResponse]
 
   case class GetPublishedCollectionsResponse(collections: List[SharedCollectionInfo])
 

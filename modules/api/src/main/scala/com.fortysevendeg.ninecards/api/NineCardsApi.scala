@@ -2,7 +2,7 @@ package com.fortysevendeg.ninecards.api
 
 import akka.actor.{ Actor, ActorRefFactory }
 import com.fortysevendeg.ninecards.api.NineCardsApiHeaderCommons._
-import com.fortysevendeg.ninecards.api.NineCardsAuthenticator._
+import com.fortysevendeg.ninecards.api.NineCardsDirectives._
 import com.fortysevendeg.ninecards.api.NineCardsHeaders.Domain._
 import com.fortysevendeg.ninecards.api.converters.Converters._
 import com.fortysevendeg.ninecards.api.messages.InstallationsMessages._
@@ -14,6 +14,7 @@ import com.fortysevendeg.ninecards.processes.NineCardsServices._
 import com.fortysevendeg.ninecards.processes._
 import spray.httpx.SprayJsonSupport
 import spray.routing._
+import spray.http.StatusCodes.NotFound
 
 import scala.concurrent.ExecutionContext
 
@@ -48,16 +49,17 @@ class NineCardsRoutes(
     case "collections" ⇒ sharedCollectionsRoute
     case "installations" ⇒ installationsRoute
     case "login" ⇒ userRoute
+    case _ ⇒ complete(NotFound)
   }
 
   private[this] lazy val userRoute =
     pathEndOrSingleSlash {
       requestLoginHeaders { (appId, apiKey) ⇒
-        nineCardsAuthenticator.authenticateLoginRequest {
+        nineCardsDirectives.authenticateLoginRequest { sessionToken: SessionToken ⇒
           post {
             entity(as[ApiLoginRequest]) { request ⇒
               complete {
-                userProcesses.signUpUser(toLoginRequest(request)) map toApiLoginResponse
+                userProcesses.signUpUser(toLoginRequest(request, sessionToken)) map toApiLoginResponse
               }
             }
           }
@@ -66,7 +68,7 @@ class NineCardsRoutes(
     }
 
   private[this] lazy val installationsRoute =
-    nineCardsAuthenticator.authenticateUser { userContext: UserContext ⇒
+    nineCardsDirectives.authenticateUser { implicit userContext: UserContext ⇒
       pathEndOrSingleSlash {
         put {
           entity(as[ApiUpdateInstallationRequest]) { request ⇒
@@ -77,14 +79,16 @@ class NineCardsRoutes(
     }
 
   private[this] lazy val sharedCollectionsRoute =
-    nineCardsAuthenticator.authenticateUser { userContext: UserContext ⇒
+    nineCardsDirectives.authenticateUser { userContext: UserContext ⇒
       pathEndOrSingleSlash {
-        get(complete(getPublishedCollections(userContext))) ~
-          post {
-            entity(as[ApiCreateCollectionRequest]) { request ⇒
-              complete(createCollection(request, userContext))
+        post {
+          entity(as[ApiCreateCollectionRequest]) { request ⇒
+            nineCardsDirectives.generateNewCollectionInfo { collectionInfo: NewSharedCollectionInfo ⇒
+              complete(createCollection(request, collectionInfo, userContext))
             }
           }
+        } ~
+          get(complete(getPublishedCollections(userContext)))
       } ~
         pathPrefix(TypedSegment[PublicIdentifier]) { publicIdentifier ⇒
           pathEndOrSingleSlash {
@@ -114,11 +118,15 @@ class NineCardsRoutes(
   private[this] def getCollection(publicId: PublicIdentifier) =
     sharedCollectionProcesses
       .getCollectionByPublicIdentifier(publicId.value)
-      .map(toXorApiSharedCollection)
+      .map(_.map(r ⇒ toApiSharedCollection(r.data)))
 
-  private[this] def createCollection(request: ApiCreateCollectionRequest, userContext: UserContext) =
+  private[this] def createCollection(
+    request: ApiCreateCollectionRequest,
+    collectionInfo: NewSharedCollectionInfo,
+    userContext: UserContext
+  ) =
     sharedCollectionProcesses
-      .createCollection(toCreateCollectionRequest(request, userContext))
+      .createCollection(toCreateCollectionRequest(request, collectionInfo, userContext))
       .map(toApiCreateCollectionResponse)
 
   private[this] def subscribe(publicId: PublicIdentifier, userContext: UserContext) =
