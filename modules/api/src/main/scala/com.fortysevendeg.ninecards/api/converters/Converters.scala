@@ -116,4 +116,7 @@ object Converters {
   def toApiSubscribeResponse(response: SubscribeResponse): ApiSubscribeResponse =
     ApiSubscribeResponse()
 
+  def toApiUnsubscribeResponse(response: UnsubscribeResponse): ApiUnsubscribeResponse =
+    ApiUnsubscribeResponse()
+
 }

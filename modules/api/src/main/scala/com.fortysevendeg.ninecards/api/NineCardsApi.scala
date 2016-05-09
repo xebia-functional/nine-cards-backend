@@ -94,7 +94,8 @@ class NineCardsRoutes(
             get(complete(getCollection(publicIdentifier)))
           } ~
             path("subscribe") {
-              put(complete(subscribe(publicIdentifier, userContext)))
+              put(complete(subscribe(publicIdentifier, userContext))) ~
+                delete(complete(unsubscribe(publicIdentifier, userContext)))
             }
         }
     }
@@ -131,5 +132,10 @@ class NineCardsRoutes(
     sharedCollectionProcesses
       .subscribe(publicId.value, userContext.userId.value)
       .map(_.map(toApiSubscribeResponse))
+
+  private[this] def unsubscribe(publicId: PublicIdentifier, userContext: UserContext) =
+    sharedCollectionProcesses
+      .unsubscribe(publicId.value, userContext.userId.value)
+      .map(_.map(toApiUnsubscribeResponse))
 
 }

@@ -82,6 +82,8 @@ trait NineCardsApiSpecification
     sharedCollectionProcesses.subscribe(any[String], any[Long]) returns
       Free.pure(subscribeResponse.right)
 
+    sharedCollectionProcesses.unsubscribe(any[String], any[Long]) returns
+      Free.pure(unsubscribeResponse.right)
   }
 
   trait UnsuccessfulScope extends BasicScope {
@@ -99,6 +101,9 @@ trait NineCardsApiSpecification
       Free.pure(sharedCollectionNotFoundException.left)
 
     sharedCollectionProcesses.subscribe(any[String], any[Long]) returns
+      Free.pure(sharedCollectionNotFoundException.left)
+
+    sharedCollectionProcesses.unsubscribe(any[String], any[Long]) returns
       Free.pure(sharedCollectionNotFoundException.left)
 
   }
@@ -234,6 +239,8 @@ trait NineCardsApiContext {
 
   val subscribeResponse = SubscribeResponse()
 
+  val unsubscribeResponse = UnsubscribeResponse()
+
   val persistenceException = PersistenceException(
     message = "Test error",
     cause   = Option(new RuntimeException("Test error"))
@@ -315,6 +322,14 @@ class NineCardsApiSpec
     "return 500 Internal Server Error status code if a persistence error happens" in new FailingScope {
       request ~> addHeaders(userInfoHeaders) ~> sealRoute(nineCardsApi) ~> check {
         status.intValue shouldEqual StatusCodes.InternalServerError.intValue
+      }
+    }
+  }
+
+  private[this] def successOk(request: HttpRequest) = {
+    "return a 200 OK Status code if the operation was carried out" in new SuccessfulScope {
+      request ~> addHeaders(userInfoHeaders) ~> sealRoute(nineCardsApi) ~> check {
+        status.intValue shouldEqual StatusCodes.OK.intValue
       }
     }
   }
@@ -600,11 +615,21 @@ class NineCardsApiSpec
 
     internalServerError(request)
 
-    "return a 200 OK Status code if the operation was carried out" in new SuccessfulScope {
-      request ~> addHeaders(userInfoHeaders) ~> sealRoute(nineCardsApi) ~> check {
-        status.intValue shouldEqual StatusCodes.OK.intValue
-      }
-    }
+    successOk(request)
+
+  }
+
+  "DELETE /collections/collectionId/subscribe" should {
+
+    val request = Delete(s"${collectionByIdPath}/subscribe")
+
+    unauthorizedNoHeaders(request)
+
+    notFoundSharedCollection(request)
+
+    internalServerError(request)
+
+    successOk(request)
 
   }
 

@@ -61,4 +61,7 @@ object SharedCollectionMessages {
   type XorApiGetCollectionByPublicId = Xor[Throwable, ApiGetCollectionByPublicIdentifierResponse]
 
   case class ApiSubscribeResponse()
+
+  case class ApiUnsubscribeResponse()
+
 }

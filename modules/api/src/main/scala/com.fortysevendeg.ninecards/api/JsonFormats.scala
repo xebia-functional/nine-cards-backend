@@ -62,6 +62,8 @@ trait JsonFormats
 
   implicit val apiSubscribeResponseFormat = jsonFormat0(ApiSubscribeResponse)
 
+  implicit val apiUnsubscribeResponseFormat = jsonFormat0(ApiUnsubscribeResponse)
+
 }
 
 object JsonFormats extends JsonFormats
