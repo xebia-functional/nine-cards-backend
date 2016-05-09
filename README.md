@@ -72,11 +72,7 @@ Possible ways to define the database connection info:
 
 ##Authentication
 ```
-X-Appsly-Application-Id : appId
-
-X-Appsly-REST-API-Key : restAPIKey
-
-X-Appsly-Session-Token : sessionToken
+X-Session-Token : sessionToken
 
 X-Android-ID : androidId
 

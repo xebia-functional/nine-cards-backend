@@ -92,11 +92,6 @@
 
       window.swaggerUi.load();
 
-      // This two lines are an example on how to auto-populate authorization headers for our API. We should take a look at this later,
-      // so users won't need to put the auth headers as a parameter in every request. But for now, let's leave it like commented out:
-      // window.swaggerUi.api.clientAuthorizations.add("keyAppId", new SwaggerClient.ApiKeyAuthorization("X-Appsly-Application-Id", "ninecards", "header"));
-      // window.swaggerUi.api.clientAuthorizations.add("keyApiKey", new SwaggerClient.ApiKeyAuthorization("X-Appsly-REST-API-Key", "myApiKeyXXXX123456789", "header"));
-
       function log() {
         if ('console' in window) {
           console.log.apply(console, arguments);

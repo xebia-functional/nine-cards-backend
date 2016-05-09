@@ -264,11 +264,6 @@ trait NineCardsApiContext {
 
   val getCollectionByIdTask: Task[XorGetCollectionByPublicId] = Task.now(persistenceException.left)
 
-  val apiRequestHeaders = List(
-    RawHeader(headerAppId, appId),
-    RawHeader(headerApiKey, appKey)
-  )
-
   val userInfoHeaders = List(
     RawHeader(headerAndroidId, androidId),
     RawHeader(headerSessionToken, sessionToken),
@@ -347,30 +342,26 @@ class NineCardsApiSpec
           responseAs[String] must contain("Swagger")
         }
     }
+
+    "return a 404 NotFound error for an undefined path " in new BasicScope {
+      Get("/chalkyTown") ~> sealRoute(nineCardsApi) ~> check {
+        status.intValue shouldEqual StatusCodes.NotFound.intValue
+      }
+    }
+
   }
 
   "POST /login" should {
-    "return a 401 Unauthorized status code if no headers are provided" in new BasicScope {
 
-      Post(loginPath) ~>
-        sealRoute(nineCardsApi) ~>
-        check {
-          status.intValue shouldEqual StatusCodes.Unauthorized.intValue
-        }
+    "return a 400 BadRequest if no body is provided" in new BasicScope {
+      Post(loginPath) ~> sealRoute(nineCardsApi) ~> check {
+        status.intValue shouldEqual StatusCodes.BadRequest.intValue
+      }
     }
-    "return a 401 Unauthorized status code if some of the headers aren't provided" in new BasicScope {
 
-      Post(loginPath) ~>
-        addHeader(RawHeader(headerAppId, appId)) ~>
-        sealRoute(nineCardsApi) ~>
-        check {
-          status.intValue shouldEqual StatusCodes.Unauthorized.intValue
-        }
-    }
     "return a 401 Unauthorized status code if the given email is empty" in new BasicScope {
 
       Post(loginPath, ApiLoginRequest("", androidId, tokenId)) ~>
-        addHeaders(apiRequestHeaders) ~>
         sealRoute(nineCardsApi) ~>
         check {
           status.intValue shouldEqual StatusCodes.Unauthorized.intValue
@@ -379,7 +370,6 @@ class NineCardsApiSpec
     "return a 401 Unauthorized status code if the given tokenId is empty" in new BasicScope {
 
       Post(loginPath, ApiLoginRequest(email, androidId, "")) ~>
-        addHeaders(apiRequestHeaders) ~>
         sealRoute(nineCardsApi) ~>
         check {
           status.intValue shouldEqual StatusCodes.Unauthorized.intValue
@@ -388,7 +378,6 @@ class NineCardsApiSpec
     "return a 401 Unauthorized status code if the given email address and tokenId are not valid" in new UnsuccessfulScope {
 
       Post(loginPath, apiLoginRequest) ~>
-        addHeaders(apiRequestHeaders) ~>
         sealRoute(nineCardsApi) ~>
         check {
           status.intValue shouldEqual StatusCodes.Unauthorized.intValue
@@ -397,7 +386,6 @@ class NineCardsApiSpec
     "return a 200 Ok status code if the given email address and tokenId are valid" in new SuccessfulScope {
 
       Post(loginPath, apiLoginRequest) ~>
-        addHeaders(apiRequestHeaders) ~>
         sealRoute(nineCardsApi) ~>
         check {
           status.intValue shouldEqual StatusCodes.OK.intValue
@@ -406,7 +394,6 @@ class NineCardsApiSpec
     "return a 500 Internal Server Error status code if a persistence error happens" in new FailingScope {
 
       Post(loginPath, apiLoginRequest) ~>
-        addHeaders(apiRequestHeaders) ~>
         sealRoute(nineCardsApi) ~>
         check {
           status.intValue shouldEqual StatusCodes.InternalServerError.intValue

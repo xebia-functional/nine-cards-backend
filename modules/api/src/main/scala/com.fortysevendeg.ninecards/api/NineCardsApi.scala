@@ -1,7 +1,6 @@
 package com.fortysevendeg.ninecards.api
 
 import akka.actor.{ Actor, ActorRefFactory }
-import com.fortysevendeg.ninecards.api.NineCardsApiHeaderCommons._
 import com.fortysevendeg.ninecards.api.NineCardsDirectives._
 import com.fortysevendeg.ninecards.api.NineCardsHeaders.Domain._
 import com.fortysevendeg.ninecards.api.converters.Converters._
@@ -54,13 +53,11 @@ class NineCardsRoutes(
 
   private[this] lazy val userRoute =
     pathEndOrSingleSlash {
-      requestLoginHeaders { (appId, apiKey) ⇒
-        nineCardsDirectives.authenticateLoginRequest { sessionToken: SessionToken ⇒
-          post {
-            entity(as[ApiLoginRequest]) { request ⇒
-              complete {
-                userProcesses.signUpUser(toLoginRequest(request, sessionToken)) map toApiLoginResponse
-              }
+      post {
+        entity(as[ApiLoginRequest]) { request ⇒
+          nineCardsDirectives.authenticateLoginRequest { sessionToken: SessionToken ⇒
+            complete {
+              userProcesses.signUpUser(toLoginRequest(request, sessionToken)) map toApiLoginResponse
             }
           }
         }

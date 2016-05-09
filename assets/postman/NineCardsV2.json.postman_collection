@@ -35,7 +35,7 @@
 	"requests": [
 		{
 			"id": "052efc3e-f341-caaf-1b35-80d599bc3229",
-			"headers": "X-Appsly-Application-Id: {{appid}}\nX-Appsly-REST-API-Key: {{appkey}}\nContent-Type: application/json\n",
+			"headers": "Content-Type: application/json\n",
 			"url": "http://{{baseurl}}/login",
 			"preRequestScript": "",
 			"pathVariables": {},
@@ -55,8 +55,8 @@
 		},
 		{
 			"id": "17f43c2f-f010-d93c-15bf-a3799f7eee31",
-			"headers": "Accept: \"application/json\"\nContent-Type: application/json\nX-Appsly-Application-Id: {{appid}}\nX-Appsly-REST-API-Key: {{appkey}}\nX-Appsly-Session-Token: {{token}}\nX-Android-ID: {{androidid}}\nX-Android-Market-Localization: {{localization}}\n",
-			"url": "https://{{baseurl}}/ninecards/collections",
+			"headers": "Accept: \"application/json\"\nContent-Type: application/json\nX-Session-Token: {{token}}\nX-Android-ID: {{androidid}}\nX-Android-Market-Localization: {{localization}}\nX-Auth-Token: {{COMPUTE_AUTH_TOKEN}}\n",
+			"url": "http://{{baseurl}}/collections",
 			"preRequestScript": "",
 			"pathVariables": {},
 			"method": "GET",
@@ -74,8 +74,8 @@
 		},
 		{
 			"id": "27589784-4c58-4a91-e9ba-db997b69c9ef",
-			"headers": "Accept: \"application/json\"\nContent-Type: application/json\nX-Appsly-Application-Id: {{appid}}\nX-Appsly-REST-API-Key: {{appkey}}\nX-Appsly-Session-Token: {{token}}\nX-Android-ID: {{androidid}}\nX-Android-Market-Localization: {{localization}}\n",
-			"url": "https://{{baseurl}}/ninecards/collections/5346f6802000003802fcf3ee",
+			"headers": "Accept: \"application/json\"\nContent-Type: application/json\nX-Session-Token: {{token}}\nX-Android-ID: {{androidid}}\nX-Android-Market-Localization: {{localization}}\nX-Auth-Token: {{COMPUTE_AUTH_TOKEN}}\n",
+			"url": "http://{{baseurl}}/collections/5346f6802000003802fcf3ee",
 			"preRequestScript": "",
 			"pathVariables": {},
 			"method": "GET",
@@ -93,8 +93,8 @@
 		},
 		{
 			"id": "4f54e578-ad87-6df4-3afa-da46df17c319",
-			"headers": "Accept: \"application/json\"\nContent-Type: application/json\nX-Appsly-Application-Id: {{appid}}\nX-Appsly-REST-API-Key: {{appkey}}\nX-Appsly-Session-Token: {{token}}\nX-Android-ID: {{androidid}}\nX-Android-Market-Localization: {{localization}}\n",
-			"url": "https://{{baseurl}}/ninecards/collections",
+			"headers": "Accept: \"application/json\"\nContent-Type: application/json\nX-Session-Token: {{token}}\nX-Android-ID: {{androidid}}\nX-Android-Market-Localization: {{localization}}\nX-Auth-Token: {{COMPUTE_AUTH_TOKEN}}\n",
+			"url": "http://{{baseurl}}/collections",
 			"preRequestScript": "",
 			"pathVariables": {},
 			"method": "POST",
@@ -113,8 +113,8 @@
 		},
 		{
 			"id": "a7134bb9-2d20-c72e-58d3-750818f6e6c8",
-			"headers": "Accept: \"application/json\"\nContent-Type: application/json\nX-Appsly-Application-Id: {{appid}}\nX-Appsly-REST-API-Key: {{appkey}}\nX-Appsly-Session-Token: {{token}}\nX-Android-ID: {{androidid}}\nX-Android-Market-Localization: {{localization}}\n",
-			"url": "https://{{baseurl}}/ninecards/collections/5346f6802000003802fcf3ee/subscribe",
+			"headers": "Accept: \"application/json\"\nContent-Type: application/json\nX-Session-Token: {{token}}\nX-Android-ID: {{androidid}}\nX-Android-Market-Localization: {{localization}}\nX-Auth-Token: {{COMPUTE_AUTH_TOKEN}}\n",
+			"url": "http://{{baseurl}}/collections/5346f6802000003802fcf3ee/subscribe",
 			"preRequestScript": "",
 			"pathVariables": {},
 			"method": "PUT",
@@ -133,8 +133,8 @@
 		},
 		{
 			"id": "ac4262a3-5453-c0a2-ab09-90f50176fe3f",
-			"headers": "Accept: \"application/json\"\nContent-Type: application/json\nX-Appsly-Application-Id: {{appid}}\nX-Appsly-REST-API-Key: {{appkey}}\nX-Appsly-Session-Token: {{token}}\nX-Android-ID: {{androidid}}\nX-Android-Market-Localization: {{localization}}\n",
-			"url": "https://{{baseurl}}/ninecards/collections/5346f6802000003802fcf3ee/subscribe",
+			"headers": "Accept: \"application/json\"\nContent-Type: application/json\nX-Session-Token: {{token}}\nX-Android-ID: {{androidid}}\nX-Android-Market-Localization: {{localization}}\X-Auth-Token: {{COMPUTE_AUTH_TOKEN}}\n",
+			"url": "http://{{baseurl}}/collections/5346f6802000003802fcf3ee/subscribe",
 			"preRequestScript": "",
 			"pathVariables": {},
 			"method": "DELETE",
@@ -153,7 +153,7 @@
 		},
 		{
 			"id": "d2f159bd-33dc-b9a3-7386-d7dffeaa0d0d",
-			"headers": "X-Appsly-Application-Id: {{appid}}\nX-Appsly-REST-API-Key: {{appkey}}\nContent-Type: application/json\nX-Appsly-Session-Token: {{token}}\nX-Android-ID: {{androidId}}\nX-Android-Market-Localization: {{location}}\n",
+			"headers": "Content-Type: application/json\nX-Session-Token: {{token}}\nX-Android-ID: {{androidId}}\nX-Android-Market-Localization: {{location}}\nX-Auth-Token: {{COMPUTE_AUTH_TOKEN}}\n",
 			"url": "http://{{baseurl}}/installations",
 			"preRequestScript": "",
 			"pathVariables": {},

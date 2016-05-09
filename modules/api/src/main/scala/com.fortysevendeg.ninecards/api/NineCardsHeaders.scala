@@ -5,19 +5,13 @@ import org.joda.time.DateTime
 object NineCardsHeaders {
 
   val headerAndroidId = "X-Android-ID"
-  val headerApiKey = "X-Appsly-REST-API-Key"
-  val headerAppId = "X-Appsly-Application-Id"
   val headerMarketLocalization = "X-Android-Market-Localization"
-  val headerSessionToken = "X-Appsly-Session-Token"
+  val headerSessionToken = "X-Session-Token"
   val headerAuthToken = "X-Auth-Token"
 
   object Domain {
 
     case class AndroidId(value: String) extends AnyVal
-
-    case class ApiKey(value: String) extends AnyVal
-
-    case class ApplicationId(value: String) extends AnyVal
 
     case class AuthToken(value: String) extends AnyVal
 
