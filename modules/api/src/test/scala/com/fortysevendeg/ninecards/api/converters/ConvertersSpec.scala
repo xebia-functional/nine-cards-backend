@@ -21,7 +21,7 @@ class ConvertersSpec
     "convert an ApiLoginRequest to a LoginRequest object" in {
       prop { (apiRequest: ApiLoginRequest, sessionToken: SessionToken) ⇒
 
-        val request = Converters.toLoginRequest(apiRequest)(sessionToken)
+        val request = Converters.toLoginRequest(apiRequest, sessionToken)
 
         request.androidId shouldEqual apiRequest.androidId
         request.email shouldEqual apiRequest.email
@@ -48,7 +48,7 @@ class ConvertersSpec
 
         implicit val userContext = UserContext(userId, androidId)
 
-        val request = Converters.toUpdateInstallationRequest(apiRequest)
+        val request = Converters.toUpdateInstallationRequest(apiRequest, userContext)
 
         request.androidId shouldEqual androidId.value
         request.deviceToken shouldEqual apiRequest.deviceToken

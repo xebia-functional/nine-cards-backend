@@ -59,4 +59,9 @@ trait JsonFormats
   implicit val apiCreateCollectionRequestFormat = jsonFormat9(ApiCreateCollectionRequest)
 
   implicit val apiCreateCollectionResponseFormat = jsonFormat12(ApiCreateCollectionResponse)
+
+  implicit val apiSubscribeResponseFormat = jsonFormat0(ApiSubscribeResponse)
+
 }
+
+object JsonFormats extends JsonFormats

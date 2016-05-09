@@ -35,7 +35,14 @@ trait SharedCollectionProcessesSpecification
   trait BasicScope extends Scope {
 
     implicit val sharedCollectionPersistenceServices = mock[SharedCollectionPersistenceServices]
+    implicit val sharedCollectionSubscriptionPersistenceServices = mock[SharedCollectionSubscriptionPersistenceServices]
     implicit val sharedCollectionProcesses = new SharedCollectionProcesses[NineCardsServices]
+
+    def mockGetSubscription(res: Option[SharedCollectionSubscription]) = {
+      sharedCollectionSubscriptionPersistenceServices
+        .getSubscriptionByCollectionAndUser(any, any) returns
+        res.point[ConnectionIO]
+    }
 
   }
 
@@ -75,6 +82,8 @@ trait SharedCollectionProcessesContext {
   val collectionId = 1l
 
   val userId = None
+
+  val subscriberId = 42L
 
   val millis = 1453226400000l
 
@@ -179,6 +188,13 @@ trait SharedCollectionProcessesContext {
   val sharedCollectionNotFoundException = SharedCollectionNotFoundException(
     message = "The required shared collection doesn't exist"
   )
+
+  val subscription = SharedCollectionSubscription(
+    id                 = 1L,
+    sharedCollectionId = collectionId,
+    userId             = subscriberId
+  )
+
 }
 
 class SharedCollectionProcessesSpec
@@ -215,4 +231,31 @@ class SharedCollectionProcessesSpec
         collectionInfo.foldMap(testInterpreters) must beXorLeft(sharedCollectionNotFoundException)
       }
   }
+
+  "subscribe" should {
+
+    "return a SharedCollectionNotFoundException when the shared collection does not exist" in new SharedCollectionUnsuccessfulScope {
+      val subscriptionInfo = sharedCollectionProcesses.subscribe(publicIdentifier, subscriberId)
+      subscriptionInfo.foldMap(testInterpreters) must beXorLeft(sharedCollectionNotFoundException)
+    }
+
+    "return a valid response if the subscription already exists  " in new SharedCollectionSuccessfulScope {
+      mockGetSubscription(Some(subscription))
+
+      val subscriptionInfo = sharedCollectionProcesses.subscribe(publicIdentifier, subscriberId)
+      subscriptionInfo.foldMap(testInterpreters) must beXorRight(SubscribeResponse())
+    }
+
+    "return a valid response if it has created a subscription " in new SharedCollectionSuccessfulScope {
+      mockGetSubscription(None)
+
+      sharedCollectionSubscriptionPersistenceServices
+        .addSubscription[SharedCollectionSubscription](any, any)(any) returns subscription.point[ConnectionIO]
+
+      val subscriptionInfo = sharedCollectionProcesses.subscribe(publicIdentifier, subscriberId)
+      subscriptionInfo.foldMap(testInterpreters) must beXorRight(SubscribeResponse())
+    }
+
+  }
+
 }

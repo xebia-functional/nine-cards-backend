@@ -10,12 +10,7 @@ import com.fortysevendeg.ninecards.processes.messages.UserMessages._
 
 object Converters {
 
-  implicit def toLoginRequest(
-    request: ApiLoginRequest
-  )(
-    implicit
-    sessionToken: SessionToken
-  ): LoginRequest =
+  def toLoginRequest(request: ApiLoginRequest, sessionToken: SessionToken): LoginRequest =
     LoginRequest(
       email        = request.email,
       androidId    = request.androidId,
@@ -45,11 +40,10 @@ object Converters {
       packages         = response.data.packages
     )
 
-  implicit def toCreateCollectionRequest(
-    request: ApiCreateCollectionRequest
-  )(
-    implicit
-    collectionInfo: NewSharedCollectionInfo, userContext: UserContext
+  def toCreateCollectionRequest(
+    request: ApiCreateCollectionRequest,
+    collectionInfo: NewSharedCollectionInfo,
+    userContext: UserContext
   ): CreateCollectionRequest =
     CreateCollectionRequest(
       collection = SharedCollectionData(
@@ -79,30 +73,30 @@ object Converters {
       downloads   = resolvedPackageInfo.downloads
     )
 
-  implicit def toApiGetCollectionByPublicIdentifierResponse(
+  def toApiGetCollectionByPublicIdentifierResponse(r: GetCollectionByPublicIdentifierResponse) =
+    ApiGetCollectionByPublicIdentifierResponse(
+      publicIdentifier = r.data.publicIdentifier,
+      publishedOn      = r.data.publishedOn,
+      description      = r.data.description,
+      author           = r.data.author,
+      name             = r.data.name,
+      sharedLink       = r.data.sharedLink,
+      installations    = r.data.installations,
+      views            = r.data.views,
+      category         = r.data.category,
+      icon             = r.data.icon,
+      community        = r.data.community,
+      packages         = r.data.packages,
+      resolvedPackages = r.data.resolvedPackages map toApiResolvedPackageInfo
+    )
+
+  def toApiGetCollectionByPublicIdentifierResponse(
     response: XorGetCollectionByPublicId
   ): XorApiGetCollectionByPublicId =
-    response map (r ⇒
-      ApiGetCollectionByPublicIdentifierResponse(
-        publicIdentifier = r.data.publicIdentifier,
-        publishedOn      = r.data.publishedOn,
-        description      = r.data.description,
-        author           = r.data.author,
-        name             = r.data.name,
-        sharedLink       = r.data.sharedLink,
-        installations    = r.data.installations,
-        views            = r.data.views,
-        category         = r.data.category,
-        icon             = r.data.icon,
-        community        = r.data.community,
-        packages         = r.data.packages,
-        resolvedPackages = r.data.resolvedPackages map toApiResolvedPackageInfo
-      ))
+    response map toApiGetCollectionByPublicIdentifierResponse
 
-  implicit def toUpdateInstallationRequest(
-    request: ApiUpdateInstallationRequest
-  )(
-    implicit
+  def toUpdateInstallationRequest(
+    request: ApiUpdateInstallationRequest,
     userContext: UserContext
   ): UpdateInstallationRequest =
     UpdateInstallationRequest(
@@ -111,12 +105,15 @@ object Converters {
       deviceToken = request.deviceToken
     )
 
-  implicit def toApiUpdateInstallationResponse(
+  def toApiUpdateInstallationResponse(
     response: UpdateInstallationResponse
   ): ApiUpdateInstallationResponse =
     ApiUpdateInstallationResponse(
       androidId   = response.androidId,
       deviceToken = response.deviceToken
     )
+
+  def toApiSubscribeResponse(response: SubscribeResponse): ApiSubscribeResponse =
+    ApiSubscribeResponse()
 
 }
