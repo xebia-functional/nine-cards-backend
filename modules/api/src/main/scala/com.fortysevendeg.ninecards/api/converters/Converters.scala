@@ -10,22 +10,21 @@ import com.fortysevendeg.ninecards.processes.messages.UserMessages._
 
 object Converters {
 
-  def toLoginRequest(request: ApiLoginRequest): LoginRequest =
+  def toLoginRequest(request: ApiLoginRequest, sessionToken: SessionToken): LoginRequest =
     LoginRequest(
-      email     = request.email,
-      androidId = request.androidId,
-      tokenId   = request.tokenId
+      email        = request.email,
+      androidId    = request.androidId,
+      sessionToken = sessionToken.value,
+      tokenId      = request.tokenId
     )
 
-  def toApiLoginResponse(response: LoginResponse): ApiLoginResponse =
+  implicit def toApiLoginResponse(response: LoginResponse): ApiLoginResponse =
     ApiLoginResponse(
       apiKey       = response.apiKey,
       sessionToken = response.sessionToken
     )
 
-  def toApiCreateCollectionResponse(
-    response: CreateCollectionResponse
-  ): ApiCreateCollectionResponse =
+  implicit def toApiCreateCollectionResponse(response: CreateCollectionResponse): ApiCreateCollectionResponse =
     ApiCreateCollectionResponse(
       publicIdentifier = response.data.publicIdentifier,
       publishedOn      = response.data.publishedOn,
@@ -43,19 +42,22 @@ object Converters {
 
   def toCreateCollectionRequest(
     request: ApiCreateCollectionRequest,
+    collectionInfo: NewSharedCollectionInfo,
     userContext: UserContext
   ): CreateCollectionRequest =
     CreateCollectionRequest(
       collection = SharedCollectionData(
-        userId        = Option(userContext.userId.value),
-        description   = request.description,
-        author        = request.author,
-        name          = request.name,
-        installations = request.installations,
-        views         = request.views,
-        category      = request.category,
-        icon          = request.icon,
-        community     = request.community
+        publicIdentifier = collectionInfo.identifier.value,
+        userId           = Option(userContext.userId.value),
+        publishedOn      = collectionInfo.currentDate.value,
+        description      = request.description,
+        author           = request.author,
+        name             = request.name,
+        installations    = request.installations,
+        views            = request.views,
+        category         = request.category,
+        icon             = request.icon,
+        community        = request.community
       ),
       packages   = request.packages
     )
