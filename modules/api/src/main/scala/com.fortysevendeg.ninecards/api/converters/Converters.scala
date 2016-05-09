@@ -73,27 +73,23 @@ object Converters {
       downloads   = resolvedPackageInfo.downloads
     )
 
-  def toApiGetCollectionByPublicIdentifierResponse(r: GetCollectionByPublicIdentifierResponse) =
-    ApiGetCollectionByPublicIdentifierResponse(
-      publicIdentifier = r.data.publicIdentifier,
-      publishedOn      = r.data.publishedOn,
-      description      = r.data.description,
-      author           = r.data.author,
-      name             = r.data.name,
-      sharedLink       = r.data.sharedLink,
-      installations    = r.data.installations,
-      views            = r.data.views,
-      category         = r.data.category,
-      icon             = r.data.icon,
-      community        = r.data.community,
-      packages         = r.data.packages,
-      resolvedPackages = r.data.resolvedPackages map toApiResolvedPackageInfo
+  @inline
+  def toApiSharedCollection(info: SharedCollectionInfo): ApiSharedCollection =
+    ApiSharedCollection(
+      publicIdentifier = info.publicIdentifier,
+      publishedOn      = info.publishedOn,
+      description      = info.description,
+      author           = info.author,
+      name             = info.name,
+      sharedLink       = info.sharedLink,
+      installations    = info.installations,
+      views            = info.views,
+      category         = info.category,
+      icon             = info.icon,
+      community        = info.community,
+      packages         = info.packages,
+      resolvedPackages = info.resolvedPackages map toApiResolvedPackageInfo
     )
-
-  def toApiGetCollectionByPublicIdentifierResponse(
-    response: XorGetCollectionByPublicId
-  ): XorApiGetCollectionByPublicId =
-    response map toApiGetCollectionByPublicIdentifierResponse
 
   def toUpdateInstallationRequest(
     request: ApiUpdateInstallationRequest,

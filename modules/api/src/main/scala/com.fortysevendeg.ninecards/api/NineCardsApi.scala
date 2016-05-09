@@ -79,7 +79,7 @@ class NineCardsRoutes(
     }
 
   private[this] lazy val sharedCollectionsRoute =
-    nineCardsDirectives.authenticateUser { implicit userContext: UserContext ⇒
+    nineCardsDirectives.authenticateUser { userContext: UserContext ⇒
       pathEndOrSingleSlash {
         post {
           entity(as[ApiCreateCollectionRequest]) { request ⇒
@@ -87,7 +87,8 @@ class NineCardsRoutes(
               complete(createCollection(request, collectionInfo, userContext))
             }
           }
-        }
+        } ~
+          get(complete(getPublishedCollections(userContext)))
       } ~
         pathPrefix(TypedSegment[PublicIdentifier]) { publicIdentifier ⇒
           pathEndOrSingleSlash {
@@ -117,7 +118,7 @@ class NineCardsRoutes(
   private[this] def getCollection(publicId: PublicIdentifier) =
     sharedCollectionProcesses
       .getCollectionByPublicIdentifier(publicId.value)
-      .map(toApiGetCollectionByPublicIdentifierResponse)
+      .map(_.map(r ⇒ toApiSharedCollection(r.data)))
 
   private[this] def createCollection(
     request: ApiCreateCollectionRequest,
@@ -138,4 +139,8 @@ class NineCardsRoutes(
       .unsubscribe(publicId.value, userContext.userId.value)
       .map(_.map(toApiUnsubscribeResponse))
 
+  private[this] def getPublishedCollections(userContext: UserContext) =
+    sharedCollectionProcesses
+      .getPublishedCollections(userContext.userId.value)
+      .map(_.collections.map(toApiSharedCollection))
 }

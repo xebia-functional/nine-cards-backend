@@ -109,15 +109,18 @@ object Converters {
       icon             = collection.icon,
       community        = collection.community,
       packages         = packages,
-      resolvedPackages = packages map (p ⇒ //TODO: Get the information about packages from Google
-        ResolvedPackageInfo(
-          packageName = p,
-          title       = "Title of the app",
-          description = "Description of the app",
-          free        = true,
-          icon        = "url-to-the-icon",
-          stars       = 4.5,
-          downloads   = "100.000.000+"
-        ))
+      resolvedPackages = packages map toResolvedPackage
     )
+
+  def toResolvedPackage(packageName: String): ResolvedPackageInfo =
+    ResolvedPackageInfo(
+      packageName = packageName,
+      title       = "Title of the app",
+      description = "Description of the app",
+      free        = true,
+      icon        = "url-to-the-icon",
+      stars       = 4.5,
+      downloads   = "100.000.000+"
+    )
+
 }

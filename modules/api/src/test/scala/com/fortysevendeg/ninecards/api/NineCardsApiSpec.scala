@@ -84,6 +84,9 @@ trait NineCardsApiSpecification
 
     sharedCollectionProcesses.unsubscribe(any[String], any[Long]) returns
       Free.pure(unsubscribeResponse.right)
+
+    sharedCollectionProcesses.getPublishedCollections(any[Long]) returns
+      Free.pure(GetPublishedCollectionsResponse(List()))
   }
 
   trait UnsuccessfulScope extends BasicScope {
@@ -631,6 +634,17 @@ class NineCardsApiSpec
 
     successOk(request)
 
+  }
+
+  "GET /collections" should {
+
+    val request = Get(s"/collections")
+
+    unauthorizedNoHeaders(request)
+
+    internalServerError(request)
+
+    successOk(request)
   }
 
 }

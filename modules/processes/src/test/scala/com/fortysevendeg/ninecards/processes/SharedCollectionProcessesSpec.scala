@@ -70,6 +70,14 @@ trait SharedCollectionProcessesSpecification
     sharedCollectionPersistenceServices.getPackagesByCollection(
       collectionId = collectionId
     ) returns List.empty[SharedCollectionPackage].point[ConnectionIO]
+
+    sharedCollectionPersistenceServices.getCollectionsByUserId(
+      userId = publisherId
+    ) returns List(collection).point[ConnectionIO]
+
+    sharedCollectionPersistenceServices.getCollectionsByUserId(
+      userId = subscriberId
+    ) returns List[SharedCollection]().point[ConnectionIO]
   }
 
   trait SharedCollectionUnsuccessfulScope extends BasicScope {
@@ -87,9 +95,10 @@ trait SharedCollectionProcessesContext {
 
   val collectionId = 1l
 
-  val userId = None
-
+  val publisherId = 27L
   val subscriberId = 42L
+
+  val userId = Some(publisherId)
 
   val millis = 1453226400000l
 
@@ -236,6 +245,22 @@ class SharedCollectionProcessesSpec
 
         collectionInfo.foldMap(testInterpreters) must beXorLeft(sharedCollectionNotFoundException)
       }
+  }
+
+  "getPublishedCollections" should {
+
+    "return a list of Shared collections of the publisher user" in new SharedCollectionSuccessfulScope {
+      val response = GetPublishedCollectionsResponse(List(sharedCollectionInfo))
+      val collectionsInfo = sharedCollectionProcesses.getPublishedCollections(userId = publisherId)
+      collectionsInfo.foldMap(testInterpreters) mustEqual response
+    }
+
+    "return a list of Shared collections of the subscriber user" in new SharedCollectionSuccessfulScope {
+      val response = GetPublishedCollectionsResponse(List())
+      val collectionsInfo = sharedCollectionProcesses.getPublishedCollections(userId = subscriberId)
+      collectionsInfo.foldMap(testInterpreters) mustEqual response
+    }
+
   }
 
   "subscribe" should {
