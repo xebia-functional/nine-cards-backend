@@ -9,7 +9,7 @@ class SharedCollectionSubscriptionPersistenceServices(
   subscriptionPersistence: Persistence[SharedCollectionSubscription]
 ) {
 
-  def addSubscription[K: Composite](collectionId: Long, userId: Long): ConnectionIO[K] =
+  def addSubscription[K](collectionId: Long, userId: Long)(implicit ev: Composite[K]): ConnectionIO[K] =
     subscriptionPersistence.updateWithGeneratedKeys[K](
       sql    = insert,
       fields = SharedCollection.allFields,

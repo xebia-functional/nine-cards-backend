@@ -11,7 +11,7 @@ object XorCIO {
   type XorCIO[L, R] = ConnectionIO[Xor[L, R]]
 
   def flatMapXorCIO[L, A, B](xorCIO: XorCIO[L, A], fun: A ⇒ ConnectionIO[B]): XorCIO[L, B] =
-    // TODO: cats.data.XorT.liftT, with 
+    // TODO: cats.data.XorT.liftT, with
     xorCIO flatMap {
       case left @ Xor.Left(a) ⇒ (left: Xor[L, B]).point[ConnectionIO]
       case Xor.Right(b) ⇒ fun(b) map (Xor.Right.apply)

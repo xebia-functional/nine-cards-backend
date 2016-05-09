@@ -1,7 +1,6 @@
 package com.fortysevendeg.ninecards.api
 
-import com.fortysevendeg.ninecards.api.NineCardsHeaders.Domain._
-import shapeless.{ ::, HNil }
+import org.joda.time.DateTime
 
 object NineCardsHeaders {
 
@@ -22,7 +21,11 @@ object NineCardsHeaders {
 
     case class AuthToken(value: String) extends AnyVal
 
+    case class CurrentDateTime(value: DateTime) extends AnyVal
+
     case class MarketLocalization(value: String) extends AnyVal
+
+    case class NewSharedCollectionInfo(currentDate: CurrentDateTime, identifier: PublicIdentifier)
 
     case class PublicIdentifier(value: String) extends AnyVal
 
@@ -33,7 +36,4 @@ object NineCardsHeaders {
     case class UserContext(userId: UserId, androidId: AndroidId)
 
   }
-
-  type UserInfo = UserContext :: HNil
-  type ApiInfo = ApplicationId :: HNil
 }
