@@ -54,9 +54,16 @@ trait JsonFormats
 
   implicit val apiResolvedPackageInfoFormat = jsonFormat7(ApiResolvedPackageInfo)
 
-  implicit val apiGetCollectionByPublicIdentifierResponseFormat = jsonFormat13(ApiGetCollectionByPublicIdentifierResponse)
+  implicit val apiGetCollectionByPublicIdentifierResponseFormat = jsonFormat13(ApiSharedCollection)
 
   implicit val apiCreateCollectionRequestFormat = jsonFormat9(ApiCreateCollectionRequest)
 
   implicit val apiCreateCollectionResponseFormat = jsonFormat12(ApiCreateCollectionResponse)
+
+  implicit val apiSubscribeResponseFormat = jsonFormat0(ApiSubscribeResponse)
+
+  implicit val apiUnsubscribeResponseFormat = jsonFormat0(ApiUnsubscribeResponse)
+
 }
+
+object JsonFormats extends JsonFormats

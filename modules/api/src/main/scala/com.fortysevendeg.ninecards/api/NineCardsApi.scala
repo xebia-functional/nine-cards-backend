@@ -1,6 +1,6 @@
 package com.fortysevendeg.ninecards.api
 
-import akka.actor.Actor
+import akka.actor.{ Actor, ActorRefFactory }
 import com.fortysevendeg.ninecards.api.NineCardsApiHeaderCommons._
 import com.fortysevendeg.ninecards.api.NineCardsDirectives._
 import com.fortysevendeg.ninecards.api.NineCardsHeaders.Domain._
@@ -14,74 +14,52 @@ import com.fortysevendeg.ninecards.processes.NineCardsServices._
 import com.fortysevendeg.ninecards.processes._
 import spray.httpx.SprayJsonSupport
 import spray.routing._
+import spray.http.StatusCodes.NotFound
 
 import scala.concurrent.ExecutionContext
 
 class NineCardsApiActor
   extends Actor
-  with NineCardsApi
   with AuthHeadersRejectionHandler
+  with HttpService
   with NineCardsExceptionHandler {
 
-  def actorRefFactory = context
+  override val actorRefFactory = context
 
-  implicit def executionContext: ExecutionContext = actorRefFactory.dispatcher
+  implicit val executionContext: ExecutionContext = actorRefFactory.dispatcher
 
-  def receive = runRoute(nineCardsApiRoute)
+  def receive = runRoute(new NineCardsRoutes().nineCardsRoutes)
 
 }
 
-trait NineCardsApi
-  extends HttpService
-  with SprayJsonSupport
-  with JsonFormats {
+class NineCardsRoutes(
+  implicit
+  userProcesses: UserProcesses[NineCardsServices],
+  googleApiProcesses: GoogleApiProcesses[NineCardsServices],
+  sharedCollectionProcesses: SharedCollectionProcesses[NineCardsServices],
+  refFactory: ActorRefFactory,
+  executionContext: ExecutionContext
+) {
 
-  def nineCardsApiRoute(
-    implicit
-    userProcesses: UserProcesses[NineCardsServices],
-    googleApiProcesses: GoogleApiProcesses[NineCardsServices],
-    sharedCollectionProcesses: SharedCollectionProcesses[NineCardsServices],
-    executionContext: ExecutionContext
-  ): Route =
-    userApiRoute ~
-      installationsApiRoute ~
-      sharedCollectionsApiRoute ~
-      swaggerApiRoute
+  import Directives._
+  import JsonFormats._
 
-  private[this] def userApiRoute(
-    implicit
-    userProcesses: UserProcesses[NineCardsServices],
-    googleApiProcesses: GoogleApiProcesses[NineCardsServices],
-    executionContext: ExecutionContext
-  ) =
-    pathPrefix("login") {
-      pathEndOrSingleSlash {
-        requestLoginHeaders { (appId, apiKey) ⇒
-          nineCardsDirectives.authenticateLoginRequest { implicit sessionToken: SessionToken ⇒
-            post {
-              entity(as[ApiLoginRequest]) { request ⇒
-                complete {
-                  userProcesses.signUpUser(request) map toApiLoginResponse
-                }
-              }
-            }
-          }
-        }
-      }
-    }
+  val nineCardsRoutes: Route = pathPrefix(Segment) {
+    case "apiDocs" ⇒ swaggerRoute
+    case "collections" ⇒ sharedCollectionsRoute
+    case "installations" ⇒ installationsRoute
+    case "login" ⇒ userRoute
+    case _ ⇒ complete(NotFound)
+  }
 
-  private[this] def installationsApiRoute(
-    implicit
-    userProcesses: UserProcesses[NineCardsServices],
-    executionContext: ExecutionContext
-  ) =
-    pathPrefix("installations") {
-      pathEndOrSingleSlash {
-        nineCardsDirectives.authenticateUser { implicit userContext: UserContext ⇒
-          put {
-            entity(as[ApiUpdateInstallationRequest]) { request ⇒
+  private[this] lazy val userRoute =
+    pathEndOrSingleSlash {
+      requestLoginHeaders { (appId, apiKey) ⇒
+        nineCardsDirectives.authenticateLoginRequest { sessionToken: SessionToken ⇒
+          post {
+            entity(as[ApiLoginRequest]) { request ⇒
               complete {
-                userProcesses.updateInstallation(request) map toApiUpdateInstallationResponse
+                userProcesses.signUpUser(toLoginRequest(request, sessionToken)) map toApiLoginResponse
               }
             }
           }
@@ -89,49 +67,80 @@ trait NineCardsApi
       }
     }
 
-  private[this] def sharedCollectionsApiRoute(
-    implicit
-    userProcesses: UserProcesses[NineCardsServices],
-    sharedCollectionProcesses: SharedCollectionProcesses[NineCardsServices],
-    executionContext: ExecutionContext
-  ) =
-    pathPrefix("collections") {
+  private[this] lazy val installationsRoute =
+    nineCardsDirectives.authenticateUser { implicit userContext: UserContext ⇒
       pathEndOrSingleSlash {
-        nineCardsDirectives.authenticateUser { implicit userContext: UserContext ⇒
-          nineCardsDirectives.generateNewCollectionInfo { implicit c: NewSharedCollectionInfo ⇒
-            post {
-              entity(as[ApiCreateCollectionRequest]) { request ⇒
-                complete {
-                  sharedCollectionProcesses.createCollection(
-                    request
-                  ) map toApiCreateCollectionResponse
-                }
-              }
-            }
+        put {
+          entity(as[ApiUpdateInstallationRequest]) { request ⇒
+            complete(updateInstallation(request, userContext))
           }
         }
+      }
+    }
+
+  private[this] lazy val sharedCollectionsRoute =
+    nineCardsDirectives.authenticateUser { userContext: UserContext ⇒
+      pathEndOrSingleSlash {
+        post {
+          entity(as[ApiCreateCollectionRequest]) { request ⇒
+            nineCardsDirectives.generateNewCollectionInfo { collectionInfo: NewSharedCollectionInfo ⇒
+              complete(createCollection(request, collectionInfo, userContext))
+            }
+          }
+        } ~
+          get(complete(getPublishedCollections(userContext)))
       } ~
-        path(TypedSegment[PublicIdentifier]) { publicIdentifier ⇒
-          nineCardsDirectives.authenticateUser { implicit userContext: UserContext ⇒
-            get {
-              complete {
-                sharedCollectionProcesses.getCollectionByPublicIdentifier(
-                  publicIdentifier.value
-                ) map toApiGetCollectionByPublicIdentifierResponse
-              }
+        pathPrefix(TypedSegment[PublicIdentifier]) { publicIdentifier ⇒
+          pathEndOrSingleSlash {
+            get(complete(getCollection(publicIdentifier)))
+          } ~
+            path("subscribe") {
+              put(complete(subscribe(publicIdentifier, userContext))) ~
+                delete(complete(unsubscribe(publicIdentifier, userContext)))
             }
-          }
         }
     }
 
-  private[this] def swaggerApiRoute =
+  private[this] lazy val swaggerRoute =
     // This path prefix grants access to the Swagger documentation.
     // Both /apiDocs/ and /apiDocs/index.html are valid paths to load Swagger-UI.
-    pathPrefix("apiDocs") {
-      pathEndOrSingleSlash {
-        getFromResource("apiDocs/index.html")
-      } ~ {
-        getFromResourceDirectory("apiDocs")
-      }
+    pathEndOrSingleSlash {
+      getFromResource("apiDocs/index.html")
+    } ~ {
+      getFromResourceDirectory("apiDocs")
     }
+
+  private[this] def updateInstallation(request: ApiUpdateInstallationRequest, userContext: UserContext) =
+    userProcesses
+      .updateInstallation(toUpdateInstallationRequest(request, userContext))
+      .map(toApiUpdateInstallationResponse)
+
+  private[this] def getCollection(publicId: PublicIdentifier) =
+    sharedCollectionProcesses
+      .getCollectionByPublicIdentifier(publicId.value)
+      .map(_.map(r ⇒ toApiSharedCollection(r.data)))
+
+  private[this] def createCollection(
+    request: ApiCreateCollectionRequest,
+    collectionInfo: NewSharedCollectionInfo,
+    userContext: UserContext
+  ) =
+    sharedCollectionProcesses
+      .createCollection(toCreateCollectionRequest(request, collectionInfo, userContext))
+      .map(toApiCreateCollectionResponse)
+
+  private[this] def subscribe(publicId: PublicIdentifier, userContext: UserContext) =
+    sharedCollectionProcesses
+      .subscribe(publicId.value, userContext.userId.value)
+      .map(_.map(toApiSubscribeResponse))
+
+  private[this] def unsubscribe(publicId: PublicIdentifier, userContext: UserContext) =
+    sharedCollectionProcesses
+      .unsubscribe(publicId.value, userContext.userId.value)
+      .map(_.map(toApiUnsubscribeResponse))
+
+  private[this] def getPublishedCollections(userContext: UserContext) =
+    sharedCollectionProcesses
+      .getPublishedCollections(userContext.userId.value)
+      .map(_.collections.map(toApiSharedCollection))
 }

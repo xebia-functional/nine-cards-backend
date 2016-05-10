@@ -23,7 +23,7 @@ import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
 import org.specs2.specification.Scope
 import spray.http.HttpHeaders.RawHeader
-import spray.http.{ MediaTypes, StatusCodes }
+import spray.http.{ HttpRequest, MediaTypes, StatusCodes }
 import spray.routing.HttpService
 import spray.testkit.Specs2RouteTest
 
@@ -53,9 +53,7 @@ trait NineCardsApiSpecification
 
     implicit val sharedCollectionProcesses: SharedCollectionProcesses[NineCardsServices] = mock[SharedCollectionProcesses[NineCardsServices]]
 
-    val nineCardsApi = new NineCardsApi {
-      override implicit def actorRefFactory: ActorRefFactory = NineCardsApiSpecification.this.actorRefFactory
-    }.nineCardsApiRoute
+    val nineCardsApi = new NineCardsRoutes().nineCardsRoutes
 
     userProcesses.checkAuthToken(
       sessionToken = mockEq(sessionToken),
@@ -80,6 +78,15 @@ trait NineCardsApiSpecification
 
     sharedCollectionProcesses.getCollectionByPublicIdentifier(any[String]) returns
       Free.pure(getCollectionByPublicIdentifierResponse.right)
+
+    sharedCollectionProcesses.subscribe(any[String], any[Long]) returns
+      Free.pure(subscribeResponse.right)
+
+    sharedCollectionProcesses.unsubscribe(any[String], any[Long]) returns
+      Free.pure(unsubscribeResponse.right)
+
+    sharedCollectionProcesses.getPublishedCollections(any[Long]) returns
+      Free.pure(GetPublishedCollectionsResponse(List()))
   }
 
   trait UnsuccessfulScope extends BasicScope {
@@ -95,6 +102,13 @@ trait NineCardsApiSpecification
 
     sharedCollectionProcesses.getCollectionByPublicIdentifier(any[String]) returns
       Free.pure(sharedCollectionNotFoundException.left)
+
+    sharedCollectionProcesses.subscribe(any[String], any[Long]) returns
+      Free.pure(sharedCollectionNotFoundException.left)
+
+    sharedCollectionProcesses.unsubscribe(any[String], any[Long]) returns
+      Free.pure(sharedCollectionNotFoundException.left)
+
   }
 
   trait FailingScope extends BasicScope {
@@ -226,6 +240,10 @@ trait NineCardsApiContext {
     data = sharedCollectionInfo
   )
 
+  val subscribeResponse = SubscribeResponse()
+
+  val unsubscribeResponse = UnsubscribeResponse()
+
   val persistenceException = PersistenceException(
     message = "Test error",
     cause   = Option(new RuntimeException("Test error"))
@@ -266,6 +284,58 @@ trait NineCardsApiContext {
 
 class NineCardsApiSpec
   extends NineCardsApiSpecification {
+
+  private[this] def unauthorizedNoHeaders(request: HttpRequest) = {
+
+    "return a 401 Unauthorized status code if no headers are provided" in new BasicScope {
+      request ~> sealRoute(nineCardsApi) ~> check {
+        status.intValue shouldEqual StatusCodes.Unauthorized.intValue
+      }
+    }
+
+    "return a 401 Unauthorized status code if some of the headers aren't provided" in new BasicScope {
+      request ~> addHeader(RawHeader(headerAndroidId, androidId)) ~> sealRoute(nineCardsApi) ~> check {
+        status.intValue shouldEqual StatusCodes.Unauthorized.intValue
+      }
+    }
+
+    "return a 401 Unauthorized status code if a wrong credential is provided" in new UnsuccessfulScope {
+      request ~> addHeaders(failingUserInfoHeaders) ~> sealRoute(nineCardsApi) ~> check {
+        status.intValue shouldEqual StatusCodes.Unauthorized.intValue
+      }
+    }
+
+    "return a 401 Unauthorized status code if a persistence error happens" in new FailingScope {
+      request ~> addHeaders(failingUserInfoHeaders) ~> sealRoute(nineCardsApi) ~> check {
+        status.intValue shouldEqual StatusCodes.Unauthorized.intValue
+      }
+    }
+
+  }
+
+  private[this] def notFoundSharedCollection(request: HttpRequest) = {
+    "return a 404 Not found status code if the shared collection doesn't exist" in new UnsuccessfulScope {
+      request ~> addHeaders(userInfoHeaders) ~> sealRoute(nineCardsApi) ~> check {
+        status.intValue shouldEqual StatusCodes.NotFound.intValue
+      }
+    }
+  }
+
+  private[this] def internalServerError(request: HttpRequest) = {
+    "return 500 Internal Server Error status code if a persistence error happens" in new FailingScope {
+      request ~> addHeaders(userInfoHeaders) ~> sealRoute(nineCardsApi) ~> check {
+        status.intValue shouldEqual StatusCodes.InternalServerError.intValue
+      }
+    }
+  }
+
+  private[this] def successOk(request: HttpRequest) = {
+    "return a 200 OK Status code if the operation was carried out" in new SuccessfulScope {
+      request ~> addHeaders(userInfoHeaders) ~> sealRoute(nineCardsApi) ~> check {
+        status.intValue shouldEqual StatusCodes.OK.intValue
+      }
+    }
+  }
 
   "nineCardsApi" should {
     "grant access to Swagger documentation" in new BasicScope {
@@ -535,5 +605,46 @@ class NineCardsApiSpec
           status.intValue shouldEqual StatusCodes.InternalServerError.intValue
         }
     }
+
   }
+
+  "PUT /collections/collectionId/subscribe" should {
+
+    val request = Put(s"${collectionByIdPath}/subscribe")
+
+    unauthorizedNoHeaders(request)
+
+    notFoundSharedCollection(request)
+
+    internalServerError(request)
+
+    successOk(request)
+
+  }
+
+  "DELETE /collections/collectionId/subscribe" should {
+
+    val request = Delete(s"${collectionByIdPath}/subscribe")
+
+    unauthorizedNoHeaders(request)
+
+    notFoundSharedCollection(request)
+
+    internalServerError(request)
+
+    successOk(request)
+
+  }
+
+  "GET /collections" should {
+
+    val request = Get(s"/collections")
+
+    unauthorizedNoHeaders(request)
+
+    internalServerError(request)
+
+    successOk(request)
+  }
+
 }

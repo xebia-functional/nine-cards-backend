@@ -42,7 +42,7 @@ object SharedCollectionMessages {
     downloads: String
   )
 
-  case class ApiGetCollectionByPublicIdentifierResponse(
+  case class ApiSharedCollection(
     publicIdentifier: String,
     publishedOn: DateTime,
     description: Option[String],
@@ -58,5 +58,10 @@ object SharedCollectionMessages {
     resolvedPackages: List[ApiResolvedPackageInfo]
   )
 
-  type XorApiGetCollectionByPublicId = Xor[Throwable, ApiGetCollectionByPublicIdentifierResponse]
+  type XorApiGetCollectionByPublicId = Xor[Throwable, ApiSharedCollection]
+
+  case class ApiSubscribeResponse()
+
+  case class ApiUnsubscribeResponse()
+
 }

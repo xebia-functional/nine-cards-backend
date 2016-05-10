@@ -1,7 +1,6 @@
 package com.fortysevendeg.ninecards.services.persistence
 
-import com.fortysevendeg.ninecards.services.free.domain.SharedCollectionSubscription.Queries._
-import com.fortysevendeg.ninecards.services.free.domain._
+import com.fortysevendeg.ninecards.services.free.domain.SharedCollectionSubscription
 import doobie.imports._
 
 class SharedCollectionSubscriptionPersistenceServices(
@@ -9,10 +8,12 @@ class SharedCollectionSubscriptionPersistenceServices(
   subscriptionPersistence: Persistence[SharedCollectionSubscription]
 ) {
 
+  import SharedCollectionSubscription.Queries._
+
   def addSubscription[K](collectionId: Long, userId: Long)(implicit ev: Composite[K]): ConnectionIO[K] =
     subscriptionPersistence.updateWithGeneratedKeys[K](
       sql    = insert,
-      fields = SharedCollection.allFields,
+      fields = SharedCollectionSubscription.allFields,
       values = (collectionId, userId)
     )
 

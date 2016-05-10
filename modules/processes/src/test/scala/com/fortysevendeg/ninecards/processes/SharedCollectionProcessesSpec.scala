@@ -35,7 +35,20 @@ trait SharedCollectionProcessesSpecification
   trait BasicScope extends Scope {
 
     implicit val sharedCollectionPersistenceServices = mock[SharedCollectionPersistenceServices]
+    implicit val sharedCollectionSubscriptionPersistenceServices = mock[SharedCollectionSubscriptionPersistenceServices]
     implicit val sharedCollectionProcesses = new SharedCollectionProcesses[NineCardsServices]
+
+    def mockGetSubscription(res: Option[SharedCollectionSubscription]) = {
+      sharedCollectionSubscriptionPersistenceServices
+        .getSubscriptionByCollectionAndUser(any, any) returns
+        res.point[ConnectionIO]
+    }
+
+    def mockRemoveSubscription(res: Int) = {
+      sharedCollectionSubscriptionPersistenceServices
+        .removeSubscriptionByCollectionAndUser(any, any) returns
+        res.point[ConnectionIO]
+    }
 
   }
 
@@ -57,6 +70,14 @@ trait SharedCollectionProcessesSpecification
     sharedCollectionPersistenceServices.getPackagesByCollection(
       collectionId = collectionId
     ) returns List.empty[SharedCollectionPackage].point[ConnectionIO]
+
+    sharedCollectionPersistenceServices.getCollectionsByUserId(
+      userId = publisherId
+    ) returns List(collection).point[ConnectionIO]
+
+    sharedCollectionPersistenceServices.getCollectionsByUserId(
+      userId = subscriberId
+    ) returns List[SharedCollection]().point[ConnectionIO]
   }
 
   trait SharedCollectionUnsuccessfulScope extends BasicScope {
@@ -74,7 +95,10 @@ trait SharedCollectionProcessesContext {
 
   val collectionId = 1l
 
-  val userId = None
+  val publisherId = 27L
+  val subscriberId = 42L
+
+  val userId = Some(publisherId)
 
   val millis = 1453226400000l
 
@@ -179,6 +203,13 @@ trait SharedCollectionProcessesContext {
   val sharedCollectionNotFoundException = SharedCollectionNotFoundException(
     message = "The required shared collection doesn't exist"
   )
+
+  val subscription = SharedCollectionSubscription(
+    id                 = 1L,
+    sharedCollectionId = collectionId,
+    userId             = subscriberId
+  )
+
 }
 
 class SharedCollectionProcessesSpec
@@ -215,4 +246,73 @@ class SharedCollectionProcessesSpec
         collectionInfo.foldMap(testInterpreters) must beXorLeft(sharedCollectionNotFoundException)
       }
   }
+
+  "getPublishedCollections" should {
+
+    "return a list of Shared collections of the publisher user" in new SharedCollectionSuccessfulScope {
+      val response = GetPublishedCollectionsResponse(List(sharedCollectionInfo))
+      val collectionsInfo = sharedCollectionProcesses.getPublishedCollections(userId = publisherId)
+      collectionsInfo.foldMap(testInterpreters) mustEqual response
+    }
+
+    "return a list of Shared collections of the subscriber user" in new SharedCollectionSuccessfulScope {
+      val response = GetPublishedCollectionsResponse(List())
+      val collectionsInfo = sharedCollectionProcesses.getPublishedCollections(userId = subscriberId)
+      collectionsInfo.foldMap(testInterpreters) mustEqual response
+    }
+
+  }
+
+  "subscribe" should {
+
+    "return a SharedCollectionNotFoundException when the shared collection does not exist" in new SharedCollectionUnsuccessfulScope {
+      val subscriptionInfo = sharedCollectionProcesses.subscribe(publicIdentifier, subscriberId)
+      subscriptionInfo.foldMap(testInterpreters) must beXorLeft(sharedCollectionNotFoundException)
+    }
+
+    "return a valid response if the subscription already exists  " in new SharedCollectionSuccessfulScope {
+      mockGetSubscription(Some(subscription))
+
+      val subscriptionInfo = sharedCollectionProcesses.subscribe(publicIdentifier, subscriberId)
+      subscriptionInfo.foldMap(testInterpreters) must beXorRight(SubscribeResponse())
+    }
+
+    "return a valid response if it has created a subscription " in new SharedCollectionSuccessfulScope {
+      mockGetSubscription(None)
+
+      sharedCollectionSubscriptionPersistenceServices
+        .addSubscription[SharedCollectionSubscription](any, any)(any) returns subscription.point[ConnectionIO]
+
+      val subscriptionInfo = sharedCollectionProcesses.subscribe(publicIdentifier, subscriberId)
+      subscriptionInfo.foldMap(testInterpreters) must beXorRight(SubscribeResponse())
+    }
+
+  }
+
+  "unsubscribe" should {
+
+    "return a SharedCollectionNotFoundException when the shared collection does not exist" in new SharedCollectionUnsuccessfulScope {
+      val unsubscription = sharedCollectionProcesses.unsubscribe(publicIdentifier, subscriberId)
+      unsubscription.foldMap(testInterpreters) must beXorLeft(sharedCollectionNotFoundException)
+    }
+
+    "return a valid response if the subscription existed" in new SharedCollectionSuccessfulScope {
+      mockRemoveSubscription(1)
+      val subscriptionInfo = sharedCollectionProcesses.unsubscribe(publicIdentifier, subscriberId)
+      subscriptionInfo.foldMap(testInterpreters) must beXorRight(UnsubscribeResponse())
+    }
+
+    "return a valid response if the subscription did not existed " in new SharedCollectionSuccessfulScope {
+      mockRemoveSubscription(0)
+
+      sharedCollectionSubscriptionPersistenceServices
+        .removeSubscriptionByCollectionAndUser(any, any) returns
+        0.point[ConnectionIO]
+
+      val subscriptionInfo = sharedCollectionProcesses.unsubscribe(publicIdentifier, subscriberId)
+      subscriptionInfo.foldMap(testInterpreters) must beXorRight(UnsubscribeResponse())
+    }
+
+  }
+
 }
