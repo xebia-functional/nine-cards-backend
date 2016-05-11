@@ -5,8 +5,8 @@ scala:
 jdk:
   - oraclejdk8
 script:
-  - sbt ++$TRAVIS_SCALA_VERSION "project tests" clean coverage test
+  - sbt -Dconfig.file="modules/api/src/main/resources/application.conf" ++$TRAVIS_SCALA_VERSION "project tests" clean coverage test
 after_success:
-  - sbt ++$TRAVIS_SCALA_VERSION "project tests" coverageReport
-  - sbt ++$TRAVIS_SCALA_VERSION "project tests" coverageAggregate
-  - sbt ++$TRAVIS_SCALA_VERSION "project tests" codacyCoverage
+  - sbt -Dconfig.file="modules/api/src/main/resources/application.conf" ++$TRAVIS_SCALA_VERSION "project tests" coverageReport
+  - sbt -Dconfig.file="modules/api/src/main/resources/application.conf" ++$TRAVIS_SCALA_VERSION "project tests" coverageAggregate
+  - sbt -Dconfig.file="modules/api/src/main/resources/application.conf" ++$TRAVIS_SCALA_VERSION "project tests" codacyCoverage

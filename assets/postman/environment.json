@@ -1,0 +1,60 @@
+{
+	"id": "fb68a1e4-3e29-09e9-cc4c-4deded4f5983",
+	"name": "Ninecards - Local",
+	"values": [
+		{
+			"key": "baseurl",
+			"value": "localhost:8080",
+			"type": "text",
+			"name": "baseurl",
+			"enabled": true
+		},
+		{
+			"key": "appid",
+			"value": "ninecards",
+			"type": "text",
+			"name": "appid",
+			"enabled": true
+		},
+		{
+			"key": "appkey",
+			"value": "RH8Z2RuDJcCTaKy3J6rra7kv",
+			"type": "text",
+			"name": "appkey",
+			"enabled": true
+		},
+		{
+			"key": "token",
+			"value": "e1e33889-2e2d-49d7-81e7-10606c4ca32f",
+			"type": "text",
+			"name": "token",
+			"enabled": true
+		},
+		{
+			"key": "androidid",
+			"value": "3186A3CBB674A626",
+			"type": "text",
+			"name": "androidid",
+			"enabled": true
+		},
+		{
+			"key": "localization",
+			"value": "en-EN",
+			"type": "text",
+			"name": "localization",
+			"enabled": true
+		},
+		{
+			"key": "userid",
+			"value": "5309d7164e00002201c6fc51",
+			"type": "text",
+			"name": "userid",
+			"enabled": true
+		}
+	],
+	"team": null,
+	"timestamp": 1462355359494,
+	"synced": false,
+	"syncedFilename": "",
+	"isDeleted": false
+}
