@@ -13,16 +13,29 @@ which other users can subscribe to.
 The NineCards Back End (NCBE) is a server-side, REST service application, that supports the features for publishing and
 subscribing to Shared Collections.
 
+<!-- markdown-toc start - Don't edit this section. Run M-x markdown-toc-generate-toc again -->
 **Table of Contents**
+- [9Cards Backend V2](#9cards-backend-v2)
+    - [Description of the Application](#description-of-the-application)
+        - [Data Model](#data-model)
+        - [Authentication and Authorization](#authentication-and-authorization)
+            - [Client Signup in BackEnd](#client-signup-in-backend)
+            - [User Authentication](#user-authentication)
+            - [Manually obtaining an IdToken](#manually-obtaining-an-idtoken)
+    - [Developers Setup](#developers-setup)
+        - [Scala Development Tools](#scala-development-tools)
+        - [Postgres Database Setup](#postgres-database-setup)
+            - [Installation](#installation)
+            - [Setting Client authentication](#setting-client-authentication)
+            - [Setting user and password for local development:](#setting-user-and-password-for-local-development)
+            - [Database Schema Migrations](#database-schema-migrations)
+    - [Running and testing the application](#running-and-testing-the-application)
+        - [Database Connection Configuration](#database-connection-configuration)
+        - [Testing and running the endpoints with Postman](#testing-and-running-the-endpoints-with-postman)
+    - [Deployment - Preparing the Application](#deployment---preparing-the-application)
+    - [License](#license)
+<!-- markdown-toc end -->
 
-- [Summary](#summary)
-- [Prerequisites](#prerequisites)
-- [Execute](#execute)
-- [Database connection](#database-connection)
-- [Authentication](#authentication)
-- [Request](#request)
-- [Postgres](#postgres)
-- [License](#license)
 
 ## Description of the Application
 
