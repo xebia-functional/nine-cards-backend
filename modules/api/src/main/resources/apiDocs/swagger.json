@@ -2114,22 +2114,8 @@
         }
     },
     "parameters": {
-        "appId": {
-            "name": "X-Appsly-Application-Id",
-            "description": "Application ID needed for authentication in appsly.",
-            "in": "header",
-            "type": "string",
-            "required": true
-        },
-        "restApiKey": {
-            "name": "X-Appsly-REST-API-Key",
-            "description": "REST API Key in appsly.",
-            "in": "header",
-            "type": "string",
-            "required": true
-        },
         "sessionToken": {
-            "name": "X-Appsly-Session-Token",
+            "name": "X-Session-Token",
             "description": "Appsly session token obtained from a valid login request.",
             "in": "header",
             "type": "string",
