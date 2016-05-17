@@ -113,6 +113,7 @@ the user's device).
    * the `email` that serves as an external identifier for the user running the client,
    * the `androidId`, that identifies the Android device in which the user is running the client application, and
    * the `idToken` that the client received from the GAC in Step 1.
+
    If the request succeeds, the NCBE records the client's user and device and returns a response to the client app.
    The response carries (in a Json object in the request body) two fields: a `sessionToken`, and an `apiKey`.
    * The `sessionToken` is a unique identifier of the user within the NCBE instead of the user's email. 
