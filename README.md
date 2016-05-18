@@ -62,7 +62,7 @@ and [cats](http://typelevel.org/cats/).
 
 The data model, that is the entities and relations handled by the application, is represented in the database
 using the scheme definitions in [the migrations files](modules/api/src/main/resources/db/migration/).
-It consists of five main classes: `User`, `Installation`, `Collection`, `Package`, and `Subscription`.
+It consists of five main classes: `User`, `Installation`, `Shared Collection`, `Package`, and `Subscription`.
 
 A **User** represents an entity, usually a person, who owns a Google account.
 * The `sessionToken` is a unique identifier of the user within the NCBE, as an alternative to the user's email.
@@ -75,13 +75,12 @@ An **Installation** represents a device (e.g. a mobile phone) of a *User*, in wh
 * The `androidId` is a globally unique identifier of each Android device.
 * The `deviceId` is used for _push_ notifications services.
 
-A **Collection** is a curated set of Android applications. The collection is annotated with some information
-about who wrote and when it, what kind of applications it containsait contains, some statistics about visits
-and downloads, etc.
-NCBE only deals with **shared** collections, those that one user publishes and curates and other users
-subscribe to. In this data model, every collection is a *shared* collections published by a user.
-Thus, there is a `1:N` relation between **user** and **collection**. Every collection has one author,
-which is marked in the field `userId`. However, a user can be the author of several or none collections.
+A **Shared Collection** is a list of Android applications shared between a publisher and several subscribers.
+The shared collection is annotated with information about who wrote and when, a description text, some statistics about visits and downloads, etc.
+Every *shared* collections is published (and afterwards modified) by exactly one user.
+Thus, there is a  `1:N` relation between **user** and **collection**, which is represented in the field `userId` of the `users` table.
+The fiekd `author` only shows the name of that user.
+A user can be the author of several or none collections.
 
 A **Package** represents an application that is included in a collection.
 The field `packageName` represents the application as the Java package of its main executable
@@ -89,7 +88,6 @@ class, e.g. `com.fortysevendeg.ninecardslauncher.app.App`.
 
 A **Subscription** is an unconstrained `M:N` relation between user and collections, where each entry
 indicates that a user is subscribed to a collection.
-
 
 ### Authentication and Authorization
 
@@ -131,7 +129,7 @@ carry out an authentication step, to check that the client app sending the reque
 The information for user authentication is carried in the HTTP headers `X-Android-ID`, `X-Auth-Token` and `X-Session-Token`.
 
 * The `X-Android-ID` should give the `androidId` of the client's device. Note that, since the GAC process in the signup
-  involve a user and device, the device itself and nut just the user should be signed up beforehand.
+  involves a user and device, it is the device itself and not just the user that should be signed up beforehand.
 
 * The `X-Session-Token` should carry the user's `sessionToken` that the NCBE generated and gave to the client in Step 3 of the signup process.
   This value acts as a way to identify the user within the NCBE.
