@@ -83,8 +83,8 @@ The fiekd `author` only shows the name of that user.
 A user can be the author of several or none collections.
 
 A **Package** represents an application that is included in a collection.
-The field `packageName` represents the application as the Java package of its main executable
-class, e.g. `com.fortysevendeg.ninecardslauncher.app.App`.
+The field `packageName` represents the application as the root Java package of the application, 
+e.g. `com.fortysevendeg.ninecardslauncher`.
 
 A **Subscription** is an unconstrained `M:N` relation between user and collections, where each entry
 indicates that a user is subscribed to a collection.
