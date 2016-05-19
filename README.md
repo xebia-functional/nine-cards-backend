@@ -82,7 +82,7 @@ Thus, there is a  `1:N` relation between **user** and **collection**, which is r
 The field `author` only shows the name of that user. A user can be the author of several or none collections.
 
 A **Package** represents an application that is included in a collection.
-The field `packageName` represents the application as the root Java package of the application, 
+The field `packageName` represents the application as the root Java package of the application,
 e.g. `com.fortysevendeg.ninecardslauncher`.
 
 A **Subscription** is an unconstrained `M:N` relation between user and collections, where each entry
@@ -113,7 +113,7 @@ the user's device).
 
    If the request succeeds, the NCBE records the client's user and device and returns a response to the client app.
    The response carries (in a JSON object in the request body) two fields: a `sessionToken` and an `apiKey`.
-   * The `sessionToken` is a unique identifier of the user within the NCBE instead of the user's email. 
+   * The `sessionToken` is a unique identifier of the user within the NCBE instead of the user's email.
    * The `apiKey` is the private cryptographic key that the client uses after signup to authenticate in the NCBE.
 
 3. **NCBE access to GAC.**
@@ -249,11 +249,10 @@ Thus, you need to follow these steps:
 
 #### Database Schema Migrations
 
-The evolutions for the data schema of the `ninecards` database are managed by the build system of NCBE,
-using the [flyway SBT plugin](https://flywaydb.org/documentation/sbt/).
-Flyway needs the parameters to access the database. For setting your machine, you can use the values in `localhost.conf`.
-For this, you should open a shell session in the `nine-cards-backend` root directory,
-and start `sbt` using the `localhost.conf` file:
+The evolutions for the data schema of the `ninecards` database are managed by `sbt`, the build system, using the [flyway SBT plugin](https://flywaydb.org/documentation/sbt/).
+Flyway needs the parameters to access the database.
+Setting values for setting your local database are stored in the [`localhost.conf`](modules/api/src/main/resources/localhost.conf) file
+For this, you should open a shell session in the `nine-cards-backend` root directory, and run `sbt` loading the `localhost.conf` file:
 
         sbt -Dconfig.file="modules/api/src/main/resources/localhost.conf"
 
@@ -282,22 +281,27 @@ The default configuration is at the `modules/api/src/main/resources/application.
 loads the values for some configuration settings from the environment. This gives you several ways to
 define your configuration settings:
 
-a. Run `sbt` passing the configuration settings, each setting having the form `-D{key}}={{value}}`, such as:
+a. Run `sbt` passing the configuration settings, each setting having the form `-D{key}}={{value}}`.
+   For example, to run the application in your local host, you would pass the databae configuration as follows:
 
-        sbt -Ddb.default.driver="..."  -Ddb.default.url="..." -Ddb.default.user="..." -Ddb.default.password="..."
+        sbt -Ddb.default.driver="org.postgresql.Driver" -Ddb.default.url="jdbc:postgresql://localhost/ninecards" -Ddb.default.user="ninecards" -Ddb.default.password="ninecards_pass"
 
-b. Write a configuration file with your settings, and pass that file to `sbt` using the `-Dconfig.file` option, as follows:
+b. Write a configuration file with your settings, and pass that file to `sbt` using the `-Dconfig.file` option.
+    For example, to run the application in yout local host, you can pass the [`localhost.conf` file](modules/api/src/main/resources/localhost.conf), as follows:
 
         sbt -Dconfig.file="modules/api/src/main/resources/localhost.conf"
 
-c. Set the shell environment variables used by the default configuration file. For instance, in `bash`, this is done as follows:
+c. Set the shell environment variables used by the default configuration file.
+    In `bash`, this is done with the command `export VAR=[VALUE]`, without spaces.
+    For instance, to initialize the environment variables related to the database configuration, and set them for local execution, you would run the following:
 
-        export DB_DEFAULT_DRIVER="..."
-        export DB_DEFAULT_URL="..."
-        export DB_DEFAULT_USER="..."
-        export DB_DEFAULT_PASSWORD="..."
+        export DB_DEFAULT_DRIVER="org.postgresql.Driver"
+        export DB_DEFAULT_URL="jdbc:postgresql://localhost/ninecards"
+        export DB_DEFAULT_USER="ninecards"
+        export DB_DEFAULT_PASSWORD="ninecards_pass"
 
-    Of course, you can write such settings in the `.bashrc` file, or in a executable shell script.
+    Note that there should be no whitespace around the `=` sign. Note also that the settings only remain for the bash session.
+    You can write such settings in the `.bashrc` file, or in a executable shell script.
 
 ### Testing and running the endpoints with Postman
 
