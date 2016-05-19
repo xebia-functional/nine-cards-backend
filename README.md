@@ -6,7 +6,7 @@
 
 This repository contains the source code of the Nine-Cards Back-End (NCBE) application.
 
-NineCards is an Android Launcher that organises the applications and data of your phone into several collections.
+NineCards is an Android Launcher that organizes the applications and data of your phone into several collections.
 The user can modify these collections, create new collections. Also, a user can publish and curate a shared collection
 which other users can subscribe to.
 
@@ -44,7 +44,7 @@ and most of the functionality is provided either by the [client](https://github.
 or by a separate [Google Play integration](https://github.com/47deg/nine-cards-backend-google-play) subsystem.
 The Back End is only concerned with those features that involve information shared between several users.
 
-The NCBE is organised within three modules, called `api`, `processes`, and `services`:
+The NCBE is organized within three modules, called `api`, `processes`, and `services`:
 
 * The **api** module implements the HTTP server application that provides the endpoints for the application.
   The routes are built with the [spray](http://spray.io/) library, with [spray-json](http://github.com/spray/spray-json) serialization.
@@ -60,7 +60,7 @@ and [cats](http://typelevel.org/cats/).
 
 ### Data Model
 
-The data model, that is the entities and relations handled by the application, is represented in the database
+The data model, by which we mean the entities and relations handled by the application, is represented in the database
 using the scheme definitions in [the migrations files](modules/api/src/main/resources/db/migration/).
 It consists of five main classes: `User`, `Installation`, `Shared Collection`, `Package`, and `Subscription`.
 
@@ -76,11 +76,10 @@ An **Installation** represents a device (e.g. a mobile phone) of a *User*, in wh
 * The `deviceId` is used for _push_ notifications services.
 
 A **Shared Collection** is a list of Android applications shared between a publisher and several subscribers.
-The shared collection is annotated with information about who wrote and when, a description text, some statistics about visits and downloads, etc.
+The shared collection is annotated with information about who wrote it and when, a description text, some statistics about visits and downloads, etc.
 Every *shared* collections is published (and afterwards modified) by exactly one user.
 Thus, there is a  `1:N` relation between **user** and **collection**, which is represented in the field `userId` of the `users` table.
-The fiekd `author` only shows the name of that user.
-A user can be the author of several or none collections.
+The field `author` only shows the name of that user. A user can be the author of several or none collections.
 
 A **Package** represents an application that is included in a collection.
 The field `packageName` represents the application as the root Java package of the application, 
@@ -107,13 +106,13 @@ the user's device).
 
 2. **Client signup in NCBE.**
    The *Client* sends a HTTP request to the NCBE's endpoint `POST {apiRoot}/login`, to register in it.
-   This request carries (as a JSon object in the body entity) three fields:
+   This request carries (as a JSON object in the body entity) three fields:
    * the `email` that serves as an external identifier for the user running the client,
    * the `androidId`, that identifies the Android device in which the user is running the client application, and
    * the `idToken` that the client received from the GAC in Step 1.
 
    If the request succeeds, the NCBE records the client's user and device and returns a response to the client app.
-   The response carries (in a Json object in the request body) two fields: a `sessionToken`, and an `apiKey`.
+   The response carries (in a JSON object in the request body) two fields: a `sessionToken` and an `apiKey`.
    * The `sessionToken` is a unique identifier of the user within the NCBE instead of the user's email. 
    * The `apiKey` is the private cryptographic key that the client uses after signup to authenticate in the NCBE.
 
@@ -187,7 +186,7 @@ The NCBE is written in [Scala](www.scala-lang.org), using the [Scala Build Tool 
 
 If you have an older version of SBT, or Scala, often `sbt` can bootstrap itself to a newer versions.
 
-You should put `scala`, `scalac`, and `sbt` are in PATH.
+You should ensure that the `PATH` environment variable contains the directories in which the programs `scala`, `scalac`, and `sbt` are located.
 
 ### Postgres Database Setup
 
@@ -206,7 +205,7 @@ For OsX users, you can use any of the tools mentioned [here](http://www.postgres
 #### Setting Client authentication
 
 In PostgreSQL, the "Client Authentication" method, used for opening a client's session, can be set differently for each user, database, or connection.
-This configuration is kepy in a file called [`pg_hba.conf`](http://www.postgresql.org/docs/9.1/static/auth-pg-hba-conf.html).
+This configuration is kept in a file called [`pg_hba.conf`](http://www.postgresql.org/docs/9.1/static/auth-pg-hba-conf.html).
 
 * In Debian-based distributions, it is located in the directory `/etc/postgresql/{version}/main/pg_hba.conf`.
 * In OSX, you can find it using the command `locate pg_hba.conf`, or following [these instructions](http://stackoverflow.com/questions/14025972/postgresql-how-to-find-pg-hba-conf-file-using-mac-os-x).
