@@ -21,6 +21,9 @@ object Versions {
 
   val tagSoup = "1.2.1"
 
+  val redisClient = "3.0"
+  val embeddedRedis = "0.6"
+  
   // Test Libs
   val specs2 = "3.6.6" // this is the last version depending on scalaz 7.1.4. Http4s needs Scalaz 7.1
   val scalaCheckShapeless = "0.3.2-SNAPSHOT"

@@ -27,6 +27,8 @@ trait Dependencies {
 
   val tagSoup = "org.ccil.cowan.tagsoup" % "tagsoup" % Versions.tagSoup
 
+  val redisClient = "net.debasishg" %% "redisclient" % Versions.redisClient
+  val embeddedRedis = "com.orange.redis-embedded" % "embedded-redis" % Versions.embeddedRedis % "test"
   val baseDepts = Seq(specs2Core)
 
   val apiDeps = Seq(libraryDependencies ++= baseDepts ++ Seq(
@@ -39,6 +41,8 @@ trait Dependencies {
     circeCore,
     circeGeneric,
     circeParser,
+    redisClient,
+    embeddedRedis,
     scalaCheckShapeless,
     specs2ScalaCheck,
     specs2MatcherExtra,

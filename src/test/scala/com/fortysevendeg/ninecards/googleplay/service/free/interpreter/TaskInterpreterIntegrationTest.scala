@@ -78,5 +78,5 @@ class TaskInterpreterIntegrationTest extends Specification with Specs2RouteTest 
 
       retrievedCategory.runFor(10.seconds) must_=== Some(expectedCategory)
     }
-  }  
+  }
 }
