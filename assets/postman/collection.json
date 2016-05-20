@@ -133,7 +133,7 @@
 		},
 		{
 			"id": "ac4262a3-5453-c0a2-ab09-90f50176fe3f",
-			"headers": "Accept: \"application/json\"\nContent-Type: application/json\nX-Session-Token: {{token}}\nX-Android-ID: {{androidid}}\nX-Android-Market-Localization: {{localization}}\X-Auth-Token: {{COMPUTE_AUTH_TOKEN}}\n",
+			"headers": "Accept: \"application/json\"\nContent-Type: application/json\nX-Session-Token: {{token}}\nX-Android-ID: {{androidid}}\nX-Android-Market-Localization: {{localization}}\nX-Auth-Token: {{COMPUTE_AUTH_TOKEN}}\n",
 			"url": "http://{{baseurl}}/collections/5346f6802000003802fcf3ee/subscribe",
 			"preRequestScript": "",
 			"pathVariables": {},
