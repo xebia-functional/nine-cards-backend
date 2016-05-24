@@ -3,28 +3,28 @@
 	"name": "Ninecards - Local",
 	"values": [
 		{
-			"key": "baseurl",
+			"key": "base_url",
 			"value": "localhost:8080",
 			"type": "text",
 			"name": "baseurl",
 			"enabled": true
 		},
 		{
-			"key": "token",
+			"key": "session_token",
 			"value": "toktok",
 			"type": "text",
 			"name": "token",
 			"enabled": true
 		},
 		{
-			"key": "androidid",
+			"key": "android_id",
 			"value": "andrea",
 			"type": "text",
 			"name": "androidid",
 			"enabled": true
 		},
 		{
-			"key": "localization",
+			"key": "market_localization",
 			"value": "en-EN",
 			"type": "text",
 			"name": "localization",

@@ -21,7 +21,7 @@ subscribing to Shared Collections.
         - [Authentication and Authorization](#authentication-and-authorization)
             - [Client Signup in BackEnd](#client-signup-in-backend)
             - [User Authentication](#user-authentication)
-            - [Manually obtaining an IdToken](#manually-obtaining-an-idtoken)
+            - [Manually obtaining a `TokenId`](#manually-obtaining-an-idtoken)
     - [Developers Setup](#developers-setup)
         - [Scala Development Tools](#scala-development-tools)
         - [Postgres Database Setup](#postgres-database-setup)
@@ -150,7 +150,7 @@ To calculate the value, you can use one of these methods:
   The request URL would be into the `message` dialog, the user's `apiKey` would go into the `SecretKey` text box,
   and the algorithm would be "SHA512". The result would be the digest.
 
-#### Manually obtaining an IdToken
+#### Manually obtaining a `TokenId`
 
 Sometimes, you may want to carry out manually the first step of the signup, which is the communication between the
 Client and the Google Account Services.
@@ -168,10 +168,9 @@ This information is only the user's email, so the scope used is `https://www.goo
 3. Before you should be opened a new page, showing the `Request/Response`. In the left pane there is a text field labelled _Authorization Code_,
    and below it there is a button labelled _Exchange authorization code for tokens_. Press this button.
    Google OAuth playground generates then a new token, which is shown inside the textbox labelled _Access Token_.
-   This _access token_ identifies a session within the _Google Account Services_, which is to expire within the hour.
-4. Copy the value of the _Access Token_,
-
-This is the value you need to put in the  `tokenId` field of the request body for the login gendpoint.
+   This _Access Token_ identifies a session within the _Google Account Services_, which is to expire within the hour.
+4. Copy the value of the _Access Token_ generated. A request to login endpoint `POST {apiRoot}/login` should include in the 
+   body a JSON object with the field `tokenId`. The value of this field should be the _Access Token_.  
 
 
 ## Developers Setup
@@ -204,7 +203,7 @@ In a Debian-based Linux distribution, you can use the `apt-get` command to insta
 
     sudo apt-get install postgresql postgresql-contrib postgresql-client pgadmin3
 
-For OsX users, you can use any of the tools mentioned [here](http://www.postgresql.org/download/macosx/).
+For OS-X users, you can use any of the tools mentioned [here](http://www.postgresql.org/download/macosx/).
 
 #### Setting Client authentication
 
@@ -212,7 +211,7 @@ In PostgreSQL, the "Client Authentication" method, used for opening a client's s
 This configuration is kept in a file called [`pg_hba.conf`](http://www.postgresql.org/docs/9.1/static/auth-pg-hba-conf.html).
 
 * In Debian-based distributions, it is located in the directory `/etc/postgresql/{version}/main/pg_hba.conf`.
-* In OSX, you can find it using the command `locate pg_hba.conf`, or following [these instructions](http://stackoverflow.com/questions/14025972/postgresql-how-to-find-pg-hba-conf-file-using-mac-os-x).
+* In OS-X, you can find it using the command `locate pg_hba.conf`, or following [these instructions](http://stackoverflow.com/questions/14025972/postgresql-how-to-find-pg-hba-conf-file-using-mac-os-x).
 
 To run and test the NCBE on our local host using the `ninecards_user` user, we need to open channels for the command line and for the JDBC driver.
 
