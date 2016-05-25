@@ -97,7 +97,7 @@ The Nine Cards Back-End Application authenticates almost all of the endpoints.
 #### Client Signup in BackEnd
 
 We describe now the process of interactions performed for a client (user and device) to sign up in the NCBE.
-In essence, this process is just a third-party authentication (the third party being the NCBE) following the [OAuth 2.0 protocol](https://developers.google.com/identity/protocols/OAuth2). 
+In essence, this process is just a third-party authentication (the third party being the NCBE) following the [OAuth 2.0 protocol](https://developers.google.com/identity/protocols/OAuth2).
 It consists of an interaction between the NCBE, the **Google Account Services** (GAC), and the **Client**, which is the Ninecards Android application running from the user device.
 
 1. **Grant Google Account Permissions.**
@@ -165,11 +165,11 @@ This information is only the user's email, so the scope used is `https://www.goo
 2. If you have several Google accounts stored in the browser, you may be asked to select one. You will then
    be presented with a usual Google permissions dialog, asking you to allow an application to _Read your email address_.
     Press _Allow_.
-3. After pressing _Allow_, the playground page would change to a new view. The modified page shows you `Request/Response`. 
-   In the left pane there is a text field labelled _Authorization Code_, and a button labelled _Exchange authorization code for tokens_. 
+3. After pressing _Allow_, the playground page would change to a new view. The modified page shows you `Request/Response`.
+   In the left pane there is a text field labelled _Authorization Code_, and a button labelled _Exchange authorization code for tokens_.
    Press this button. Google OAuth playground generates then a new token, which is shown inside the textbox labelled _Access Token_.
    This _Access Token_ identifies a session within the _Google Account Services_, which is to expire within the hour.
-4. Copy the value of the _Access Token_ generated. A request to login endpoint `POST {apiRoot}/login` should include in the 
+4. Copy the value of the _Access Token_ generated. A request to login endpoint `POST {apiRoot}/login` should include in the
    body a JSON object with the field `tokenId`. The value of this field should be the _Access Token_.
 
 
@@ -253,17 +253,17 @@ Thus, you need to follow these steps:
 #### Database Schema Migrations
 
 The evolutions for the data schema of the `ninecards` database are managed by `sbt`, the build system, using the [flyway SBT plugin](https://flywaydb.org/documentation/sbt/).
-Flyway needs the parameters to access the database.
-Setting values for setting your local database are stored in the [`localhost.conf`](modules/api/src/main/resources/localhost.conf) file
-For this, you should open a shell session in the `nine-cards-backend` root directory, and run `sbt` loading the `localhost.conf` file:
+Flyway needs some configuration parameters to access the database.
+An overview on how to pass these settings is given in the [Database Connection Configuration](#database-connection-configuration) section.
+Suffice it to say that, to run the migrations on your local database, you can use the configuration values written in the [`localhost.conf`](modules/api/src/main/resources/localhost.conf) file.
+You can pass this file to `sbt`, by opening a shell session in the `nine-cards-backend` root directory and executing the following command:
 
         sbt -Dconfig.file="modules/api/src/main/resources/localhost.conf"
 
-You can use either the projects `api` or `root`.
-Once the `sbt` session is opened, you can clear the database with the command
-`flywayClean`, or you can perform the database schema migrations by running `flywayMigrate`.
+This should open an interactive `sbt` session. Inside this session,
+you can clear the database with the command `flywayClean`, or perform the database migrations with `flywayMigrate`.
 
-**Note**: `flyway` connects to the database through JDBC, so you should configure the `pg_hba.conf` file as explained earlier.
+**Note**: since `flyway` connects to the database through JDBC, you would need to configure the PostgreSQL authentication file `pg_hba.conf`, as explained [in a previous section](#setting-client-authentication)).
 
 
 ## Running and testing the application
