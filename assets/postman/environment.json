@@ -1,0 +1,39 @@
+{
+	"id": "fb68a1e4-3e29-09e9-cc4c-4deded4f5983",
+	"name": "Ninecards - Local",
+	"values": [
+		{
+			"key": "base_url",
+			"value": "localhost:8080",
+			"type": "text",
+			"name": "baseurl",
+			"enabled": true
+		},
+		{
+			"key": "session_token",
+			"value": "toktok",
+			"type": "text",
+			"name": "token",
+			"enabled": true
+		},
+		{
+			"key": "android_id",
+			"value": "andrea",
+			"type": "text",
+			"name": "androidid",
+			"enabled": true
+		},
+		{
+			"key": "market_localization",
+			"value": "en-EN",
+			"type": "text",
+			"name": "localization",
+			"enabled": true
+		}
+	],
+	"team": null,
+	"timestamp": 1462355359494,
+	"synced": false,
+	"syncedFilename": "",
+	"isDeleted": false
+}
