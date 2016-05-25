@@ -21,7 +21,7 @@ subscribing to Shared Collections.
         - [Authentication and Authorization](#authentication-and-authorization)
             - [Client Signup in BackEnd](#client-signup-in-backend)
             - [User Authentication](#user-authentication)
-            - [Manually obtaining a `TokenId`](#manually-obtaining-an-idtoken)
+            - [Manually obtaining a TokenId](#manually-obtaining-a-tokenid)
     - [Developers Setup](#developers-setup)
         - [Scala Development Tools](#scala-development-tools)
         - [Postgres Database Setup](#postgres-database-setup)
@@ -91,14 +91,14 @@ indicates that a user is subscribed to a collection.
 
 ### Authentication and Authorization
 
+The Nine Cards Back-End Application authenticates almost all of the endpoints.
+
 
 #### Client Signup in BackEnd
 
 We describe now the process of interactions performed for a client (user and device) to sign up in the NCBE.
-This process is not performed unless a user wants to publish a new shared collection, or subscribe to an existing shared collection.
-The process involves a series of interactions between three subsystems: the NCBE,
-the **Google Account Services** (GAC), and the **Client**, which is the Ninecards Android application in
-the user's device).
+In essence, this process is just a third-party authentication (the third party being the NCBE) following the [OAuth 2.0 protocol](https://developers.google.com/identity/protocols/OAuth2). 
+It consists of an interaction between the NCBE, the **Google Account Services** (GAC), and the **Client**, which is the Ninecards Android application running from the user device.
 
 1. **Grant Google Account Permissions.**
    The *Client* sends a request to the GAC to open an authorization token. The request carries the user's `email` and the `deviceId`,
@@ -142,15 +142,15 @@ The *cryptographic key* used is the user's `apiKey`, which the NCBE generates an
 The code is then calculated using the `sha512` hash function.
 To calculate the value, you can use one of these methods:
 
-* The command `openssl` can generate the HMAC digest of a message. For example, to digest the URI `http://127.0.0.1:8080/collections/a` with the key `foo`, you would run:
+* The command `openssl` can generate the HMAC digest of a message. For example, to digest the URI `http://localhost:8080/collections/a` with the key `foo`, you would run:
 
-        echo -n "http://127.0.0.1:8080/collections/a" | openssl dgst -sha512 -hmac "foo" | awk '{print $2}'
+        echo -n "http://localhost:8080/collections/a" | openssl dgst -sha512 -hmac "foo" | awk '{print $2}'
 
 * This [web page](http://www.freeformatter.com/hmac-generator.html) offers a graphic dialog to generate the digest.
   The request URL would be into the `message` dialog, the user's `apiKey` would go into the `SecretKey` text box,
   and the algorithm would be "SHA512". The result would be the digest.
 
-#### Manually obtaining a `TokenId`
+#### Manually obtaining a TokenId
 
 Sometimes, you may want to carry out manually the first step of the signup, which is the communication between the
 Client and the Google Account Services.
@@ -165,12 +165,12 @@ This information is only the user's email, so the scope used is `https://www.goo
 2. If you have several Google accounts stored in the browser, you may be asked to select one. You will then
    be presented with a usual Google permissions dialog, asking you to allow an application to _Read your email address_.
     Press _Allow_.
-3. Before you should be opened a new page, showing the `Request/Response`. In the left pane there is a text field labelled _Authorization Code_,
-   and below it there is a button labelled _Exchange authorization code for tokens_. Press this button.
-   Google OAuth playground generates then a new token, which is shown inside the textbox labelled _Access Token_.
+3. After pressing _Allow_, the playground page would change to a new view. The modified page shows you `Request/Response`. 
+   In the left pane there is a text field labelled _Authorization Code_, and a button labelled _Exchange authorization code for tokens_. 
+   Press this button. Google OAuth playground generates then a new token, which is shown inside the textbox labelled _Access Token_.
    This _Access Token_ identifies a session within the _Google Account Services_, which is to expire within the hour.
 4. Copy the value of the _Access Token_ generated. A request to login endpoint `POST {apiRoot}/login` should include in the 
-   body a JSON object with the field `tokenId`. The value of this field should be the _Access Token_.  
+   body a JSON object with the field `tokenId`. The value of this field should be the _Access Token_.
 
 
 ## Developers Setup
