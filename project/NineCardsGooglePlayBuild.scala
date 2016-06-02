@@ -3,8 +3,8 @@ import Keys._
 
 import sbtprotobuf.{ProtobufPlugin=>PB}
 
-object NineCardsBuild extends Build with Settings with Dependencies {
+object NineCardsBuild extends Build with Settings {
 
   lazy val root = project.in(file("."))
-    .settings(apiSettings ++ apiDeps ++ PB.protobufSettings : _*)
+    .settings(apiSettings ++ Dependencies.apiDeps ++ PB.protobufSettings : _*)
 }

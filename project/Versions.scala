@@ -2,7 +2,6 @@ import sbt.Keys._
 import sbt._
 
 object Versions {
-  this: Build =>
 
   // Build version
   val buildVersion = "1.0.0-SNAPSHOT"
