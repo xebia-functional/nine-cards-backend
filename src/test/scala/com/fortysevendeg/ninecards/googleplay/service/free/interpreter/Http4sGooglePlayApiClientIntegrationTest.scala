@@ -2,7 +2,7 @@ package com.fortysevendeg.ninecards.googleplay.service.free.interpreter
 
 import com.fortysevendeg.ninecards.config.NineCardsConfig
 import com.fortysevendeg.ninecards.googleplay.domain.Domain._
-import com.fortysevendeg.ninecards.googleplay.TestConfig
+import com.fortysevendeg.ninecards.googleplay.TestConfig._
 import org.specs2.mutable.Specification
 import org.specs2.matcher.TaskMatchers
 import spray.testkit.Specs2RouteTest
@@ -11,7 +11,7 @@ import java.nio.file.Files
 import scalaz.concurrent.Task
 import cats.data.Xor
 
-class Http4sGooglePlayApiClientIntegrationTest extends Specification with Specs2RouteTest with TaskMatchers with TestConfig {
+class Http4sGooglePlayApiClientIntegrationTest extends Specification with Specs2RouteTest with TaskMatchers {
 
   val apiEndpoint = NineCardsConfig.getConfigValue("googleplay.api.endpoint")
   val apiClient = new Http4sGooglePlayApiClient(apiEndpoint)

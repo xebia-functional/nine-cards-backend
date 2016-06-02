@@ -3,7 +3,7 @@ package com.fortysevendeg.ninecards.googleplay.service.free.interpreter
 import com.fortysevendeg.ninecards.config.NineCardsConfig
 import com.fortysevendeg.ninecards.googleplay.domain.Domain._
 import com.fortysevendeg.ninecards.googleplay.service.free.algebra.GooglePlay._
-import com.fortysevendeg.ninecards.googleplay.TestConfig
+import com.fortysevendeg.ninecards.googleplay.TestConfig._
 import org.specs2.mutable.Specification
 import org.specs2.matcher.TaskMatchers
 import spray.testkit.Specs2RouteTest
@@ -12,7 +12,7 @@ import cats.data.Xor
 import com.fortysevendeg.ninecards.googleplay.service.GooglePlayDomain.GoogleAuthParams
 import scala.concurrent.duration._
 
-class TaskInterpreterIntegrationTest extends Specification with Specs2RouteTest with TaskMatchers with TestConfig {
+class TaskInterpreterIntegrationTest extends Specification with Specs2RouteTest with TaskMatchers {
 
   val apiEndpoint = NineCardsConfig.getConfigValue("googleplay.api.endpoint")
   val apiClient = new Http4sGooglePlayApiClient(apiEndpoint)

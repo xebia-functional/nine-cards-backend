@@ -6,6 +6,8 @@ import akka.pattern.ask
 import akka.util.Timeout
 import spray.can.Http
 
+import com.fortysevendeg.extracats._
+import com.fortysevendeg.ninecards.config.NineCardsConfig.getConfigValue
 import scala.concurrent.duration._
 
 object Boot extends App {
@@ -16,5 +18,8 @@ object Boot extends App {
 
   implicit val timeout = Timeout(5.seconds)
 
-  IO(Http) ? Http.Bind(service, interface = "localhost", port = 8081)
+  val host = getConfigValue("ninecards.host")
+  val port = getConfigValue("ninecards.port").toInt
+
+  IO(Http) ? Http.Bind(service, interface = host, port = port)
 }
