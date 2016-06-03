@@ -1,29 +1,26 @@
 package com.fortysevendeg.ninecards.googleplay.api
 
-import com.fortysevendeg.ninecards.config.NineCardsConfig
-import com.fortysevendeg.ninecards.googleplay.TestConfig
-import com.fortysevendeg.ninecards.googleplay.domain.Domain._
-import com.fortysevendeg.ninecards.googleplay.service.free.interpreter.{ Http4sGooglePlayApiClient, Http4sGooglePlayWebScraper }
-import org.specs2.mutable.Specification
-import spray.testkit.Specs2RouteTest
-import spray.http.HttpHeaders.RawHeader
-import spray.http.StatusCodes._
-import io.circe.parser._
-import io.circe.syntax._
-import io.circe.generic.auto._
 import cats.data.Xor
 import cats.syntax.xor._
-
-import scalaz.concurrent.Task
 import com.fortysevendeg.extracats._
-
+import com.fortysevendeg.ninecards.config.NineCardsConfig.getConfigValue
+import com.fortysevendeg.ninecards.googleplay.TestConfig._
+import com.fortysevendeg.ninecards.googleplay._
+import com.fortysevendeg.ninecards.googleplay.domain.Domain._
 import com.fortysevendeg.ninecards.googleplay.ninecardsspray._
 import com.fortysevendeg.ninecards.googleplay.service.free.interpreter.TaskInterpreter._
-import com.fortysevendeg.ninecards.googleplay._
-
+import com.fortysevendeg.ninecards.googleplay.service.free.interpreter.{ Http4sGooglePlayApiClient, Http4sGooglePlayWebScraper }
+import io.circe.generic.auto._
+import io.circe.parser._
+import io.circe.syntax._
+import org.specs2.mutable.Specification
 import scala.concurrent.duration._
+import scalaz.concurrent.Task
+import spray.http.HttpHeaders.RawHeader
+import spray.http.StatusCodes._
+import spray.testkit.Specs2RouteTest
 
-class NineCardsGooglePlayApiIntegrationTest extends Specification with Specs2RouteTest with TestConfig {
+class NineCardsGooglePlayApiIntegrationTest extends Specification with Specs2RouteTest {
 
   /*
    * Reasons this test suite may fail:
@@ -35,21 +32,18 @@ class NineCardsGooglePlayApiIntegrationTest extends Specification with Specs2Rou
   implicit val defaultTimeout = RouteTestTimeout(20.seconds)
 
   val requestHeaders = List(
-    RawHeader("X-Android-ID", androidId.value),
-    RawHeader("X-Google-Play-Token", token.value),
-    RawHeader("X-Android-Market-Localization", localization.value)
+    RawHeader(Headers.androidId, androidId.value),
+    RawHeader(Headers.token, token.value),
+    RawHeader(Headers.localisation, localization.value)
   )
 
-  val apiEndpoint = NineCardsConfig.getConfigValue("googleplay.api.endpoint")
-  val apiClient = new Http4sGooglePlayApiClient(apiEndpoint)
-  val webEndpoint = NineCardsConfig.getConfigValue("googleplay.web.endpoint")
-  val webClient = new Http4sGooglePlayWebScraper(webEndpoint)
+  implicit val i = {
+    val apiClient = new Http4sGooglePlayApiClient( getConfigValue("googleplay.api.endpoint") )
+    val webClient = new Http4sGooglePlayWebScraper( getConfigValue("googleplay.web.endpoint") )
+    interpreter(apiClient.request _, webClient.request _)
+  }
 
-  implicit val i = interpreter(apiClient.request _, webClient.request _)
-
-  val route = new NineCardsGooglePlayApi {
-    override def actorRefFactory = system
-  }.googlePlayApiRoute[Task]
+  val route = new NineCardsGooglePlayApi{}.googlePlayApiRoute[Task]
 
   val validPackages = List("air.fisherprice.com.shapesAndColors", "com.rockstargames.gtalcs", "com.ted.android")
   val invalidPackages = List("com.package.does.not.exist", "com.another.invalid.package")

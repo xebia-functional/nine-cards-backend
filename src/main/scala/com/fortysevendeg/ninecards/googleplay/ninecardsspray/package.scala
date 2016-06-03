@@ -1,6 +1,5 @@
 package com.fortysevendeg.ninecards.googleplay
 
-import cats.data.Xor
 import spray.httpx.marshalling.{Marshaller, ToResponseMarshaller}
 import spray.http.{ContentTypes, HttpEntity}
 import io.circe._
