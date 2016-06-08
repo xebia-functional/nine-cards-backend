@@ -9,7 +9,6 @@ import com.fortysevendeg.ninecards.googleplay.service.free.algebra.GooglePlay._
 import org.specs2.matcher.TaskMatchers
 import org.specs2.mutable.Specification
 import scala.concurrent.duration._
-import scala.xml.Node
 import scalaz.concurrent.Task
 
 class InterpretersIntegrationTests extends Specification with TaskMatchers {

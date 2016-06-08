@@ -3,7 +3,6 @@ package com.fortysevendeg.ninecards.googleplay.api
 import com.fortysevendeg.ninecards.googleplay.domain.Domain._
 import com.fortysevendeg.ninecards.googleplay.service.GooglePlayDomain._
 import com.fortysevendeg.ninecards.googleplay.service.free.algebra.GooglePlay._
-import com.fortysevendeg.ninecards.googleplay.ninecardsspray._
 import spray.testkit.{RouteTest, TestFrameworkInterface}
 import spray.http.HttpHeaders.RawHeader
 import spray.http.StatusCodes._
@@ -27,6 +26,8 @@ trait ScalaCheckRouteTest extends RouteTest with TestFrameworkInterface {
 }
 
 object NineCardsGooglePlayApiProperties extends Properties("Nine Cards Google Play API") with ScalaCheckRouteTest {
+
+  import NineCardsMarshallers._
 
   val requestHeaders = List(
     RawHeader("X-Android-ID", "androidId"),

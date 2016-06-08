@@ -7,7 +7,6 @@ import com.fortysevendeg.ninecards.config.NineCardsConfig.getConfigValue
 import com.fortysevendeg.ninecards.googleplay.TestConfig._
 import com.fortysevendeg.ninecards.googleplay._
 import com.fortysevendeg.ninecards.googleplay.domain.Domain._
-import com.fortysevendeg.ninecards.googleplay.ninecardsspray._
 import com.fortysevendeg.ninecards.googleplay.service.free.interpreter.TaskInterpreter._
 import com.fortysevendeg.ninecards.googleplay.service.free.interpreter.{ Http4sGooglePlayApiClient, Http4sGooglePlayWebScraper }
 import io.circe.generic.auto._
@@ -28,6 +27,8 @@ class NineCardsGooglePlayApiIntegrationTest extends Specification with Specs2Rou
    *   * The packages in the field validPackages are no longer in the Google Play Store (Spain, set by the X-Android-Market-Localization header)
    *       - The URL for checking the validity is https://play.google.com/store/apps/details?id=$PACKAGE&hl=es_ES
    */
+
+  import NineCardsMarshallers._
 
   implicit val defaultTimeout = RouteTestTimeout(20.seconds)
 
