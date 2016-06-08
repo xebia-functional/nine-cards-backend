@@ -30,15 +30,7 @@ object TaskInterpreterProperties extends Properties("Task interpreter") {
           permission   = Nil
         )
       ),
-      aggregateRating = AggregateRating(
-        ratingsCount     = 0,
-        oneStarRatings   = 0,
-        twoStarRatings   = 0,
-        threeStarRatings = 0,
-        fourStarRatings  = 0,
-        fiveStarRatings  = 0,
-        starRating       = 0.0
-      ),
+      aggregateRating = AggregateRating.Zero,
       image = Nil,
       offer = Nil
     )

@@ -26,6 +26,10 @@ object Domain {
   case class Details(appDetails: AppDetails)
   case class AppDetails(appCategory: List[String], numDownloads: String, permission: List[String])
   case class AggregateRating(ratingsCount: Long, oneStarRatings: Long, twoStarRatings: Long, threeStarRatings: Long, fourStarRatings: Long, fiveStarRatings: Long, starRating: Double) // commentcount?
+
+  object AggregateRating {
+    val Zero = AggregateRating(0,0,0,0,0,0,0.0)
+  }
   case class Image(imageType: Long, imageUrl: String) // todo check which fields are necessary here
   case class Offer(offerType: Long) // todo check which fields are necessary here
 
