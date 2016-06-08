@@ -8,6 +8,7 @@ import com.fortysevendeg.ninecards.googleplay.service.GooglePlayDomain._
 import com.fortysevendeg.ninecards.googleplay.service.free.algebra.GooglePlay._
 import org.specs2.matcher.TaskMatchers
 import org.specs2.mutable.Specification
+import org.http4s.client.blaze.PooledHttp1Client
 import scala.concurrent.duration._
 import scalaz.concurrent.Task
 
@@ -17,22 +18,25 @@ class InterpretersIntegrationTests extends Specification with TaskMatchers {
   private val nonexisting = "com.package.does.not.exist"
   private val localization = Some(Localization("es-ES"))
 
+  // Most of this should be moved to a wiring module, with the cache.
+  private val client = PooledHttp1Client()
   private val apiEndpoint = NineCardsConfig.getConfigValue("googleplay.api.endpoint")
-  private val apiClient = new Http4sGooglePlayApiClient(apiEndpoint)
+  private val apiClient = new Http4sGooglePlayApiClient(apiEndpoint, client)
   private val webEndpoint = NineCardsConfig.getConfigValue("googleplay.web.endpoint")
-  private val webClient = new Http4sGooglePlayWebScraper(webEndpoint)
-  private val interpreter = TaskInterpreter.interpreter(apiClient.request _, webClient.request _)
+  private val webClient = new Http4sGooglePlayWebScraper(webEndpoint, client)
+  private val interpreter = TaskInterpreter(apiClient, webClient)
 
   "Making an API request" should {
+
     "result in an Item for packages that exist" in {
-      val request = apiClient.request(Package(fisherprice), (token, androidId, localization))
+      val request = apiClient(Package(fisherprice), (token, androidId, localization))
       val fetchedDocId = request.map(xor => xor.map(item => item.docV2.docid))
       fetchedDocId must returnValue(Xor.right(fisherprice))
       // todo should this be more comprehensive? check all other tests too
     }
 
     "result in an error state for packages that do not exist" in {
-      val request = apiClient.request(Package(nonexisting), (token, androidId, localization))
+      val request = apiClient(Package(nonexisting), (token, androidId, localization))
       request must returnValue(Xor.left(nonexisting))
     }
   }
@@ -42,9 +46,10 @@ class InterpretersIntegrationTests extends Specification with TaskMatchers {
     val expectedCategories = List("EDUCATION", "FAMILY_EDUCATION")
     val expectedDocId = fisherprice
     val expectedTitle = "Shapes & Colors Music Show"
+    val auth: GoogleAuthParams = (Token(""), AndroidId(""), localization)
 
     "result in an Item for packages that exist" in {
-      val request: Task[Xor[String, Item]] = webClient.request(Package(fisherprice), localization)
+      val request: Task[QueryResult] = webClient(Package(fisherprice), auth)
       val relevantDetails = request.map { xor =>
         xor.map { i: Item =>
           (i.docV2.docid, i.docV2.details.appDetails.appCategory, i.docV2.title)
@@ -54,11 +59,9 @@ class InterpretersIntegrationTests extends Specification with TaskMatchers {
     }
 
     "result in an error state for packages that do not exist" in {
-      val unknownPackage = nonexisting
-      val request = webClient.request(Package(unknownPackage), localization)
-      request must returnValue(Xor.left(unknownPackage))
+      val request = webClient(Package(nonexisting), auth)
+      request must returnValue(Xor.left(nonexisting))
     }
-
   }
 
   "Making requests to the Google Play store" should {
@@ -100,12 +103,10 @@ class InterpretersIntegrationTests extends Specification with TaskMatchers {
   "Making requests when the Google Play API is not successful" should {
     "fail over to the web scraping approach" in {
 
-      val badApiRequest: (Package, GoogleAuthParams) => Task[Xor[String, Item]] = { (_, _) =>
-        Task.fail(new RuntimeException("Failed request"))
-      }
+      val badApiRequest: QueryService = ( _ => Task.fail(new RuntimeException("Failed request")) )
 
-      val badApiClient = new Http4sGooglePlayApiClient("http://unknown.host.com")
-      val interpreter = TaskInterpreter.interpreter(badApiClient.request _, webClient.request _)
+      val badApiClient = new Http4sGooglePlayApiClient("http://unknown.host.com", client)
+      val interpreter = TaskInterpreter(badApiClient, webClient)
 
       val result = interpreter(RequestPackage(params, Package(fisherprice)))
 

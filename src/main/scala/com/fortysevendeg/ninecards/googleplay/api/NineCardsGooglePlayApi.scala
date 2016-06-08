@@ -8,14 +8,14 @@ import com.fortysevendeg.ninecards.config.NineCardsConfig.getConfigValue
 import com.fortysevendeg.ninecards.googleplay.domain.Domain._
 import com.fortysevendeg.ninecards.googleplay.service.free.algebra.GooglePlay._
 import com.fortysevendeg.ninecards.googleplay.service.free.interpreter.{ Http4sGooglePlayApiClient, Http4sGooglePlayWebScraper, TaskInterpreter }
-import scalaz.concurrent.Task
 import io.circe.generic.auto._
+import org.http4s.client.Client
+import org.http4s.client.blaze.PooledHttp1Client
+import scalaz.concurrent.Task
 import spray.httpx.marshalling.ToResponseMarshaller
-import spray.routing._
+import spray.routing.{Directives, HttpService, Route}
 
 class NineCardsGooglePlayActor extends Actor with HttpService {
-
-  import TaskInterpreter._
 
   override def actorRefFactory = context
 
@@ -24,22 +24,25 @@ class NineCardsGooglePlayActor extends Actor with HttpService {
   private val googleApiRoute: Route = {
     import NineCardsMarshallers._
 
+    // todo make a new wiring module
     implicit val inter: GooglePlayOps ~> Task = {
-      val apiClient = new Http4sGooglePlayApiClient(  getConfigValue("googleplay.api.endpoint"))
-      val webClient = new Http4sGooglePlayWebScraper( getConfigValue("googleplay.web.endpoint"))
-      interpreter(apiClient.request _, webClient.request _)
+      val client = PooledHttp1Client()
+      val apiClient = new Http4sGooglePlayApiClient(  getConfigValue("googleplay.api.endpoint"), client)
+      val webClient = new Http4sGooglePlayWebScraper( getConfigValue("googleplay.web.endpoint"), client)
+      TaskInterpreter(apiClient, webClient)
     }
 
-    new NineCardsGooglePlayApi().googlePlayApiRoute[Task]
+    NineCardsGooglePlayApi.googlePlayApiRoute[Task]
   }
 
   def receive = runRoute(googleApiRoute)
+
 }
 
-class NineCardsGooglePlayApi() {
+object NineCardsGooglePlayApi {
 
-  import Directives._
   import CustomDirectives._
+  import Directives._
   import NineCardsMarshallers._
 
   def googlePlayApiRoute[M[_]](

@@ -5,13 +5,10 @@ import cats.syntax.xor._
 import com.fortysevendeg.extracats._
 import com.fortysevendeg.ninecards.config.NineCardsConfig.getConfigValue
 import com.fortysevendeg.ninecards.googleplay.TestConfig._
-import com.fortysevendeg.ninecards.googleplay._
 import com.fortysevendeg.ninecards.googleplay.domain.Domain._
-import com.fortysevendeg.ninecards.googleplay.service.free.interpreter.TaskInterpreter._
-import com.fortysevendeg.ninecards.googleplay.service.free.interpreter.{ Http4sGooglePlayApiClient, Http4sGooglePlayWebScraper }
+import com.fortysevendeg.ninecards.googleplay.service.free.interpreter.{ Http4sGooglePlayApiClient, Http4sGooglePlayWebScraper, TaskInterpreter }
 import io.circe.generic.auto._
 import io.circe.parser._
-import io.circe.syntax._
 import org.specs2.mutable.Specification
 import scala.concurrent.duration._
 import scalaz.concurrent.Task
@@ -39,12 +36,13 @@ class NineCardsGooglePlayApiIntegrationTest extends Specification with Specs2Rou
   )
 
   implicit val i = {
-    val apiClient = new Http4sGooglePlayApiClient( getConfigValue("googleplay.api.endpoint") )
-    val webClient = new Http4sGooglePlayWebScraper( getConfigValue("googleplay.web.endpoint") )
-    interpreter(apiClient.request _, webClient.request _)
+    val client = org.http4s.client.blaze.PooledHttp1Client()
+    val apiClient = new Http4sGooglePlayApiClient( getConfigValue("googleplay.api.endpoint") , client)
+    val webClient = new Http4sGooglePlayWebScraper( getConfigValue("googleplay.web.endpoint") , client)
+    TaskInterpreter(apiClient, webClient)
   }
 
-  val route = new NineCardsGooglePlayApi{}.googlePlayApiRoute[Task]
+  val route = NineCardsGooglePlayApi.googlePlayApiRoute[Task]
 
   val validPackages = List("air.fisherprice.com.shapesAndColors", "com.rockstargames.gtalcs", "com.ted.android")
   val invalidPackages = List("com.package.does.not.exist", "com.another.invalid.package")

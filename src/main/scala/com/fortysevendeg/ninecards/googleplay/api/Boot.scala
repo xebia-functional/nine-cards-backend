@@ -12,14 +12,14 @@ import scala.concurrent.duration._
 
 object Boot extends App {
 
-  implicit val system = ActorSystem("nine-cards-google-play-server-actor")
+  implicit private val system = ActorSystem("nine-cards-google-play-server-actor")
 
-  val service = system.actorOf(Props[NineCardsGooglePlayActor], "nine-cards-google-play-server")
+  private val service = system.actorOf(Props[NineCardsGooglePlayActor], "nine-cards-google-play-server")
 
-  implicit val timeout = Timeout(5.seconds)
+  implicit private val timeout = Timeout(5.seconds)
 
-  val host = getConfigValue("ninecards.host")
-  val port = getConfigValue("ninecards.port").toInt
+  private val host = getConfigValue("ninecards.host")
+  private val port = getConfigValue("ninecards.port").toInt
 
   IO(Http) ? Http.Bind(service, interface = host, port = port)
 }

@@ -1,13 +1,11 @@
 package com.fortysevendeg.ninecards.googleplay.api
 
 import com.fortysevendeg.ninecards.googleplay.domain.Domain._
-import com.fortysevendeg.ninecards.googleplay.service.GooglePlayDomain._
 import com.fortysevendeg.ninecards.googleplay.service.free.algebra.GooglePlay._
+import com.fortysevendeg.ninecards.googleplay.service.free.interpreter.QueryResult
 import spray.testkit.{RouteTest, TestFrameworkInterface}
 import spray.http.HttpHeaders.RawHeader
 import spray.http.StatusCodes._
-import io.circe._
-import io.circe.syntax._
 import io.circe.parser._
 import io.circe.generic.auto._
 import cats._
@@ -59,7 +57,7 @@ object NineCardsGooglePlayApiProperties extends Properties("Nine Cards Google Pl
       }
     }
 
-    val route = new NineCardsGooglePlayApi { }.googlePlayApiRoute[Id]
+    val route = NineCardsGooglePlayApi.googlePlayApiRoute[Id]
 
     Get(s"/googleplay/package/${pkg.value}") ~> addHeaders(requestHeaders) ~> route ~> check {
       val response = responseAs[String]
@@ -79,7 +77,7 @@ object NineCardsGooglePlayApiProperties extends Properties("Nine Cards Google Pl
       }
     }
 
-    val route = new NineCardsGooglePlayApi { }.googlePlayApiRoute[Id]
+    val route = NineCardsGooglePlayApi.googlePlayApiRoute[Id]
 
     Get(s"/googleplay/package/${unknownPackage.value}") ~> addHeaders(requestHeaders) ~> route ~> check {
       status ?= InternalServerError
@@ -98,7 +96,7 @@ object NineCardsGooglePlayApiProperties extends Properties("Nine Cards Google Pl
       def apply[A](fa: GooglePlayOps[A]) = fa match {
         case BulkRequestPackage(_, PackageListRequest(items)) =>
 
-          val fetched: List[Xor[String, Item]] = items.map{ i =>
+          val fetched: List[QueryResult] = items.map{ i =>
             database.get(Package(i)).toRightXor(i)
           }
 
@@ -110,7 +108,7 @@ object NineCardsGooglePlayApiProperties extends Properties("Nine Cards Google Pl
       }
     }
 
-    val route = new NineCardsGooglePlayApi{ }.googlePlayApiRoute[Id]
+    val route = NineCardsGooglePlayApi.googlePlayApiRoute[Id]
 
     val allPackages = (succs ++ errs).map(_.value)
 
