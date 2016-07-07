@@ -1,4 +1,4 @@
-package com.fortysevendeg.ninecards.services.free.interpreter.impl
+package com.fortysevendeg.ninecards.services.free.interpreter.googleapi
 
 import cats.data.Xor
 import com.fortysevendeg.ninecards.services.free.domain.{ TokenInfo, WrongTokenInfo }
@@ -8,7 +8,9 @@ import org.http4s.Uri.{ Authority, RegName }
 
 import scalaz.concurrent.Task
 
-class GoogleApiServices(implicit config: GoogleApiConfiguration) extends GoogleApiDecoders {
+class Services(config: Configuration) {
+
+  import Decoders._
 
   val client = org.http4s.client.blaze.PooledHttp1Client()
 
@@ -23,7 +25,7 @@ class GoogleApiServices(implicit config: GoogleApiConfiguration) extends GoogleA
   }
 }
 
-object GoogleApiServices {
+object Services {
 
-  implicit def googleApiServices(implicit config: GoogleApiConfiguration) = new GoogleApiServices
+  implicit def services(implicit config: Configuration) = new Services(config)
 }

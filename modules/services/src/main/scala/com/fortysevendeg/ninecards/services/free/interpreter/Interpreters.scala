@@ -2,9 +2,8 @@ package com.fortysevendeg.ninecards.services.free.interpreter
 
 import cats._
 import com.fortysevendeg.ninecards.services.free.algebra.DBResult._
-import com.fortysevendeg.ninecards.services.free.algebra.GoogleApiServices._
-import com.fortysevendeg.ninecards.services.free.interpreter.impl.GoogleApiServices._
-
+import com.fortysevendeg.ninecards.services.free.algebra.GoogleApi
+import com.fortysevendeg.ninecards.services.free.interpreter.googleapi.Services._
 import scala.util.{ Failure, Success, Try }
 import scalaz.concurrent.Task
 
@@ -19,11 +18,13 @@ abstract class Interpreters[M[_]](implicit A: ApplicativeError[M, Throwable]) {
     }
   }
 
-  def googleAPIServicesInterpreter: (GoogleApiOps ~> M) = new (GoogleApiOps ~> M) {
-    def apply[A](fa: GoogleApiOps[A]) = fa match {
-      case GetTokenInfo(tokenId: String) ⇒ task2M(googleApiServices.getTokenInfo(tokenId))
+  private[this] val googleApiServices: GoogleApiServices = GoogleApiServices.services
+  object googleApiInterpreter extends (GoogleApi.Ops ~> M) {
+    def apply[A](fa: GoogleApi.Ops[A]) = fa match {
+      case GoogleApi.GetTokenInfo(tokenId: String) ⇒ task2M(googleApiServices.getTokenInfo(tokenId))
     }
   }
+
 }
 
 trait IdInstances {

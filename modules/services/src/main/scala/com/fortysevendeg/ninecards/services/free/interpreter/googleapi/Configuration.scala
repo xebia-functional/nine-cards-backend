@@ -1,8 +1,8 @@
-package com.fortysevendeg.ninecards.services.free.interpreter.impl
+package com.fortysevendeg.ninecards.services.free.interpreter.googleapi
 
 import com.fortysevendeg.ninecards.services.common.NineCardsConfig
 
-case class GoogleApiConfiguration(
+case class Configuration(
   protocol: String,
   host: String,
   port: Option[Int],
@@ -10,9 +10,9 @@ case class GoogleApiConfiguration(
   tokenIdQueryParameter: String
 )
 
-object GoogleApiConfiguration {
-  implicit def googleApiConfiguration(implicit config: NineCardsConfig): GoogleApiConfiguration =
-    GoogleApiConfiguration(
+object Configuration {
+  implicit def configuration(implicit config: NineCardsConfig): Configuration =
+    Configuration(
       protocol              = config.getString("googleapi.protocol"),
       host                  = config.getString("googleapi.host"),
       port                  = config.getOptionalInt("googleapi.port"),

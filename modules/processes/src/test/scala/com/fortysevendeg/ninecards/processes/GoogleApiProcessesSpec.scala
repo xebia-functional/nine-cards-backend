@@ -3,7 +3,7 @@ package com.fortysevendeg.ninecards.processes
 import cats.data.Xor
 import cats.free.Free
 import com.fortysevendeg.ninecards.processes.NineCardsServices._
-import com.fortysevendeg.ninecards.services.free.algebra.GoogleApiServices.GoogleApiServices
+import com.fortysevendeg.ninecards.services.free.algebra.GoogleApi.Services
 import com.fortysevendeg.ninecards.services.free.domain.{ TokenInfo, WrongTokenInfo }
 import org.specs2.ScalaCheck
 import org.specs2.matcher.Matchers
@@ -20,7 +20,7 @@ trait GoogleApiProcessesSpecification
 
   trait BasicScope extends Scope {
 
-    implicit val googleApiServices: GoogleApiServices[NineCardsServices] = mock[GoogleApiServices[NineCardsServices]]
+    implicit val googleApiServices: Services[NineCardsServices] = mock[Services[NineCardsServices]]
     implicit val googleApiProcesses = new GoogleApiProcesses[NineCardsServices]
 
   }

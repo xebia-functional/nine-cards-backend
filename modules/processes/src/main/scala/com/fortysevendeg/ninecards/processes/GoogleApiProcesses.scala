@@ -1,9 +1,9 @@
 package com.fortysevendeg.ninecards.processes
 
 import cats.free.Free
-import com.fortysevendeg.ninecards.services.free.algebra.GoogleApiServices.GoogleApiServices
+import com.fortysevendeg.ninecards.services.free.algebra.GoogleApi
 
-class GoogleApiProcesses[F[_]](implicit googleAPIServices: GoogleApiServices[F]) {
+class GoogleApiProcesses[F[_]](implicit googleAPIServices: GoogleApi.Services[F]) {
 
   def checkGoogleTokenId(email: String, tokenId: String): Free[F, Boolean] =
     googleAPIServices.getTokenInfo(tokenId) map { xor ⇒
@@ -13,7 +13,7 @@ class GoogleApiProcesses[F[_]](implicit googleAPIServices: GoogleApiServices[F])
 
 object GoogleApiProcesses {
 
-  implicit def googleApiProcesses[F[_]](implicit googleAPIServices: GoogleApiServices[F]) =
+  implicit def googleApiProcesses[F[_]](implicit googleAPIServices: GoogleApi.Services[F]) =
     new GoogleApiProcesses
 
 }
