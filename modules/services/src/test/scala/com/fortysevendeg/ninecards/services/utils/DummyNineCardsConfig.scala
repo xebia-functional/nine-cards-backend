@@ -6,36 +6,62 @@ import scala.util.Random
 
 trait DummyNineCardsConfig {
 
-  val dbDefaultDriver = "org.h2.Driver"
-  val dbDefaultUrl = s"jdbc:h2:mem:test-${Random.nextFloat()};DB_CLOSE_DELAY=-1"
-  val dbDefaultUser = "sa"
-  val dbDefaultPassword = ""
+  object db {
+    object default {
+      val driver = "org.h2.Driver"
+      val url = s"jdbc:h2:mem:test-${Random.nextFloat()};DB_CLOSE_DELAY=-1"
+      val user = "sa"
+      val password = ""
+    }
+  }
 
-  val googleApiProtocol = "http"
-  val googleApiPort = 8080
-  val googleApiHost = "localhost"
-  val googleApiTokenInfoUri = "/oauth2/v3/tokeninfo"
-  val googleApiTokenIdParameterName = "id_token"
+  object googleapi {
+    val protocol = "http"
+    val port = 8080
+    val host = "localhost"
+    val tokenInfoUri = "/oauth2/v3/tokeninfo"
+    val tokenIdParameterName = "id_token"
+  }
+
+  object googleplay {
+    val protocol = "http"
+    val host = "localhost"
+    val port = 8081
+    object uri {
+      val resolveOne = "/googleplay/package/"
+      val resolveMany = "/googleplay/packages/details"
+    }
+  }
 
   val dummyConfigHocon =
     s"""
        |db {
        |  default {
-       |    driver = "$dbDefaultDriver"
-       |    url = "$dbDefaultUrl"
-       |    user = "$dbDefaultUser"
-       |    password = "$dbDefaultPassword"
+       |    driver = "${db.default.driver}"
+       |    url = "${db.default.url}"
+       |    user = "${db.default.user}"
+       |    password = "${db.default.password}"
        |  }
        |}
        |googleapi {
-       |  protocol = "$googleApiProtocol"
-       |  port = $googleApiPort
-       |  host = "$googleApiHost"
+       |  host = "${googleapi.host}"
+       |  port = ${googleapi.port}
+       |  protocol = "${googleapi.protocol}"
        |  tokenInfo {
-       |    uri = "$googleApiTokenInfoUri"
-       |    tokenIdQueryParameter = "$googleApiTokenIdParameterName"
+       |    uri = "${googleapi.tokenInfoUri}"
+       |    tokenIdQueryParameter = "${googleapi.tokenIdParameterName}"
        |  }
        |}
+       |googleplay {
+       |  host = "${googleplay.host}"
+       |  port = ${googleplay.port}
+       |  protocol = "${googleplay.protocol}"
+       |  uri = {
+       |    resolveOne = ${googleplay.uri.resolveOne}
+       |    resolveMany = ${googleplay.uri.resolveMany}
+       |  }
+       |}
+
      """.stripMargin
 
   implicit val dummyConfig = new NineCardsConfig(Option(dummyConfigHocon))

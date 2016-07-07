@@ -121,8 +121,9 @@ trait MockGoogleApiServer extends MockServerService {
 class GoogleApiServicesSpec
   extends Specification
   with DisjunctionMatchers
-  with XorMatchers
   with MockGoogleApiServer {
+
+  import XorMatchers._
 
   implicit val googleApiConfiguration = Configuration(
     protocol              = "http",

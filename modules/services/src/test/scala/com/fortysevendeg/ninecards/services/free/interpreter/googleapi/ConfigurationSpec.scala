@@ -9,11 +9,11 @@ class ConfigurationSpec extends Specification with DummyNineCardsConfig {
 
   "GoogleApi Configuration" should {
     "return the info related to the Google API stored in the config file" in {
-      configuration.protocol shouldEqual googleApiProtocol
-      configuration.port shouldEqual Option(googleApiPort)
-      configuration.host shouldEqual googleApiHost
-      configuration.tokenInfoUri shouldEqual googleApiTokenInfoUri
-      configuration.tokenIdQueryParameter shouldEqual googleApiTokenIdParameterName
+      configuration.protocol shouldEqual googleapi.protocol
+      configuration.port shouldEqual Option(googleapi.port)
+      configuration.host shouldEqual googleapi.host
+      configuration.tokenInfoUri shouldEqual googleapi.tokenInfoUri
+      configuration.tokenIdQueryParameter shouldEqual googleapi.tokenIdParameterName
     }
   }
 

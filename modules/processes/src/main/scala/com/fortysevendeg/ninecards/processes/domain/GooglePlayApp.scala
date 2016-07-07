@@ -1,8 +1,8 @@
 package com.fortysevendeg.ninecards.processes.domain
 
-case class CategorizeResponse(
-  categorizedApps: Seq[GooglePlayApp],
-  notFoundApps: Seq[String]
+case class ResolveManyResponse(
+  apps: Seq[GooglePlayApp],
+  notFound: Seq[String]
 )
 
 case class GooglePlayApp(
