@@ -3,14 +3,13 @@ package com.fortysevendeg.ninecards.googleplay.service.free.interpreter
 import cats.data.Xor
 import cats.syntax.xor._
 import com.fortysevendeg.extracats.taskMonad
-import com.fortysevendeg.ninecards.googleplay.domain.Domain.{Item, Package}
-import com.fortysevendeg.ninecards.googleplay.service.GooglePlayDomain.{GoogleAuthParams, Localization}
+import com.fortysevendeg.ninecards.googleplay.domain.{AppRequest, Item, Package, GoogleAuthParams, Localization}
 import org.http4s.Status.ResponseClass.Successful
 import org.http4s.client.Client
 import org.http4s.{Header, Headers, Method, Request, Uri}
 import scalaz.concurrent.Task
 
-class Http4sGooglePlayApiClient(serverUrl: String, client: Client) extends QueryService {
+class Http4sGooglePlayApiClient(serverUrl: String, client: Client) extends AppService {
 
   private[this] val fixedHeaders = List(
     Header("Content-Type", "application/json; charset=UTF-8"),
@@ -25,7 +24,7 @@ class Http4sGooglePlayApiClient(serverUrl: String, client: Client) extends Query
 
   private[this] def buildRequest(uri: Uri, auth: GoogleAuthParams) : Request = {
     val variableHeaders: List[Header] = {
-      val (token, androidId, local) = auth
+      val GoogleAuthParams(androidId, token, local) = auth
       Header("Authorization", s"GoogleLogin auth=${token.value}") ::
       Header("X-DFE-Device-Id", androidId.value) :: (
         local match {
@@ -37,14 +36,12 @@ class Http4sGooglePlayApiClient(serverUrl: String, client: Client) extends Query
     new Request( method = Method.GET, uri = uri, headers = Headers( variableHeaders ++ fixedHeaders) )
   }
 
-  def apply(query: QueryRequest): Task[QueryResult] = {
-    val (pack, auth) = query
-
-    val packageName = pack.value
+  def apply(appRequest: AppRequest): Task[Xor[String, Item]] = {
+    val packageName = appRequest.packageName.value
     lazy val failed = packageName.left[Item]
 
     def runRequest(u: Uri) : Task[Xor[String,Item]] = {
-      val request = buildRequest(u, auth)
+      val request = buildRequest(u,  appRequest.authParams)
       client.fetch(request) {
         case Successful(resp) =>
           import ItemDecoders.protobufItemDecoder

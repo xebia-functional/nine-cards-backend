@@ -1,8 +1,6 @@
 package com.fortysevendeg.ninecards.googleplay.service.free.interpreter
 
-import cats.std.option._
-import cats.syntax.cartesian._
-import com.fortysevendeg.ninecards.googleplay.domain.Domain._
+import com.fortysevendeg.ninecards.googleplay.domain._
 import org.ccil.cowan.tagsoup.jaxp.SAXFactoryImpl
 import org.http4s.EntityDecoder
 import org.xml.sax.InputSource
@@ -99,12 +97,12 @@ object ByteVectorToItemParser extends (ByteVector => Option[Item]){
       s => adapter.loadXML(new InputSource(new java.io.ByteArrayInputStream(s.getBytes)), parser)
     )
 
-  def parseItem(document: Node): Option[Item] = {
-    val title: Option[String] = (document \\ "div").collect(namePF).headOption
-    val docId: Option[String] = (document \\ "@data-load-more-docid").collect(docIdPF).headOption
-    val categories: List[String] = (document \\ "a").collect(categoryPF).toList
-    (title |@| docId).map(simpleItem(_, _, categories))
-  }
+  def parseItem(document: Node): Option[Item] =
+    for { /*Option*/
+      title: String <- (document \\ "div").collect(namePF).headOption
+      docId: String <- (document \\ "@data-load-more-docid").collect(docIdPF).headOption
+      categories: List[String] = (document \\ "a").collect(categoryPF).toList
+    } yield simpleItem(title, docId, categories)
 
   def apply(bv: ByteVector) : Option[Item] = parseItem(decodeNode(bv))
 

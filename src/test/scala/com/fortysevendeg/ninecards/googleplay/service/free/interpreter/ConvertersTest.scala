@@ -1,7 +1,7 @@
 package com.fortysevendeg.ninecards.googleplay.service.free.interpreter
 
 import com.fortysevendeg.ninecards.config.NineCardsConfig
-import com.fortysevendeg.ninecards.googleplay.domain.Domain.Item
+import com.fortysevendeg.ninecards.googleplay.domain._
 import java.io.FileInputStream
 import java.nio.file.Files
 import java.nio.file.Paths

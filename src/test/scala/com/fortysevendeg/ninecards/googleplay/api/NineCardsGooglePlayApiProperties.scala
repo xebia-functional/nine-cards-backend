@@ -1,17 +1,16 @@
 package com.fortysevendeg.ninecards.googleplay.api
 
-import com.fortysevendeg.ninecards.googleplay.domain.Domain._
+import com.fortysevendeg.ninecards.googleplay.domain._
 import com.fortysevendeg.ninecards.googleplay.service.free.algebra.GooglePlay._
-import com.fortysevendeg.ninecards.googleplay.service.free.interpreter.QueryResult
 import spray.testkit.{RouteTest, TestFrameworkInterface}
 import spray.http.HttpHeaders.RawHeader
 import spray.http.StatusCodes._
 import io.circe.parser._
 import io.circe.generic.auto._
 import cats._
+import cats.data.Xor
 import cats.syntax.option._
 import cats.syntax.xor._
-import cats.data.Xor
 import org.scalacheck._
 import org.scalacheck.Prop._
 import org.scalacheck.Shapeless._
@@ -94,9 +93,9 @@ object NineCardsGooglePlayApiProperties extends Properties("Nine Cards Google Pl
 
     implicit val interpreter: GooglePlayOps ~> Id = new (GooglePlayOps ~> Id) {
       def apply[A](fa: GooglePlayOps[A]) = fa match {
-        case BulkRequestPackage(_, PackageListRequest(items)) =>
+        case BulkRequestPackage(_, PackageList(items)) =>
 
-          val fetched: List[QueryResult] = items.map{ i =>
+          val fetched: List[Xor[String, Item]] = items.map{ i =>
             database.get(Package(i)).toRightXor(i)
           }
 
@@ -112,7 +111,7 @@ object NineCardsGooglePlayApiProperties extends Properties("Nine Cards Google Pl
 
     val allPackages = (succs ++ errs).map(_.value)
 
-    Post("/googleplay/packages/detailed", PackageListRequest(allPackages)) ~> addHeaders(requestHeaders) ~> route ~> check {
+    Post("/googleplay/packages/detailed", PackageList(allPackages)) ~> addHeaders(requestHeaders) ~> route ~> check {
 
       val response = responseAs[String]
       val decoded = decode[PackageDetails](response).getOrElse(throw new RuntimeException(s"Unable to parse response [$response]"))

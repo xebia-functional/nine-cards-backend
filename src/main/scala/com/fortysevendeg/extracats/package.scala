@@ -11,40 +11,22 @@ package object extracats {
     override def pure[A](a: A): Task[A] = Task.now(a)
   }
 
-  class XorTaskOrComposer1[A,E,B](
-    one: (A => Task[Xor[E,B]]),
-    two: (A => Task[Xor[E,B]])
+  class XorTaskOrComposer[A,E,B](
+    leftFunction: (A => Task[Xor[E,B]]),
+    rightFunction: (A => Task[Xor[E,B]])
   ) extends (A => Task[Xor[E,B]]) {
 
     def apply(a: A) : Task[Xor[E,B]] = {
       // Currently this results in twoR being called twice
       // if oneR fails and twoR returns Xor.left
-      val oneR: Task[Xor[E,B]] = one(a)
-      lazy val twoR: Task[Xor[E,B]] = two(a)
-      val orR = oneR.or(twoR)
-      orR.flatMap {
-        case Xor.Left(_) => twoR
-        case r @ Xor.Right(_) => Task.now(r)
+      val leftResult: Task[Xor[E,B]] = leftFunction(a)
+      lazy val rightResult: Task[Xor[E,B]] = rightFunction(a)
+      val orResult = leftResult.or(rightResult)
+      orResult.flatMap {
+        case Xor.Left(_) => rightResult
+        case res => Task.now(res)
       }
     }
   }
 
-  class XorTaskOrComposer2[A1,A2,E,B](
-    first: (A1,A2) => Task[Xor[E,B]],
-    secon: (A1,A2) => Task[Xor[E,B]]
-  ) extends ( (A1,A2) => Task[Xor[E,B]] ) {
-
-    def apply(a1: A1, a2: A2): Task[Xor[E,B]] = {
-      // Currently this results in twoR being called twice
-      // if oneR fails and twoR returns Xor.left
-      val firstR: Task[Xor[E,B]] = first(a1,a2)
-      lazy val seconR: Task[Xor[E,B]] = secon(a1,a2)
-      val orR = firstR.or(seconR)
-      orR.flatMap {
-        case Xor.Left(_) => seconR
-        case r @ Xor.Right(_) => Task.now(r)
-      }
-    }
-
-  }
 }

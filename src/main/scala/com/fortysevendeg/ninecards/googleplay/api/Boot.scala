@@ -26,8 +26,8 @@ object Boot extends App {
     )
     val apiClient = new Http4sGooglePlayApiClient(  getConfigValue("googleplay.api.endpoint"), httpClient)
     val webClient = new Http4sGooglePlayWebScraper( getConfigValue("googleplay.web.endpoint"), httpClient)
-    val cachedApiClient = new CachedQueryService( "apiClient", apiClient, redisPool)
-    val cachedWebScrape = new CachedQueryService( "webScrape", webClient, redisPool)
+    val cachedApiClient = new CachedAppService( "apiClient", apiClient, redisPool)
+    val cachedWebScrape = new CachedAppService( "webScrape", webClient, redisPool)
     TaskInterpreter(cachedApiClient, cachedWebScrape)
   }
 

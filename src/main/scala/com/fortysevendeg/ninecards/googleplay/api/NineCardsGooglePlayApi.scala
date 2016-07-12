@@ -4,7 +4,7 @@ import akka.actor.Actor
 import cats.Monad
 import cats.~>
 import com.fortysevendeg.extracats._
-import com.fortysevendeg.ninecards.googleplay.domain.Domain._
+import com.fortysevendeg.ninecards.googleplay.domain._
 import com.fortysevendeg.ninecards.googleplay.service.free.algebra.GooglePlay._
 import io.circe.generic.auto._
 import org.http4s.client.Client
@@ -46,15 +46,15 @@ object NineCardsGooglePlayApi {
         get {
           path("package" / Segment) { packageName =>
             complete {
-              googlePlayService.requestPackage((token, androidId, localizationOption), Package(packageName)).foldMap(interpreter)
+              googlePlayService.requestPackage(GoogleAuthParams(androidId, token, localizationOption), Package(packageName)).foldMap(interpreter)
             }
           }
         } ~
         post {
           path("packages" / "detailed") {
-            entity(as[PackageListRequest]) { req =>
+            entity(as[PackageList]) { req =>
               complete {
-                googlePlayService.bulkRequestPackage((token, androidId, localizationOption), req).foldMap(interpreter)
+                googlePlayService.bulkRequestPackage(GoogleAuthParams(androidId, token, localizationOption), req).foldMap(interpreter)
               }
             }
           }

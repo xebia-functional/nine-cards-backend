@@ -3,8 +3,7 @@ package com.fortysevendeg.ninecards.googleplay.service.free.interpreter
 import cats.data.Xor
 import com.fortysevendeg.ninecards.config.NineCardsConfig
 import com.fortysevendeg.ninecards.googleplay.TestConfig._
-import com.fortysevendeg.ninecards.googleplay.domain.Domain._
-import com.fortysevendeg.ninecards.googleplay.service.GooglePlayDomain._
+import com.fortysevendeg.ninecards.googleplay.domain._
 import com.fortysevendeg.ninecards.googleplay.service.free.algebra.GooglePlay._
 import org.specs2.matcher.TaskMatchers
 import org.specs2.mutable.Specification
@@ -29,15 +28,15 @@ class InterpretersIntegrationTests extends Specification with TaskMatchers {
   "Making an API request" should {
 
     "result in an Item for packages that exist" in {
-      val request = apiClient(Package(fisherprice), (token, androidId, localization))
-      val fetchedDocId = request.map(xor => xor.map(item => item.docV2.docid))
+      val appRequest = AppRequest(Package(fisherprice), GoogleAuthParams(androidId, token, localization))
+      val fetchedDocId = apiClient(appRequest).map(xor => xor.map(_.docV2.docid))
       fetchedDocId must returnValue(Xor.right(fisherprice))
       // todo should this be more comprehensive? check all other tests too
     }
 
     "result in an error state for packages that do not exist" in {
-      val request = apiClient(Package(nonexisting), (token, androidId, localization))
-      request must returnValue(Xor.left(nonexisting))
+      val appRequest = AppRequest(Package(nonexisting), GoogleAuthParams(androidId, token, localization))
+      apiClient(appRequest) must returnValue(Xor.left(nonexisting))
     }
   }
 
@@ -46,10 +45,10 @@ class InterpretersIntegrationTests extends Specification with TaskMatchers {
     val expectedCategories = List("EDUCATION", "FAMILY_EDUCATION")
     val expectedDocId = fisherprice
     val expectedTitle = "Shapes & Colors Music Show"
-    val auth: GoogleAuthParams = (Token(""), AndroidId(""), localization)
+    val auth = GoogleAuthParams(AndroidId(""), Token(""), localization)
 
     "result in an Item for packages that exist" in {
-      val request: Task[QueryResult] = webClient(Package(fisherprice), auth)
+      val request: Task[Xor[String, Item]] = webClient(AppRequest(Package(fisherprice), auth))
       val relevantDetails = request.map { xor =>
         xor.map { i: Item =>
           (i.docV2.docid, i.docV2.details.appDetails.appCategory, i.docV2.title)
@@ -59,7 +58,7 @@ class InterpretersIntegrationTests extends Specification with TaskMatchers {
     }
 
     "result in an error state for packages that do not exist" in {
-      val request = webClient(Package(nonexisting), auth)
+      val request = webClient(AppRequest(Package(nonexisting), auth))
       request must returnValue(Xor.left(nonexisting))
     }
   }
@@ -88,7 +87,7 @@ class InterpretersIntegrationTests extends Specification with TaskMatchers {
 
       val packages = successfulCategories.map(_._1) ++ invalidPackages
 
-      val response = interpreter(BulkRequestPackage(params, PackageListRequest(packages)))
+      val response = interpreter(BulkRequestPackage(params, PackageList(packages)))
 
       val result = response.map { case PackageDetails(errors, items) =>
         val itemCategories = items.flatMap(_.docV2.details.appDetails.appCategory)
@@ -103,7 +102,7 @@ class InterpretersIntegrationTests extends Specification with TaskMatchers {
   "Making requests when the Google Play API is not successful" should {
     "fail over to the web scraping approach" in {
 
-      val badApiRequest: QueryService = ( _ => Task.fail(new RuntimeException("Failed request")) )
+      val badApiRequest: AppService = ( _ => Task.fail(new RuntimeException("Failed request")) )
 
       val badApiClient = new Http4sGooglePlayApiClient("http://unknown.host.com", client)
       val interpreter = TaskInterpreter(badApiClient, webClient)

@@ -5,7 +5,7 @@ import cats.syntax.xor._
 import com.fortysevendeg.extracats._
 import com.fortysevendeg.ninecards.config.NineCardsConfig.getConfigValue
 import com.fortysevendeg.ninecards.googleplay.TestConfig._
-import com.fortysevendeg.ninecards.googleplay.domain.Domain._
+import com.fortysevendeg.ninecards.googleplay.domain._
 import com.fortysevendeg.ninecards.googleplay.service.free.interpreter.{ Http4sGooglePlayApiClient, Http4sGooglePlayWebScraper, TaskInterpreter }
 import io.circe.generic.auto._
 import io.circe.parser._
@@ -32,7 +32,7 @@ class NineCardsGooglePlayApiIntegrationTest extends Specification with Specs2Rou
   val requestHeaders = List(
     RawHeader(Headers.androidId, androidId.value),
     RawHeader(Headers.token, token.value),
-    RawHeader(Headers.localisation, localization.value)
+    RawHeader(Headers.localization, localization.value)
   )
 
   implicit val i = {
@@ -60,7 +60,7 @@ class NineCardsGooglePlayApiIntegrationTest extends Specification with Specs2Rou
     }
 
     "Successfully connect to Google Play and give a response for a list of packages" in {
-      Post(s"/googleplay/packages/detailed", PackageListRequest(allPackages)) ~> addHeaders(requestHeaders) ~> route ~> check {
+      Post(s"/googleplay/packages/detailed", PackageList(allPackages)) ~> addHeaders(requestHeaders) ~> route ~> check {
         status must_=== OK
 
         val response = decode[PackageDetails](responseAs[String]).map {

@@ -1,6 +1,6 @@
 package com.fortysevendeg.ninecards.googleplay.api
 
-import com.fortysevendeg.ninecards.googleplay.domain.Domain.{Item, PackageListRequest}
+import com.fortysevendeg.ninecards.googleplay.domain.{Item, PackageList}
 import io.circe.{Encoder, Decoder}
 import scalaz.concurrent.Task
 import spray.http.{ContentTypes, HttpEntity, HttpResponse, StatusCodes}
@@ -13,12 +13,12 @@ import spray.httpx.unmarshalling.{MalformedContent, Unmarshaller}
 object NineCardsMarshallers {
 
   // Domain-specific marshalling and unmarshalling
-  implicit object packageListUnmarshaller extends Unmarshaller[PackageListRequest] {
+  implicit object packageListUnmarshaller extends Unmarshaller[PackageList] {
     import io.circe.generic.auto._
     import io.circe.parser._
 
     def apply(entity: HttpEntity) = {
-      decode[PackageListRequest](entity.asString).fold(
+      decode[PackageList](entity.asString).fold(
         e => Left(MalformedContent(s"Unable to parse entity into JSON list: $entity", e)),
         s => Right(s)
       )
