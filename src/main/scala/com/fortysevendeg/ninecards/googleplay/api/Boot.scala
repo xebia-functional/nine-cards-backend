@@ -5,7 +5,7 @@ import akka.io.IO
 import akka.pattern.ask
 import akka.util.Timeout
 import cats.~>
-import com.fortysevendeg.ninecards.config.NineCardsConfig.getConfigValue
+import com.fortysevendeg.ninecards.config.NineCardsConfig._
 import com.fortysevendeg.ninecards.googleplay.service.free.algebra.GooglePlay.GooglePlayOps
 import com.fortysevendeg.ninecards.googleplay.service.free.interpreter._
 import com.redis.RedisClientPool
@@ -22,7 +22,7 @@ object Boot extends App {
     val httpClient = PooledHttp1Client()
     val redisPool = new RedisClientPool(
       host = getConfigValue("googleplay.cache.host"),
-      port = getConfigValue("googleplay.cache.port").toInt
+      port = getConfigNumber("googleplay.cache.port")
     )
     val apiClient = new Http4sGooglePlayApiClient(  getConfigValue("googleplay.api.endpoint"), httpClient)
     val webClient = new Http4sGooglePlayWebScraper( getConfigValue("googleplay.web.endpoint"), httpClient)
@@ -39,7 +39,7 @@ object Boot extends App {
   implicit private val timeout = Timeout(5.seconds)
 
   private val host = getConfigValue("ninecards.host")
-  private val port = getConfigValue("ninecards.port").toInt
+  private val port = getConfigNumber("ninecards.port")
 
   IO(Http) ? Http.Bind(service, interface = host, port = port)
 }
