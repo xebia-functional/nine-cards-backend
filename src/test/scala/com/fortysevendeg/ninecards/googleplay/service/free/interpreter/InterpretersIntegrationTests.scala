@@ -54,7 +54,8 @@ class WebScrapperIntegrationTests extends Specification with TaskMatchers {
           (i.docV2.docid, i.docV2.details.appDetails.appCategory, i.docV2.title)
         }
       }
-      relevantDetails must returnValue(Xor.right((fisherPrice.packageName, fisherPrice.categories, fisherPrice.title)))
+      val expected = (fisherPrice.packageName, fisherPrice.categories, fisherPrice.title)
+      relevantDetails must returnValue(Xor.right(expected))
     }
 
     "result in an error state for packages that do not exist" in {
@@ -65,7 +66,7 @@ class WebScrapperIntegrationTests extends Specification with TaskMatchers {
 
 }
 
-class InterpretersIntegrationTests extends Specification with TaskMatchers {
+class TaskInterpreterIntegrationTests extends Specification with TaskMatchers {
 
   import TestData._
 
@@ -75,38 +76,35 @@ class InterpretersIntegrationTests extends Specification with TaskMatchers {
   private val webClient = new Http4sGooglePlayWebScraper(webEndpoint, client)
   private val interpreter = TaskInterpreter(apiClient, webClient)
 
+  def categoryOption(item: Item): Option[String] =
+    item.docV2.details.appDetails.appCategory.headOption
+
   "Making requests to the Google Play store" should {
 
+    def splitResults(res: PackageDetails) : (List[String],List[String]) = (
+      res.errors.sorted,
+      res.items.flatMap(categoryOption).sorted
+    )
+
     "result in a correctly parsed response for a single package" in {
-
-      val result = interpreter(RequestPackage(authParams, fisherPrice.packageObj))
-
-      val retrievedCategory = result.map { optionalItem =>
-        optionalItem.flatMap(_.docV2.details.appDetails.appCategory.headOption)
-      }
-
+      val retrievedCategory: Task[Option[String]] = interpreter
+        .apply( RequestPackage(authParams, fisherPrice.packageObj) )
+        .map( optItem => optItem.flatMap(categoryOption) )
       retrievedCategory must returnValue(Some("EDUCATION"))
     }
 
     "result in a correctly parsed response for multiple packages" in {
-
       val successfulCategories = List(
         (fisherPrice.packageName, "EDUCATION"),
         ("com.google.android.googlequicksearchbox", "TOOLS")
       )
 
       val invalidPackages = List(nonexisting, "com.another.invalid.package")
-
       val packages: List[String] = successfulCategories.map(_._1) ++ invalidPackages
 
-      val response = interpreter(BulkRequestPackage(authParams, PackageList(packages)))
-
-      val result = response.map { case PackageDetails(errors, items) =>
-        val itemCategories = items.flatMap(_.docV2.details.appDetails.appCategory)
-
-        (errors.sorted, itemCategories.sorted)
-      }
-
+      val result = interpreter
+        .apply( BulkRequestPackage(authParams, PackageList(packages)) )
+        .map(splitResults)
       result must returnValue((invalidPackages.sorted, successfulCategories.map(_._2).sorted))
     }
   }
@@ -115,15 +113,12 @@ class InterpretersIntegrationTests extends Specification with TaskMatchers {
     "fail over to the web scraping approach" in {
 
       val badApiRequest: AppService = ( _ => Task.fail(new RuntimeException("Failed request")) )
-
       val badApiClient = new Http4sGooglePlayApiClient("http://unknown.host.com", client)
       val interpreter = TaskInterpreter(badApiClient, webClient)
 
-      val result = interpreter(RequestPackage(authParams, fisherPrice.packageObj))
-
-      val retrievedCategory = result.map { optionalItem =>
-        optionalItem.flatMap(_.docV2.details.appDetails.appCategory.headOption)
-      }
+      val retrievedCategory: Task[Option[String]] = interpreter
+        .apply(RequestPackage(authParams, fisherPrice.packageObj))
+        .map( _.flatMap(categoryOption))
 
       retrievedCategory.runFor(10.seconds) must_=== Some("EDUCATION")
     }
