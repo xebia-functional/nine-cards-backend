@@ -43,38 +43,30 @@ object TaskInterpreterProperties extends Properties("Task interpreter") {
     def apply(req: AppRequest) = Task.now( req.packageName.value.left )
   }
 
-  property("Requesting a single package should pass the correct parameters to the client request") = forAll { (pkg: Package, i: Item, t: Token, id: AndroidId, lo: Option[Localization]) =>
-    val request = RequestPackage(GoogleAuthParams(id, t, lo), pkg)
-
+  property("Requesting a single package should pass the correct parameters to the client request") = forAll { (pkg: Package, auth: GoogleAuthParams, i: Item) =>
     object f extends AppService {
-      def apply(req: AppRequest) = {
-        val res = req match {
-          case AppRequest(`pkg`, GoogleAuthParams(`id`, `t`, `lo`) ) => i.right
-          case _ => req.packageName.value.left
-        }
-        Task.now(res)
+      def apply(req: AppRequest) = Task.now {
+        if (req == AppRequest(pkg, auth)) i.right
+        else req.packageName.value.left
       }
     }
 
     val interpreter = TaskInterpreter(f, exceptionalRequest)
-
+    val request = RequestPackage(auth, pkg)
     val response = interpreter(request)
-
     response.run ?= Some(i)
   }
 
-  property("Requesting multiple packages should call the API for the given packages and no others") = forAll { (ps: List[Package], i: Item, t: Token, id: AndroidId, lo: Option[Localization]) =>
+  property("Requesting multiple packages should call the API for the given packages and no others") = forAll { (ps: List[Package], auth: GoogleAuthParams, i: Item) =>
 
     val packageNames = ps.map(_.value)
 
-    val request = BulkRequestPackage(GoogleAuthParams(id, t, lo), PackageList(packageNames))
+    val request = BulkRequestPackage(auth, PackageList(packageNames))
 
-    val f: AppService = { case AppRequest(pkgParam, GoogleAuthParams(idParam, tParam, loParam)) =>
+    val f: AppService = { case AppRequest(pkgParam, reqAuth) =>
       Task.now {
-        (tParam, idParam, loParam) match {
-          case (`t`, `id`, `lo`) if(ps.contains(pkgParam)) => i.right
-          case _ => pkgParam.value.left
-        }
+        if (reqAuth == auth && ps.contains(pkgParam)) i.right
+        else pkgParam.value.left
       }
     }
 

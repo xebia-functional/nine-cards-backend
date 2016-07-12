@@ -9,7 +9,7 @@ trait TestConfig {
   lazy val androidId = AndroidId( getConfigValue("test.androidId") )
   lazy val localization = Localization( getConfigValue("test.localization") )
 
-  lazy val params = GoogleAuthParams(androidId, token, Some(localization))
+  lazy val authParams = GoogleAuthParams(androidId, token, Some(localization))
 }
 
 object TestConfig extends TestConfig
