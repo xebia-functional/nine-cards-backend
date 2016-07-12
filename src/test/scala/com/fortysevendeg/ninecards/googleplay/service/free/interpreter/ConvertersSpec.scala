@@ -12,7 +12,7 @@ import scala.xml.Node
 import scala.xml.parsing.NoBindingFactoryAdapter
 import spray.testkit.Specs2RouteTest
 
-class ConvertersTest extends Specification with Specs2RouteTest {
+class ConvertersSpec extends Specification with Specs2RouteTest {
 
   import TestData.fisherPrice
 

@@ -11,7 +11,7 @@ import redis.embedded.RedisServer
 case class Inner(i: Int, b: Boolean)
 case class Outer(s: String, ti: Inner)
 
-class JsonRedisCacheIntegrationTest extends Specification with ScalaCheck {
+class JsonRedisCacheIntegration extends Specification with ScalaCheck {
 
   "Caching" should {
     "only forward requests to the backend once" >> prop { testOuterSet: Set[Outer] =>

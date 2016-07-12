@@ -10,7 +10,7 @@ import org.http4s.client.blaze.PooledHttp1Client
 import scala.concurrent.duration._
 import scalaz.concurrent.Task
 
-class GooglePlayApiIntegrationTests extends Specification with TaskMatchers {
+class GooglePlayApiIntegration extends Specification with TaskMatchers {
 
   import TestData._
 
