@@ -35,7 +35,7 @@ class GooglePlayApiIntegration extends Specification with TaskMatchers {
 
 }
 
-class WebScrapperIntegrationTests extends Specification with TaskMatchers {
+class WebScraperIntegration extends Specification with TaskMatchers {
 
   import TestData._
 
@@ -66,7 +66,7 @@ class WebScrapperIntegrationTests extends Specification with TaskMatchers {
 
 }
 
-class TaskInterpreterIntegrationTests extends Specification with TaskMatchers {
+class TaskInterpreterIntegration extends Specification with TaskMatchers {
 
   import TestData._
 

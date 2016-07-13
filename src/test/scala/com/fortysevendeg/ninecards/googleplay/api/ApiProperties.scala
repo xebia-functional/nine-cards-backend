@@ -22,7 +22,7 @@ trait ScalaCheckRouteTest extends RouteTest with TestFrameworkInterface {
   def failTest(msg: String): Nothing = throw new RuntimeException(msg)
 }
 
-object NineCardsGooglePlayApiProperties extends Properties("Nine Cards Google Play API") with ScalaCheckRouteTest {
+object ApiProperties extends Properties("Nine Cards Google Play API") with ScalaCheckRouteTest {
 
   import NineCardsMarshallers._
 

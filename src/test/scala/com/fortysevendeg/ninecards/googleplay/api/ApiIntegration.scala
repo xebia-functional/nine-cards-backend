@@ -16,7 +16,7 @@ import spray.http.HttpHeaders.RawHeader
 import spray.http.StatusCodes._
 import spray.testkit.Specs2RouteTest
 
-class NineCardsGooglePlayApiIntegration extends Specification with Specs2RouteTest {
+class ApiIntegration extends Specification with Specs2RouteTest {
 
   /*
    * Reasons this test suite may fail:
