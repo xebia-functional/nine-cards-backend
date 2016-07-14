@@ -1,33 +1,37 @@
 import sbt.Keys._
 import sbt._
 
-trait Dependencies {
-  this: Build =>
+object Dependencies {
 
-  val sprayHttp = "io.spray" %% "spray-can" % Versions.spray
-  val sprayRouting = "io.spray" %% "spray-routing-shapeless2" % Versions.spray
-  val sprayTestKit = "io.spray" %% "spray-testkit" % Versions.spray % "test" exclude("org.specs2", "specs2_2.11")
-  val specs2Core = "org.specs2" %% "specs2-core" % Versions.specs2 % "test"
+  private def spray(name: String) = "io.spray" %% s"spray-${name}" % Versions.spray
 
-  val specs2MatcherExtra = "org.specs2" %% "specs2-matcher-extra" % Versions.specs2 % "test"
+  private val sprayHttp = spray("can")
+  private val sprayRouting = spray("routing-shapeless2")
+  private val sprayTestKit = spray("testkit") % "test" exclude("org.specs2", "specs2_2.11")
 
-  val specs2ScalaCheck = "org.specs2" %% "specs2-scalacheck" % Versions.specs2 % "test"
+  private def specs(name: String) = "org.specs2" %% s"specs2-${name}" % Versions.specs2
 
-  val scalaCheckShapeless = "com.github.alexarchambault" %% "scalacheck-shapeless_1.12" % Versions.scalaCheckShapeless % "test"
+  private val specs2Core = specs("core") % "test"
+  private val specs2MatcherExtra = specs("matcher-extra") % "test"
+  private val specs2ScalaCheck = specs("scalacheck") % "test"
 
-  val circeCore = "io.circe" %% "circe-core" % Versions.circe
-  val circeGeneric = "io.circe" %% "circe-generic" % Versions.circe
-  val circeParser = "io.circe" %% "circe-parser" % Versions.circe
+  private val scalaCheckShapeless = "com.github.alexarchambault" %% "scalacheck-shapeless_1.12" % Versions.scalaCheckShapeless % "test"
 
-  val cats = "org.typelevel" %% "cats" % Versions.cats
+  private def circe(name: String) = "io.circe" %% s"circe-${name}" % Versions.circe
 
-  val akkaActor = "com.typesafe.akka" %% "akka-actor" % Versions.akka
+  private val akkaActor = "com.typesafe.akka" %% "akka-actor" % Versions.akka
 
-  val http4sClient = "org.http4s" %% "http4s-blaze-client" % Versions.http4sClient
+  private val cats = "org.typelevel" %% "cats" % Versions.cats
 
-  val tagSoup = "org.ccil.cowan.tagsoup" % "tagsoup" % Versions.tagSoup
+  private val embeddedRedis = "com.orange.redis-embedded" % "embedded-redis" % Versions.embeddedRedis % "test"
 
-  val baseDepts = Seq(specs2Core)
+  private val http4sClient = "org.http4s" %% "http4s-blaze-client" % Versions.http4sClient
+
+  private val redisClient = "net.debasishg" %% "redisclient" % Versions.redisClient
+
+  private val tagSoup = "org.ccil.cowan.tagsoup" % "tagsoup" % Versions.tagSoup
+
+  private val baseDepts = Seq(specs2Core)
 
   val apiDeps = Seq(libraryDependencies ++= baseDepts ++ Seq(
     cats,
@@ -36,9 +40,11 @@ trait Dependencies {
     sprayTestKit,
     akkaActor,
     http4sClient,
-    circeCore,
-    circeGeneric,
-    circeParser,
+    circe("core"),
+    circe("generic"),
+    circe("parser"),
+    redisClient,
+    embeddedRedis,
     scalaCheckShapeless,
     specs2ScalaCheck,
     specs2MatcherExtra,

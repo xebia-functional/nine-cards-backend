@@ -1,20 +1,16 @@
 package com.fortysevendeg.ninecards.googleplay.api
 
-import com.fortysevendeg.ninecards.googleplay.domain.Domain._
-import com.fortysevendeg.ninecards.googleplay.service.GooglePlayDomain._
+import com.fortysevendeg.ninecards.googleplay.domain._
 import com.fortysevendeg.ninecards.googleplay.service.free.algebra.GooglePlay._
-import com.fortysevendeg.ninecards.googleplay.ninecardsspray._
 import spray.testkit.{RouteTest, TestFrameworkInterface}
 import spray.http.HttpHeaders.RawHeader
 import spray.http.StatusCodes._
-import io.circe._
-import io.circe.syntax._
 import io.circe.parser._
 import io.circe.generic.auto._
 import cats._
+import cats.data.Xor
 import cats.syntax.option._
 import cats.syntax.xor._
-import cats.data.Xor
 import org.scalacheck._
 import org.scalacheck.Prop._
 import org.scalacheck.Shapeless._
@@ -26,7 +22,9 @@ trait ScalaCheckRouteTest extends RouteTest with TestFrameworkInterface {
   def failTest(msg: String): Nothing = throw new RuntimeException(msg)
 }
 
-object NineCardsGooglePlayApiProperties extends Properties("Nine Cards Google Play API") with ScalaCheckRouteTest {
+object ApiProperties extends Properties("Nine Cards Google Play API") with ScalaCheckRouteTest {
+
+  import NineCardsMarshallers._
 
   val requestHeaders = List(
     RawHeader("X-Android-ID", "androidId"),
@@ -58,9 +56,7 @@ object NineCardsGooglePlayApiProperties extends Properties("Nine Cards Google Pl
       }
     }
 
-    val route = new NineCardsGooglePlayApi {
-      override def actorRefFactory = system
-    }.googlePlayApiRoute[Id]
+    val route = NineCardsGooglePlayApi.googlePlayApiRoute[Id]
 
     Get(s"/googleplay/package/${pkg.value}") ~> addHeaders(requestHeaders) ~> route ~> check {
       val response = responseAs[String]
@@ -80,9 +76,7 @@ object NineCardsGooglePlayApiProperties extends Properties("Nine Cards Google Pl
       }
     }
 
-    val route = new NineCardsGooglePlayApi {
-      override def actorRefFactory = system
-    }.googlePlayApiRoute[Id]
+    val route = NineCardsGooglePlayApi.googlePlayApiRoute[Id]
 
     Get(s"/googleplay/package/${unknownPackage.value}") ~> addHeaders(requestHeaders) ~> route ~> check {
       status ?= InternalServerError
@@ -99,7 +93,7 @@ object NineCardsGooglePlayApiProperties extends Properties("Nine Cards Google Pl
 
     implicit val interpreter: GooglePlayOps ~> Id = new (GooglePlayOps ~> Id) {
       def apply[A](fa: GooglePlayOps[A]) = fa match {
-        case BulkRequestPackage(_, PackageListRequest(items)) =>
+        case BulkRequestPackage(_, PackageList(items)) =>
 
           val fetched: List[Xor[String, Item]] = items.map{ i =>
             database.get(Package(i)).toRightXor(i)
@@ -113,13 +107,11 @@ object NineCardsGooglePlayApiProperties extends Properties("Nine Cards Google Pl
       }
     }
 
-    val route = new NineCardsGooglePlayApi {
-      override def actorRefFactory = system
-    }.googlePlayApiRoute[Id]
+    val route = NineCardsGooglePlayApi.googlePlayApiRoute[Id]
 
     val allPackages = (succs ++ errs).map(_.value)
 
-    Post("/googleplay/packages/detailed", PackageListRequest(allPackages)) ~> addHeaders(requestHeaders) ~> route ~> check {
+    Post("/googleplay/packages/detailed", PackageList(allPackages)) ~> addHeaders(requestHeaders) ~> route ~> check {
 
       val response = responseAs[String]
       val decoded = decode[PackageDetails](response).getOrElse(throw new RuntimeException(s"Unable to parse response [$response]"))

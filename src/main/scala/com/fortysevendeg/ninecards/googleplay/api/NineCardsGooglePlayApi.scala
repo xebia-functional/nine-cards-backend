@@ -1,46 +1,37 @@
 package com.fortysevendeg.ninecards.googleplay.api
 
-import com.fortysevendeg.ninecards.config.NineCardsConfig
-import com.fortysevendeg.ninecards.googleplay.ninecardsspray._
-import com.fortysevendeg.ninecards.googleplay.domain.Domain._
-import com.fortysevendeg.ninecards.googleplay.service.GooglePlayDomain._
-import com.fortysevendeg.ninecards.googleplay.service.free.algebra.GooglePlay._
-import com.fortysevendeg.extracats._
+import akka.actor.Actor
 import cats.Monad
 import cats.~>
-import com.fortysevendeg.ninecards.googleplay.service.free.interpreter.{ Http4sGooglePlayApiClient, Http4sGooglePlayWebScraper }
-import spray.routing._
-import spray.httpx.marshalling.ToResponseMarshaller
-import akka.actor.Actor
-import shapeless._
-import scalaz.concurrent.Task
+import com.fortysevendeg.extracats._
+import com.fortysevendeg.ninecards.googleplay.domain._
+import com.fortysevendeg.ninecards.googleplay.service.free.algebra.GooglePlay._
 import io.circe.generic.auto._
-import com.fortysevendeg.ninecards.googleplay.service.free.interpreter.TaskInterpreter
+import org.http4s.client.Client
+import org.http4s.client.blaze.PooledHttp1Client
+import scalaz.concurrent.Task
+import spray.httpx.marshalling.ToResponseMarshaller
+import spray.routing.{Directives, HttpService, Route}
 
-class NineCardsGooglePlayActor extends Actor with NineCardsGooglePlayApi {
+class NineCardsGooglePlayActor( googlePlayInterpreter: GooglePlayOps ~> Task) extends Actor with HttpService {
 
-  import TaskInterpreter._
+  override def actorRefFactory = context
 
-  def actorRefFactory = context
+  private val googleApiRoute: Route = {
+    import NineCardsMarshallers._
+    implicit val inter: GooglePlayOps ~> Task = googlePlayInterpreter
+    NineCardsGooglePlayApi.googlePlayApiRoute[Task]
+  }
 
-  // todo make a new wiring module
-  val apiEndpoint = NineCardsConfig.getConfigValue("googleplay.api.endpoint")
-  val apiClient = new Http4sGooglePlayApiClient(apiEndpoint)
-  val webEndpoint = NineCardsConfig.getConfigValue("googleplay.web.endpoint")
-  val webClient = new Http4sGooglePlayWebScraper(webEndpoint)
+  def receive = runRoute(googleApiRoute)
 
-  implicit val i = interpreter(apiClient.request _, webClient.request _)
-
-  def receive = runRoute(googlePlayApiRoute[Task])
 }
 
-trait NineCardsGooglePlayApi extends HttpService {
+object NineCardsGooglePlayApi {
 
-  val requestHeaders = for { // todo put this in a package object somewhere
-    token        <- headerValueByName("X-Google-Play-Token")
-    androidId    <- headerValueByName("X-Android-ID")
-    localisation <- optionalHeaderValueByName("X-Android-Market-Localization")
-  } yield Token(token) :: AndroidId(androidId) :: localisation.map(Localization.apply) :: HNil
+  import CustomDirectives._
+  import Directives._
+  import NineCardsMarshallers._
 
   def googlePlayApiRoute[M[_]](
     implicit
@@ -55,15 +46,15 @@ trait NineCardsGooglePlayApi extends HttpService {
         get {
           path("package" / Segment) { packageName =>
             complete {
-              googlePlayService.requestPackage((token, androidId, localizationOption), Package(packageName)).foldMap(interpreter)
+              googlePlayService.requestPackage(GoogleAuthParams(androidId, token, localizationOption), Package(packageName)).foldMap(interpreter)
             }
           }
         } ~
         post {
           path("packages" / "detailed") {
-            entity(as[PackageListRequest]) { req =>
+            entity(as[PackageList]) { req =>
               complete {
-                googlePlayService.bulkRequestPackage((token, androidId, localizationOption), req).foldMap(interpreter)
+                googlePlayService.bulkRequestPackage(GoogleAuthParams(androidId, token, localizationOption), req).foldMap(interpreter)
               }
             }
           }

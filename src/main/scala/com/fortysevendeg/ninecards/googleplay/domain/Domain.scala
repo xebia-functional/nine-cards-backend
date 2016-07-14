@@ -1,45 +1,34 @@
 package com.fortysevendeg.ninecards.googleplay.domain
 
-import spray.httpx.unmarshalling.MalformedContent
-import spray.httpx.unmarshalling.Unmarshaller
-import spray.httpx.marshalling.ToResponseMarshaller
-import spray.http.{HttpEntity, HttpResponse, StatusCodes}
-import io.circe._
-import io.circe.syntax._
-import io.circe.parser._
-import io.circe.generic.auto._
-import cats.Monoid
+case class Package(value: String) extends AnyVal
+case class AndroidId(value: String) extends AnyVal
+case class Token(value: String) extends AnyVal
+case class Localization(value: String) extends AnyVal
 
-object Domain {
-  case class Package(value: String) extends AnyVal
+case class GoogleAuthParams(
+  androidId: AndroidId,
+  token: Token,
+  localization: Option[Localization]
+)
 
-  case class PackageListRequest(items: List[String]) extends AnyVal
-  case class PackageDetails(errors: List[String], items: List[Item])
+case class AppRequest(
+  packageName: Package,
+  authParams: GoogleAuthParams
+)
 
-  implicit val packageDetailsMoniod: Monoid[PackageDetails] = new Monoid[PackageDetails] {
-    def empty: PackageDetails = PackageDetails(Nil, Nil)
-    def combine(x: PackageDetails, y: PackageDetails): PackageDetails = PackageDetails(errors = x.errors ++ y.errors, items = x.items ++ y.items)
-  }
+case class PackageList(items: List[String]) extends AnyVal
 
-  case class Item(docV2: DocV2)
-  case class DocV2(title: String, creator: String, docid: String, details: Details, aggregateRating: AggregateRating, image: List[Image], offer: List[Offer])
-  case class Details(appDetails: AppDetails)
-  case class AppDetails(appCategory: List[String], numDownloads: String, permission: List[String])
-  case class AggregateRating(ratingsCount: Long, oneStarRatings: Long, twoStarRatings: Long, threeStarRatings: Long, fourStarRatings: Long, fiveStarRatings: Long, starRating: Double) // commentcount?
-  case class Image(imageType: Long, imageUrl: String) // todo check which fields are necessary here
-  case class Offer(offerType: Long) // todo check which fields are necessary here
+case class PackageDetails(errors: List[String], items: List[Item])
 
-  // Domain-specific marshalling and unmarshalling
-  implicit val packageListUnmarshaller: Unmarshaller[PackageListRequest] = new Unmarshaller[PackageListRequest] {
-    def apply(entity: HttpEntity) = {
-      decode[PackageListRequest](entity.asString).fold(e => Left(MalformedContent(s"Unable to parse entity into JSON list: $entity", e)), s => Right(s))
-    }
-  }
+case class Item(docV2: DocV2)
+case class DocV2(title: String, creator: String, docid: String, details: Details, aggregateRating: AggregateRating, image: List[Image], offer: List[Offer])
+case class Details(appDetails: AppDetails)
+case class AppDetails(appCategory: List[String], numDownloads: String, permission: List[String])
+case class AggregateRating(ratingsCount: Long, oneStarRatings: Long, twoStarRatings: Long, threeStarRatings: Long, fourStarRatings: Long, fiveStarRatings: Long, starRating: Double) // commentcount?
 
-  implicit def optionalItemMarshaller(implicit im: ToResponseMarshaller[Item]): ToResponseMarshaller[Option[Item]] = {
-    ToResponseMarshaller[Option[Item]] { (o, ctx) =>
-      o.fold(ctx.marshalTo(HttpResponse(status = StatusCodes.InternalServerError, entity = HttpEntity("Cannot find item!"))))(im(_, ctx))
-    }
-  }
+object AggregateRating {
+  val Zero = AggregateRating(0,0,0,0,0,0,0.0)
 }
+case class Image(imageType: Long, imageUrl: String) // todo check which fields are necessary here
+case class Offer(offerType: Long) // todo check which fields are necessary here
 

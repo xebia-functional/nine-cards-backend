@@ -1,7 +1,6 @@
 package com.fortysevendeg.ninecards.googleplay.service.free.interpreter
 
-import com.fortysevendeg.ninecards.googleplay.domain.Domain._
-import com.fortysevendeg.ninecards.googleplay.service.GooglePlayDomain._
+import com.fortysevendeg.ninecards.googleplay.domain._
 import com.fortysevendeg.ninecards.googleplay.service.free.algebra.GooglePlay.{ BulkRequestPackage, RequestPackage }
 import org.scalacheck._
 import org.scalacheck.Arbitrary
@@ -30,59 +29,48 @@ object TaskInterpreterProperties extends Properties("Task interpreter") {
           permission   = Nil
         )
       ),
-      aggregateRating = AggregateRating(
-        ratingsCount     = 0,
-        oneStarRatings   = 0,
-        twoStarRatings   = 0,
-        threeStarRatings = 0,
-        fourStarRatings  = 0,
-        fiveStarRatings  = 0,
-        starRating       = 0.0
-      ),
+      aggregateRating = AggregateRating.Zero,
       image = Nil,
       offer = Nil
     )
   ))
 
-  val exceptionalRequest: (Any, Any) => Task[Xor[String, Item]] = ((_, _) => Task.fail(new RuntimeException("API request failed")))
+  object exceptionalRequest extends AppService {
+    def apply(req: AppRequest) = Task.fail(new RuntimeException("API request failed"))
+  }
 
-  val failingRequest: (Package, Any) => Task[Xor[String, Item]] = { case (Package(name), _) => Task.now(name.left)}
+  object failingRequest extends AppService {
+    def apply(req: AppRequest) = Task.now( req.packageName.value.left )
+  }
 
-  property("Requesting a single package should pass the correct parameters to the client request") = forAll { (pkg: Package, i: Item, t: Token, id: AndroidId, lo: Option[Localization]) =>
-    val request = RequestPackage((t, id, lo), pkg)
-
-    val f: (Package, GoogleAuthParams) => Task[Xor[String, Item]] = { case (pkgParam, (tParam, idParam, loParam)) =>
-      Task.now {
-        (pkgParam, tParam, idParam, loParam) match {
-          case (`pkg`, `t`, `id`, `lo`) => i.right
-          case _ => pkgParam.value.left
-        }
+  property("Requesting a single package should pass the correct parameters to the client request") = forAll { (pkg: Package, auth: GoogleAuthParams, i: Item) =>
+    object f extends AppService {
+      def apply(req: AppRequest) = Task.now {
+        if (req == AppRequest(pkg, auth)) i.right
+        else req.packageName.value.left
       }
     }
 
-    val interpreter = TaskInterpreter.interpreter(f, exceptionalRequest)
-
+    val interpreter = TaskInterpreter(f, exceptionalRequest)
+    val request = RequestPackage(auth, pkg)
     val response = interpreter(request)
-
     response.run ?= Some(i)
   }
 
-  property("Requesting multiple packages should call the API for the given packages and no others") = forAll { (ps: List[Package], i: Item, t: Token, id: AndroidId, lo: Option[Localization]) =>
+  property("Requesting multiple packages should call the API for the given packages and no others") = forAll { (ps: List[Package], auth: GoogleAuthParams, i: Item) =>
 
     val packageNames = ps.map(_.value)
 
-    val request = BulkRequestPackage((t, id, lo), PackageListRequest(packageNames))
+    val request = BulkRequestPackage(auth, PackageList(packageNames))
 
-    val f: (Package, GoogleAuthParams) => Task[Xor[String, Item]] = { case (pkgParam, (tParam, idParam, loParam)) =>
+    val f: AppService = { case AppRequest(pkgParam, reqAuth) =>
       Task.now {
-        (tParam, idParam, loParam) match {
-          case (`t`, `id`, `lo`) if(ps.contains(pkgParam)) => i.right
-          case _ => pkgParam.value.left
-        }
+        if (reqAuth == auth && ps.contains(pkgParam)) i.right
+        else pkgParam.value.left
       }
     }
 
-    val interpreter = TaskInterpreter.interpreter(f, exceptionalRequest)
+    val interpreter = TaskInterpreter(f, exceptionalRequest)
 
     val response = interpreter(request)
 
@@ -96,14 +84,9 @@ object TaskInterpreterProperties extends Properties("Task interpreter") {
 
     val request = RequestPackage(auth, pkg)
 
-    val webRequest: (Package, Option[Localization]) => Task[Xor[String, Item]] = { (p, _) =>
-      Task.now {
-        if (p == pkg) i.right
-        else p.value.left
-      }
-    }
+    val webRequest: AppService = ( r => Task.now( if (r.packageName == pkg) i.right else r.packageName.value.left ) )
 
-    val interpreter = TaskInterpreter.interpreter(failingRequest, webRequest)
+    val interpreter = TaskInterpreter(failingRequest, webRequest)
 
     val response = interpreter(request)
 
@@ -117,20 +100,20 @@ object TaskInterpreterProperties extends Properties("Task interpreter") {
       val apiPackages = rawApiPackages.map{case Package(name) => Package(s"api$name")}
       val webPackages = rawWebPackages.map{case Package(name) => Package(s"web$name")}
 
-      def makeRequestFunc(ps: List[Package], toReturn: Item): (Package, Any) => Task[Xor[String, Item]] = { (p, _) =>
+      def makeRequestFunc(ps: List[Package], toReturn: Item): AppRequest => Task[Xor[String, Item]] = { req =>
         Task.now {
-          if(ps.contains(p)) toReturn.right
-          else p.value.left
+          if(ps.contains(req.packageName)) toReturn.right
+          else req.packageName.value.left
         }
       }
 
-      val apiRequest: (Package, GoogleAuthParams) => Task[Xor[String, Item]] = makeRequestFunc(apiPackages, apiItem)
-      val webRequest: (Package, Option[Localization]) => Task[Xor[String, Item]] = makeRequestFunc(webPackages, webItem)
+      val apiRequest: AppService = makeRequestFunc(apiPackages, apiItem)
+      val webRequest: AppService = makeRequestFunc(webPackages, webItem)
 
       val packageNames = (apiPackages ::: webPackages).map(_.value)
-      val request = BulkRequestPackage(auth, PackageListRequest(packageNames))
+      val request = BulkRequestPackage(auth, PackageList(packageNames))
 
-      val interpreter = TaskInterpreter.interpreter(apiRequest, webRequest)
+      val interpreter = TaskInterpreter(apiRequest, webRequest)
 
       val response = interpreter(request)
 
@@ -148,7 +131,7 @@ object TaskInterpreterProperties extends Properties("Task interpreter") {
 
     val request = RequestPackage(auth, pkg)
 
-    val interpreter = TaskInterpreter.interpreter(failingRequest, failingRequest)
+    val interpreter = TaskInterpreter(failingRequest, failingRequest)
 
     val response = interpreter(request)
 
@@ -159,9 +142,9 @@ object TaskInterpreterProperties extends Properties("Task interpreter") {
 
     val packageNames = packages.map(_.value)
 
-    val request = BulkRequestPackage(auth, PackageListRequest(packageNames))
+    val request = BulkRequestPackage(auth, PackageList(packageNames))
 
-    val interpreter = TaskInterpreter.interpreter(failingRequest, failingRequest)
+    val interpreter = TaskInterpreter(failingRequest, failingRequest)
 
     val response = interpreter(request)
 
@@ -175,12 +158,12 @@ object TaskInterpreterProperties extends Properties("Task interpreter") {
 
     val request = RequestPackage(auth, pkg)
 
-    val successfulWebRequest: (Package, Option[Localization]) => Task[Xor[String, Item]] = { (p, _) =>
-      if(p == pkg) Task.now(webResponse)
+    val successfulWebRequest: AppService = { q =>
+      if(q.packageName == pkg) Task.now(webResponse)
       else Task.fail(new RuntimeException("Exception thrown by task when it should not be"))
     }
 
-    val interpreter = TaskInterpreter.interpreter(exceptionalRequest, successfulWebRequest)
+    val interpreter = TaskInterpreter(exceptionalRequest, successfulWebRequest)
 
     val response = interpreter(request)
 

@@ -4,17 +4,42 @@ import akka.actor.{ActorSystem, Props}
 import akka.io.IO
 import akka.pattern.ask
 import akka.util.Timeout
-import spray.can.Http
-
+import cats.~>
+import com.fortysevendeg.ninecards.config.NineCardsConfig._
+import com.fortysevendeg.ninecards.googleplay.service.free.algebra.GooglePlay.GooglePlayOps
+import com.fortysevendeg.ninecards.googleplay.service.free.interpreter._
+import com.redis.RedisClientPool
+import org.http4s.client.blaze.PooledHttp1Client
 import scala.concurrent.duration._
+import scalaz.concurrent.Task
+import spray.can.Http
 
 object Boot extends App {
 
-  implicit val system = ActorSystem("nine-cards-google-play-server-actor")
+  implicit private val system = ActorSystem("nine-cards-google-play-server-actor")
 
-  val service = system.actorOf(Props[NineCardsGooglePlayActor], "nine-cards-google-play-server")
+  private val interpreter: GooglePlayOps ~> Task = {
+    val httpClient = PooledHttp1Client()
+    val redisPool = new RedisClientPool(
+      host = getConfigValue("googleplay.cache.host"),
+      port = getConfigNumber("googleplay.cache.port")
+    )
+    val apiClient = new Http4sGooglePlayApiClient(  getConfigValue("googleplay.api.endpoint"), httpClient)
+    val webClient = new Http4sGooglePlayWebScraper( getConfigValue("googleplay.web.endpoint"), httpClient)
+    val cachedApiClient = new CachedAppService( "apiClient", apiClient, redisPool)
+    val cachedWebScrape = new CachedAppService( "webScrape", webClient, redisPool)
+    TaskInterpreter(cachedApiClient, cachedWebScrape)
+  }
 
-  implicit val timeout = Timeout(5.seconds)
+  private val service = system.actorOf(
+    Props( classOf[NineCardsGooglePlayActor], interpreter),
+    "nine-cards-google-play-server"
+  )
 
-  IO(Http) ? Http.Bind(service, interface = "localhost", port = 8081)
+  implicit private val timeout = Timeout(5.seconds)
+
+  private val host = getConfigValue("ninecards.host")
+  private val port = getConfigNumber("ninecards.port")
+
+  IO(Http) ? Http.Bind(service, interface = host, port = port)
 }

@@ -5,7 +5,7 @@ import org.specs2.matcher.EventuallyMatchers
 import org.specs2.mutable.Specification
 import scala.concurrent.duration._
 
-class BootTest extends Specification with EventuallyMatchers {
+class BootIntegration extends Specification with EventuallyMatchers {
 
   "Starting the app" should {
     "allow a connection to be made" in {

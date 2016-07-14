@@ -1,51 +1,44 @@
 package com.fortysevendeg.ninecards.googleplay.service.free.interpreter
 
-import com.fortysevendeg.ninecards.googleplay.service.GooglePlayDomain.{ GoogleAuthParams, Localization }
-import scalaz.concurrent.Task
-import com.fortysevendeg.extracats._
-import com.fortysevendeg.ninecards.googleplay.service.free.algebra.GooglePlay._
-import com.fortysevendeg.ninecards.googleplay.domain.Domain._
-import cats.~>
+import cats.{Foldable, Monoid}
 import cats.data.Xor
-import cats.data.XorT
 import cats.std.list._
-import cats.std.option._
 import cats.syntax.traverse._
-import cats.Foldable
+import cats.~>
+import com.fortysevendeg.extracats._
+import com.fortysevendeg.ninecards.googleplay.domain._
+import com.fortysevendeg.ninecards.googleplay.service.free.algebra.GooglePlay._
+import scalaz.concurrent.Task
+
+class TaskInterpreter(appService: AppService) extends (GooglePlayOps ~> Task) {
+
+  def apply[A](fa: GooglePlayOps[A]): Task[A] = fa match {
+
+    case RequestPackage(auth, pkg) => appService( AppRequest(pkg, auth) ).map(_.toOption)
+
+    case BulkRequestPackage(auth, PackageList(packageNames)) =>
+
+      implicit object detailsMonoid extends Monoid[PackageDetails] {
+        def empty: PackageDetails = PackageDetails(Nil, Nil)
+        def combine(x: PackageDetails, y: PackageDetails): PackageDetails =
+          PackageDetails(errors = x.errors ++ y.errors, items = x.items ++ y.items)
+      }
+
+      def fetchDetails(packageName: String): Task[PackageDetails] = {
+        def toDetails(xor: Xor[String, Item]): PackageDetails = xor.fold(
+          e => PackageDetails(List(e), Nil),
+          i => PackageDetails(Nil, List(i))
+        )
+        appService( AppRequest(Package(packageName), auth) ).map(toDetails)
+      }
+      packageNames.traverse(fetchDetails).map(Foldable[List].fold(_))
+  }
+
+}
 
 object TaskInterpreter {
-  def interpreter(
-    apiRequest: (Package, GoogleAuthParams) => Task[Xor[String, Item]],
-    webRequest: (Package, Option[Localization]) => Task[Xor[String, Item]]
-  ) = {
 
-    def composedRequests(pkg: Package, auth: GoogleAuthParams): XorT[Task, String, Item] = {
-      val (_, _, lo) = auth
+  def apply( one: AppService, two: AppService ): TaskInterpreter =
+    new TaskInterpreter( new XorTaskOrComposer[AppRequest,String,Item](one, two))
 
-      // Currently this results in the webrequest being called twice
-      // if the API request fails and the Web Request returns an Xor.left
-      XorT(apiRequest(pkg, auth).or(webRequest(pkg, lo)))
-        .orElse(XorT(webRequest(pkg, lo)))
-    }
-
-    new (GooglePlayOps ~> Task) {
-      def apply[A](fa: GooglePlayOps[A]) = fa match {
-        case RequestPackage(auth, pkg) =>
-          composedRequests(pkg, auth).to[Option]
-
-        case BulkRequestPackage(auth, PackageListRequest(packageNames)) =>
-          val packages: List[Package] = packageNames.map(Package.apply)
-
-          val fetched: Task[List[Xor[String, Item]]] = packages.traverse{ p =>
-            composedRequests(p, auth).value
-          }
-
-          fetched.map { (xors: List[Xor[String, Item]]) =>
-            Foldable[List].foldMap(xors) { xor =>
-              xor.fold(e => PackageDetails(List(e), Nil), i => PackageDetails(Nil, List(i)))
-            }
-          }
-      }
-    }
-  }
 }
