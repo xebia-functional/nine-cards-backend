@@ -6,7 +6,7 @@ import akka.pattern.ask
 import akka.util.Timeout
 import cats.~>
 import com.fortysevendeg.ninecards.config.NineCardsConfig._
-import com.fortysevendeg.ninecards.googleplay.service.free.algebra.GooglePlay.GooglePlayOps
+import com.fortysevendeg.ninecards.googleplay.service.free.algebra.GooglePlay
 import com.fortysevendeg.ninecards.googleplay.service.free.interpreter._
 import com.redis.RedisClientPool
 import org.http4s.client.blaze.PooledHttp1Client
@@ -18,7 +18,7 @@ object Boot extends App {
 
   implicit private val system = ActorSystem("nine-cards-google-play-server-actor")
 
-  private val interpreter: GooglePlayOps ~> Task = {
+  private val interpreter: GooglePlay.Ops ~> Task = {
     val httpClient = PooledHttp1Client()
     val redisPool = new RedisClientPool(
       host = getConfigValue("googleplay.cache.host"),

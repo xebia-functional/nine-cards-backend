@@ -5,7 +5,7 @@ import cats.Monad
 import cats.~>
 import com.fortysevendeg.extracats._
 import com.fortysevendeg.ninecards.googleplay.domain._
-import com.fortysevendeg.ninecards.googleplay.service.free.algebra.GooglePlay._
+import com.fortysevendeg.ninecards.googleplay.service.free.algebra.GooglePlay
 import io.circe.generic.auto._
 import org.http4s.client.Client
 import org.http4s.client.blaze.PooledHttp1Client
@@ -13,17 +13,17 @@ import scalaz.concurrent.Task
 import spray.httpx.marshalling.ToResponseMarshaller
 import spray.routing.{Directives, HttpService, Route}
 
-class NineCardsGooglePlayActor( googlePlayInterpreter: GooglePlayOps ~> Task) extends Actor with HttpService {
+class NineCardsGooglePlayActor(interpreter: GooglePlay.Ops ~> Task) extends Actor with HttpService {
 
   override def actorRefFactory = context
 
-  private val googleApiRoute: Route = {
+  private val apiRoute: Route = {
     import NineCardsMarshallers._
-    implicit val inter: GooglePlayOps ~> Task = googlePlayInterpreter
+    implicit val inter: GooglePlay.Ops ~> Task = interpreter
     NineCardsGooglePlayApi.googlePlayApiRoute[Task]
   }
 
-  def receive = runRoute(googleApiRoute)
+  def receive = runRoute(apiRoute)
 
 }
 
@@ -36,8 +36,8 @@ object NineCardsGooglePlayApi {
   def googlePlayApiRoute[M[_]](
     implicit
       monadM: Monad[M],
-      googlePlayService: GooglePlayService[GooglePlayOps],
-      interpreter: GooglePlayOps ~> M, // todo can this be made GPO ~> TRM
+      googlePlayService: GooglePlay.Service[GooglePlay.Ops],
+      interpreter: GooglePlay.Ops ~> M, // todo can this be made GPO ~> TRM
       itemMarshaller: ToResponseMarshaller[M[Option[Item]]], // todo need to make the option[item] generic
       bulkMarshaller: ToResponseMarshaller[M[PackageDetails]]
   ): Route =
@@ -46,7 +46,7 @@ object NineCardsGooglePlayApi {
         get {
           path("package" / Segment) { packageName =>
             complete {
-              googlePlayService.requestPackage(GoogleAuthParams(androidId, token, localizationOption), Package(packageName)).foldMap(interpreter)
+              googlePlayService.resolve(GoogleAuthParams(androidId, token, localizationOption), Package(packageName)).foldMap(interpreter)
             }
           }
         } ~
@@ -54,7 +54,7 @@ object NineCardsGooglePlayApi {
           path("packages" / "detailed") {
             entity(as[PackageList]) { req =>
               complete {
-                googlePlayService.bulkRequestPackage(GoogleAuthParams(androidId, token, localizationOption), req).foldMap(interpreter)
+                googlePlayService.resolveMany(GoogleAuthParams(androidId, token, localizationOption), req).foldMap(interpreter)
               }
             }
           }

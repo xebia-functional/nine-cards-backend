@@ -1,7 +1,7 @@
 package com.fortysevendeg.ninecards.googleplay.service.free.interpreter
 
 import com.fortysevendeg.ninecards.googleplay.domain._
-import com.fortysevendeg.ninecards.googleplay.service.free.algebra.GooglePlay.{ BulkRequestPackage, RequestPackage }
+import com.fortysevendeg.ninecards.googleplay.service.free.algebra.GooglePlay.{ ResolveMany, Resolve }
 import org.scalacheck._
 import org.scalacheck.Arbitrary
 import org.scalacheck.Prop._
@@ -52,7 +52,7 @@ object TaskInterpreterProperties extends Properties("Task interpreter") {
     }
 
     val interpreter = TaskInterpreter(f, exceptionalRequest)
-    val request = RequestPackage(auth, pkg)
+    val request = Resolve(auth, pkg)
     val response = interpreter(request)
     response.run ?= Some(i)
   }
@@ -61,7 +61,7 @@ object TaskInterpreterProperties extends Properties("Task interpreter") {
 
     val packageNames = ps.map(_.value)
 
-    val request = BulkRequestPackage(auth, PackageList(packageNames))
+    val request = ResolveMany(auth, PackageList(packageNames))
 
     val f: AppService = { case AppRequest(pkgParam, reqAuth) =>
       Task.now {
@@ -82,7 +82,7 @@ object TaskInterpreterProperties extends Properties("Task interpreter") {
 
   property("An unsuccessful API call for a single package falls back to the web request") = forAll { (pkg: Package, i: Item, auth: GoogleAuthParams) =>
 
-    val request = RequestPackage(auth, pkg)
+    val request = Resolve(auth, pkg)
 
     val webRequest: AppService = ( r => Task.now( if (r.packageName == pkg) i.right else r.packageName.value.left ) )
 
@@ -111,7 +111,7 @@ object TaskInterpreterProperties extends Properties("Task interpreter") {
       val webRequest: AppService = makeRequestFunc(webPackages, webItem)
 
       val packageNames = (apiPackages ::: webPackages).map(_.value)
-      val request = BulkRequestPackage(auth, PackageList(packageNames))
+      val request = ResolveMany(auth, PackageList(packageNames))
 
       val interpreter = TaskInterpreter(apiRequest, webRequest)
 
@@ -129,7 +129,7 @@ object TaskInterpreterProperties extends Properties("Task interpreter") {
 
   property("Unsuccessful in both the API and web calls results in an unsuccessful response") = forAll { (pkg: Package, auth: GoogleAuthParams) =>
 
-    val request = RequestPackage(auth, pkg)
+    val request = Resolve(auth, pkg)
 
     val interpreter = TaskInterpreter(failingRequest, failingRequest)
 
@@ -142,7 +142,7 @@ object TaskInterpreterProperties extends Properties("Task interpreter") {
 
     val packageNames = packages.map(_.value)
 
-    val request = BulkRequestPackage(auth, PackageList(packageNames))
+    val request = ResolveMany(auth, PackageList(packageNames))
 
     val interpreter = TaskInterpreter(failingRequest, failingRequest)
 
@@ -156,7 +156,7 @@ object TaskInterpreterProperties extends Properties("Task interpreter") {
 
   property("A failed task in the API call results in the web request being made") = forAll { (pkg: Package, webResponse: Xor[String, Item], auth: GoogleAuthParams) =>
 
-    val request = RequestPackage(auth, pkg)
+    val request = Resolve(auth, pkg)
 
     val successfulWebRequest: AppService = { q =>
       if(q.packageName == pkg) Task.now(webResponse)

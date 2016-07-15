@@ -2,7 +2,7 @@ package com.fortysevendeg.ninecards.googleplay.service.free.interpreter
 
 import cats.data.Xor
 import com.fortysevendeg.ninecards.googleplay.domain._
-import com.fortysevendeg.ninecards.googleplay.service.free.algebra.GooglePlay._
+import com.fortysevendeg.ninecards.googleplay.service.free.algebra.GooglePlay.{Resolve, ResolveMany}
 import com.fortysevendeg.ninecards.googleplay.TestConfig._
 import org.specs2.matcher.TaskMatchers
 import org.specs2.mutable.Specification
@@ -88,7 +88,7 @@ class TaskInterpreterIntegration extends Specification with TaskMatchers {
 
     "result in a correctly parsed response for a single package" in {
       val retrievedCategory: Task[Option[String]] = interpreter
-        .apply( RequestPackage(authParams, fisherPrice.packageObj) )
+        .apply( Resolve(authParams, fisherPrice.packageObj) )
         .map( optItem => optItem.flatMap(categoryOption) )
       retrievedCategory must returnValue(Some("EDUCATION"))
     }
@@ -103,7 +103,7 @@ class TaskInterpreterIntegration extends Specification with TaskMatchers {
       val packages: List[String] = successfulCategories.map(_._1) ++ invalidPackages
 
       val result = interpreter
-        .apply( BulkRequestPackage(authParams, PackageList(packages)) )
+        .apply( ResolveMany(authParams, PackageList(packages)) )
         .map(splitResults)
       result must returnValue((invalidPackages.sorted, successfulCategories.map(_._2).sorted))
     }
@@ -117,7 +117,7 @@ class TaskInterpreterIntegration extends Specification with TaskMatchers {
       val interpreter = TaskInterpreter(badApiClient, webClient)
 
       val retrievedCategory: Task[Option[String]] = interpreter
-        .apply(RequestPackage(authParams, fisherPrice.packageObj))
+        .apply(Resolve(authParams, fisherPrice.packageObj))
         .map( _.flatMap(categoryOption))
 
       retrievedCategory.runFor(10.seconds) must_=== Some("EDUCATION")

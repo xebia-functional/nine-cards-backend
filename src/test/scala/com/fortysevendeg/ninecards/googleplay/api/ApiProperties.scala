@@ -1,7 +1,7 @@
 package com.fortysevendeg.ninecards.googleplay.api
 
 import com.fortysevendeg.ninecards.googleplay.domain._
-import com.fortysevendeg.ninecards.googleplay.service.free.algebra.GooglePlay._
+import com.fortysevendeg.ninecards.googleplay.service.free.algebra.GooglePlay.{Ops, Resolve, ResolveMany}
 import spray.testkit.{RouteTest, TestFrameworkInterface}
 import spray.http.HttpHeaders.RawHeader
 import spray.http.StatusCodes._
@@ -47,9 +47,9 @@ object ApiProperties extends Properties("Nine Cards Google Play API") with Scala
 
   property("returns the correct package name for a Google Play Store app") = forAll { (pkg: Package, item: Item) =>
 
-    implicit val interpreter: GooglePlayOps ~> Id = new (GooglePlayOps ~> Id) {
-      def apply[A](fa: GooglePlayOps[A]) = fa match {
-        case RequestPackage(_, p) =>
+    implicit val interpreter: Ops ~> Id = new (Ops ~> Id) {
+      def apply[A](fa: Ops[A]) = fa match {
+        case Resolve(_, p) =>
           if (p == pkg) Some(item)
           else None
         case _ => failTest("Should only be making a request for a single package")
@@ -67,9 +67,9 @@ object ApiProperties extends Properties("Nine Cards Google Play API") with Scala
 
   property("fails with an Internal Server Error when the package is not known") = forAll {(unknownPackage: Package, wrongItem: Item) =>
 
-    implicit val interpreter: GooglePlayOps ~> Id = new (GooglePlayOps ~> Id) {
-      def apply[A](fa: GooglePlayOps[A]) = fa match {
-        case RequestPackage(_, p) =>
+    implicit val interpreter: Ops ~> Id = new (Ops ~> Id) {
+      def apply[A](fa: Ops[A]) = fa match {
+        case Resolve(_, p) =>
           if (p == unknownPackage) None
           else Some(wrongItem)
         case _ => failTest("Should only be making a request for a single package")
@@ -91,9 +91,9 @@ object ApiProperties extends Properties("Nine Cards Google Play API") with Scala
     val errors = errs.map(_.value).toSet
     val items = succs.map(i => database(i)).toSet
 
-    implicit val interpreter: GooglePlayOps ~> Id = new (GooglePlayOps ~> Id) {
-      def apply[A](fa: GooglePlayOps[A]) = fa match {
-        case BulkRequestPackage(_, PackageList(items)) =>
+    implicit val interpreter: Ops ~> Id = new (Ops ~> Id) {
+      def apply[A](fa: Ops[A]) = fa match {
+        case ResolveMany(_, PackageList(items)) =>
 
           val fetched: List[Xor[String, Item]] = items.map{ i =>
             database.get(Package(i)).toRightXor(i)
