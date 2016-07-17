@@ -1,6 +1,5 @@
 package com.fortysevendeg.ninecards.googleplay.service.free.interpreter
 
-import cats.{Foldable, Monoid}
 import cats.data.Xor
 import cats.std.list._
 import cats.syntax.traverse._
@@ -18,20 +17,13 @@ class TaskInterpreter(appService: AppService) extends (GooglePlayOps ~> Task) {
 
     case BulkRequestPackage(auth, PackageList(packageNames)) =>
 
-      implicit object detailsMonoid extends Monoid[PackageDetails] {
-        def empty: PackageDetails = PackageDetails(Nil, Nil)
-        def combine(x: PackageDetails, y: PackageDetails): PackageDetails =
-          PackageDetails(errors = x.errors ++ y.errors, items = x.items ++ y.items)
-      }
+      for /*Task*/ {
+        xors <- packageNames.traverse{ pkg => 
+          appService( AppRequest(Package(pkg), auth))
+        }
+        (errors, apps) = splitXors[String, Item](xors)
+      } yield PackageDetails(errors, apps)
 
-      def fetchDetails(packageName: String): Task[PackageDetails] = {
-        def toDetails(xor: Xor[String, Item]): PackageDetails = xor.fold(
-          e => PackageDetails(List(e), Nil),
-          i => PackageDetails(Nil, List(i))
-        )
-        appService( AppRequest(Package(packageName), auth) ).map(toDetails)
-      }
-      packageNames.traverse(fetchDetails).map(Foldable[List].fold(_))
   }
 
 }
