@@ -1,6 +1,6 @@
 package com.fortysevendeg.ninecards.processes.converters
 
-import com.fortysevendeg.ninecards.services.free.domain.{ User, Installation, GooglePlayApp }
+import com.fortysevendeg.ninecards.services.free.domain.{ User, Installation }
 import org.specs2.ScalaCheck
 import org.specs2.mutable.Specification
 import org.scalacheck.Shapeless._
@@ -30,13 +30,4 @@ class ConvertersSpec
     }
   }
 
-  "toGooglePlayApp" should {
-    "convert an GooglePlayAppServices to a GooglePlayApp object" in {
-      prop { app: GooglePlayApp ⇒
-
-        val processGooglePlayApp = Converters.toGooglePlayApp(app)
-        processGooglePlayApp.packageName shouldEqual app.packageName
-      }
-    }
-  }
 }

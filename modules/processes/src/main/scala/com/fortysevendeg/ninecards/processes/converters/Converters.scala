@@ -8,7 +8,6 @@ import com.fortysevendeg.ninecards.processes.messages.SharedCollectionMessages._
 import com.fortysevendeg.ninecards.processes.messages.UserMessages.LoginResponse
 import com.fortysevendeg.ninecards.services.common.NineCardsConfig.defaultConfig
 import com.fortysevendeg.ninecards.services.free.domain.{
-  GooglePlayApp ⇒ GooglePlayAppServices,
   Installation ⇒ InstallationServices,
   SharedCollection ⇒ SharedCollectionServices,
   SharedCollectionPackage ⇒ SharedCollectionPackageServices,
@@ -32,17 +31,6 @@ object Converters {
     } fold (
       error ⇒ "", //TODO: Maybe we should return an error if the url is malformed
       uri ⇒ uri
-    )
-
-  def toGooglePlayApp(app: GooglePlayAppServices): GooglePlayApp =
-    GooglePlayApp(
-      packageName  = app.packageName,
-      appType      = app.appType,
-      appCategory  = app.appCategory,
-      numDownloads = app.numDownloads,
-      starRating   = app.starRating,
-      ratingCount  = app.ratingCount,
-      commentCount = app.commentCount
     )
 
   def toLoginResponse(info: (UserAppServices, InstallationServices)): LoginResponse = {

@@ -11,20 +11,18 @@ import org.http4s.circe._
 
 object Decoders {
 
-  implicit val resolveManyEntityDecoder = jsonOf[Failure Xor AppsDetails](
-    XorDecoder.xorDecoder[Failure, AppsDetails]
+  implicit val resolveOneEntityDecoder = jsonOf[UnresolvedApp Xor AppCard](
+    XorDecoder.xorDecoder[UnresolvedApp, AppCard]
   )
 
-  implicit val resolveOneEntityDecoder = jsonOf[Failure Xor App](
-    XorDecoder.xorDecoder[Failure, App]
-  )
+  implicit val appsCardsEntityDecoder = jsonOf[AppsCards](deriveDecoder[AppsCards])
 }
 
 object Encoders {
 
-  implicit val packageListEncoder: Encoder[PackageListRequest] = deriveEncoder[PackageListRequest]
+  implicit val packageListEncoder: Encoder[PackageList] = deriveEncoder[PackageList]
 
-  implicit val packageListEntityEncoder: EntityEncoder[PackageListRequest] = jsonEncoderOf(packageListEncoder)
+  implicit val packageListEntityEncoder: EntityEncoder[PackageList] = jsonEncoderOf(packageListEncoder)
 
 }
 

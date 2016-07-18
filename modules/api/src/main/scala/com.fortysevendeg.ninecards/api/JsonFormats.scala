@@ -42,8 +42,6 @@ trait JsonFormats
 
   }
 
-  implicit val googlePlayAppFormat = jsonFormat7(GooglePlayApp)
-
   implicit val apiLoginRequestFormat = jsonFormat3(ApiLoginRequest)
 
   implicit val apiLoginResponseFormat = jsonFormat2(ApiLoginResponse)

@@ -1,7 +1,7 @@
 package com.fortysevendeg.ninecards.services.free.interpreter.googleplay
 
 import cats.data.Xor
-import com.fortysevendeg.ninecards.services.free.domain.GooglePlay.{ App, AppsDetails, AuthParams, Failure, PackageListRequest }
+import com.fortysevendeg.ninecards.services.free.domain.GooglePlay._
 import org.http4s.Http4s._
 import org.http4s.{ Header, Headers, Method, Request, Uri }
 import org.http4s.Uri.{ Authority, RegName }
@@ -29,7 +29,7 @@ class Services(config: Configuration) {
     )
   }
 
-  def resolveOne(packageName: String, auth: AuthParams): Task[Failure Xor App] = {
+  def resolveOne(packageName: String, auth: AuthParams): Task[UnresolvedApp Xor AppCard] = {
     val uri = Uri(
       scheme    = Option(config.protocol.ci),
       authority = Option(authority),
@@ -37,10 +37,10 @@ class Services(config: Configuration) {
     )
     //authParams: add to headers
     val request = Request(Method.GET, uri = uri, headers = authHeaders(auth))
-    client.fetchAs[Failure Xor App](request)
+    client.fetchAs[UnresolvedApp Xor AppCard](request)
   }
 
-  def resolveMany(packageNames: Seq[String], auth: AuthParams): Task[Failure Xor AppsDetails] = {
+  def resolveMany(packageNames: Seq[String], auth: AuthParams): Task[AppsCards] = {
     val resolveManyUri = Uri(
       scheme    = Option(config.protocol.ci),
       authority = Option(authority),
@@ -48,8 +48,8 @@ class Services(config: Configuration) {
     )
     //authParams: add to headers
     val request = Request(Method.POST, uri = resolveManyUri)
-      .withBody[PackageListRequest](PackageListRequest(packageNames))
-    client.fetchAs[Failure Xor AppsDetails](request)
+      .withBody[PackageList](PackageList(packageNames))
+    client.fetchAs[AppsCards](request)
   }
 
 }
