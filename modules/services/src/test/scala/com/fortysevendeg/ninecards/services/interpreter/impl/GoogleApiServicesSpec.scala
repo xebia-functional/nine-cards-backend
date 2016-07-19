@@ -3,11 +3,11 @@ package com.fortysevendeg.ninecards.services.interpreter.impl
 import cats.data.Xor
 import com.fortysevendeg.ninecards.services.free.domain.{ TokenInfo, WrongTokenInfo }
 import com.fortysevendeg.ninecards.services.free.interpreter.impl._
-import com.fortysevendeg.ninecards.services.utils.{ MockServerService, XorMatchers }
+import com.fortysevendeg.ninecards.services.utils.MockServerService
 import org.mockserver.model.HttpRequest._
 import org.mockserver.model.HttpResponse._
 import org.mockserver.model.HttpStatusCode
-import org.specs2.matcher.DisjunctionMatchers
+import org.specs2.matcher.{ DisjunctionMatchers, XorMatchers }
 import org.specs2.mutable.Specification
 
 trait GoogleApiServerResponse {

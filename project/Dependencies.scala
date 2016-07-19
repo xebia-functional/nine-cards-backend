@@ -12,6 +12,7 @@ trait Dependencies {
   val akkaTestKit = "com.typesafe.akka" %% "akka-testkit" % Versions.akka
   val cats = "org.typelevel" %% "cats" % Versions.cats
   val specs2Core = "org.specs2" %% "specs2-core" % Versions.specs2
+  val specs2Cats = "org.specs2" %% "specs2-cats" % Versions.specs2
   val specs2Scalacheck = "org.specs2" %% "specs2-scalacheck" % Versions.specs2
   val specs2Mockito = "org.specs2" %% "specs2-mock" % Versions.specs2
   val scalaz = "org.scalaz" %% "scalaz-core" % Versions.scalaz
@@ -24,7 +25,7 @@ trait Dependencies {
   val doobieSpecs2 = "org.tpolecat" %% "doobie-contrib-specs2" % Versions.doobie
   val typesafeConfig = "com.typesafe" % "config" % Versions.typesafeConfig
   val flywaydbCore = "org.flywaydb" % "flyway-core" % Versions.flywaydb
-  val scalacheckShapeless = "com.github.alexarchambault" %% "scalacheck-shapeless_1.12" % Versions.scalacheckShapeless
+  val scalacheckShapeless = "com.github.alexarchambault" %% "scalacheck-shapeless_1.13" % Versions.scalacheckShapeless
   val http4sClient = "org.http4s" %% "http4s-blaze-client" % Versions.http4s
   val http4sCirce = "org.http4s" %% "http4s-circe" % Versions.http4s
   val circe = "io.circe" %% "circe-core" % Versions.circe
@@ -36,6 +37,7 @@ trait Dependencies {
     typesafeConfig,
     hasher,
     specs2Core % "test" exclude("org.scalaz", "*"),
+    specs2Cats % "test",
     specs2Mockito % "test",
     specs2Scalacheck % "test",
     scalacheckShapeless % "test")

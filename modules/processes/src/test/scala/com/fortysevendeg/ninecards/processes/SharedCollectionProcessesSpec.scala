@@ -7,7 +7,7 @@ import com.fortysevendeg.ninecards.processes.NineCardsServices._
 import com.fortysevendeg.ninecards.processes.ProcessesExceptions._
 import com.fortysevendeg.ninecards.processes.converters.Converters
 import com.fortysevendeg.ninecards.processes.messages.SharedCollectionMessages._
-import com.fortysevendeg.ninecards.processes.utils.{ DummyNineCardsConfig, XorMatchers }
+import com.fortysevendeg.ninecards.processes.utils.DummyNineCardsConfig
 import com.fortysevendeg.ninecards.services.free.domain._
 import com.fortysevendeg.ninecards.services.persistence.SharedCollectionPersistenceServices.{ SharedCollectionData ⇒ SharedCollectionDataServices }
 import com.fortysevendeg.ninecards.services.persistence._
@@ -16,7 +16,7 @@ import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import org.mockito.Matchers.{ eq ⇒ mockEq }
 import org.specs2.ScalaCheck
-import org.specs2.matcher.Matchers
+import org.specs2.matcher.{ Matchers, XorMatchers }
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
 import org.specs2.specification.Scope

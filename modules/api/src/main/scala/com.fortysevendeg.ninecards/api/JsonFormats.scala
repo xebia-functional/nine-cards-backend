@@ -25,18 +25,18 @@ trait JsonFormats
 
     val decodeDateTime: Decoder[DateTime] = Decoder.instance { cursor ⇒
       cursor.as[String].flatMap {
-        case dateTime ⇒ Xor.right(DateTime.parse(dateTime, formatter))
+        dateTime ⇒ Xor.right(DateTime.parse(dateTime, formatter))
       }
     }
 
     val encodeDateTime: Encoder[DateTime] = Encoder.instance { dateTime: DateTime ⇒
-      Json.string(formatter.print(dateTime))
+      Json.fromString(formatter.print(dateTime))
     }
 
     def write(obj: DateTime): JsValue = JsString(encodeDateTime(obj).noSpaces)
 
     def read(json: JsValue): DateTime = json match {
-      case JsString(s) ⇒ decodeDateTime(Json.string(s).hcursor).fold(error(s), d ⇒ d)
+      case JsString(s) ⇒ decodeDateTime(Json.fromString(s).hcursor).fold(error(s), d ⇒ d)
       case _ ⇒ error(json.toString)
     }
 
