@@ -5,8 +5,8 @@ object Versions {
 
   // Core Libs
   val akka = "2.4.8"
-  val cats = "0.5.0"
-  val circe = "0.4.1"
+  val cats = "0.6.1"
+  val circe = "0.5.0-M2"
   val doobie = "0.3.0"
   val flywaydb = "3.2.1"
   val hasher = "1.2.0"
