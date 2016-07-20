@@ -28,8 +28,8 @@ trait DummyNineCardsConfig {
     val host = "localhost"
     val port = 8081
     object uri {
-      val resolveOne = "/googleplay/package/"
-      val resolveMany = "/googleplay/packages/details"
+      val resolveOne = "googleplay/cards"
+      val resolveMany = "googleplay/cards"
     }
   }
 

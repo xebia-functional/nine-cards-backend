@@ -10,15 +10,14 @@ object GooglePlay {
     token: String
   )
 
-  case class AppsCards(
-    unresolved: List[String],
-    apps: List[AppCard]
+  case class AppsInfo(
+    missing: List[String],
+    apps: List[AppInfo]
   )
 
-  case class AppCard(
+  case class AppInfo(
     packageName: String,
     title: String,
-    description: String,
     free: Boolean,
     icon: String,
     stars: Double,

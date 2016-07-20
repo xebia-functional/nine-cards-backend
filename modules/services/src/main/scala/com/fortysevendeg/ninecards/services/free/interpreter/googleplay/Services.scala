@@ -19,7 +19,7 @@ class Services(config: Configuration) {
 
   private[this] def authHeaders(auth: AuthParams): Headers = {
     val locHeader: List[Header] = auth.localization
-      .map(Header("X-Android-Maket-Localization", _))
+      .map(Header("X-Android-Market-Localization", _))
       .toList
 
     Headers(
@@ -29,27 +29,27 @@ class Services(config: Configuration) {
     )
   }
 
-  def resolveOne(packageName: String, auth: AuthParams): Task[UnresolvedApp Xor AppCard] = {
+  def resolveOne(packageName: String, auth: AuthParams): Task[UnresolvedApp Xor AppInfo] = {
     val uri = Uri(
       scheme    = Option(config.protocol.ci),
       authority = Option(authority),
       path      = s"${config.resolveOneUri}/$packageName"
     )
-    //authParams: add to headers
+
     val request = Request(Method.GET, uri = uri, headers = authHeaders(auth))
-    client.fetchAs[UnresolvedApp Xor AppCard](request)
+    client.fetchAs[UnresolvedApp Xor AppInfo](request)
   }
 
-  def resolveMany(packageNames: Seq[String], auth: AuthParams): Task[AppsCards] = {
+  def resolveMany(packageNames: Seq[String], auth: AuthParams): Task[AppsInfo] = {
     val resolveManyUri = Uri(
       scheme    = Option(config.protocol.ci),
       authority = Option(authority),
       path      = config.resolveManyUri
     )
-    //authParams: add to headers
-    val request = Request(Method.POST, uri = resolveManyUri)
+
+    val request = Request(Method.POST, uri = resolveManyUri, headers = authHeaders(auth))
       .withBody[PackageList](PackageList(packageNames))
-    client.fetchAs[AppsCards](request)
+    client.expect[AppsInfo](request)
   }
 
 }
