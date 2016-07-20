@@ -2,13 +2,12 @@ package com.fortysevendeg.ninecards.googleplay.api
 
 import akka.actor.Actor
 import cats.Monad
+import cats.data.Xor
 import cats.~>
 import com.fortysevendeg.extracats._
 import com.fortysevendeg.ninecards.googleplay.domain._
 import com.fortysevendeg.ninecards.googleplay.service.free.algebra.GooglePlay
 import io.circe.generic.auto._
-import org.http4s.client.Client
-import org.http4s.client.blaze.PooledHttp1Client
 import scalaz.concurrent.Task
 import spray.httpx.marshalling.ToResponseMarshaller
 import spray.routing.{Directives, HttpService, Route}
@@ -39,7 +38,9 @@ object NineCardsGooglePlayApi {
       googlePlayService: GooglePlay.Service[GooglePlay.Ops],
       interpreter: GooglePlay.Ops ~> M, // todo can this be made GPO ~> TRM
       itemMarshaller: ToResponseMarshaller[M[Option[Item]]], // todo need to make the option[item] generic
-      bulkMarshaller: ToResponseMarshaller[M[PackageDetails]]
+      bulkMarshaller: ToResponseMarshaller[M[PackageDetails]],
+      cardMarshaller: ToResponseMarshaller[M[Xor[AppMissed,AppCard]]],
+      cardListMarshaller: ToResponseMarshaller[M[AppCardList]]
   ): Route =
     pathPrefix("googleplay") {
       requestHeaders { (token, androidId, localizationOption) =>
@@ -57,6 +58,11 @@ object NineCardsGooglePlayApi {
                 googlePlayService.resolveMany(GoogleAuthParams(androidId, token, localizationOption), req).foldMap(interpreter)
               }
             }
+          }
+        } ~
+        pathPrefix("cards" / Segment) { packageName =>
+          complete {
+            googlePlayService.getCard( GoogleAuthParams(androidId, token, localizationOption), Package(packageName)).foldMap(interpreter)
           }
         }
       }

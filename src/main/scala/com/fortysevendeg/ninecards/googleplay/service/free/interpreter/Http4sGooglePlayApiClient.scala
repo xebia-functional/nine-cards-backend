@@ -2,14 +2,14 @@ package com.fortysevendeg.ninecards.googleplay.service.free.interpreter
 
 import cats.data.Xor
 import cats.syntax.xor._
-import com.fortysevendeg.extracats.taskMonad
-import com.fortysevendeg.ninecards.googleplay.domain.{AppRequest, Item, Package, GoogleAuthParams, Localization}
+import com.fortysevendeg.ninecards.googleplay.domain._
 import org.http4s.Status.ResponseClass.Successful
 import org.http4s.client.Client
-import org.http4s.{Header, Headers, Method, Request, Uri}
+import org.http4s.{Header, Headers, Method, Request, Response, Uri}
 import scalaz.concurrent.Task
+import scodec.bits.ByteVector
 
-class Http4sGooglePlayApiClient(serverUrl: String, client: Client) extends AppService {
+class Http4sGooglePlayApiClient(serverUrl: String, client: Client) {
 
   private[this] val fixedHeaders = List(
     Header("Content-Type", "application/json; charset=UTF-8"),
@@ -22,7 +22,7 @@ class Http4sGooglePlayApiClient(serverUrl: String, client: Client) extends AppSe
     Header("X-DFE-Unsupported-Experiments", "nocache:billing.use_charging_poller,market_emails,buyer_currency,prod_baseline,checkin.set_asset_paid_app_field,shekel_test,content_ratings,buyer_currency_in_app,nocache:encrypted_apk,recent_changes")
   )
 
-  private[this] def buildRequest(uri: Uri, auth: GoogleAuthParams) : Request = {
+  private[this] def buildHeaders(auth: GoogleAuthParams) : Headers = {
     val variableHeaders: List[Header] = {
       val GoogleAuthParams(androidId, token, local) = auth
       Header("Authorization", s"GoogleLogin auth=${token.value}") ::
@@ -33,26 +33,48 @@ class Http4sGooglePlayApiClient(serverUrl: String, client: Client) extends AppSe
         }
       )
     }
-    new Request( method = Method.GET, uri = uri, headers = Headers( variableHeaders ++ fixedHeaders) )
+    Headers( variableHeaders ++ fixedHeaders)
   }
 
-  def apply(appRequest: AppRequest): Task[Xor[String, Item]] = {
-    val packageName = appRequest.packageName.value
-    lazy val failed = packageName.left[Item]
+  private[this] def runRequest[L,R](
+    appRequest: AppRequest,
+    failed: => L,
+    parserR: ByteVector => Xor[L,R]
+  ): Task[Xor[L,R]] = {
+    val uriString = s"${serverUrl}?doc=${appRequest.packageName.value}"
+    Uri.fromString(uriString).toOption match {
+      case Some(uri) =>
+        val headers = buildHeaders(appRequest.authParams)
+        val request = new Request( method = Method.GET, uri = uri, headers = headers )
 
-    def runRequest(u: Uri) : Task[Xor[String,Item]] = {
-      val request = buildRequest(u,  appRequest.authParams)
-      client.fetch(request) {
-        case Successful(resp) =>
-          import ItemDecoders.protobufItemDecoder
-          resp.as[Item].map(i => i.right[String])
-        case _ => Task.now(failed)
-      }.handle {
-        case _ => failed
-      }
+        client.fetch( request ) {
+          case Successful(resp) =>
+            resp.as[ByteVector].map(parserR)
+          case _ =>
+            Task.now(failed.left[R])
+        }.handle {
+          case _ => failed.left[R]
+        }
+
+      case None => Task.now(failed.left[R])
     }
-
-    Uri.fromString(s"${serverUrl}?doc=$packageName").fold( _ => Task.now(failed), runRequest)
   }
+
+  def getItem(appRequest: AppRequest): Task[Xor[String, Item]] =
+    runRequest[String,Item](
+      appRequest = appRequest,
+      failed = appRequest.packageName.value,
+      parserR = (bv => GoogleApiItemParser.parseItem(bv).right[String] )
+    )
+
+  def getCard(appRequest: AppRequest): Task[Xor[AppMissed, AppCard]] =
+    runRequest[AppMissed,AppCard](
+      appRequest = appRequest,
+      failed = AppMissed(
+        packageName = appRequest.packageName.value,
+        cause = "Could not find package!"
+      ),
+      parserR = (bv => GoogleApiItemParser.parseCard(bv).right[AppMissed])
+    )
 
 }

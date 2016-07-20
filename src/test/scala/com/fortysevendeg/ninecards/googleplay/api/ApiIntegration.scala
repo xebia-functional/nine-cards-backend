@@ -39,7 +39,9 @@ class ApiIntegration extends Specification with Specs2RouteTest {
     val client = org.http4s.client.blaze.PooledHttp1Client()
     val apiClient = new Http4sGooglePlayApiClient( getConfigValue("googleplay.api.endpoint") , client)
     val webClient = new Http4sGooglePlayWebScraper( getConfigValue("googleplay.web.endpoint") , client)
-    TaskInterpreter(apiClient, webClient)
+    val itemService = new XorTaskOrComposer[AppRequest,String,Item](apiClient.getItem, webClient.getItem)
+    val cardService = new XorTaskOrComposer[AppRequest,AppMissed, AppCard](apiClient.getCard, webClient.getCard)
+    new TaskInterpreter(itemService, cardService)
   }
 
   val route = NineCardsGooglePlayApi.googlePlayApiRoute[Task]

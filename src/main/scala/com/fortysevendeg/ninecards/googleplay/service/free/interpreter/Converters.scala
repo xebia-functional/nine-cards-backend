@@ -2,18 +2,17 @@ package com.fortysevendeg.ninecards.googleplay.service.free.interpreter
 
 import com.fortysevendeg.ninecards.googleplay.domain._
 import org.ccil.cowan.tagsoup.jaxp.SAXFactoryImpl
-import org.http4s.EntityDecoder
 import org.xml.sax.InputSource
 import scala.collection.JavaConversions._
 import scala.xml.Node
 import scala.xml.parsing.NoBindingFactoryAdapter
 import scodec.bits.ByteVector
 
-object ItemParser extends (ByteVector => Item) {
+object GoogleApiItemParser {
 
   import com.fortysevendeg.googleplay.proto.{GooglePlay => Proto}
 
-  private def javaToScala(docV2: Proto.DocV2) : Item = {
+  private def toItem(docV2: Proto.DocV2) : Item = {
     val details = docV2.getDetails
     val appDetails = details.getAppDetails
     val agg = docV2.getAggregateRating
@@ -45,13 +44,32 @@ object ItemParser extends (ByteVector => Item) {
     )
   }
 
-  def apply( byteVector: ByteVector) : Item = {
+
+  private def toAppCard(docV2: Proto.DocV2) : AppCard = {
+    val appDetails = docV2.getDetails.getAppDetails
+    AppCard(
+      packageName = docV2.getDocid,
+      title   = docV2.getTitle,
+      free = false, // TODO
+      icon = "", // TODO
+      stars = docV2.getAggregateRating.getStarRating,
+      downloads = appDetails.getNumDownloads,
+      categories = appDetails.getAppCategoryList.toList
+    )
+  }
+
+  def parseItem(byteVector: ByteVector) : Item = {
     val docV2 = Proto.ResponseWrapper.parseFrom(byteVector.toArray).getPayload.getDetailsResponse.getDocV2
-    javaToScala(docV2)
+    toItem(docV2)
+  }
+
+  def parseCard(byteVector: ByteVector) : AppCard = {
+    val docV2 = Proto.ResponseWrapper.parseFrom(byteVector.toArray).getPayload.getDetailsResponse.getDocV2
+    toAppCard(docV2)
   }
 }
 
-object ByteVectorToItemParser extends (ByteVector => Option[Item]){
+object GooglePlayPageParser {
 
   private[this] val namePF: PartialFunction[Node, String] = {
     case n if((n \\ "@itemprop").text == "name") => n.child.text.trim
@@ -88,6 +106,17 @@ object ByteVectorToItemParser extends (ByteVector => Option[Item]){
       )
     )
 
+  private[this] def simpleAppCard(title:String, docId: String, categories: List[String]): AppCard =
+    AppCard(
+      packageName = docId,
+      title = title,
+      free = false, // TODO
+      icon = "//TODO", //TODO
+      stars = 0.0, //TODO
+      downloads = "//TODO", //TODO,
+      categories = categories
+    )
+
   private val parser = new SAXFactoryImpl().newSAXParser()
   private val adapter = new NoBindingFactoryAdapter
 
@@ -97,23 +126,24 @@ object ByteVectorToItemParser extends (ByteVector => Option[Item]){
       s => adapter.loadXML(new InputSource(new java.io.ByteArrayInputStream(s.getBytes)), parser)
     )
 
-  def parseItem(document: Node): Option[Item] =
+  def parseItem(byteVector: ByteVector): Option[Item] =
+    parseItemAux(decodeNode(byteVector))
+
+  def parseItemAux(document: Node): Option[Item] =
     for { /*Option*/
       title: String <- (document \\ "div").collect(namePF).headOption
       docId: String <- (document \\ "@data-load-more-docid").collect(docIdPF).headOption
       categories: List[String] = (document \\ "a").collect(categoryPF).toList
     } yield simpleItem(title, docId, categories)
 
-  def apply(bv: ByteVector) : Option[Item] = parseItem(decodeNode(bv))
+  def parseCard(byteVector: ByteVector): Option[AppCard] =
+    parseCardAux(decodeNode(byteVector))
 
-}
-
-object ItemDecoders {
-
-  implicit def itemOptionDecoder(implicit base: EntityDecoder[ByteVector] ) : EntityDecoder[Option[Item]] =
-    base map ByteVectorToItemParser
-
-  implicit def protobufItemDecoder(implicit base: EntityDecoder[ByteVector]): EntityDecoder[Item] =
-    base map ItemParser
+  def parseCardAux(document: Node): Option[AppCard] =
+    for { /*Option*/
+      title: String <- (document \\ "div").collect(namePF).headOption
+      docId: String <- (document \\ "@data-load-more-docid").collect(docIdPF).headOption
+      categories: List[String] = (document \\ "a").collect(categoryPF).toList
+    } yield simpleAppCard(title, docId, categories)
 
 }

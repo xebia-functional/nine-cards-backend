@@ -13,6 +13,10 @@ object TestData {
     val packageObj = Package(packageName)
     val title = "Shapes & Colors Music Show"
     val categories = List("EDUCATION", "FAMILY_EDUCATION")
+
+    lazy val protobufFile = getClass.getClassLoader.getResource(packageName)
+    lazy val htmlFile     = getClass.getClassLoader.getResource(packageName + ".html")
+
   }
 
   val nonexisting = "com.package.does.not.exist"
