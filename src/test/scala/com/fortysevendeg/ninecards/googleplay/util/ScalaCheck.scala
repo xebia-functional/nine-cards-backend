@@ -22,10 +22,10 @@ object ScalaCheck {
   implicit val arbItem: Arbitrary[Item] =
     ScalaCheck_Aux.arbItem
 
-  implicit val arbAppMissed: Arbitrary[AppMissed] =
-    ScalaCheck_Aux.arbAppMissed
+  implicit val arbString: Arbitrary[String] =
+    ScalaCheck_Aux.arbString
 
-  implicit val arbGetCardAnswer: Arbitrary[Xor[AppMissed,AppCard]] =
+  implicit val arbGetCardAnswer: Arbitrary[Xor[String,AppCard]] =
     ScalaCheck_Aux.arbGetCardAnswer
 
   implicit val arbResolveAnswer: Arbitrary[Xor[String,Item]] =
@@ -48,7 +48,7 @@ object ScalaCheck_Aux {
 
   val arbAuth = implicitly[Arbitrary[GoogleAuthParams]]
 
-  val arbAppMissed = implicitly[Arbitrary[AppMissed]]
+  val arbString = implicitly[Arbitrary[String]]
 
   val arbAppCard: Arbitrary[AppCard] = Arbitrary(for {
     title <- identifier
@@ -89,8 +89,8 @@ object ScalaCheck_Aux {
 
   val arbGetCardAnswer = {
     implicit val app: Arbitrary[AppCard] = arbAppCard
-    implicit val fail: Arbitrary[AppMissed] = arbAppMissed
-    implicitly[Arbitrary[Xor[AppMissed,AppCard]]]
+    implicit val fail: Arbitrary[String] = arbString
+    implicitly[Arbitrary[Xor[String,AppCard]]]
   }
 
   val arbResolveAnswer: Arbitrary[Xor[String,Item]] = {

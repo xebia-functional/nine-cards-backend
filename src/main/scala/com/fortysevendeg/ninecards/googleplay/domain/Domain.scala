@@ -42,11 +42,6 @@ case class AppCard(
   categories: List[String]
 )
 
-case class AppMissed(
-  packageName: String,
-  cause: String
-)
-
 case class AppCardList(
   missing: List[String],
   appsCards: List[AppCard]

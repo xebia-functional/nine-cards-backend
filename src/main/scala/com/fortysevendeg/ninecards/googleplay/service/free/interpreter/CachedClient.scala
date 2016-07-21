@@ -12,9 +12,9 @@ import scalaz.concurrent.Task
 
 class CachedAppService(
   serviceName: String,
-  baseService: AppRequest => Task[Xor[AppMissed,AppCard]],
+  baseService: AppRequest => Task[Xor[String,AppCard]],
   redisPool: RedisClientPool)
-    extends RedisCachedMonadicFunction[AppRequest, Xor[AppMissed, AppCard], Task](baseService, redisPool)(extracats.taskMonad){
+    extends RedisCachedMonadicFunction[AppRequest, Xor[String, AppCard], Task](baseService, redisPool)(extracats.taskMonad){
 
   import io.circe._
   import io.circe.generic.auto._
@@ -23,7 +23,7 @@ class CachedAppService(
   case class CachedQueryKey(serviceName: String, packageName: String, locale: Option[Localization])
 
   override protected[this] type CacheKey = CachedQueryKey
-  override protected[this] type CacheVal = Xor[AppMissed, AppCard]
+  override protected[this] type CacheVal = Xor[String, AppCard]
 
   override protected[this] val encodeKey: Encoder[CacheKey] = deriveEncoder[CachedQueryKey]
   override protected[this] val decodeVal: Decoder[CacheVal] = deriveDecoder[CacheVal]

@@ -117,7 +117,7 @@ object ApiProperties extends Properties("Nine Cards Google Play API") with Scala
   def getCard(pkg: Package) =
     Get(s"/googleplay/cards/${pkg.value}") ~> addHeaders(requestHeaders)
 
-  def getCardInterpreter( fun: Package => Xor[AppMissed,AppCard]) = new (Ops ~> Id){
+  def getCardInterpreter( fun: Package => Xor[String,AppCard]) = new (Ops ~> Id){
     def apply[A](fa: Ops[A]) = fa match {
       case GetCard(_, p) => fun(p)
       case _ => failTest("Should only be making a request for an AppCard")
@@ -129,7 +129,7 @@ object ApiProperties extends Properties("Nine Cards Google Play API") with Scala
 
       implicit val interpreter = getCardInterpreter { p =>
         if (p == pkg) Xor.Right(card)
-        else Xor.Left( AppMissed( packageName = p.value, cause = ""))
+        else Xor.Left( p.value)
       }
 
       val route = NineCardsGooglePlayApi.googlePlayApiRoute[Id]
@@ -143,18 +143,17 @@ object ApiProperties extends Properties("Nine Cards Google Play API") with Scala
   property(""" GET '/googleplay/cards/{pkg}' fails with a NotFound Error when the package is not known""") =
     forAll {(unknownPackage: Package, wrongCard: AppCard) =>
 
-      val appMissed = AppMissed(packageName = unknownPackage.value, cause = "")
+      val appMissed = unknownPackage.value
 
       implicit val interpreter = getCardInterpreter{ p =>
         if (p == unknownPackage) Xor.Left(appMissed)
         else Xor.Right(wrongCard)
       }
-
       val route = NineCardsGooglePlayApi.googlePlayApiRoute[Id]
 
       getCard(unknownPackage) ~> route ~> check {
         val response = responseAs[String]
-          (status ?= NotFound) && (decode[AppMissed](response) ?= Xor.Right( appMissed))
+        (status ?= NotFound) && (response ?= appMissed)
       }
     }
 }

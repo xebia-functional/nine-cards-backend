@@ -39,7 +39,7 @@ object NineCardsGooglePlayApi {
       interpreter: GooglePlay.Ops ~> M, // todo can this be made GPO ~> TRM
       itemMarshaller: ToResponseMarshaller[M[Option[Item]]], // todo need to make the option[item] generic
       bulkMarshaller: ToResponseMarshaller[M[PackageDetails]],
-      cardMarshaller: ToResponseMarshaller[M[Xor[AppMissed,AppCard]]],
+      cardMarshaller: ToResponseMarshaller[M[Xor[String,AppCard]]],
       cardListMarshaller: ToResponseMarshaller[M[AppCardList]]
   ): Route =
     pathPrefix("googleplay") {

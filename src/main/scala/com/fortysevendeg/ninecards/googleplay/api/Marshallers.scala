@@ -31,9 +31,6 @@ object NineCardsMarshallers {
   implicit val appCardMarshaller: ToResponseMarshaller[AppCard] =
     circeJsonMarshaller(implicitly[Encoder[AppCard]])
 
-  implicit val appMissedMarshaller: ToResponseMarshaller[AppMissed] =
-    circeJsonMarshaller(implicitly[Encoder[AppMissed]])
-
   // Domain-specific marshalling and unmarshalling
   implicit object packageListUnmarshaller extends Unmarshaller[PackageList] {
     def apply(entity: HttpEntity) = {
@@ -53,13 +50,13 @@ object NineCardsMarshallers {
       o.fold(ctx.marshalTo(response))(itemMarshaller(_, ctx))
     }
 
-  implicit val xorAppMarshaller: ToResponseMarshaller[Xor[AppMissed,AppCard]] =
-    ToResponseMarshaller[Xor[AppMissed,AppCard]] { (xor, ctx) => xor match {
-      case Xor.Left(appMissed) =>
-        val im = implicitly[Marshaller[AppMissed]]
+  implicit val xorAppMarshaller: ToResponseMarshaller[Xor[String,AppCard]] =
+    ToResponseMarshaller[Xor[String,AppCard]] { (xor, ctx) => xor match {
+      case Xor.Left(cause) =>
+        val im = implicitly[Marshaller[String]]
         val response = HttpResponse(
           status = StatusCodes.NotFound,
-          entity = spray.httpx.marshalling.marshalUnsafe(appMissed)(im)
+          entity = HttpEntity(cause)
         )
         ctx.marshalTo(response)
       case Xor.Right(appCard) =>

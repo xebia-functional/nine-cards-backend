@@ -22,7 +22,7 @@ object TaskInterpreterProperties extends Properties("Task interpreter") {
     def apply(req: AppRequest) = Task.now( req.packageName.value.left )
   }
 
-  object appCardService extends (AppRequest => Task[Xor[AppMissed, AppCard]]) {
+  object appCardService extends (AppRequest => Task[Xor[String, AppCard]]) {
     def apply(req: AppRequest) = Task.fail(new RuntimeException("No App Cards"))
   }
 
