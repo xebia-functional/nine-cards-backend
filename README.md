@@ -236,11 +236,8 @@ Example of a successful Response :
 
 Example of a not-found response (the body is not empty)
 
-```json
-{ 
-  "packageName" : "com.fortysevendeg.ninecardslauncher.v1",
-  "cause" : "The app has been retired"
-}
+```
+ "The following app has been retired: com.fortysevendeg.ninecardslauncher.v1"
 ```
 
 Response codes:
@@ -250,4 +247,52 @@ Response codes:
 | `200 OK` | Successfully found `<package>` |
 | `404 Not Found` | Package not found |
 
+#### List of Cards
+
+| Endpoint | Method | Content-Type |
+|----------|--------|--------------|
+| `/googleplay/cards/` | `POST` | `application/json` |
+
+
+Example of request:
+```json
+{
+   "items":[
+      "com.fortysevendeg.ninecardslauncher",
+      "com.package.does.not.exist"
+   ]
+}
+```
+
+Example of a successful Response :
+
+```json
+{
+  "missing" : [
+      "Could not find package: com.package.does.not.exist"
+  ]
+  "appsCards" : [
+      {
+         "packageName": "com.fortysevendeg.ninecardslauncher",
+         "title" : "9 Cards Home Launcher",
+         "free": true,
+         "icon": "http://apps.icon.nine.cards",
+         "stars" : 3.14159265359,
+         "downloads" : "18357 - 25000",
+         "categories": ["PERSONALIZATION"]
+      }
+  ]
+}
+```
+
+Response codes:
+
+| Code | Reason |
+|------|--------|
+| `200 OK` | Successfully found `<package>` |
+
 ---
+
+
+
+
