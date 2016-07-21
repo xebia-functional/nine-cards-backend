@@ -44,6 +44,6 @@ case class AppCard(
 
 case class AppCardList(
   missing: List[String],
-  appsCards: List[AppCard]
+  apps: List[AppCard]
 )
 

@@ -271,7 +271,7 @@ Example of a successful Response :
   "missing" : [
       "Could not find package: com.package.does.not.exist"
   ]
-  "appsCards" : [
+  "apps" : [
       {
          "packageName": "com.fortysevendeg.ninecardslauncher",
          "title" : "9 Cards Home Launcher",

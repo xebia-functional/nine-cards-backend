@@ -191,7 +191,7 @@ object ApiProperties extends Properties("Nine Cards Google Play API") with Scala
           .getOrElse(throw new RuntimeException(s"Unable to parse response [$response]"))
         (status ?= OK) &&
         (decoded.missing.toSet ?= errors) &&
-        (decoded.appsCards.toSet ?= items)
+        (decoded.apps.toSet ?= items)
       }
     }
 
