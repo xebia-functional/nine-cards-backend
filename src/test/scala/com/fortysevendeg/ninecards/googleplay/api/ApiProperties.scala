@@ -3,6 +3,7 @@ package com.fortysevendeg.ninecards.googleplay.api
 import cats.{ Id, ~> }
 import cats.data.Xor
 import cats.syntax.option._
+import com.fortysevendeg.extracats.splitXors
 import com.fortysevendeg.ninecards.googleplay.domain._
 import com.fortysevendeg.ninecards.googleplay.service.free.algebra.GooglePlay._
 import io.circe.generic.auto._
@@ -29,6 +30,9 @@ object ApiProperties extends Properties("Nine Cards Google Play API") with Scala
   )
 
   import com.fortysevendeg.ninecards.googleplay.util.ScalaCheck._
+
+  def splitFind[K,V]( database: Map[K,V], keys: List[K]) : (List[K], List[V]) =
+    splitXors[K,V](keys.map( k => database.get(k).toRightXor(k)) )
 
   def resolveOne(pkg: Package) =
     Get(s"/googleplay/package/${pkg.value}") ~> addHeaders(requestHeaders)
@@ -90,14 +94,10 @@ object ApiProperties extends Properties("Nine Cards Google Play API") with Scala
       val errors = errs.map(_.value).toSet
       val items = succs.map(i => database(i)).toSet
 
-      implicit val interpreter: Ops ~> Id = resolveManyInterpreter { case PackageList(packages) =>
-        val fetched: List[Xor[String, Item]] = packages.map{ i =>
-          database.get(Package(i)).toRightXor(i)
-        }
-
-        fetched.foldLeft(PackageDetails(Nil, Nil)) { case (PackageDetails(errors, items), next) =>
-          next.fold(s => PackageDetails(s :: errors, items), i => PackageDetails(errors, i :: items))
-        }
+      implicit val interpreter: Ops ~> Id = resolveManyInterpreter {
+        case PackageList(packages) =>
+          val (errors, items) = splitFind[Package,Item](database, packages.map(Package.apply))
+          PackageDetails(errors.map(_.value), items)
       }
 
       val route = NineCardsGooglePlayApi.googlePlayApiRoute[Id]
@@ -156,4 +156,43 @@ object ApiProperties extends Properties("Nine Cards Google Play API") with Scala
         (status ?= NotFound) && (response ?= appMissed)
       }
     }
+
+  def getCardListInterpreter(fun: PackageList => AppCardList) = new (Ops ~> Id){
+    def apply[A](fa: Ops[A]) = fa match {
+      case GetCardList(_, ps) => fun(ps)
+      case _ => failTest("Should only be making a request for an AppCard")
+    }
+  }
+
+  def getCardList(pkg: PackageList) =
+    Post(s"/googleplay/cards", pkg) ~> addHeaders(requestHeaders)
+
+  property(""" POST  '/googleplay/cards/{pkg}' fails with a NotFound Error when the package is not known""") =
+    forAll(genPick[Package, AppCard]) { (data: (Map[Package, AppCard], List[Package], List[Package])) =>
+
+      val (database, succs, errs) = data
+
+      //order doesn't matter
+      val errors = errs.map(_.value).toSet
+      val items = succs.map(i => database(i)).toSet
+
+      implicit val interpreter: Ops ~> Id = getCardListInterpreter {
+        case PackageList(packages) =>
+          val (errors, items) = splitFind[Package,AppCard](database, packages.map(Package.apply))
+          AppCardList(errors.map(_.value), items)
+      }
+      val route = NineCardsGooglePlayApi.googlePlayApiRoute[Id]
+
+      val allPackages = (succs ++ errs).map(_.value)
+
+      getCardList( PackageList(allPackages)) ~> route ~> check {
+        val response = responseAs[String]
+        val decoded = decode[AppCardList](response)
+          .getOrElse(throw new RuntimeException(s"Unable to parse response [$response]"))
+        (status ?= OK) &&
+        (decoded.missing.toSet ?= errors) &&
+        (decoded.appsCards.toSet ?= items)
+      }
+    }
+
 }

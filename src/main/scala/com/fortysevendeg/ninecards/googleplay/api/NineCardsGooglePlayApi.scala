@@ -43,11 +43,11 @@ object NineCardsGooglePlayApi {
       cardListMarshaller: ToResponseMarshaller[M[AppCardList]]
   ): Route =
     pathPrefix("googleplay") {
-      requestHeaders { (token, androidId, localizationOption) =>
+      requestHeaders { authParams =>
         get {
           path("package" / Segment) { packageName =>
             complete {
-              googlePlayService.resolve(GoogleAuthParams(androidId, token, localizationOption), Package(packageName)).foldMap(interpreter)
+              googlePlayService.resolve( authParams, Package(packageName)).foldMap(interpreter)
             }
           }
         } ~
@@ -55,14 +55,23 @@ object NineCardsGooglePlayApi {
           path("packages" / "detailed") {
             entity(as[PackageList]) { req =>
               complete {
-                googlePlayService.resolveMany(GoogleAuthParams(androidId, token, localizationOption), req).foldMap(interpreter)
+                googlePlayService.resolveMany(authParams, req).foldMap(interpreter)
               }
             }
           }
         } ~
-        pathPrefix("cards" / Segment) { packageName =>
-          complete {
-            googlePlayService.getCard( GoogleAuthParams(androidId, token, localizationOption), Package(packageName)).foldMap(interpreter)
+        pathPrefix("cards") {
+          pathEndOrSingleSlash {
+            (post  & entity(as[PackageList])){ packageList =>
+              complete {
+                googlePlayService.getCardList( authParams, packageList).foldMap(interpreter)
+              }
+            }
+          } ~
+          pathPrefix(Segment) { packageName =>
+            complete {
+              googlePlayService.getCard( authParams, Package(packageName)).foldMap(interpreter)
+            }
           }
         }
       }
