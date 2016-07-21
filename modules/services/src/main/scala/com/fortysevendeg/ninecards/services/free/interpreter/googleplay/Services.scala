@@ -29,7 +29,7 @@ class Services(config: Configuration) {
     )
   }
 
-  def resolveOne(packageName: String, auth: AuthParams): Task[UnresolvedApp Xor AppInfo] = {
+  def resolveOne(packageName: String, auth: AuthParams): Task[String Xor AppInfo] = {
     val uri = Uri(
       scheme    = Option(config.protocol.ci),
       authority = Option(authority),
@@ -37,7 +37,7 @@ class Services(config: Configuration) {
     )
 
     val request = Request(Method.GET, uri = uri, headers = authHeaders(auth))
-    client.fetchAs[UnresolvedApp Xor AppInfo](request)
+    client.fetchAs[String Xor AppInfo](request)
   }
 
   def resolveMany(packageNames: Seq[String], auth: AuthParams): Task[AppsInfo] = {

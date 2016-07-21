@@ -59,6 +59,8 @@ trait MockGoogleApiServer extends MockServerService {
 
   import GoogleApiServerResponse._
 
+  override val mockServerPort = 9999
+
   val getTokenInfoPath = "/oauth2/v3/tokeninfo"
   val tokenIdParameterName = "id_token"
 

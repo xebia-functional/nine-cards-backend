@@ -25,10 +25,5 @@ object GooglePlay {
     categories: List[String]
   )
 
-  case class UnresolvedApp(
-    packageName: String,
-    cause: String
-  )
-
 }
 

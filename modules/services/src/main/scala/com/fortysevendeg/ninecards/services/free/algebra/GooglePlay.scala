@@ -9,14 +9,14 @@ object GooglePlay {
   sealed trait Ops[A]
 
   case class Resolve(packageName: String, auth: AuthParams)
-    extends Ops[UnresolvedApp Xor AppInfo]
+    extends Ops[String Xor AppInfo]
 
   case class ResolveMany(packageNames: Seq[String], auth: AuthParams)
     extends Ops[AppsInfo]
 
   class Services[F[_]](implicit I: Inject[Ops, F]) {
 
-    def resolve(packageName: String, auth: AuthParams): Free[F, UnresolvedApp Xor AppInfo] =
+    def resolve(packageName: String, auth: AuthParams): Free[F, String Xor AppInfo] =
       Free.inject[Ops, F](Resolve(packageName, auth))
 
     def resolveMany(packageNames: Seq[String], auth: AuthParams): Free[F, AppsInfo] =

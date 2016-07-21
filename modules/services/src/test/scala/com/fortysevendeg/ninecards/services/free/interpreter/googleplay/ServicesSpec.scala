@@ -13,6 +13,8 @@ trait MockGooglePlayServer extends MockServerService {
 
   import TestData._
 
+  override val mockServerPort = 9998
+
   mockServer.when(
     request
       .withMethod("GET")
@@ -84,7 +86,7 @@ class GooglePlayServicesSpec
 
     "return the App object when a valid package name is provided" in {
       val response = services.resolveOne(appsNames.italy, auth.params)
-      response.attemptRun should be_\/-[UnresolvedApp Xor AppInfo].which {
+      response.attemptRun should be_\/-[String Xor AppInfo].which {
         content ⇒ content should beXorRight[AppInfo]
       }
     }

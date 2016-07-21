@@ -2,7 +2,6 @@ package com.fortysevendeg.ninecards.processes.converters
 
 import java.sql.Timestamp
 
-import com.fortysevendeg.ninecards.processes.domain._
 import com.fortysevendeg.ninecards.processes.messages.InstallationsMessages._
 import com.fortysevendeg.ninecards.processes.messages.SharedCollectionMessages._
 import com.fortysevendeg.ninecards.processes.messages.UserMessages.LoginResponse

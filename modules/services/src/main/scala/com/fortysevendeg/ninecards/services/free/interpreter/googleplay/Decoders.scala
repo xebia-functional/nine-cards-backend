@@ -11,8 +11,8 @@ import org.http4s.circe._
 
 object Decoders {
 
-  implicit val resolveOneEntityDecoder: EntityDecoder[Xor[UnresolvedApp, AppInfo]] =
-    jsonOf[UnresolvedApp Xor AppInfo](XorDecoder.xorDecoder[UnresolvedApp, AppInfo])
+  implicit val resolveOneEntityDecoder: EntityDecoder[Xor[String, AppInfo]] =
+    jsonOf[String Xor AppInfo](XorDecoder.xorDecoder[String, AppInfo])
 
   implicit val appsCardsEntityDecoder: EntityDecoder[AppsInfo] =
     jsonOf[AppsInfo](deriveDecoder[AppsInfo])
