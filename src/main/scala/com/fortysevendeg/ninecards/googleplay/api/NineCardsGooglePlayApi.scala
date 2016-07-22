@@ -68,7 +68,7 @@ object NineCardsGooglePlayApi {
               }
             }
           } ~
-          pathPrefix(Segment) { packageName =>
+          (pathPrefix(Segment) & get) { packageName =>
             complete {
               googlePlayService.getCard( authParams, Package(packageName)).foldMap(interpreter)
             }
