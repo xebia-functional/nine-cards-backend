@@ -59,12 +59,17 @@ class ConvertersSpec extends Specification with Specs2RouteTest {
     "result in an AppCard to send to the client" in {
       val doc = readHtmlFile() 
 
-      val parsedAppCard = GooglePlayPageParser.parseCardAux(doc)
+      val card = GooglePlayPageParser.parseCardAux(doc)
         .getOrElse(failTest("AppCard should parse correctly"))
 
-      parsedAppCard.categories must_=== fisherPrice.categories
-      parsedAppCard.packageName must_=== fisherPrice.packageName
-      parsedAppCard.title must_=== fisherPrice.title
+      card.categories must_=== fisherPrice.categories
+      card.packageName must_=== fisherPrice.packageName
+      card.title must_=== fisherPrice.title
+      card.free must_=== true
+      card.icon must_=== "http://lh4.ggpht.com/Pb8iLNmi9vHOwB-39TKe-kn4b_uU-E6rn7zSiFz6jC0RlaEQeNCcBh2MueyslcQ3mj2H"
+      card.stars must_=== 4.069400310516357
+      card.downloads must_=== "1.000.000 - 5.000.000"
+      card.categories must_=== List("EDUCATION", "FAMILY_EDUCATION")
     }
 
   }

@@ -69,53 +69,9 @@ object GoogleApiItemParser {
   }
 }
 
+
+
 object GooglePlayPageParser {
-
-  private[this] val namePF: PartialFunction[Node, String] = {
-    case n if((n \\ "@itemprop").text == "name") => n.child.text.trim
-  }
-
-  private[this] val docIdPF: PartialFunction[Node, String] = {
-    case n => n.text
-  }
-
-  private[this] val CategoryHrefRegex = "/store/apps/category/(\\w+)".r
-
-  private def spanName(n: Node): String = ((n \\ "span") \\ "@itemprop").text
-
-  private[this] val categoryPF: PartialFunction[Node, String] = {
-    case n if (spanName(n) == "genre") =>
-      val href = (n \\ "@href").text
-      href match {
-        case CategoryHrefRegex(path) => path
-      }
-  }
-
-  private[this] def simpleItem(title:String, docId: String, categories: List[String]): Item =
-    Item(
-      DocV2(
-        title = title,
-        creator = "",
-        docid = docId,
-        details = Details(
-          appDetails = AppDetails(appCategory = categories, numDownloads = "", permission = Nil)
-        ),
-        aggregateRating = AggregateRating.Zero,
-        image = Nil,
-        offer = Nil
-      )
-    )
-
-  private[this] def simpleAppCard(title:String, docId: String, categories: List[String]): AppCard =
-    AppCard(
-      packageName = docId,
-      title = title,
-      free = false, // TODO
-      icon = "//TODO", //TODO
-      stars = 0.0, //TODO
-      downloads = "//TODO", //TODO,
-      categories = categories
-    )
 
   private val parser = new SAXFactoryImpl().newSAXParser()
   private val adapter = new NoBindingFactoryAdapter
@@ -126,24 +82,135 @@ object GooglePlayPageParser {
       s => adapter.loadXML(new InputSource(new java.io.ByteArrayInputStream(s.getBytes)), parser)
     )
 
+  implicit class NodeOps(node: Node) {
+
+    def getAttribute(key: String) : String = (node \\ s"@$key").text
+
+    def isProperty(key: String) : Boolean = getAttribute("itemprop") == key
+
+    def isClass(key: String) : Boolean = getAttribute("class") == key
+  }
+
+  class NodeWrapper(doc: Node) {
+
+    def getTitle(): Seq[String] =
+      for /*Seq*/ {
+        n <- doc \\ "div"
+        if n.isProperty("name")
+        name = n.child.text.trim
+      } yield name
+
+    def getDownloads() : Seq[String] =
+      for /*Seq*/ {
+        n <- doc \\ "div"
+        if n.isProperty("numDownloads")
+        if n.isClass("content")
+      } yield n.text.trim
+
+    def getStars() : Seq[Double] =
+      for /*Seq*/ {
+        n <- doc \\ "meta"
+        if n.isProperty("ratingValue")
+        stars = n.getAttribute("content")
+      } yield stars.toDouble
+
+    def getDocId(): Seq[String] =
+      for /*Seq*/ {
+        n <- doc \\ "@data-load-more-docid"
+      } yield n.text
+
+    /*We exclude from the URL the portions after the equals symbol, which are parameters
+     to choose smaller icons */
+    val IconSrcRegex = "//([^=]+)=??.*".r
+
+    def getIcon(): Seq[String] =
+      for /*Seq*/ {
+        n <- doc \\ "img"
+        if n.isProperty("image") 
+        url = n.getAttribute("src") match {
+          case IconSrcRegex(uri) => uri
+        }
+      } yield s"http://$url"
+
+
+    val CategoryHrefRegex = "/store/apps/category/(\\w+)".r
+
+    def getCategories(): Seq[String] =
+      for /*Seq*/ {
+        n <- doc \\ "a"
+        if n.isClass("document-subtitle category")
+        c:String = n.getAttribute("href") match {
+          case CategoryHrefRegex(cat) => cat
+        }
+      } yield c
+
+    def isFree(): Seq[Boolean] =
+      for /*Seq*/  {
+        n <- doc \\ "meta"
+        if n.isProperty("price")
+        price = n.getAttribute("content").trim
+      } yield price == "0" 
+
+    def parseCardAux(): Seq[AppCard] =
+      for { /*Option*/
+        docId <- getDocId()
+        title <- getTitle()
+        free <- isFree()
+        icon <- getIcon()
+        stars <- getStars()
+        downloads <- getDownloads()
+      } yield
+        AppCard(
+          packageName = docId,
+          title = title,
+          free = free,
+          icon = icon,
+          stars = stars,
+          downloads = downloads,
+          categories = getCategories().toList
+        )
+
+    def parseCard(): Option[AppCard] = parseCardAux.headOption
+
+    def parseItem(): Option[Item] =
+      for { /*Option*/
+        title: String <- getTitle().headOption
+        docId: String <- getDocId().headOption
+        downloads <- getDownloads().headOption
+        categories: List[String] = getCategories().toList
+      } yield
+        Item(
+          DocV2(
+            title = title,
+            creator = "",
+            docid = docId,
+            details = Details( appDetails = AppDetails(
+              appCategory = categories,
+              numDownloads = downloads,
+              permission = Nil
+            ) ),
+            aggregateRating = AggregateRating.Zero,
+            image = Nil,
+            offer = Nil
+          )
+        )
+
+  }
+
+
   def parseItem(byteVector: ByteVector): Option[Item] =
     parseItemAux(decodeNode(byteVector))
 
   def parseItemAux(document: Node): Option[Item] =
-    for { /*Option*/
-      title: String <- (document \\ "div").collect(namePF).headOption
-      docId: String <- (document \\ "@data-load-more-docid").collect(docIdPF).headOption
-      categories: List[String] = (document \\ "a").collect(categoryPF).toList
-    } yield simpleItem(title, docId, categories)
+    new NodeWrapper(document).parseItem()
 
   def parseCard(byteVector: ByteVector): Option[AppCard] =
     parseCardAux(decodeNode(byteVector))
 
   def parseCardAux(document: Node): Option[AppCard] =
-    for { /*Option*/
-      title: String <- (document \\ "div").collect(namePF).headOption
-      docId: String <- (document \\ "@data-load-more-docid").collect(docIdPF).headOption
-      categories: List[String] = (document \\ "a").collect(categoryPF).toList
-    } yield simpleAppCard(title, docId, categories)
+    new NodeWrapper(document).parseCard()
 
 }
+
+
+
