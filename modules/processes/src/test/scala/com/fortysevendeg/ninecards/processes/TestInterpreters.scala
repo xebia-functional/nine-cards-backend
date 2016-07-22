@@ -7,6 +7,6 @@ import com.fortysevendeg.ninecards.services.free.interpreter.Interpreters._
 trait TestInterpreters {
 
   val testInterpreters: NineCardsServices ~> Id =
-    idInterpreters.dBResultInterpreter or idInterpreters.googleAPIServicesInterpreter
+    idInterpreters.dBResultInterpreter or idInterpreters.googleApiInterpreter
 
 }

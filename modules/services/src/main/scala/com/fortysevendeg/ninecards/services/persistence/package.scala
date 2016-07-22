@@ -1,8 +1,7 @@
 package com.fortysevendeg.ninecards.services
 
 import com.fortysevendeg.ninecards.services.common.NineCardsConfig
-import doobie.imports._
-
+import doobie.imports.{ DriverManagerTransactor, ConnectionIO, Transactor }
 import scalaz.Scalaz._
 import scalaz.concurrent.Task
 

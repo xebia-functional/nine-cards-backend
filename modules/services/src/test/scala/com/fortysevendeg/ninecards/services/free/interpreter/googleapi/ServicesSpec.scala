@@ -1,8 +1,7 @@
-package com.fortysevendeg.ninecards.services.interpreter.impl
+package com.fortysevendeg.ninecards.services.free.interpreter.googleapi
 
 import cats.data.Xor
 import com.fortysevendeg.ninecards.services.free.domain.{ TokenInfo, WrongTokenInfo }
-import com.fortysevendeg.ninecards.services.free.interpreter.impl._
 import com.fortysevendeg.ninecards.services.utils.MockServerService
 import org.mockserver.model.HttpRequest._
 import org.mockserver.model.HttpResponse._
@@ -10,7 +9,7 @@ import org.mockserver.model.HttpStatusCode
 import org.specs2.matcher.{ DisjunctionMatchers, XorMatchers }
 import org.specs2.mutable.Specification
 
-trait GoogleApiServerResponse {
+object GoogleApiServerResponse {
 
   val getTokenInfoValidResponse =
     """
@@ -56,9 +55,11 @@ trait GoogleApiServerResponse {
 
 }
 
-trait MockGoogleApiServer
-  extends MockServerService
-  with GoogleApiServerResponse {
+trait MockGoogleApiServer extends MockServerService {
+
+  import GoogleApiServerResponse._
+
+  override val mockServerPort = 9999
 
   val getTokenInfoPath = "/oauth2/v3/tokeninfo"
   val tokenIdParameterName = "id_token"
@@ -122,10 +123,10 @@ trait MockGoogleApiServer
 class GoogleApiServicesSpec
   extends Specification
   with DisjunctionMatchers
-  with XorMatchers
-  with MockGoogleApiServer {
+  with MockGoogleApiServer
+  with XorMatchers {
 
-  implicit val googleApiConfiguration = GoogleApiConfiguration(
+  implicit val googleApiConfiguration = Configuration(
     protocol              = "http",
     host                  = "localhost",
     port                  = Option(mockServerPort),
@@ -133,7 +134,7 @@ class GoogleApiServicesSpec
     tokenIdQueryParameter = tokenIdParameterName
   )
 
-  val googleApiServices = GoogleApiServices.googleApiServices
+  val googleApiServices = Services.services
 
   "getTokenInfo" should {
     "return the TokenInfo object when a valid token id is provided" in {

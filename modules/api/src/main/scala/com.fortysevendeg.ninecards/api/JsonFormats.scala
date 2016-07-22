@@ -4,7 +4,6 @@ import cats.data.Xor
 import com.fortysevendeg.ninecards.api.messages.InstallationsMessages._
 import com.fortysevendeg.ninecards.api.messages.SharedCollectionMessages._
 import com.fortysevendeg.ninecards.api.messages.UserMessages._
-import com.fortysevendeg.ninecards.processes.domain._
 import io.circe.{ Decoder, Encoder, Json }
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
@@ -41,8 +40,6 @@ trait JsonFormats
     }
 
   }
-
-  implicit val googlePlayAppFormat = jsonFormat7(GooglePlayApp)
 
   implicit val apiLoginRequestFormat = jsonFormat3(ApiLoginRequest)
 

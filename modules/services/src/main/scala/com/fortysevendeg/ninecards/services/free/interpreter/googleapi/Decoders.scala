@@ -1,17 +1,16 @@
-package com.fortysevendeg.ninecards.services.free.interpreter.impl
+package com.fortysevendeg.ninecards.services.free.interpreter.googleapi
 
 import cats.data.Xor
+import com.fortysevendeg.ninecards.services.common.XorDecoder
 import com.fortysevendeg.ninecards.services.free.domain.{ TokenInfo, WrongTokenInfo }
 import io.circe.Decoder
 import io.circe.generic.auto._
 import org.http4s.circe._
 
-trait GoogleApiDecoders {
+object Decoders {
 
   implicit val tokenInfoDecoder: Decoder[WrongTokenInfo Xor TokenInfo] =
-    Decoder[TokenInfo].map(t ⇒ Xor.right(t)).or(
-      Decoder[WrongTokenInfo].map(w ⇒ Xor.left(w))
-    )
+    XorDecoder.xorDecoder[WrongTokenInfo, TokenInfo]
 
   implicit val tokenInfoEntityDecoder = jsonOf[WrongTokenInfo Xor TokenInfo](tokenInfoDecoder)
 

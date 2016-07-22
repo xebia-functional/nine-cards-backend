@@ -1,31 +1,30 @@
 package com.fortysevendeg.ninecards.services.persistence
 
-import doobie.imports._
+import doobie.imports.{ Composite, ConnectionIO, Query, Query0, Update, Update0 }
 import shapeless.HNil
-
 import scalaz.Foldable
 
-class Persistence[K](val supportsSelectForUpdate: Boolean = true) {
+class Persistence[K: Composite](val supportsSelectForUpdate: Boolean = true) {
 
-  def generateQuery(sql: String)(implicit K: Composite[K]): Query0[K] =
+  def generateQuery(sql: String): Query0[K] =
     Query[HNil, K](sql).toQuery0(HNil)
 
-  def generateQuery[A: Composite](sql: String, values: A)(implicit K: Composite[K]): Query0[K] =
+  def generateQuery[A: Composite](sql: String, values: A): Query0[K] =
     Query[A, K](sql).toQuery0(values)
 
   def generateUpdateWithGeneratedKeys[A: Composite](sql: String, values: A): Update0 =
     Update[A](sql).toUpdate0(values)
 
-  def fetchList(sql: String)(implicit K: Composite[K]): ConnectionIO[List[K]] =
+  def fetchList(sql: String): ConnectionIO[List[K]] =
     Query[HNil, K](sql).toQuery0(HNil).to[List]
 
-  def fetchList[A: Composite](sql: String, values: A)(implicit K: Composite[K]): ConnectionIO[List[K]] =
+  def fetchList[A: Composite](sql: String, values: A): ConnectionIO[List[K]] =
     Query[A, K](sql).to[List](values)
 
-  def fetchOption[A: Composite](sql: String, values: A)(implicit K: Composite[K]): ConnectionIO[Option[K]] =
+  def fetchOption[A: Composite](sql: String, values: A): ConnectionIO[Option[K]] =
     Query[A, K](sql).option(values)
 
-  def fetchUnique[A: Composite](sql: String, values: A)(implicit K: Composite[K]): ConnectionIO[K] =
+  def fetchUnique[A: Composite](sql: String, values: A): ConnectionIO[K] =
     Query[A, K](sql).unique(values)
 
   def update(sql: String): ConnectionIO[Int] = Update[HNil](sql).run(HNil)
@@ -50,5 +49,5 @@ class Persistence[K](val supportsSelectForUpdate: Boolean = true) {
 
 object Persistence {
 
-  implicit def persistence[K]: Persistence[K] = new Persistence
+  implicit def persistence[K: Composite]: Persistence[K] = new Persistence
 }
