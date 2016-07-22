@@ -66,11 +66,11 @@ class Http4sGooglePlayApiClient(serverUrl: String, client: Client) {
     parserR = (bv => GoogleApiItemParser.parseItem(bv).right[String] )
   )
 
-  def getCard(appRequest: AppRequest): Task[Xor[String, AppCard]] =
-    runRequest[String,AppCard](
-      appRequest = appRequest,
-      failed = "Could not find package!",
-      parserR = (bv => GoogleApiItemParser.parseCard(bv).right[String])
-    )
+  def getCard(appRequest: AppRequest): Task[Xor[InfoError, AppCard]] = {
+    val failed = InfoError( s"Could not find app: ${appRequest.packageName.value}")
+    runRequest[InfoError,AppCard]( appRequest, failed, {bv =>
+      GoogleApiItemParser.parseCard(bv).right[InfoError]
+    })
+  }
 
 }

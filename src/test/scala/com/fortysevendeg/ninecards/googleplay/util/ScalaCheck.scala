@@ -25,7 +25,7 @@ object ScalaCheck {
   implicit val arbString: Arbitrary[String] =
     ScalaCheck_Aux.arbString
 
-  implicit val arbGetCardAnswer: Arbitrary[Xor[String,AppCard]] =
+  implicit val arbGetCardAnswer: Arbitrary[Xor[InfoError,AppCard]] =
     ScalaCheck_Aux.arbGetCardAnswer
 
   implicit val arbResolveAnswer: Arbitrary[Xor[String,Item]] =
@@ -90,7 +90,7 @@ object ScalaCheck_Aux {
   val arbGetCardAnswer = {
     implicit val app: Arbitrary[AppCard] = arbAppCard
     implicit val fail: Arbitrary[String] = arbString
-    implicitly[Arbitrary[Xor[String,AppCard]]]
+    implicitly[Arbitrary[Xor[InfoError,AppCard]]]
   }
 
   val arbResolveAnswer: Arbitrary[Xor[String,Item]] = {

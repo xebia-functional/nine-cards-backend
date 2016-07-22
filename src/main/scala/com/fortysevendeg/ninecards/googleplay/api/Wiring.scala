@@ -3,7 +3,7 @@ package com.fortysevendeg.ninecards.googleplay.api
 import cats.~>
 import com.fortysevendeg.extracats.XorTaskOrComposer
 import com.fortysevendeg.ninecards.config.NineCardsConfig._
-import com.fortysevendeg.ninecards.googleplay.domain.{AppRequest, Item, AppCard}
+import com.fortysevendeg.ninecards.googleplay.domain.{AppCard, AppRequest, InfoError, Item}
 import com.fortysevendeg.ninecards.googleplay.service.free.algebra.GooglePlay
 import com.fortysevendeg.ninecards.googleplay.service.free.interpreter._
 import com.redis.RedisClientPool
@@ -24,7 +24,7 @@ object Wiring {
       new CachedItemService( "apiClient_item", apiClient.getItem, redisPool),
       new CachedItemService( "webScrape_item", webClient.getItem, redisPool)
     )
-    val appService = new XorTaskOrComposer[AppRequest,String,AppCard](
+    val appService = new XorTaskOrComposer[AppRequest,InfoError,AppCard](
       new CachedAppService( "apiClient_app", apiClient.getCard, redisPool),
       new CachedAppService( "webScrape_app", webClient.getCard, redisPool)
     )

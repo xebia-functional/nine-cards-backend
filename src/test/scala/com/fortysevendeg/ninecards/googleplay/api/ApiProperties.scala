@@ -44,6 +44,27 @@ object ApiProperties extends Properties("Nine Cards Google Play API") with Scala
     }
   }
 
+  def resolveManyInterpreter(fun: PackageList => PackageDetails): Ops ~> Id = new (Ops ~> Id){
+    def apply[A](fa: Ops[A]) = fa match {
+      case ResolveMany(_, packageList) => fun(packageList)
+      case _ => failTest("Should only be making a bulk request")
+    }
+  }
+
+  def getCardInterpreter( fun: Package => Xor[InfoError,AppCard]) = new (Ops ~> Id){
+    def apply[A](fa: Ops[A]) = fa match {
+      case GetCard(_, p) => fun(p)
+      case _ => failTest("Should only be making a request for an AppCard")
+    }
+  }
+
+  def getCardListInterpreter(fun: PackageList => AppCardList) = new (Ops ~> Id){
+    def apply[A](fa: Ops[A]) = fa match {
+      case GetCardList(_, ps) => fun(ps)
+      case _ => failTest("Should only be making a request for an AppCard")
+    }
+  }
+
   property("The ResolveOne endpoint returns the correct package name for a Google Play Store app") =
     forAll { (pkg: Package, item: Item) =>
 
@@ -78,13 +99,6 @@ object ApiProperties extends Properties("Nine Cards Google Play API") with Scala
   def resolveMany(packageList: PackageList) =
     Post("/googleplay/packages/detailed", packageList) ~> addHeaders(requestHeaders)
 
-  def resolveManyInterpreter(fun: PackageList => PackageDetails): Ops ~> Id = new (Ops ~> Id){
-    def apply[A](fa: Ops[A]) = fa match {
-      case ResolveMany(_, packageList) => fun(packageList)
-      case _ => failTest("Should only be making a bulk request")
-    }
-  }
-
   property("gives the package details for the known packages and highlights the errors") =
     forAll(genPick[Package, Item]) { (data: (Map[Package, Item], List[Package], List[Package])) =>
 
@@ -117,19 +131,12 @@ object ApiProperties extends Properties("Nine Cards Google Play API") with Scala
   def getCard(pkg: Package) =
     Get(s"/googleplay/cards/${pkg.value}") ~> addHeaders(requestHeaders)
 
-  def getCardInterpreter( fun: Package => Xor[String,AppCard]) = new (Ops ~> Id){
-    def apply[A](fa: Ops[A]) = fa match {
-      case GetCard(_, p) => fun(p)
-      case _ => failTest("Should only be making a request for an AppCard")
-    }
-  }
-
   property(""" GET '/googleplay/cards/{pkg}' returns a valid card for an app"""") =
     forAll { (pkg: Package, card: AppCard) =>
 
       implicit val interpreter = getCardInterpreter { p =>
         if (p == pkg) Xor.Right(card)
-        else Xor.Left( p.value)
+        else Xor.Left( InfoError(p.value))
       }
 
       val route = NineCardsGooglePlayApi.googlePlayApiRoute[Id]
@@ -143,26 +150,19 @@ object ApiProperties extends Properties("Nine Cards Google Play API") with Scala
   property(""" GET '/googleplay/cards/{pkg}' fails with a NotFound Error when the package is not known""") =
     forAll {(unknownPackage: Package, wrongCard: AppCard) =>
 
-      val appMissed = unknownPackage.value
+      val infoError = InfoError(unknownPackage.value)
 
       implicit val interpreter = getCardInterpreter{ p =>
-        if (p == unknownPackage) Xor.Left(appMissed)
+        if (p == unknownPackage) Xor.Left(infoError)
         else Xor.Right(wrongCard)
       }
       val route = NineCardsGooglePlayApi.googlePlayApiRoute[Id]
 
       getCard(unknownPackage) ~> route ~> check {
         val response = responseAs[String]
-        (status ?= NotFound) && (response ?= appMissed)
+        (status ?= NotFound) && (decode[InfoError](response) ?= Xor.Right(infoError) )
       }
     }
-
-  def getCardListInterpreter(fun: PackageList => AppCardList) = new (Ops ~> Id){
-    def apply[A](fa: Ops[A]) = fa match {
-      case GetCardList(_, ps) => fun(ps)
-      case _ => failTest("Should only be making a request for an AppCard")
-    }
-  }
 
   def getCardList(pkg: PackageList) =
     Post(s"/googleplay/cards", pkg) ~> addHeaders(requestHeaders)

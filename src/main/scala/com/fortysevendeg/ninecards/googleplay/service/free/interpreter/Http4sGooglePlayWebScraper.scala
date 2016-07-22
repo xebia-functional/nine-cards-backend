@@ -2,7 +2,7 @@ package com.fortysevendeg.ninecards.googleplay.service.free.interpreter
 
 import cats.data.Xor
 import cats.syntax.xor._
-import com.fortysevendeg.ninecards.googleplay.domain.{AppRequest, AppCard, Localization, Item}
+import com.fortysevendeg.ninecards.googleplay.domain._
 import org.http4s.{Method, Request, Response, Uri}
 import org.http4s.Status.ResponseClass.Successful
 import org.http4s.client.Client
@@ -51,11 +51,12 @@ class Http4sGooglePlayWebScraper(serverUrl: String, client: Client) {
     })
   }
 
-  def getCard(appRequest: AppRequest): Task[Xor[String, AppCard]] = {
-    lazy val failed: String = s"Could not find the Package ${appRequest.packageName.value}"
-    runRequest[String, AppCard](appRequest, failed, { bv =>
+  def getCard(appRequest: AppRequest): Task[Xor[InfoError, AppCard]] = {
+    lazy val errorMess = s"Could not find the Package ${appRequest.packageName.value}"
+    lazy val failed: InfoError = InfoError(message = errorMess)
+    runRequest[InfoError, AppCard](appRequest, failed, { bv =>
       GooglePlayPageParser.parseCard(bv)
-        .fold(failed.left[AppCard])(i => i.right[String])
+        .fold(failed.left[AppCard])(i => i.right[InfoError])
     })
   }
 }

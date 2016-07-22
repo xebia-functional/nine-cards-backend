@@ -78,7 +78,7 @@ class TaskInterpreterIntegration extends Specification with TaskMatchers {
   // Most of this should be moved to a wiring module, with the cache.
   val interpreter = {
     val itemService = new XorTaskOrComposer[AppRequest,String,Item](apiClient.getItem, webClient.getItem)
-    val cardService = new XorTaskOrComposer[AppRequest,String, AppCard](apiClient.getCard, webClient.getCard)
+    val cardService = new XorTaskOrComposer[AppRequest,InfoError, AppCard](apiClient.getCard, webClient.getCard)
     new TaskInterpreter(itemService, cardService)
   }
 
@@ -123,7 +123,7 @@ class TaskInterpreterIntegration extends Specification with TaskMatchers {
           ( _ => Task.fail(new RuntimeException("Failed request")) )
         val itemService: AppRequest => Task[Xor[String,Item]] =
           new XorTaskOrComposer( badApiRequest, webClient.getItem)
-        val appCardService: AppRequest => Task[Xor[String, AppCard]] =
+        val appCardService: AppRequest => Task[Xor[InfoError, AppCard]] =
           (_ => Task.fail( new RuntimeException("Should not ask for App Card")))
         new TaskInterpreter( itemService, appCardService)
       }

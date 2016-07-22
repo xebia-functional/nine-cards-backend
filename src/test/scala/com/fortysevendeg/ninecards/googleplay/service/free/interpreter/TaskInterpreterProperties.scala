@@ -22,7 +22,7 @@ object TaskInterpreterProperties extends Properties("Task interpreter") {
     def apply(req: AppRequest) = Task.now( req.packageName.value.left )
   }
 
-  object appCardService extends (AppRequest => Task[Xor[String, AppCard]]) {
+  object appCardService extends (AppRequest => Task[Xor[InfoError, AppCard]]) {
     def apply(req: AppRequest) = Task.fail(new RuntimeException("No App Cards"))
   }
 
@@ -125,9 +125,7 @@ object TaskInterpreterProperties extends Properties("Task interpreter") {
 
       val interpreter = itemTaskInterpreter(failingRequest, failingRequest)
 
-      val response = interpreter(request)
-
-      response.run ?= None
+      interpreter(request).run ?= None
     }
 
   property("Unsuccessful API and web requests when working with bulk packages results in collected errors in the response") =

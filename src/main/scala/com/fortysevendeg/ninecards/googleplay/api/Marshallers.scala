@@ -50,13 +50,13 @@ object NineCardsMarshallers {
       o.fold(ctx.marshalTo(response))(itemMarshaller(_, ctx))
     }
 
-  implicit val xorAppMarshaller: ToResponseMarshaller[Xor[String,AppCard]] =
-    ToResponseMarshaller[Xor[String,AppCard]] { (xor, ctx) => xor match {
-      case Xor.Left(cause) =>
-        val im = implicitly[Marshaller[String]]
+  implicit val xorAppMarshaller: ToResponseMarshaller[Xor[InfoError,AppCard]] =
+    ToResponseMarshaller[Xor[InfoError,AppCard]] { (xor, ctx) => xor match {
+      case Xor.Left(infoError) =>
+        val im = implicitly[Marshaller[InfoError]]
         val response = HttpResponse(
           status = StatusCodes.NotFound,
-          entity = HttpEntity(cause)
+          entity = spray.httpx.marshalling.marshalUnsafe(infoError)
         )
         ctx.marshalTo(response)
       case Xor.Right(appCard) =>

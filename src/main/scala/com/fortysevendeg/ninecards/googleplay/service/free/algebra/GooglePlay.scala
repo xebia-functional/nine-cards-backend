@@ -12,7 +12,7 @@ object GooglePlay {
   case class ResolveMany(auth: GoogleAuthParams, packageList: PackageList) extends Ops[PackageDetails]
 
   case class GetCard(auth: GoogleAuthParams, pkg: Package)
-      extends Ops[String Xor AppCard] // todo remember this will probably not stay as option
+      extends Ops[InfoError Xor AppCard]
 
   case class GetCardList(auth: GoogleAuthParams, packageList: PackageList)
       extends Ops[AppCardList]
@@ -24,7 +24,7 @@ object GooglePlay {
     def resolveMany(auth: GoogleAuthParams, packageList: PackageList): Free[F, PackageDetails] =
       Free.inject[Ops, F](ResolveMany(auth, packageList))
 
-    def getCard(auth: GoogleAuthParams, pkg: Package): Free[F, String Xor AppCard] =
+    def getCard(auth: GoogleAuthParams, pkg: Package): Free[F,Xor[InfoError, AppCard]] =
       Free.inject[Ops, F](GetCard(auth, pkg))
 
     def getCardList(auth: GoogleAuthParams, packageList: PackageList): Free[F, AppCardList] =

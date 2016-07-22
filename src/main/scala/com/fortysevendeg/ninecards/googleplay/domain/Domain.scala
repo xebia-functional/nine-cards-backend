@@ -42,6 +42,8 @@ case class AppCard(
   categories: List[String]
 )
 
+case class InfoError( message: String ) extends AnyVal
+
 case class AppCardList(
   missing: List[String],
   apps: List[AppCard]
