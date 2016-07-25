@@ -6,7 +6,7 @@ import com.fortysevendeg.ninecards.api.messages.InstallationsMessages.ApiUpdateI
 import com.fortysevendeg.ninecards.api.messages.SharedCollectionMessages.ApiCreateCollectionRequest
 import com.fortysevendeg.ninecards.api.messages.UserMessages.ApiLoginRequest
 import com.fortysevendeg.ninecards.processes.ProcessesExceptions.SharedCollectionNotFoundException
-import com.fortysevendeg.ninecards.processes.messages.GooglePlayMessages.CategorizeAppsResponse
+import com.fortysevendeg.ninecards.processes.messages.ApplicationMessages.CategorizeAppsResponse
 import com.fortysevendeg.ninecards.processes.messages.InstallationsMessages._
 import com.fortysevendeg.ninecards.processes.messages.SharedCollectionMessages._
 import com.fortysevendeg.ninecards.processes.messages.UserMessages.{ LoginRequest, LoginResponse }
@@ -159,7 +159,7 @@ object TestData {
 
     val apiDocs = "/apiDocs/index.html"
 
-    val categorize = "/googleplay/categorize"
+    val categorize = "/applications/categorize"
 
     val collections = "/collections"
 

@@ -1,6 +1,6 @@
 package com.fortysevendeg.ninecards.processes.converters
 
-import com.fortysevendeg.ninecards.processes.messages.GooglePlayMessages.AuthParams
+import com.fortysevendeg.ninecards.processes.messages.ApplicationMessages.AuthParams
 import com.fortysevendeg.ninecards.services.free.domain.GooglePlay.{ AppInfo, AppsInfo }
 import com.fortysevendeg.ninecards.services.free.domain.{ Installation, User }
 import org.scalacheck.Arbitrary._

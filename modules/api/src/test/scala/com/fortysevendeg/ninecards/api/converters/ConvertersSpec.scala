@@ -3,7 +3,7 @@ package com.fortysevendeg.ninecards.api.converters
 import com.fortysevendeg.ninecards.api.NineCardsHeaders.Domain._
 import com.fortysevendeg.ninecards.api.messages.InstallationsMessages._
 import com.fortysevendeg.ninecards.api.messages.UserMessages._
-import com.fortysevendeg.ninecards.processes.messages.GooglePlayMessages.CategorizeAppsResponse
+import com.fortysevendeg.ninecards.processes.messages.ApplicationMessages.CategorizeAppsResponse
 import com.fortysevendeg.ninecards.processes.messages.InstallationsMessages._
 import com.fortysevendeg.ninecards.processes.messages.UserMessages._
 import org.scalacheck.{ Arbitrary, Gen }

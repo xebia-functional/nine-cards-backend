@@ -1,6 +1,6 @@
 package com.fortysevendeg.ninecards.processes.messages
 
-object GooglePlayMessages {
+object ApplicationMessages {
 
   case class CategorizeAppsResponse(errors: List[String], items: List[CategorizedApp])
 

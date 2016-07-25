@@ -1,6 +1,6 @@
 package com.fortysevendeg.ninecards.api.messages
 
-import com.fortysevendeg.ninecards.processes.messages.GooglePlayMessages.CategorizedApp
+import com.fortysevendeg.ninecards.processes.messages.ApplicationMessages.CategorizedApp
 
 object GooglePlayMessages {
 

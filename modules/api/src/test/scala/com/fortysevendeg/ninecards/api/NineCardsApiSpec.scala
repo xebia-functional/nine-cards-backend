@@ -8,7 +8,7 @@ import com.fortysevendeg.ninecards.api.NineCardsHeaders._
 import com.fortysevendeg.ninecards.api.TestData._
 import com.fortysevendeg.ninecards.processes.NineCardsServices.NineCardsServices
 import com.fortysevendeg.ninecards.processes._
-import com.fortysevendeg.ninecards.processes.messages.GooglePlayMessages.CategorizeAppsResponse
+import com.fortysevendeg.ninecards.processes.messages.ApplicationMessages.CategorizeAppsResponse
 import com.fortysevendeg.ninecards.processes.messages.InstallationsMessages._
 import com.fortysevendeg.ninecards.processes.messages.SharedCollectionMessages._
 import com.fortysevendeg.ninecards.processes.messages.UserMessages._
@@ -46,7 +46,7 @@ trait NineCardsApiSpecification
 
     implicit val googleApiProcesses: GoogleApiProcesses[NineCardsServices] = mock[GoogleApiProcesses[NineCardsServices]]
 
-    implicit val googlePlayProcesses: GooglePlayProcesses[NineCardsServices] = mock[GooglePlayProcesses[NineCardsServices]]
+    implicit val applicationProcesses: ApplicationProcesses[NineCardsServices] = mock[ApplicationProcesses[NineCardsServices]]
 
     implicit val sharedCollectionProcesses: SharedCollectionProcesses[NineCardsServices] = mock[SharedCollectionProcesses[NineCardsServices]]
 
@@ -86,7 +86,7 @@ trait NineCardsApiSpecification
     sharedCollectionProcesses.getPublishedCollections(any[Long]) returns
       Free.pure(Messages.getPublishedCollectionsResponse)
 
-    googlePlayProcesses.categorizeApps(any, any) returns
+    applicationProcesses.categorizeApps(any, any) returns
       Free.pure(Messages.categorizeAppsResponse)
   }
 
@@ -147,7 +147,7 @@ trait NineCardsApiSpecification
     sharedCollectionProcesses.getCollectionByPublicIdentifier(any[String]) returns
       getCollectionByIdTask.liftF[NineCardsServices]
 
-    googlePlayProcesses.categorizeApps(any, any) returns
+    applicationProcesses.categorizeApps(any, any) returns
       categorizeAppsTask.liftF[NineCardsServices]
   }
 

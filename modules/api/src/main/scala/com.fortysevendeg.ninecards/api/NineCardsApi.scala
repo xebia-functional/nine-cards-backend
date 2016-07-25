@@ -35,7 +35,7 @@ class NineCardsRoutes(
   implicit
   userProcesses: UserProcesses[NineCardsServices],
   googleApiProcesses: GoogleApiProcesses[NineCardsServices],
-  googlePlayProcesses: GooglePlayProcesses[NineCardsServices],
+  applicationProcesses: ApplicationProcesses[NineCardsServices],
   sharedCollectionProcesses: SharedCollectionProcesses[NineCardsServices],
   refFactory: ActorRefFactory,
   executionContext: ExecutionContext
@@ -47,7 +47,7 @@ class NineCardsRoutes(
   val nineCardsRoutes: Route = pathPrefix(Segment) {
     case "apiDocs" ⇒ swaggerRoute
     case "collections" ⇒ sharedCollectionsRoute
-    case "googleplay" ⇒ googlePlayRoute
+    case "applications" ⇒ applicationRoute
     case "installations" ⇒ installationsRoute
     case "login" ⇒ userRoute
     case _ ⇒ complete(NotFound)
@@ -66,7 +66,7 @@ class NineCardsRoutes(
       }
     }
 
-  private[this] lazy val googlePlayRoute =
+  private[this] lazy val applicationRoute =
     nineCardsDirectives.authenticateUser { userContext ⇒
       nineCardsDirectives.googlePlayInfo { googlePlayContext ⇒
         path("categorize") {
@@ -160,9 +160,8 @@ class NineCardsRoutes(
     request: ApiCategorizeAppsRequest,
     googlePlayContext: GooglePlayContext,
     userContext: UserContext
-  ) = {
-    googlePlayProcesses
+  ) =
+    applicationProcesses
       .categorizeApps(request.items, toAuthParams(googlePlayContext, userContext))
       .map(toApiCategorizeAppsResponse)
-  }
 }
