@@ -236,8 +236,8 @@ Example of a successful Response :
 
 Example of a not-found response (the body is not empty)
 
-```
- "The following app has been retired: com.fortysevendeg.ninecardslauncher.v1"
+```json
+    { "message" : "com.package.does.not.exist" }
 ```
 
 Response codes:
@@ -269,7 +269,7 @@ Example of a successful Response :
 ```json
 {
   "missing" : [
-      "Could not find package: com.package.does.not.exist"
+      "com.package.does.not.exist"
   ]
   "apps" : [
       {

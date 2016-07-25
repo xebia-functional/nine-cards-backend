@@ -52,8 +52,7 @@ class Http4sGooglePlayWebScraper(serverUrl: String, client: Client) {
   }
 
   def getCard(appRequest: AppRequest): Task[Xor[InfoError, AppCard]] = {
-    lazy val errorMess = s"Could not find the Package ${appRequest.packageName.value}"
-    lazy val failed: InfoError = InfoError(message = errorMess)
+    lazy val failed: InfoError = InfoError(appRequest.packageName.value)
     runRequest[InfoError, AppCard](appRequest, failed, { bv =>
       GooglePlayPageParser.parseCard(bv)
         .fold(failed.left[AppCard])(i => i.right[InfoError])
