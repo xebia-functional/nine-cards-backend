@@ -1,6 +1,9 @@
 package com.fortysevendeg.ninecards.googleplay.api
 
-import com.fortysevendeg.ninecards.googleplay.domain.{Item, PackageList}
+import cats.data.Xor
+import com.fortysevendeg.ninecards.googleplay.domain._
+import io.circe.generic.auto._
+import io.circe.parser._
 import io.circe.{Encoder, Decoder}
 import scalaz.concurrent.Task
 import spray.http.{ContentTypes, HttpEntity, HttpResponse, StatusCodes}
@@ -12,26 +15,6 @@ import spray.httpx.unmarshalling.{MalformedContent, Unmarshaller}
   */
 object NineCardsMarshallers {
 
-  // Domain-specific marshalling and unmarshalling
-  implicit object packageListUnmarshaller extends Unmarshaller[PackageList] {
-    import io.circe.generic.auto._
-    import io.circe.parser._
-
-    def apply(entity: HttpEntity) = {
-      decode[PackageList](entity.asString).fold(
-        e => Left(MalformedContent(s"Unable to parse entity into JSON list: $entity", e)),
-        s => Right(s)
-      )
-    }
-  }
-
-  implicit def optionalItemMarshaller(implicit im: ToResponseMarshaller[Item]): ToResponseMarshaller[Option[Item]] = {
-    ToResponseMarshaller[Option[Item]] { (o, ctx) =>
-      val response = HttpResponse(status = StatusCodes.InternalServerError, entity = HttpEntity("Cannot find item!"))
-      o.fold(ctx.marshalTo(response))(im(_, ctx))
-    }
-  }
-
   /**
     * A marshaller capable of writing any case class to JSON, using the structure of the case class.
     * @param encoder An encoder, which may be automatically derived using Circe's generic derivation
@@ -41,6 +24,46 @@ object NineCardsMarshallers {
     Marshaller.of[A](ContentTypes.`application/json`) {
       case (a, contentType, ctx) => ctx.marshalTo(HttpEntity(ContentTypes.`application/json`, encoder(a).noSpaces))
     }
+
+  implicit val itemMarshaller: ToResponseMarshaller[Item] =
+    circeJsonMarshaller(implicitly[Encoder[Item]])
+
+  implicit val appCardMarshaller: ToResponseMarshaller[AppCard] =
+    circeJsonMarshaller(implicitly[Encoder[AppCard]])
+
+  // Domain-specific marshalling and unmarshalling
+  implicit object packageListUnmarshaller extends Unmarshaller[PackageList] {
+    def apply(entity: HttpEntity) = {
+      decode[PackageList](entity.asString).fold(
+        e => Left(MalformedContent(s"Unable to parse entity into JSON list: $entity", e)),
+        s => Right(s)
+      )
+    }
+  }
+
+  implicit val optionalItemMarshaller: ToResponseMarshaller[Option[Item]] =
+    ToResponseMarshaller[Option[Item]] { (o, ctx) =>
+      val response = HttpResponse(
+        status = StatusCodes.InternalServerError,
+        entity = HttpEntity("Cannot find item!")
+      )
+      o.fold(ctx.marshalTo(response))(itemMarshaller(_, ctx))
+    }
+
+  implicit val xorAppMarshaller: ToResponseMarshaller[Xor[InfoError,AppCard]] =
+    ToResponseMarshaller[Xor[InfoError,AppCard]] { (xor, ctx) => xor match {
+      case Xor.Left(infoError) =>
+        val im = implicitly[Marshaller[InfoError]]
+        val response = HttpResponse(
+          status = StatusCodes.NotFound,
+          entity = spray.httpx.marshalling.marshalUnsafe(infoError)
+        )
+        ctx.marshalTo(response)
+      case Xor.Right(appCard) =>
+        val im = implicitly[ToResponseMarshaller[AppCard]]
+        im(appCard,ctx)
+    }
+  }
 
   /**
     *  A to response marshaller capable of completing Scalaz concurrent tasks

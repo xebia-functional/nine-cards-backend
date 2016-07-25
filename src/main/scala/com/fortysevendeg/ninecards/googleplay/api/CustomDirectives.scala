@@ -13,11 +13,22 @@ object Headers {
 object CustomDirectives {
   import Directives._
 
-  val requestHeaders: Directive[ Token :: AndroidId :: Option[Localization] :: HNil] =
+  val requestHeaders: Directive[ GoogleAuthParams :: HNil] =
     for {
       token        <- headerValueByName(Headers.token)
       androidId    <- headerValueByName(Headers.androidId)
       localization <- optionalHeaderValueByName(Headers.localization)
-    } yield Token(token) :: AndroidId(androidId) :: localization.map(Localization.apply) :: HNil
+      authParams = GoogleAuthParams( AndroidId(androidId), Token(token), localization.map(Localization.apply) )
+
+    } yield authParams :: HNil
+
+  val packageParameters: Directive[PackageList :: HNil] = {
+    def getPackages(params: Seq[(String,String)]): Seq[String] = params.collect {
+      case ("id",x) => x
+    }
+    parameterSeq.hmap {
+      case params :: HNil => PackageList(getPackages(params).toList)
+    }
+  }
 
 }

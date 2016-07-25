@@ -1,44 +1,43 @@
 package com.fortysevendeg.ninecards.googleplay.service.free.interpreter
 
-import cats.{Foldable, Monoid}
 import cats.data.Xor
 import cats.std.list._
 import cats.syntax.traverse._
 import cats.~>
 import com.fortysevendeg.extracats._
 import com.fortysevendeg.ninecards.googleplay.domain._
-import com.fortysevendeg.ninecards.googleplay.service.free.algebra.GooglePlay._
+import com.fortysevendeg.ninecards.googleplay.service.free.algebra.GooglePlay
 import scalaz.concurrent.Task
 
-class TaskInterpreter(appService: AppService) extends (GooglePlayOps ~> Task) {
+class TaskInterpreter(
+  itemService: AppRequest => Task[Xor[String,Item]],
+  appCardService: AppRequest => Task[Xor[InfoError,AppCard]]
+) extends (GooglePlay.Ops ~> Task) {
 
-  def apply[A](fa: GooglePlayOps[A]): Task[A] = fa match {
+  def apply[A](fa: GooglePlay.Ops[A]): Task[A] = fa match {
 
-    case RequestPackage(auth, pkg) => appService( AppRequest(pkg, auth) ).map(_.toOption)
+    case GooglePlay.Resolve(auth, pkg) =>
+      itemService( AppRequest(pkg, auth) ).map(_.toOption)
 
-    case BulkRequestPackage(auth, PackageList(packageNames)) =>
+    case GooglePlay.ResolveMany(auth, PackageList(packageNames)) =>
+      for /*Task*/ {
+        xors <- packageNames.traverse{ pkg => 
+          itemService( AppRequest(Package(pkg), auth))
+        }
+        (errors, apps) = splitXors[String, Item](xors)
+      } yield PackageDetails(errors, apps)
 
-      implicit object detailsMonoid extends Monoid[PackageDetails] {
-        def empty: PackageDetails = PackageDetails(Nil, Nil)
-        def combine(x: PackageDetails, y: PackageDetails): PackageDetails =
-          PackageDetails(errors = x.errors ++ y.errors, items = x.items ++ y.items)
-      }
+    case GooglePlay.GetCard(auth, pkg) =>
+      appCardService( AppRequest(pkg, auth) )
 
-      def fetchDetails(packageName: String): Task[PackageDetails] = {
-        def toDetails(xor: Xor[String, Item]): PackageDetails = xor.fold(
-          e => PackageDetails(List(e), Nil),
-          i => PackageDetails(Nil, List(i))
-        )
-        appService( AppRequest(Package(packageName), auth) ).map(toDetails)
-      }
-      packageNames.traverse(fetchDetails).map(Foldable[List].fold(_))
+    case GooglePlay.GetCardList( auth, PackageList(packageNames)) =>
+      for /*Task*/ {
+        xors <- packageNames.traverse{ pkg =>
+          appCardService( AppRequest(Package(pkg), auth))
+        }
+        (errors, apps) = splitXors[InfoError, AppCard](xors)
+      } yield AppCardList(errors.map(_.message), apps)
+
   }
-
-}
-
-object TaskInterpreter {
-
-  def apply( one: AppService, two: AppService ): TaskInterpreter =
-    new TaskInterpreter( new XorTaskOrComposer[AppRequest,String,Item](one, two))
 
 }

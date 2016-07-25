@@ -32,3 +32,20 @@ object AggregateRating {
 case class Image(imageType: Long, imageUrl: String) // todo check which fields are necessary here
 case class Offer(offerType: Long) // todo check which fields are necessary here
 
+case class AppCard(
+  packageName: String,
+  title: String,
+  free: Boolean,
+  icon: String,
+  stars: Double,
+  downloads: String,
+  categories: List[String]
+)
+
+case class InfoError( message: String ) extends AnyVal
+
+case class AppCardList(
+  missing: List[String],
+  apps: List[AppCard]
+)
+

@@ -208,3 +208,91 @@ Response codes:
 | Code | Reason |
 |------|--------|
 | `200 OK` | All responses, even if all packages are errors |
+
+
+#### Single Card
+
+| Endpoint | Method | Content-Type |
+|----------|--------|--------------|
+| `/googleplay/cards/{packageName}` | `GET` | `application/json` |
+
+
+
+`<package>` is the Google Play package ID, such as `com.fortysevendeg.ninecardslauncher`
+
+Example of a successful Response :
+
+```json
+{
+   "packageName": "com.fortysevendeg.ninecardslauncher",
+   "title" : "9 Cards Home Launcher",
+   "free": true,
+   "icon": "http://apps.icon.nine.cards",
+   "stars" : 3.14159265359,
+   "downloads" : "18357 - 25000",
+   "categories": ["PERSONALIZATION"]
+}
+```
+
+Example of a not-found response (the body is not empty)
+
+```json
+    { "message" : "com.package.does.not.exist" }
+```
+
+Response codes:
+
+| Code | Reason |
+|------|--------|
+| `200 OK` | Successfully found `<package>` |
+| `404 Not Found` | Package not found |
+
+#### List of Cards
+
+| Endpoint | Method | Content-Type |
+|----------|--------|--------------|
+| `/googleplay/cards/` | `POST` | `application/json` |
+
+
+Example of request:
+```json
+{
+   "items":[
+      "com.fortysevendeg.ninecardslauncher",
+      "com.package.does.not.exist"
+   ]
+}
+```
+
+Example of a successful Response :
+
+```json
+{
+  "missing" : [
+      "com.package.does.not.exist"
+  ]
+  "apps" : [
+      {
+         "packageName": "com.fortysevendeg.ninecardslauncher",
+         "title" : "9 Cards Home Launcher",
+         "free": true,
+         "icon": "http://apps.icon.nine.cards",
+         "stars" : 3.14159265359,
+         "downloads" : "18357 - 25000",
+         "categories": ["PERSONALIZATION"]
+      }
+  ]
+}
+```
+
+Response codes:
+
+| Code | Reason |
+|------|--------|
+| `200 OK` | Successfully found `<package>` |
+
+---
+
+
+
+
