@@ -12,15 +12,17 @@ import scalaz.concurrent.Task
 import spray.httpx.marshalling.ToResponseMarshaller
 import spray.routing.{Directives, HttpService, Route}
 
-class NineCardsGooglePlayActor(interpreter: GooglePlay.Ops ~> Task) extends Actor with HttpService {
+class NineCardsGooglePlayActor extends Actor with HttpService {
 
   override def actorRefFactory = context
 
   private val apiRoute: Route = {
     import NineCardsMarshallers._
-    implicit val inter: GooglePlay.Ops ~> Task = interpreter
+    implicit val interpreter: GooglePlay.Ops ~> Task = Wiring.interpreter()
     NineCardsGooglePlayApi.googlePlayApiRoute[Task]
   }
+
+  import AuthHeadersRejectionHandler._
 
   def receive = runRoute(apiRoute)
 

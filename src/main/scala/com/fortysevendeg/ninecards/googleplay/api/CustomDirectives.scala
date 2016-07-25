@@ -1,8 +1,8 @@
 package com.fortysevendeg.ninecards.googleplay.api
 
 import com.fortysevendeg.ninecards.googleplay.domain._
-import spray.routing.{Directive, Directives}
-import shapeless._
+import spray.http.StatusCodes.Unauthorized
+import spray.routing.{Directive, Directives, MissingHeaderRejection, RejectionHandler }
 
 object Headers {
   val token = "X-Google-Play-Token"
@@ -12,6 +12,7 @@ object Headers {
 
 object CustomDirectives {
   import Directives._
+  import shapeless._
 
   val requestHeaders: Directive[ GoogleAuthParams :: HNil] =
     for {
@@ -32,3 +33,13 @@ object CustomDirectives {
   }
 
 }
+
+object AuthHeadersRejectionHandler {
+
+  implicit val authHeadersRejectionHandler = RejectionHandler {
+    case MissingHeaderRejection(headerName: String) :: _ ⇒
+      Directives.complete(Unauthorized, "Missing authorization headers needed for this request")
+  }
+
+}
+

@@ -8,15 +8,15 @@ object Versions {
 
   // Core Libs
   val akka = "2.3.12"
-  val scala = "2.11.7"
+  val scala = "2.11.8"
   val spray = "1.3.3"
   val cats = "0.4.0"
 
   resolvers += "Scalaz Bintray Repo" at "http://dl.bintray.com/scalaz/releases"
-  val http4sClient = "0.12.1"
+  val http4sClient = "0.14.1"
 
   resolvers += Resolver.sonatypeRepo("snapshots")
-  val circe = "0.3.0"
+  val circe = "0.4.1"
 
   val tagSoup = "1.2.1"
 

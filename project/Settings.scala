@@ -18,6 +18,7 @@ trait Settings {
     publishMavenStyle := true,
     publishArtifact in(Test, packageSrc) := true,
     logLevel := Level.Info,
+    parallelExecution in Test := false,
     resolvers ++= Seq(
       Resolver.mavenLocal,
       Resolver.defaultLocal,

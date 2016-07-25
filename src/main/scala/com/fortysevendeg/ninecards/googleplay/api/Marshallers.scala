@@ -2,12 +2,12 @@ package com.fortysevendeg.ninecards.googleplay.api
 
 import cats.data.Xor
 import com.fortysevendeg.ninecards.googleplay.domain._
+import io.circe.Encoder
 import io.circe.generic.auto._
 import io.circe.parser._
-import io.circe.{Encoder, Decoder}
 import scalaz.concurrent.Task
 import spray.http.{ContentTypes, HttpEntity, HttpResponse, StatusCodes}
-import spray.httpx.marshalling.{Marshaller, ToResponseMarshaller, ToResponseMarshallingContext}
+import spray.httpx.marshalling.{Marshaller, ToResponseMarshaller}
 import spray.httpx.unmarshalling.{MalformedContent, Unmarshaller}
 
 /**
