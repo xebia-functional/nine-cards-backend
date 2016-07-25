@@ -115,9 +115,7 @@ object GooglePlayPageParser {
       } yield stars.toDouble
 
     def getDocId(): Seq[String] =
-      for /*Seq*/ {
-        n <- doc \\ "@data-load-more-docid"
-      } yield n.text
+      (doc \\ "@data-load-more-docid").map(_.text)
 
     /*We exclude from the URL the portions after the equals symbol, which are parameters
      to choose smaller icons */
@@ -177,7 +175,6 @@ object GooglePlayPageParser {
         title: String <- getTitle().headOption
         docId: String <- getDocId().headOption
         downloads <- getDownloads().headOption
-        categories: List[String] = getCategories().toList
       } yield
         Item(
           DocV2(
@@ -185,7 +182,7 @@ object GooglePlayPageParser {
             creator = "",
             docid = docId,
             details = Details( appDetails = AppDetails(
-              appCategory = categories,
+              appCategory = getCategories().toList,
               numDownloads = downloads,
               permission = Nil
             ) ),
