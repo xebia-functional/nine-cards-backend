@@ -9,12 +9,12 @@ import com.fortysevendeg.ninecards.processes.messages.UserMessages.LoginResponse
 import com.fortysevendeg.ninecards.services.common.NineCardsConfig.defaultConfig
 import com.fortysevendeg.ninecards.services.free.domain.GooglePlay.{
   AppsInfo,
+  AppInfo ⇒ AppInfoServices,
   AuthParams ⇒ AuthParamServices
 }
 import com.fortysevendeg.ninecards.services.free.domain.{
   Installation ⇒ InstallationServices,
   SharedCollection ⇒ SharedCollectionServices,
-  SharedCollectionPackage ⇒ SharedCollectionPackageServices,
   User ⇒ UserAppServices
 }
 import com.fortysevendeg.ninecards.services.persistence.SharedCollectionPersistenceServices.{
@@ -45,20 +45,12 @@ object Converters {
     )
   }
 
-  def toGetCollectionByPublicIdentifierResponse(
-    collection: SharedCollectionServices,
-    packages: List[SharedCollectionPackageServices]
-  ): GetCollectionByPublicIdentifierResponse =
-    GetCollectionByPublicIdentifierResponse(
-      toSharedCollectionInfo(collection, packages map (_.packageName))
-    )
-
   def toCreateCollectionResponse(
     collection: SharedCollectionServices,
     packages: List[String]
   ): CreateCollectionResponse =
     CreateCollectionResponse(
-      toSharedCollectionInfo(collection, packages)
+      toSharedCollection(collection, packages)
     )
 
   def toUpdateInstallationResponse(installation: InstallationServices): UpdateInstallationResponse =
@@ -84,11 +76,11 @@ object Converters {
       community        = data.community
     )
 
-  def toSharedCollectionInfo(
+  def toSharedCollection(
     collection: SharedCollectionServices,
     packages: List[String]
-  ): SharedCollectionInfo =
-    SharedCollectionInfo(
+  ): SharedCollection =
+    SharedCollection(
       publicIdentifier = collection.publicIdentifier,
       publishedOn      = collection.publishedOn,
       description      = collection.description,
@@ -100,19 +92,27 @@ object Converters {
       category         = collection.category,
       icon             = collection.icon,
       community        = collection.community,
-      packages         = packages,
-      resolvedPackages = packages map toResolvedPackage
+      packages         = packages
     )
 
-  def toResolvedPackage(packageName: String): ResolvedPackageInfo =
-    ResolvedPackageInfo(
-      packageName = packageName,
-      title       = "Title of the app",
-      description = "Description of the app",
-      free        = true,
-      icon        = "url-to-the-icon",
-      stars       = 4.5,
-      downloads   = "100.000.000+"
+  def toSharedCollectionWithAppsInfo(
+    collection: SharedCollection,
+    appsInfo: List[AppInfoServices]
+  ): SharedCollectionWithAppsInfo =
+    SharedCollectionWithAppsInfo(
+      collection = collection,
+      appsInfo   = appsInfo map toAppInfo
+    )
+
+  def toAppInfo(info: AppInfoServices): AppInfo =
+    AppInfo(
+      packageName = info.packageName,
+      title       = info.title,
+      free        = info.free,
+      icon        = info.icon,
+      stars       = info.stars,
+      downloads   = info.downloads,
+      category    = info.categories.headOption getOrElse ""
     )
 
   def toCategorizeAppsResponse(info: AppsInfo): CategorizeAppsResponse = {

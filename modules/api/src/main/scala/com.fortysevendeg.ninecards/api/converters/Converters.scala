@@ -64,33 +64,22 @@ object Converters {
       packages   = request.packages
     )
 
-  def toApiResolvedPackageInfo(resolvedPackageInfo: ResolvedPackageInfo) =
-    ApiResolvedPackageInfo(
-      packageName = resolvedPackageInfo.packageName,
-      title       = resolvedPackageInfo.title,
-      description = resolvedPackageInfo.description,
-      free        = resolvedPackageInfo.free,
-      icon        = resolvedPackageInfo.icon,
-      stars       = resolvedPackageInfo.stars,
-      downloads   = resolvedPackageInfo.downloads
-    )
-
   @inline
-  def toApiSharedCollection(info: SharedCollectionInfo): ApiSharedCollection =
+  def toApiSharedCollection(info: SharedCollectionWithAppsInfo): ApiSharedCollection =
     ApiSharedCollection(
-      publicIdentifier = info.publicIdentifier,
-      publishedOn      = info.publishedOn,
-      description      = info.description,
-      author           = info.author,
-      name             = info.name,
-      sharedLink       = info.sharedLink,
-      installations    = info.installations,
-      views            = info.views,
-      category         = info.category,
-      icon             = info.icon,
-      community        = info.community,
-      packages         = info.packages,
-      resolvedPackages = info.resolvedPackages map toApiResolvedPackageInfo
+      publicIdentifier = info.collection.publicIdentifier,
+      publishedOn      = info.collection.publishedOn,
+      description      = info.collection.description,
+      author           = info.collection.author,
+      name             = info.collection.name,
+      sharedLink       = info.collection.sharedLink,
+      installations    = info.collection.installations,
+      views            = info.collection.views,
+      category         = info.collection.category,
+      icon             = info.collection.icon,
+      community        = info.collection.community,
+      packages         = info.collection.packages,
+      appsInfo         = info.appsInfo
     )
 
   def toUpdateInstallationRequest(

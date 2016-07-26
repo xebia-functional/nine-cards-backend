@@ -6,6 +6,7 @@ import com.fortysevendeg.ninecards.api.messages.InstallationsMessages._
 import com.fortysevendeg.ninecards.api.messages.SharedCollectionMessages._
 import com.fortysevendeg.ninecards.api.messages.UserMessages._
 import com.fortysevendeg.ninecards.processes.messages.ApplicationMessages.CategorizedApp
+import com.fortysevendeg.ninecards.processes.messages.SharedCollectionMessages.AppInfo
 import io.circe.{ Decoder, Encoder, Json }
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
@@ -51,7 +52,7 @@ trait JsonFormats
 
   implicit val updateInstallationResponseFormat = jsonFormat2(ApiUpdateInstallationResponse)
 
-  implicit val apiResolvedPackageInfoFormat = jsonFormat7(ApiResolvedPackageInfo)
+  implicit val appInfoFormat = jsonFormat7(AppInfo)
 
   implicit val apiGetCollectionByPublicIdentifierResponseFormat = jsonFormat13(ApiSharedCollection)
 
