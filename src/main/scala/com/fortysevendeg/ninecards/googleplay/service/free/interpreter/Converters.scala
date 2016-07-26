@@ -69,8 +69,6 @@ object GoogleApiItemParser {
   }
 }
 
-
-
 object GooglePlayPageParser {
 
   private val parser = new SAXFactoryImpl().newSAXParser()
@@ -84,7 +82,7 @@ object GooglePlayPageParser {
 
   implicit class NodeOps(node: Node) {
 
-    def getAttribute(key: String) : String = (node \\ s"@$key").text
+    def getAttribute(key: String) : String = (node \ s"@$key").text
 
     def isProperty(key: String) : Boolean = getAttribute("itemprop") == key
 
@@ -96,9 +94,8 @@ object GooglePlayPageParser {
     def getTitle(): Seq[String] =
       for /*Seq*/ {
         n <- doc \\ "div"
-        if n.isProperty("name")
-        name = n.child.text.trim
-      } yield name
+        if n.isClass("id-app-title")
+      } yield n.text.trim
 
     def getDownloads() : Seq[String] =
       for /*Seq*/ {
@@ -150,7 +147,7 @@ object GooglePlayPageParser {
       } yield price == "0" 
 
     def parseCardAux(): Seq[AppCard] =
-      for { /*Option*/
+      for { /*Seq*/
         docId <- getDocId()
         title <- getTitle()
         free <- isFree()
