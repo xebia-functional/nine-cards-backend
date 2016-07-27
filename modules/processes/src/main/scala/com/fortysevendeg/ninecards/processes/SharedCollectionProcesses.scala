@@ -36,12 +36,14 @@ class SharedCollectionProcesses[F[_]](
 
   def createCollection(request: CreateCollectionRequest): Free[F, CreateCollectionResponse] = {
     for {
-      sharedCollection ← collectionPersistence.addCollection[SharedCollectionServices](request.collection)
-      response ← collectionPersistence.addPackages(sharedCollection.id, request.packages)
-    } yield toCreateCollectionResponse(sharedCollection, request.packages)
+      collection ← collectionPersistence.addCollection[SharedCollectionServices](request.collection)
+      response ← collectionPersistence.addPackages(collection.id, request.packages)
+    } yield toCreateCollectionResponse(collection, request.packages)
   }.liftF[F]
 
-  def getCollectionByPublicIdentifier(publicIdentifier: String, authParams: AuthParams): Free[F, XorGetCollectionByPublicId] = {
+  def getCollectionByPublicIdentifier(
+    publicIdentifier: String,
+    authParams: AuthParams): Free[F, XorGetCollectionByPublicId] = {
     val unresolvedSharedCollectionInfo = for {
       sharedCollection ← findCollection(publicIdentifier)
       sharedCollectionInfo ← getCollectionPackages(sharedCollection).rightXorT[Throwable]
@@ -56,20 +58,21 @@ class SharedCollectionProcesses[F[_]](
     }.value
   }
 
-  def getPublishedCollections(userId: Long, authParams: AuthParams): Free[F, GetPublishedCollectionsResponse] = {
+  def getPublishedCollections(
+    userId: Long,
+    authParams: AuthParams): Free[F, GetPublishedCollectionsResponse] = {
     import scalaz.std.list.listInstance
     import scalaz.syntax.traverse.ToTraverseOps
 
     val publishedCollections = for {
       collections ← collectionPersistence.getCollectionsByUserId(userId)
-      infos ← collections.traverse[ConnectionIO, SharedCollection](getCollectionPackages)
-    } yield infos
+      info ← collections.traverse[ConnectionIO, SharedCollection](getCollectionPackages)
+    } yield info
 
-    publishedCollections.liftF[F] flatMap { collections ⇒
-      getAppsInfoForCollections(collections, authParams) map { data ⇒
-        GetPublishedCollectionsResponse(data)
-      }
-    }
+    for {
+      collections ← publishedCollections.liftF[F]
+      collectionWithAppsInfo ← getAppsInfoForCollections(collections, authParams)
+    } yield GetPublishedCollectionsResponse(collectionWithAppsInfo)
   }
 
   /**
@@ -78,16 +81,16 @@ class SharedCollectionProcesses[F[_]](
 
   def subscribe(publicIdentifier: String, userId: Long): Free[F, Xor[Throwable, SubscribeResponse]] = {
     for {
-      sharedCollection ← findCollection(publicIdentifier)
-      subscription ← subscriptionPersistence.getSubscriptionByCollectionAndUser(sharedCollection.id, userId).rightXorT[Throwable]
-      subscriptionInfo ← addSubscription(subscription, sharedCollection.id, userId).rightXorT[Throwable]
+      collection ← findCollection(publicIdentifier)
+      subscription ← subscriptionPersistence.getSubscriptionByCollectionAndUser(collection.id, userId).rightXorT[Throwable]
+      subscriptionInfo ← addSubscription(subscription, collection.id, userId).rightXorT[Throwable]
     } yield subscriptionInfo
   }.value.liftF[F]
 
   def unsubscribe(publicIdentifier: String, userId: Long): Free[F, Xor[Throwable, UnsubscribeResponse]] = {
     for {
-      sharedCollection ← findCollection(publicIdentifier)
-      _ ← subscriptionPersistence.removeSubscriptionByCollectionAndUser(sharedCollection.id, userId).rightXorT[Throwable]
+      collection ← findCollection(publicIdentifier)
+      _ ← subscriptionPersistence.removeSubscriptionByCollectionAndUser(collection.id, userId).rightXorT[Throwable]
     } yield UnsubscribeResponse()
   }.value.liftF
 
@@ -100,7 +103,7 @@ class SharedCollectionProcesses[F[_]](
       .fold(subscriptionPersistence.addSubscription[SharedCollectionSubscription](collectionId, userId))(_.point[ConnectionIO])
       .map(_ ⇒ SubscribeResponse())
 
-  private[this] def findCollection(publicId: String) =
+  private[this] def findCollection(publicId: String): XorT[ConnectionIO, Throwable, SharedCollectionServices] =
     XorT[ConnectionIO, Throwable, SharedCollectionServices] {
       collectionPersistence
         .getCollectionByPublicIdentifier(publicId)
@@ -110,7 +113,7 @@ class SharedCollectionProcesses[F[_]](
   private def getAppsInfoForCollection(
     collection: SharedCollection,
     authParams: AuthParams
-  ) = {
+  ): XorT[Free[F, ?], Throwable, GetCollectionByPublicIdentifierResponse] = {
     googlePlayServices.resolveMany(collection.packages, toAuthParamsServices(authParams)) map { appsInfo ⇒
       GetCollectionByPublicIdentifierResponse(
         toSharedCollectionWithAppsInfo(collection, appsInfo.apps)
@@ -121,7 +124,7 @@ class SharedCollectionProcesses[F[_]](
   private def getAppsInfoForCollections(
     collections: List[SharedCollection],
     authParams: AuthParams
-  ) = {
+  ): Free[F, List[SharedCollectionWithAppsInfo]] = {
     import cats.std.list._
     import cats.syntax.traverse._
 

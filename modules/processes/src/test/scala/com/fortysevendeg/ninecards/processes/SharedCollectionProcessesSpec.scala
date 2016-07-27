@@ -10,13 +10,14 @@ import com.fortysevendeg.ninecards.processes.messages.SharedCollectionMessages._
 import com.fortysevendeg.ninecards.processes.utils.DummyNineCardsConfig
 import com.fortysevendeg.ninecards.services.free.algebra.GooglePlay
 import com.fortysevendeg.ninecards.services.free.domain.{
-SharedCollectionSubscription,
-SharedCollection => SharedCollectionServices}
+  SharedCollectionSubscription,
+  SharedCollection ⇒ SharedCollectionServices
+}
 import com.fortysevendeg.ninecards.services.persistence._
 import doobie.imports._
-import org.mockito.Matchers.{eq => mockEq}
+import org.mockito.Matchers.{ eq ⇒ mockEq }
 import org.specs2.ScalaCheck
-import org.specs2.matcher.{Matchers, XorMatchers}
+import org.specs2.matcher.{ Matchers, XorMatchers }
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
 import org.specs2.specification.Scope

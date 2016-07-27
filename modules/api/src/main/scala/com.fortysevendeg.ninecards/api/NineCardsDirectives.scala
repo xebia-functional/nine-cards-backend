@@ -66,7 +66,7 @@ class NineCardsDirectives(
     userId ← authenticate(validateUser(sessionToken, androidId, authToken, uri))
   } yield UserContext(UserId(userId), AndroidId(androidId)) :: HNil
 
-  def googlePlayInfo: Directive1[GooglePlayContext] = for {
+  val googlePlayInfo: Directive1[GooglePlayContext] = for {
     googlePlayToken ← headerValueByName(headerGooglePlayToken)
     marketLocalization ← optionalHeaderValueByName(headerMarketLocalization)
   } yield GooglePlayContext(
