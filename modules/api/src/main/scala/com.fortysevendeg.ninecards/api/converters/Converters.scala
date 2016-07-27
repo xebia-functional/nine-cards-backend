@@ -1,9 +1,11 @@
 package com.fortysevendeg.ninecards.api.converters
 
 import com.fortysevendeg.ninecards.api.NineCardsHeaders.Domain._
+import com.fortysevendeg.ninecards.api.messages.GooglePlayMessages.ApiCategorizeAppsResponse
 import com.fortysevendeg.ninecards.api.messages.InstallationsMessages._
 import com.fortysevendeg.ninecards.api.messages.SharedCollectionMessages._
 import com.fortysevendeg.ninecards.api.messages.UserMessages._
+import com.fortysevendeg.ninecards.processes.messages.ApplicationMessages._
 import com.fortysevendeg.ninecards.processes.messages.InstallationsMessages._
 import com.fortysevendeg.ninecards.processes.messages.SharedCollectionMessages._
 import com.fortysevendeg.ninecards.processes.messages.UserMessages._
@@ -115,4 +117,16 @@ object Converters {
   def toApiUnsubscribeResponse(response: UnsubscribeResponse): ApiUnsubscribeResponse =
     ApiUnsubscribeResponse()
 
+  def toAuthParams(googlePlayContext: GooglePlayContext, userContext: UserContext) =
+    AuthParams(
+      androidId    = userContext.androidId.value,
+      localization = googlePlayContext.marketLocalization map (_.value),
+      token        = googlePlayContext.googlePlayToken.value
+    )
+
+  def toApiCategorizeAppsResponse(response: CategorizeAppsResponse): ApiCategorizeAppsResponse =
+    ApiCategorizeAppsResponse(
+      items  = response.items,
+      errors = response.errors
+    )
 }

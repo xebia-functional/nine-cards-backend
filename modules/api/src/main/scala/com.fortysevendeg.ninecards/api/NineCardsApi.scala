@@ -4,6 +4,7 @@ import akka.actor.{ Actor, ActorRefFactory }
 import com.fortysevendeg.ninecards.api.NineCardsDirectives._
 import com.fortysevendeg.ninecards.api.NineCardsHeaders.Domain._
 import com.fortysevendeg.ninecards.api.converters.Converters._
+import com.fortysevendeg.ninecards.api.messages.GooglePlayMessages.ApiCategorizeAppsRequest
 import com.fortysevendeg.ninecards.api.messages.InstallationsMessages._
 import com.fortysevendeg.ninecards.api.messages.SharedCollectionMessages._
 import com.fortysevendeg.ninecards.api.messages.UserMessages._
@@ -11,9 +12,8 @@ import com.fortysevendeg.ninecards.api.utils.SprayMarshallers._
 import com.fortysevendeg.ninecards.api.utils.SprayMatchers._
 import com.fortysevendeg.ninecards.processes.NineCardsServices._
 import com.fortysevendeg.ninecards.processes._
-import spray.httpx.SprayJsonSupport
-import spray.routing._
 import spray.http.StatusCodes.NotFound
+import spray.routing._
 
 import scala.concurrent.ExecutionContext
 
@@ -35,6 +35,7 @@ class NineCardsRoutes(
   implicit
   userProcesses: UserProcesses[NineCardsServices],
   googleApiProcesses: GoogleApiProcesses[NineCardsServices],
+  applicationProcesses: ApplicationProcesses[NineCardsServices],
   sharedCollectionProcesses: SharedCollectionProcesses[NineCardsServices],
   refFactory: ActorRefFactory,
   executionContext: ExecutionContext
@@ -46,6 +47,7 @@ class NineCardsRoutes(
   val nineCardsRoutes: Route = pathPrefix(Segment) {
     case "apiDocs" ⇒ swaggerRoute
     case "collections" ⇒ sharedCollectionsRoute
+    case "applications" ⇒ applicationRoute
     case "installations" ⇒ installationsRoute
     case "login" ⇒ userRoute
     case _ ⇒ complete(NotFound)
@@ -58,6 +60,19 @@ class NineCardsRoutes(
           nineCardsDirectives.authenticateLoginRequest { sessionToken: SessionToken ⇒
             complete {
               userProcesses.signUpUser(toLoginRequest(request, sessionToken)) map toApiLoginResponse
+            }
+          }
+        }
+      }
+    }
+
+  private[this] lazy val applicationRoute =
+    nineCardsDirectives.authenticateUser { userContext ⇒
+      nineCardsDirectives.googlePlayInfo { googlePlayContext ⇒
+        path("categorize") {
+          post {
+            entity(as[ApiCategorizeAppsRequest]) { request ⇒
+              complete(categorizeApps(request, googlePlayContext, userContext))
             }
           }
         }
@@ -140,4 +155,13 @@ class NineCardsRoutes(
     sharedCollectionProcesses
       .getPublishedCollections(userContext.userId.value)
       .map(_.collections.map(toApiSharedCollection))
+
+  private[this] def categorizeApps(
+    request: ApiCategorizeAppsRequest,
+    googlePlayContext: GooglePlayContext,
+    userContext: UserContext
+  ) =
+    applicationProcesses
+      .categorizeApps(request.items, toAuthParams(googlePlayContext, userContext))
+      .map(toApiCategorizeAppsResponse)
 }

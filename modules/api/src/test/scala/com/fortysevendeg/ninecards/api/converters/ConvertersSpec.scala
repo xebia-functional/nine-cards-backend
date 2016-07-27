@@ -3,6 +3,7 @@ package com.fortysevendeg.ninecards.api.converters
 import com.fortysevendeg.ninecards.api.NineCardsHeaders.Domain._
 import com.fortysevendeg.ninecards.api.messages.InstallationsMessages._
 import com.fortysevendeg.ninecards.api.messages.UserMessages._
+import com.fortysevendeg.ninecards.processes.messages.ApplicationMessages.CategorizeAppsResponse
 import com.fortysevendeg.ninecards.processes.messages.InstallationsMessages._
 import com.fortysevendeg.ninecards.processes.messages.UserMessages._
 import org.scalacheck.{ Arbitrary, Gen }
@@ -46,7 +47,7 @@ class ConvertersSpec
     "convert an ApiUpdateInstallationRequest to a UpdateInstallationRequest object" in {
       prop { (apiRequest: ApiUpdateInstallationRequest, userId: UserId, androidId: AndroidId) ⇒
 
-        implicit val userContext = UserContext(userId, androidId)
+        val userContext = UserContext(userId, androidId)
 
         val request = Converters.toUpdateInstallationRequest(apiRequest, userContext)
 
@@ -65,6 +66,34 @@ class ConvertersSpec
 
         apiResponse.androidId shouldEqual response.androidId
         apiResponse.deviceToken shouldEqual response.deviceToken
+      }
+    }
+  }
+
+  "toApiCategorizeAppsResponse" should {
+    "convert an UpdateInstallationResponse to an ApiUpdateInstallationResponse object" in {
+      prop { (response: CategorizeAppsResponse) ⇒
+
+        val apiResponse = Converters.toApiCategorizeAppsResponse(response)
+
+        apiResponse.errors shouldEqual response.errors
+        apiResponse.items shouldEqual response.items
+      }
+    }
+  }
+
+  "toAuthParams" should {
+    "convert UserContext and GooglePlayContext objects to an AuthParams object" in {
+      prop { (userId: UserId, androidId: AndroidId, token: GooglePlayToken, localization: Option[MarketLocalization]) ⇒
+
+        val userContext = UserContext(userId, androidId)
+        val googlePlayContext = GooglePlayContext(token, localization)
+
+        val authParams = Converters.toAuthParams(googlePlayContext, userContext)
+
+        authParams.token shouldEqual googlePlayContext.googlePlayToken.value
+        authParams.localization shouldEqual googlePlayContext.marketLocalization.map(_.value)
+        authParams.androidId shouldEqual userContext.androidId.value
       }
     }
   }

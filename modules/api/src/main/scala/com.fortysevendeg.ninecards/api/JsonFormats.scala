@@ -1,9 +1,11 @@
 package com.fortysevendeg.ninecards.api
 
 import cats.data.Xor
+import com.fortysevendeg.ninecards.api.messages.GooglePlayMessages._
 import com.fortysevendeg.ninecards.api.messages.InstallationsMessages._
 import com.fortysevendeg.ninecards.api.messages.SharedCollectionMessages._
 import com.fortysevendeg.ninecards.api.messages.UserMessages._
+import com.fortysevendeg.ninecards.processes.messages.ApplicationMessages.CategorizedApp
 import io.circe.{ Decoder, Encoder, Json }
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
@@ -60,6 +62,12 @@ trait JsonFormats
   implicit val apiSubscribeResponseFormat = jsonFormat0(ApiSubscribeResponse)
 
   implicit val apiUnsubscribeResponseFormat = jsonFormat0(ApiUnsubscribeResponse)
+
+  implicit val apiCategorizeAppsRequestFormat = jsonFormat1(ApiCategorizeAppsRequest)
+
+  implicit val categorizedAppFormat = jsonFormat2(CategorizedApp)
+
+  implicit val apiCategorizeAppsResponseFormat = jsonFormat2(ApiCategorizeAppsResponse)
 
 }
 

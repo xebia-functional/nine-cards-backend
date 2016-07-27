@@ -2,10 +2,15 @@ package com.fortysevendeg.ninecards.processes.converters
 
 import java.sql.Timestamp
 
+import com.fortysevendeg.ninecards.processes.messages.ApplicationMessages._
 import com.fortysevendeg.ninecards.processes.messages.InstallationsMessages._
 import com.fortysevendeg.ninecards.processes.messages.SharedCollectionMessages._
 import com.fortysevendeg.ninecards.processes.messages.UserMessages.LoginResponse
 import com.fortysevendeg.ninecards.services.common.NineCardsConfig.defaultConfig
+import com.fortysevendeg.ninecards.services.free.domain.GooglePlay.{
+  AppsInfo,
+  AuthParams ⇒ AuthParamServices
+}
 import com.fortysevendeg.ninecards.services.free.domain.{
   Installation ⇒ InstallationServices,
   SharedCollection ⇒ SharedCollectionServices,
@@ -110,4 +115,25 @@ object Converters {
       downloads   = "100.000.000+"
     )
 
+  def toCategorizeAppsResponse(info: AppsInfo): CategorizeAppsResponse = {
+    val (appsWithoutCategories, apps) = info.apps.partition(app ⇒ app.categories.isEmpty)
+
+    CategorizeAppsResponse(
+      errors = info.missing ++ appsWithoutCategories.map(_.packageName),
+      items  = apps map { app ⇒
+      CategorizedApp(
+        packageName = app.packageName,
+        category    = app.categories.head
+      )
+    }
+    )
+  }
+
+  def toAuthParamsServices(authParams: AuthParams): AuthParamServices = {
+    AuthParamServices(
+      androidId    = authParams.androidId,
+      localization = authParams.localization,
+      token        = authParams.token
+    )
+  }
 }
