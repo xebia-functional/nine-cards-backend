@@ -5,8 +5,8 @@ import com.fortysevendeg.ninecards.config.NineCardsConfig
 
 object TestData {
 
-  def apiEndpoint = NineCardsConfig.getConfigValue("googleplay.api.endpoint")
-  def webEndpoint = NineCardsConfig.getConfigValue("googleplay.web.endpoint")
+  def apiEndpoint = NineCardsConfig.getConfigValue("ninecards.googleplay.api.endpoint")
+  def webEndpoint = NineCardsConfig.getConfigValue("ninecards.googleplay.web.endpoint")
 
   object nonexisting {
     val packageName = "com.package.does.not.exist"
@@ -26,7 +26,7 @@ object TestData {
       title = "Shapes & Colors Music Show",
       free = true,
       icon = "http://lh4.ggpht.com/Pb8iLNmi9vHOwB-39TKe-kn4b_uU-E6rn7zSiFz6jC0RlaEQeNCcBh2MueyslcQ3mj2H",
-      stars = 4.10,
+      stars = 4.071812152862549,
       downloads = "1.000.000 - 5.000.000",
       categories = List("EDUCATION", "FAMILY_EDUCATION")
     )
@@ -41,9 +41,9 @@ object TestData {
       title = "Minecraft: Pocket Edition",
       free = false,
       icon = "http://lh3.googleusercontent.com/30koN0eGl-LHqvUZrCj9HT4qVPQdvN508p2wuhaWUnqKeCp6nrs9QW8v6IVGvGNauA",
-      stars = 0.0,
-      downloads = "",
-      categories = List()
+      stars = 4.4701409339904785,
+      downloads = "10,000,000+",
+      categories = List("GAME_ARCADE")
     )
 
   }
