@@ -12,7 +12,7 @@ import com.fortysevendeg.ninecards.processes.messages.ApplicationMessages.Catego
 import com.fortysevendeg.ninecards.processes.messages.InstallationsMessages._
 import com.fortysevendeg.ninecards.processes.messages.SharedCollectionMessages._
 import com.fortysevendeg.ninecards.processes.messages.UserMessages._
-import com.fortysevendeg.ninecards.services.common.TaskOps._
+import com.fortysevendeg.ninecards.services.common.ConnectionIOOps._
 import org.mockito.Matchers.{ eq ⇒ mockEq }
 import org.specs2.matcher.Matchers
 import org.specs2.mock.Mockito
@@ -74,7 +74,7 @@ trait NineCardsApiSpecification
     sharedCollectionProcesses.createCollection(any) returns
       Free.pure(Messages.createCollectionResponse)
 
-    sharedCollectionProcesses.getCollectionByPublicIdentifier(any[String]) returns
+    sharedCollectionProcesses.getCollectionByPublicIdentifier(any[String], any) returns
       Free.pure(Messages.getCollectionByPublicIdentifierResponse.right)
 
     sharedCollectionProcesses.subscribe(any[String], any[Long]) returns
@@ -83,7 +83,7 @@ trait NineCardsApiSpecification
     sharedCollectionProcesses.unsubscribe(any[String], any[Long]) returns
       Free.pure(Messages.unsubscribeResponse.right)
 
-    sharedCollectionProcesses.getPublishedCollections(any[Long]) returns
+    sharedCollectionProcesses.getPublishedCollections(any[Long], any) returns
       Free.pure(Messages.getPublishedCollectionsResponse)
 
     applicationProcesses.categorizeApps(any, any) returns
@@ -101,7 +101,7 @@ trait NineCardsApiSpecification
       requestUri   = any[String]
     ) returns Free.pure(None)
 
-    sharedCollectionProcesses.getCollectionByPublicIdentifier(any[String]) returns
+    sharedCollectionProcesses.getCollectionByPublicIdentifier(any[String], any) returns
       Free.pure(Exceptions.sharedCollectionNotFoundException.left)
 
     sharedCollectionProcesses.subscribe(any[String], any[Long]) returns
@@ -144,7 +144,7 @@ trait NineCardsApiSpecification
     sharedCollectionProcesses.createCollection(any) returns
       createCollectionTask.liftF[NineCardsServices]
 
-    sharedCollectionProcesses.getCollectionByPublicIdentifier(any[String]) returns
+    sharedCollectionProcesses.getCollectionByPublicIdentifier(any[String], any) returns
       getCollectionByIdTask.liftF[NineCardsServices]
 
     applicationProcesses.categorizeApps(any, any) returns
@@ -317,12 +317,13 @@ class NineCardsApiSpec
 
   "GET /collections/collectionId" should {
 
-    val request = Get(Paths.collectionById)
+    val request = Get(Paths.collectionById) ~> addHeaders(Headers.googlePlayHeaders)
 
     "return a 404 Not found status code if the shared collection doesn't exist" in new UnsuccessfulScope {
 
       Get(Paths.collectionById) ~>
         addHeaders(Headers.userInfoHeaders) ~>
+        addHeaders(Headers.googlePlayHeaders) ~>
         sealRoute(nineCardsApi) ~>
         check {
           status.intValue shouldEqual StatusCodes.NotFound.intValue
@@ -364,7 +365,8 @@ class NineCardsApiSpec
 
   "GET /collections" should {
 
-    val request = Get(Paths.collections)
+    val request = Get(Paths.collections) ~>
+      addHeaders(Headers.googlePlayHeaders)
 
     unauthorizedNoHeaders(request)
 

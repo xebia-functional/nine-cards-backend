@@ -97,7 +97,7 @@ object TestData {
 
   object Messages {
 
-    val sharedCollectionInfo = SharedCollectionInfo(
+    val sharedCollection = SharedCollection(
       publicIdentifier = publicIdentifier,
       publishedOn      = now,
       description      = description,
@@ -109,8 +109,12 @@ object TestData {
       category         = category,
       icon             = icon,
       community        = community,
-      packages         = List.empty,
-      resolvedPackages = List.empty
+      packages         = List.empty
+    )
+
+    val sharedCollectionInfo = SharedCollectionWithAppsInfo(
+      collection = sharedCollection,
+      appsInfo   = List.empty
     )
 
     val apiCategorizeAppsRequest = ApiCategorizeAppsRequest(items = List("", "", ""))
@@ -133,7 +137,7 @@ object TestData {
 
     val categorizeAppsResponse = CategorizeAppsResponse(Nil, Nil)
 
-    val createCollectionResponse = CreateCollectionResponse(data = sharedCollectionInfo)
+    val createCollectionResponse = CreateCollectionResponse(data = sharedCollection)
 
     val getCollectionByPublicIdentifierResponse = GetCollectionByPublicIdentifierResponse(
       data = sharedCollectionInfo

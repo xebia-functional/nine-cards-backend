@@ -5,7 +5,7 @@ import com.fortysevendeg.ninecards.processes.converters.Converters._
 import com.fortysevendeg.ninecards.processes.messages.InstallationsMessages._
 import com.fortysevendeg.ninecards.processes.messages.UserMessages._
 import com.fortysevendeg.ninecards.processes.utils.HashUtils
-import com.fortysevendeg.ninecards.services.common.TaskOps._
+import com.fortysevendeg.ninecards.services.common.ConnectionIOOps._
 import com.fortysevendeg.ninecards.services.free.algebra.DBResult.DBOps
 import com.fortysevendeg.ninecards.services.free.domain._
 import com.fortysevendeg.ninecards.services.persistence.{ UserPersistenceServices, _ }

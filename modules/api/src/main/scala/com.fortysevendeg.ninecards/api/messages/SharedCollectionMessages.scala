@@ -1,6 +1,7 @@
 package com.fortysevendeg.ninecards.api.messages
 
 import cats.data.Xor
+import com.fortysevendeg.ninecards.processes.messages.SharedCollectionMessages.AppInfo
 import org.joda.time.DateTime
 
 object SharedCollectionMessages {
@@ -32,16 +33,6 @@ object SharedCollectionMessages {
     packages: List[String]
   )
 
-  case class ApiResolvedPackageInfo(
-    packageName: String,
-    title: String,
-    description: String,
-    free: Boolean,
-    icon: String,
-    stars: Double,
-    downloads: String
-  )
-
   case class ApiSharedCollection(
     publicIdentifier: String,
     publishedOn: DateTime,
@@ -55,7 +46,7 @@ object SharedCollectionMessages {
     icon: String,
     community: Boolean,
     packages: List[String],
-    resolvedPackages: List[ApiResolvedPackageInfo]
+    appsInfo: List[AppInfo]
   )
 
   type XorApiGetCollectionByPublicId = Xor[Throwable, ApiSharedCollection]

@@ -100,11 +100,17 @@ class NineCardsRoutes(
             }
           }
         } ~
-          get(complete(getPublishedCollections(userContext)))
+          nineCardsDirectives.googlePlayInfo { googlePlayContext ⇒
+            get {
+              complete(getPublishedCollections(googlePlayContext, userContext))
+            }
+          }
       } ~
         pathPrefix(TypedSegment[PublicIdentifier]) { publicIdentifier ⇒
           pathEndOrSingleSlash {
-            get(complete(getCollection(publicIdentifier)))
+            nineCardsDirectives.googlePlayInfo { googlePlayContext ⇒
+              get(complete(getCollection(publicIdentifier, googlePlayContext, userContext)))
+            }
           } ~
             path("subscribe") {
               put(complete(subscribe(publicIdentifier, userContext))) ~
@@ -127,9 +133,13 @@ class NineCardsRoutes(
       .updateInstallation(toUpdateInstallationRequest(request, userContext))
       .map(toApiUpdateInstallationResponse)
 
-  private[this] def getCollection(publicId: PublicIdentifier) =
+  private[this] def getCollection(
+    publicId: PublicIdentifier,
+    googlePlayContext: GooglePlayContext,
+    userContext: UserContext
+  ) =
     sharedCollectionProcesses
-      .getCollectionByPublicIdentifier(publicId.value)
+      .getCollectionByPublicIdentifier(publicId.value, toAuthParams(googlePlayContext, userContext))
       .map(_.map(r ⇒ toApiSharedCollection(r.data)))
 
   private[this] def createCollection(
@@ -151,9 +161,12 @@ class NineCardsRoutes(
       .unsubscribe(publicId.value, userContext.userId.value)
       .map(_.map(toApiUnsubscribeResponse))
 
-  private[this] def getPublishedCollections(userContext: UserContext) =
+  private[this] def getPublishedCollections(
+    googlePlayContext: GooglePlayContext,
+    userContext: UserContext
+  ) =
     sharedCollectionProcesses
-      .getPublishedCollections(userContext.userId.value)
+      .getPublishedCollections(userContext.userId.value, toAuthParams(googlePlayContext, userContext))
       .map(_.collections.map(toApiSharedCollection))
 
   private[this] def categorizeApps(

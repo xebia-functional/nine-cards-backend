@@ -5,14 +5,14 @@ import org.joda.time.DateTime
 
 object SharedCollectionMessages {
 
-  case class ResolvedPackageInfo(
+  case class AppInfo(
     packageName: String,
     title: String,
-    description: String,
     free: Boolean,
     icon: String,
     stars: Double,
-    downloads: String
+    downloads: String,
+    category: String
   )
 
   case class SharedCollectionData(
@@ -29,7 +29,12 @@ object SharedCollectionMessages {
     community: Boolean
   )
 
-  case class SharedCollectionInfo(
+  case class SharedCollectionWithAppsInfo(
+    collection: SharedCollection,
+    appsInfo: List[AppInfo]
+  )
+
+  case class SharedCollection(
     publicIdentifier: String,
     publishedOn: DateTime,
     description: Option[String],
@@ -41,8 +46,7 @@ object SharedCollectionMessages {
     category: String,
     icon: String,
     community: Boolean,
-    packages: List[String],
-    resolvedPackages: List[ResolvedPackageInfo]
+    packages: List[String]
   )
 
   case class CreateCollectionRequest(
@@ -50,16 +54,16 @@ object SharedCollectionMessages {
     packages: List[String]
   )
 
-  case class CreateCollectionResponse(data: SharedCollectionInfo)
+  case class CreateCollectionResponse(data: SharedCollection)
 
-  case class GetCollectionByPublicIdentifierResponse(data: SharedCollectionInfo)
-
-  type XorGetCollectionByPublicId = Xor[Throwable, GetCollectionByPublicIdentifierResponse]
+  case class GetCollectionByPublicIdentifierResponse(data: SharedCollectionWithAppsInfo)
 
   case class SubscribeResponse()
 
   case class UnsubscribeResponse()
 
-  case class GetPublishedCollectionsResponse(collections: List[SharedCollectionInfo])
+  case class GetPublishedCollectionsResponse(collections: List[SharedCollectionWithAppsInfo])
+
+  type XorGetCollectionByPublicId = Xor[Throwable, GetCollectionByPublicIdentifierResponse]
 
 }
