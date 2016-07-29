@@ -50,8 +50,10 @@ object GoogleApiItemParser {
     AppCard(
       packageName = docV2.getDocid,
       title   = docV2.getTitle,
-      free = false, // TODO
-      icon = "", // TODO
+      free = docV2.getOfferList.exists(_.getMicros == 0),
+      icon = docV2.getImageList
+        .find(_.getImageType == 4)
+        .fold("")(_.getImageUrl.replaceFirst("https","http") ),
       stars = docV2.getAggregateRating.getStarRating,
       downloads = appDetails.getNumDownloads,
       categories = appDetails.getAppCategoryList.toList
