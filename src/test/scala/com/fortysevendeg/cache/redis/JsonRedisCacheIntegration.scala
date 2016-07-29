@@ -24,9 +24,11 @@ class JsonRedisCacheIntegration extends Specification with ScalaCheck {
         to.ti
       }
 
-      val cachedFunction = (new JsonRedisCache("localhost", 6379)).cached(testFunction)
+      val redisServer = new RedisServer()
+      val redisPort = redisServer.getPort()
 
-      val redisServer = new RedisServer(6379)
+      val cachedFunction = (new JsonRedisCache("localhost", redisPort)).cached(testFunction)
+
       redisServer.start()
 
       val firstPass = testOuterList.map(cachedFunction(_))

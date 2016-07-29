@@ -5,9 +5,6 @@ import com.fortysevendeg.cache.redis.RedisCachedMonadicFunction
 import com.fortysevendeg.extracats
 import com.fortysevendeg.ninecards.googleplay.domain._
 import com.redis.RedisClientPool
-import org.http4s.Status.ResponseClass.Successful
-import org.http4s.client.Client
-import org.http4s.{Method, Request, Uri}
 import scalaz.concurrent.Task
 
 class CachedAppService(

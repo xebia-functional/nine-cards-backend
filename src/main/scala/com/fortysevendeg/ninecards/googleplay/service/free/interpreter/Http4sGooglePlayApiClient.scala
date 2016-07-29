@@ -5,7 +5,7 @@ import cats.syntax.xor._
 import com.fortysevendeg.ninecards.googleplay.domain._
 import org.http4s.Status.ResponseClass.Successful
 import org.http4s.client.Client
-import org.http4s.{Header, Headers, Method, Request, Response, Uri}
+import org.http4s.{Header, Headers, Method, Request, Uri}
 import scalaz.concurrent.Task
 import scodec.bits.ByteVector
 

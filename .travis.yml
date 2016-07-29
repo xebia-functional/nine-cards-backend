@@ -5,7 +5,7 @@ scala:
 jdk:
   - oraclejdk8
 script:
-  - sbt ++$$TRAVIS_SCALA_VERSION clean coverage "test-only *Properties *Spec"
+  - sbt ++$$TRAVIS_SCALA_VERSION clean coverage "test"
 addons:
   apt:
     packages:

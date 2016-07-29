@@ -10,7 +10,6 @@ import io.circe.generic.auto._
 import io.circe.parser._
 import org.scalacheck.Prop._
 import org.scalacheck._
-import scalaz.concurrent.Task
 import spray.http.HttpHeaders.RawHeader
 import spray.http.StatusCodes._
 import spray.testkit.{RouteTest, TestFrameworkInterface}

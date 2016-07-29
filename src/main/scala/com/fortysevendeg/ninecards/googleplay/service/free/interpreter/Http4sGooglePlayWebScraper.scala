@@ -3,7 +3,7 @@ package com.fortysevendeg.ninecards.googleplay.service.free.interpreter
 import cats.data.Xor
 import cats.syntax.xor._
 import com.fortysevendeg.ninecards.googleplay.domain._
-import org.http4s.{Method, Request, Response, Uri}
+import org.http4s.{Method, Request, Uri}
 import org.http4s.Status.ResponseClass.Successful
 import org.http4s.client.Client
 import scalaz.concurrent.Task

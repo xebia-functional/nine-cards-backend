@@ -4,7 +4,6 @@ import com.fortysevendeg.extracats.XorTaskOrComposer
 import com.fortysevendeg.ninecards.googleplay.domain._
 import com.fortysevendeg.ninecards.googleplay.service.free.algebra.GooglePlay.{ ResolveMany, Resolve }
 import org.scalacheck._
-import org.scalacheck.Arbitrary
 import org.scalacheck.Prop._
 import scalaz.concurrent.Task
 import cats.data.Xor
