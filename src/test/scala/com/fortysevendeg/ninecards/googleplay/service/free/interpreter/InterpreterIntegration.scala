@@ -61,7 +61,7 @@ class InterpretersIntegration extends Specification with TaskMatchers with WithH
       val relevantDetails = response.map ( _.map { i: Item =>
         (i.docV2.docid, i.docV2.details.appDetails.appCategory, i.docV2.title)
       })
-      val expected = (fisherPrice.packageName, fisherPrice.categories, fisherPrice.title)
+      val expected = (fisherPrice.packageName, fisherPrice.card.categories, fisherPrice.card.title)
       relevantDetails must returnValue(Xor.right(expected))
     }
 
@@ -77,7 +77,7 @@ class InterpretersIntegration extends Specification with TaskMatchers with WithH
       val relevantDetails = response.map { xor => xor.map { c: AppCard =>
         (c.packageName, c.categories, c.title)
       }}
-      val expected = (fisherPrice.packageName, fisherPrice.categories, fisherPrice.title)
+      val expected = (fisherPrice.packageName, fisherPrice.card.categories, fisherPrice.card.title)
       relevantDetails must returnValue(Xor.right(expected))
     }
 

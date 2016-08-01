@@ -17,23 +17,35 @@ object TestData {
   object fisherPrice {
     val packageName = "air.fisherprice.com.shapesAndColors"
     val packageObj = Package(packageName)
-    val title = "Shapes & Colors Music Show"
-    val categories = List("EDUCATION", "FAMILY_EDUCATION")
-    val icon = "http://lh4.ggpht.com/Pb8iLNmi9vHOwB-39TKe-kn4b_uU-E6rn7zSiFz6jC0RlaEQeNCcBh2MueyslcQ3mj2H"
-    val stars = 4.10
 
     lazy val protobufFile = getClass.getClassLoader.getResource(packageName)
     lazy val htmlFile     = getClass.getClassLoader.getResource(packageName + ".html")
 
     val card = AppCard(
       packageName = packageName,
-      title = title,
+      title = "Shapes & Colors Music Show",
       free = true,
-      icon = icon,
-      stars = stars,
-      downloads = "",
-      categories = categories
+      icon = "http://lh4.ggpht.com/Pb8iLNmi9vHOwB-39TKe-kn4b_uU-E6rn7zSiFz6jC0RlaEQeNCcBh2MueyslcQ3mj2H",
+      stars = 4.10,
+      downloads = "1.000.000 - 5.000.000",
+      categories = List("EDUCATION", "FAMILY_EDUCATION")
     )
+  }
+
+  object minecraft {
+    val packageName = "com.mojang.minecraftpe"
+    val packageObj = Package(packageName)
+
+    val card = AppCard(
+      packageName = packageName,
+      title = "Minecraft: Pocket Edition",
+      free = false,
+      icon = "http://lh3.googleusercontent.com/30koN0eGl-LHqvUZrCj9HT4qVPQdvN508p2wuhaWUnqKeCp6nrs9QW8v6IVGvGNauA",
+      stars = 0.0,
+      downloads = "",
+      categories = List()
+    )
+
   }
 
 }
