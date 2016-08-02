@@ -34,6 +34,8 @@ trait Dependencies {
   val hasher = "com.roundeights" %% "hasher" % Versions.hasher
   val newRelic = "com.newrelic.agent.java" % "newrelic-agent" % Versions.newRelic
 
+  val googleAnalyticsJava = "com.google.apis" % "google-api-services-analyticsreporting" % "v4-rev9-1.22.0"
+
   val baseDepts = Seq(
     typesafeConfig,
     hasher,
@@ -67,6 +69,7 @@ trait Dependencies {
     doobieH2,
     doobiePostgresql,
     doobieSpecs2 % "test",
+    googleAnalyticsJava,
     scalaz,
     scalazConcurrent,
     sprayJson,
