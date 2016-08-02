@@ -1,31 +1,71 @@
-/*
-* We found the basis for this solution in
-* http://dba.stackexchange.com/questions/42924/postgresql-function-to-create-table
+/* Note: a procedural-like solution was found and used
+in a previous version, but it does not work with H2 */
+
+
+/*World: called earth*/
+create table if not exists rankings_earth (
+  packageName character varying(256) not null,
+  category varchar(30) not null,
+  ranking integer not null,
+  primary key (packageName, category)
+);
+
+/* Continents, without any word, just the name*/
+create table if not exists rankings_africa (
+  packageName character varying(256) not null,
+  category varchar(30) not null,
+  ranking integer not null,
+  primary key (packageName, category)
+);
+
+create table if not exists rankings_americas (
+  packageName character varying(256) not null,
+  category varchar(30) not null,
+  ranking integer not null,
+  primary key (packageName, category)
+);
+
+create table if not exists rankings_asia (
+  packageName character varying(256) not null,
+  category varchar(30) not null,
+  ranking integer not null,
+  primary key (packageName, category)
+);
+
+create table if not exists rankings_europe (
+  packageName character varying(256) not null,
+  category varchar(30) not null,
+  ranking integer not null,
+  primary key (packageName, category)
+);
+
+create table if not exists rankings_oceania (
+  packageName character varying(256) not null,
+  category varchar(30) not null,
+  ranking integer not null,
+  primary key (packageName, category)
+);
+
+/** Countries: with the word country before, and the two-letter code
 */
-create function create_ranking_table(geo_scope varchar(30)) returns VOID as $$
-begin
-  execute format(
-      'create table if not exists %I (
-        packageName character varying(256) not null,
-        category varchar(30) not null,
-        ranking integer not null,
-        primary key (packageName, category)
-    )',
-    'rankings_' || geo_scope
-    );
-end
-$$ LANGUAGE plpgsql;
+create table if not exists rankings_country_es (
+  packageName character varying(256) not null,
+  category varchar(30) not null,
+  ranking integer not null,
+  primary key (packageName, category)
+);
 
-select 1 from create_ranking_table('earth') ;
+create table if not exists rankings_country_gb (
+  packageName character varying(256) not null,
+  category varchar(30) not null,
+  ranking integer not null,
+  primary key (packageName, category)
+);
 
-select 1 from create_ranking_table('africa') ;
-select 1 from create_ranking_table('americas');
-select 1 from create_ranking_table('asia');
-select 1 from create_ranking_table('europe');
-select 1 from create_ranking_table('oceania');
+create table if not exists rankings_country_us (
+  packageName character varying(256) not null,
+  category varchar(30) not null,
+  ranking integer not null,
+  primary key (packageName, category)
+);
 
-select 1 from create_ranking_table('country_es');
-select 1 from create_ranking_table('country_gb');
-select 1 from create_ranking_table('country_us');
-
-drop function if exists create_ranking_table(varchar(30));
