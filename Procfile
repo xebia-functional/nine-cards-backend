@@ -1,0 +1,1 @@
+web: target/universal/stage/bin/9Cards-backend-google-play -Dhttp.port=${PORT}
