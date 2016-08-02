@@ -17,10 +17,7 @@
   },
   "buildpacks": [
     {
-      "url": "https://github.com/heroku/heroku-buildpack-multi"
-    },
-    {
-      "url": "https://github.com/loku/heroku-buildpack-protobuf.git"
+      "url": "https://github.com/juanpedromoreno/heroku-buildpack-protobuf.git"
     },
     {
       "url": "https://github.com/heroku/heroku-buildpack-scala.git"

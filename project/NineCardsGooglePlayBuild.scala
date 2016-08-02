@@ -1,5 +1,4 @@
 import sbt._
-import Keys._
 import com.typesafe.sbt.packager.archetypes.JavaAppPackaging
 import sbtprotobuf.{ProtobufPlugin => PB}
 
