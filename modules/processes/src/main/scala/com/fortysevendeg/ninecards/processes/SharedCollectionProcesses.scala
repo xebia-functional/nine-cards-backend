@@ -43,7 +43,8 @@ class SharedCollectionProcesses[F[_]](
 
   def getCollectionByPublicIdentifier(
     publicIdentifier: String,
-    authParams: AuthParams): Free[F, XorGetCollectionByPublicId] = {
+    authParams: AuthParams
+  ): Free[F, XorGetCollectionByPublicId] = {
     val unresolvedSharedCollectionInfo = for {
       sharedCollection ← findCollection(publicIdentifier)
       sharedCollectionInfo ← getCollectionPackages(sharedCollection).rightXorT[Throwable]
@@ -60,7 +61,8 @@ class SharedCollectionProcesses[F[_]](
 
   def getPublishedCollections(
     userId: Long,
-    authParams: AuthParams): Free[F, GetPublishedCollectionsResponse] = {
+    authParams: AuthParams
+  ): Free[F, GetPublishedCollectionsResponse] = {
     import scalaz.std.list.listInstance
     import scalaz.syntax.traverse.ToTraverseOps
 

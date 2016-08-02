@@ -1,7 +1,8 @@
 import com.typesafe.config.ConfigFactory
-import sbt.{Def, settingKey}
+import sbt.Keys._
+import sbt._
 
-object FlywayConfig {
+object CustomSettings {
 
   case class DatabaseConfig(driver: String, url: String, user: String, password: String)
 
@@ -20,5 +21,12 @@ object FlywayConfig {
         user = envOrElseConfig(s"$prefix.user"),
         password = envOrElseConfig(s"$prefix.password")
       )
+    }
+
+  lazy val apiResourcesFolder = settingKey[File]("The resources folder for api project")
+
+  lazy val apiResourcesFolderDef: Def.Initialize[File] =
+    Def.setting[File] {
+      (baseDirectory in LocalProject("api")).value / "src/main/resources"
     }
 }
