@@ -1,7 +1,7 @@
 package com.fortysevendeg.ninecards.api.messages
 
 import cats.data.Xor
-import com.fortysevendeg.ninecards.processes.messages.SharedCollectionMessages.AppInfo
+import com.fortysevendeg.ninecards.processes.messages.SharedCollectionMessages._
 import org.joda.time.DateTime
 
 object SharedCollectionMessages {
@@ -18,19 +18,9 @@ object SharedCollectionMessages {
     packages: List[String]
   )
 
-  case class ApiCreateCollectionResponse(
+  case class ApiCreateOrUpdateCollectionResponse(
     publicIdentifier: String,
-    publishedOn: DateTime,
-    description: Option[String],
-    author: String,
-    name: String,
-    sharedLink: String,
-    installations: Int,
-    views: Int,
-    category: String,
-    icon: String,
-    community: Boolean,
-    packages: List[String]
+    packagesInfo: PackagesInfo
   )
 
   case class ApiSharedCollection(
@@ -39,7 +29,6 @@ object SharedCollectionMessages {
     description: Option[String],
     author: String,
     name: String,
-    sharedLink: String,
     installations: Int,
     views: Int,
     category: String,
@@ -47,6 +36,11 @@ object SharedCollectionMessages {
     community: Boolean,
     packages: List[String],
     appsInfo: List[AppInfo]
+  )
+
+  case class ApiUpdateCollectionRequest(
+    collectionInfo: Option[SharedCollectionUpdateInfo],
+    packages: Option[List[String]]
   )
 
   type XorApiGetCollectionByPublicId = Xor[Throwable, ApiSharedCollection]

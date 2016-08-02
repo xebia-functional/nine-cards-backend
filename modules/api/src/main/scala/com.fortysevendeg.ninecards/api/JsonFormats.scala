@@ -6,7 +6,7 @@ import com.fortysevendeg.ninecards.api.messages.InstallationsMessages._
 import com.fortysevendeg.ninecards.api.messages.SharedCollectionMessages._
 import com.fortysevendeg.ninecards.api.messages.UserMessages._
 import com.fortysevendeg.ninecards.processes.messages.ApplicationMessages.CategorizedApp
-import com.fortysevendeg.ninecards.processes.messages.SharedCollectionMessages.AppInfo
+import com.fortysevendeg.ninecards.processes.messages.SharedCollectionMessages._
 import io.circe.{ Decoder, Encoder, Json }
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
@@ -54,15 +54,21 @@ trait JsonFormats
 
   implicit val appInfoFormat = jsonFormat7(AppInfo)
 
-  implicit val apiGetCollectionByPublicIdentifierResponseFormat = jsonFormat13(ApiSharedCollection)
+  implicit val apiGetCollectionByPublicIdentifierResponseFormat = jsonFormat12(ApiSharedCollection)
 
   implicit val apiCreateCollectionRequestFormat = jsonFormat9(ApiCreateCollectionRequest)
 
-  implicit val apiCreateCollectionResponseFormat = jsonFormat12(ApiCreateCollectionResponse)
+  implicit val packagesInfoFormat = jsonFormat2(PackagesInfo)
+
+  implicit val apiCreateCollectionResponseFormat = jsonFormat2(ApiCreateOrUpdateCollectionResponse)
 
   implicit val apiSubscribeResponseFormat = jsonFormat0(ApiSubscribeResponse)
 
   implicit val apiUnsubscribeResponseFormat = jsonFormat0(ApiUnsubscribeResponse)
+
+  implicit val sharedCollectionUpdateInfoFormat = jsonFormat2(SharedCollectionUpdateInfo)
+
+  implicit val apiUpdateCollectionRequestFormat = jsonFormat2(ApiUpdateCollectionRequest)
 
   implicit val apiCategorizeAppsRequestFormat = jsonFormat1(ApiCategorizeAppsRequest)
 

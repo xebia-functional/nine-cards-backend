@@ -5,6 +5,7 @@ import com.fortysevendeg.ninecards.api.messages.InstallationsMessages._
 import com.fortysevendeg.ninecards.api.messages.UserMessages._
 import com.fortysevendeg.ninecards.processes.messages.ApplicationMessages.CategorizeAppsResponse
 import com.fortysevendeg.ninecards.processes.messages.InstallationsMessages._
+import com.fortysevendeg.ninecards.processes.messages.SharedCollectionMessages._
 import com.fortysevendeg.ninecards.processes.messages.UserMessages._
 import org.scalacheck.{ Arbitrary, Gen }
 import org.scalacheck.Shapeless._
@@ -94,6 +95,18 @@ class ConvertersSpec
         authParams.token shouldEqual googlePlayContext.googlePlayToken.value
         authParams.localization shouldEqual googlePlayContext.marketLocalization.map(_.value)
         authParams.androidId shouldEqual userContext.androidId.value
+      }
+    }
+  }
+
+  "toApiCreateOrUpdateCollectionResponse" should {
+    "convert CreateOrUpdateCollectionResponse to ApiCreateOrUpdateCollectionResponse" in {
+      prop { (response: CreateOrUpdateCollectionResponse) ⇒
+
+        val apiResponse = Converters.toApiCreateOrUpdateCollectionResponse(response)
+
+        apiResponse.packagesInfo shouldEqual response.packagesInfo
+        apiResponse.publicIdentifier shouldEqual response.publicIdentifier
       }
     }
   }

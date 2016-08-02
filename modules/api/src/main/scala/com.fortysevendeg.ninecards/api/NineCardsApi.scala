@@ -68,9 +68,9 @@ class NineCardsRoutes(
 
   private[this] lazy val applicationRoute =
     nineCardsDirectives.authenticateUser { userContext ⇒
-      nineCardsDirectives.googlePlayInfo { googlePlayContext ⇒
-        path("categorize") {
-          post {
+      path("categorize") {
+        post {
+          nineCardsDirectives.googlePlayInfo { googlePlayContext ⇒
             entity(as[ApiCategorizeAppsRequest]) { request ⇒
               complete(categorizeApps(request, googlePlayContext, userContext))
             }
@@ -100,17 +100,24 @@ class NineCardsRoutes(
             }
           }
         } ~
-          nineCardsDirectives.googlePlayInfo { googlePlayContext ⇒
-            get {
+          get {
+            nineCardsDirectives.googlePlayInfo { googlePlayContext ⇒
               complete(getPublishedCollections(googlePlayContext, userContext))
             }
           }
       } ~
         pathPrefix(TypedSegment[PublicIdentifier]) { publicIdentifier ⇒
           pathEndOrSingleSlash {
-            nineCardsDirectives.googlePlayInfo { googlePlayContext ⇒
-              get(complete(getCollection(publicIdentifier, googlePlayContext, userContext)))
-            }
+            get {
+              nineCardsDirectives.googlePlayInfo { googlePlayContext ⇒
+                complete(getCollection(publicIdentifier, googlePlayContext, userContext))
+              }
+            } ~
+              put {
+                entity(as[ApiUpdateCollectionRequest]) { request ⇒
+                  complete(updateCollection(publicIdentifier, request))
+                }
+              }
           } ~
             path("subscribe") {
               put(complete(subscribe(publicIdentifier, userContext))) ~
@@ -149,12 +156,20 @@ class NineCardsRoutes(
   ) =
     sharedCollectionProcesses
       .createCollection(toCreateCollectionRequest(request, collectionInfo, userContext))
-      .map(toApiCreateCollectionResponse)
+      .map(toApiCreateOrUpdateCollectionResponse)
 
   private[this] def subscribe(publicId: PublicIdentifier, userContext: UserContext) =
     sharedCollectionProcesses
       .subscribe(publicId.value, userContext.userId.value)
       .map(_.map(toApiSubscribeResponse))
+
+  private[this] def updateCollection(
+    publicId: PublicIdentifier,
+    request: ApiUpdateCollectionRequest
+  ) =
+    sharedCollectionProcesses
+      .updateCollection(publicId.value, request.collectionInfo, request.packages)
+      .map(_.map(toApiCreateOrUpdateCollectionResponse))
 
   private[this] def unsubscribe(publicId: PublicIdentifier, userContext: UserContext) =
     sharedCollectionProcesses
