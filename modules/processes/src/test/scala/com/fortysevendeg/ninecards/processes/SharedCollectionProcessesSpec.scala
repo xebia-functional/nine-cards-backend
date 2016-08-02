@@ -224,8 +224,8 @@ class SharedCollectionProcessesSpec
         collectionInfo.foldMap(testInterpreters) must beXorRight[CreateOrUpdateCollectionResponse].which {
           response ⇒
             response.publicIdentifier must_== publicIdentifier
-            response.packagesInfo.added must_== addedPackages
-            response.packagesInfo.removed must beSome(removedPackages)
+            response.packagesStats.added must_== addedPackages
+            response.packagesStats.removed must beSome(removedPackages)
         }
       }
 
@@ -240,8 +240,8 @@ class SharedCollectionProcessesSpec
         collectionInfo.foldMap(testInterpreters) must beXorRight[CreateOrUpdateCollectionResponse].which {
           response ⇒
             response.publicIdentifier must_== publicIdentifier
-            response.packagesInfo.added must_== 0
-            response.packagesInfo.removed must beSome(0)
+            response.packagesStats.added must_== 0
+            response.packagesStats.removed must beSome(0)
         }
       }
 

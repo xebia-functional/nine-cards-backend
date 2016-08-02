@@ -40,7 +40,7 @@ class SharedCollectionProcesses[F[_]](
       addedPackages ← collectionPersistence.addPackages(collection.id, request.packages)
     } yield CreateOrUpdateCollectionResponse(
       publicIdentifier = collection.publicIdentifier,
-      packagesInfo     = PackagesInfo(added = addedPackages)
+      packagesStats    = PackagesStats(added = addedPackages)
     )
   }.liftF[F]
 
@@ -112,7 +112,7 @@ class SharedCollectionProcesses[F[_]](
       (added, removed) = info
     } yield CreateOrUpdateCollectionResponse(
       collection.publicIdentifier,
-      packagesInfo = (PackagesInfo.apply _).tupled((added, Option(removed)))
+      packagesStats = (PackagesStats.apply _).tupled((added, Option(removed)))
     )
   }.value.liftF
 

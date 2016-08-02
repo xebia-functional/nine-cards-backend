@@ -31,7 +31,7 @@ object Converters {
   ): ApiCreateOrUpdateCollectionResponse =
     ApiCreateOrUpdateCollectionResponse(
       publicIdentifier = response.publicIdentifier,
-      packagesInfo     = response.packagesInfo
+      packagesStats    = response.packagesStats
     )
 
   def toCreateCollectionRequest(

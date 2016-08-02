@@ -58,11 +58,11 @@ object SharedCollectionMessages {
     packages: List[String]
   )
 
-  case class PackagesInfo(added: Int, removed: Option[Int] = None)
+  case class PackagesStats(added: Int, removed: Option[Int] = None)
 
   case class CreateOrUpdateCollectionResponse(
     publicIdentifier: String,
-    packagesInfo: PackagesInfo
+    packagesStats: PackagesStats
   )
 
   case class GetCollectionByPublicIdentifierResponse(data: SharedCollectionWithAppsInfo)

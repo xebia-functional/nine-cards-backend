@@ -105,7 +105,7 @@ class ConvertersSpec
 
         val apiResponse = Converters.toApiCreateOrUpdateCollectionResponse(response)
 
-        apiResponse.packagesInfo shouldEqual response.packagesInfo
+        apiResponse.packagesStats shouldEqual response.packagesStats
         apiResponse.publicIdentifier shouldEqual response.publicIdentifier
       }
     }

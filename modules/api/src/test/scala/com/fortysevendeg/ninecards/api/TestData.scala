@@ -110,7 +110,7 @@ object TestData {
 
     val collectionInfo = SharedCollectionUpdateInfo(description = description, title = name)
 
-    val packagesInfo = PackagesInfo(addedPackages, removedPackages)
+    val packagesStats = PackagesStats(addedPackages, removedPackages)
 
     val sharedCollection = SharedCollection(
       publicIdentifier = publicIdentifier,
@@ -158,7 +158,7 @@ object TestData {
 
     val createOrUpdateCollectionResponse = CreateOrUpdateCollectionResponse(
       publicIdentifier = publicIdentifier,
-      packagesInfo     = packagesInfo
+      packagesStats    = packagesStats
     )
 
     val getCollectionByPublicIdentifierResponse = GetCollectionByPublicIdentifierResponse(

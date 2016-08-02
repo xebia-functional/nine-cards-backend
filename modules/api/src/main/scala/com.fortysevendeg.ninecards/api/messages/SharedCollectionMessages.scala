@@ -20,7 +20,7 @@ object SharedCollectionMessages {
 
   case class ApiCreateOrUpdateCollectionResponse(
     publicIdentifier: String,
-    packagesInfo: PackagesInfo
+    packagesStats: PackagesStats
   )
 
   case class ApiSharedCollection(

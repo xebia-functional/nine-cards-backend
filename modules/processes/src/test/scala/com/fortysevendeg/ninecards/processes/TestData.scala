@@ -119,9 +119,9 @@ object TestData {
         SharedCollectionPackage(id, collectionId, n)
     }
 
-    val createPackagesInfo = PackagesInfo(addedPackages, None)
+    val createPackagesStats = PackagesStats(addedPackages, None)
 
-    val updatePackagesInfo = PackagesInfo(addedPackages, Option(removedPackages))
+    val updatePackagesStats = PackagesStats(addedPackages, Option(removedPackages))
 
     val appInfoList = packagesName map { packageName ⇒
       AppInfo(packageName, "Germany", true, icon, stars, "100.000+", appCategory)
@@ -197,7 +197,7 @@ object TestData {
 
     val createCollectionResponse = CreateOrUpdateCollectionResponse(
       publicIdentifier = publicIdentifier,
-      packagesInfo     = createPackagesInfo
+      packagesStats    = createPackagesStats
     )
 
     val getCollectionByPublicIdentifierResponse = GetCollectionByPublicIdentifierResponse(
