@@ -18,7 +18,8 @@ object Wiring {
     val webClient = new Http4sGooglePlayWebScraper( getConfigValue("ninecards.googleplay.web.endpoint"), httpClient)
     val redisPool = new RedisClientPool(
       host = getConfigValue("ninecards.googleplay.redis.host"),
-      port = getConfigNumber("ninecards.googleplay.redis.port")
+      port = getConfigNumber("ninecards.googleplay.redis.port"),
+      secret = getOptionalConfigValue("ninecards.googleplay.redis.secret")
     )
     val itemService = new XorTaskOrComposer[AppRequest,String,Item](
       new CachedItemService( "apiClient_item", apiClient.getItem, redisPool),
