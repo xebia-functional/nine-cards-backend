@@ -1,1 +1,1 @@
-web: target/universal/stage/bin/9cards-backend-google-play -Dninecards.googleplay.host=0.0.0.0 -Dninecards.googleplay.port=${PORT}
+web: target/universal/stage/bin/9cards-backend-google-play -Dninecards.googleplay.port=$PORT
