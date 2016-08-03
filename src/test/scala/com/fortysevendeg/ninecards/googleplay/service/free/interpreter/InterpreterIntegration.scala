@@ -12,7 +12,9 @@ import scala.concurrent.duration._
 import scalaz.concurrent.Task
 import TestData._
 
-class InterpretersIntegration extends Specification with TaskMatchers with WithHttp1Client {
+class InterpretersIntegration extends Specification with WithHttp1Client {
+
+  import TaskMatchers._
 
   private val apiClient = new Http4sGooglePlayApiClient(apiEndpoint, pooledClient)
   private val webClient = new Http4sGooglePlayWebScraper(webEndpoint, pooledClient)
@@ -24,10 +26,18 @@ class InterpretersIntegration extends Specification with TaskMatchers with WithH
     "Making an API request for an Item" should {
       "retrieve an Item for packages that exist" in {
         val response = apiClient.getItem(AppRequest(fisherPrice.packageObj,authParams))
-        val fetchedDocId = response.map(xor => xor.map(_.docV2.docid))
-        fetchedDocId must returnValue(Xor.right(fisherPrice.packageName))
+        val fetchedDocId = response.map { xor => xor.map { item => (
+          item.docV2.docid,
+          item.docV2.title,
+          item.docV2.details.appDetails.appCategory
+        )}}
+        val expected = {
+          import fisherPrice.card
+          (card.packageName, card.title, card.categories.take(1) )
+        }
+        fetchedDocId must returnValue( Xor.Right(expected) )
         // todo should this be more comprehensive? check all other tests too
-      }.pendingUntilFixed("Google Unofficial Api non operational")
+      }
 
       "result in an error state for packages that do not exist" in {
         val appRequest = AppRequest(nonexisting.packageObj, authParams )
@@ -38,11 +48,17 @@ class InterpretersIntegration extends Specification with TaskMatchers with WithH
     "Making an API request for a Card" should {
 
       "result in an Item for packages that exist" in {
+        def eraseDetails( card: AppCard) : AppCard = card.copy(
+          downloads = "",
+          categories = card.categories.take(1),
+          stars = 3.145
+        )
         val appRequest = AppRequest(fisherPrice.packageObj, authParams )
-        val fetchedDocId = apiClient.getCard(appRequest)
-        fetchedDocId must returnValue(Xor.right(fisherPrice.card))
-        // todo should this be more comprehensive? check all other tests too
-      }.pendingUntilFixed("Google Unofficial Api non operational")
+        val response = apiClient.getCard(appRequest)
+        val fields = response.map( _.map(eraseDetails))
+        // The number of downloads can be different from the Google API.
+        fields must returnValue( Xor.Right( eraseDetails(fisherPrice.card)))
+      }
 
       "result in an error state for packages that do not exist" in {
         val appRequest = AppRequest(nonexisting.packageObj, authParams )
