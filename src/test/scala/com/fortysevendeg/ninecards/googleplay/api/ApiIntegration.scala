@@ -41,8 +41,8 @@ class ApiIntegration extends Specification with Specs2RouteTest with WithHttp1Cl
   )
 
   implicit val i = {
-    val apiClient = new Http4sGooglePlayApiClient( getConfigValue("googleplay.api.endpoint") , pooledClient)
-    val webClient = new Http4sGooglePlayWebScraper( getConfigValue("googleplay.web.endpoint") , pooledClient)
+    val apiClient = new Http4sGooglePlayApiClient( getConfigValue("ninecards.googleplay.api.endpoint") , pooledClient)
+    val webClient = new Http4sGooglePlayWebScraper( getConfigValue("ninecards.googleplay.web.endpoint") , pooledClient)
     val itemService = new XorTaskOrComposer[AppRequest,String,Item](apiClient.getItem, webClient.getItem)
     val cardService = new XorTaskOrComposer[AppRequest,InfoError, AppCard](apiClient.getCard, webClient.getCard)
     new TaskInterpreter(itemService, cardService)

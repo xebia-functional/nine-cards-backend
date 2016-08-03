@@ -14,11 +14,11 @@ object Wiring {
 
   def interpreter(): GooglePlay.Ops ~> Task = {
     val httpClient = PooledHttp1Client()
-    val apiClient = new Http4sGooglePlayApiClient(  getConfigValue("googleplay.api.endpoint"), httpClient)
-    val webClient = new Http4sGooglePlayWebScraper( getConfigValue("googleplay.web.endpoint"), httpClient)
+    val apiClient = new Http4sGooglePlayApiClient(  getConfigValue("ninecards.googleplay.api.endpoint"), httpClient)
+    val webClient = new Http4sGooglePlayWebScraper( getConfigValue("ninecards.googleplay.web.endpoint"), httpClient)
     val redisPool = new RedisClientPool(
-      host = getConfigValue("googleplay.cache.host"),
-      port = getConfigNumber("googleplay.cache.port")
+      host = getConfigValue("ninecards.googleplay.redis.host"),
+      port = getConfigNumber("ninecards.googleplay.redis.port")
     )
     val itemService = new XorTaskOrComposer[AppRequest,String,Item](
       new CachedItemService( "apiClient_item", apiClient.getItem, redisPool),
