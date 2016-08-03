@@ -1,15 +1,18 @@
 package com.fortysevendeg.ninecards.googleplay.api
 
 import akka.actor.{ActorSystem, Props}
+import akka.event.Logging
 import akka.io.IO
 import akka.util.Timeout
 import com.fortysevendeg.ninecards.config.NineCardsConfig._
+
 import scala.concurrent.duration._
 import spray.can.Http
 
 object Boot extends App {
 
   implicit private val system = ActorSystem("nine-cards-google-play-server-actor")
+  val log = Logging(system, getClass)
 
   val actor = system.actorOf( Props[NineCardsGooglePlayActor], "nine-cards-google-play-server" )
 
@@ -20,4 +23,5 @@ object Boot extends App {
 
   IO(Http) ! Http.Bind(actor, interface = host, port = port)
 
+  log.info("Application started!")
 }
