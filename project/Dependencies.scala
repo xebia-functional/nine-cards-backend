@@ -31,6 +31,7 @@ object Dependencies {
 
   private val tagSoup = "org.ccil.cowan.tagsoup" % "tagsoup" % Versions.tagSoup
 
+  private val newRelic = "com.newrelic.agent.java" % "newrelic-agent" % Versions.newRelic
   private val baseDepts = Seq(specs2Core)
 
   val apiDeps = Seq(libraryDependencies ++= baseDepts ++ Seq(
@@ -45,6 +46,7 @@ object Dependencies {
     circe("parser"),
     redisClient,
     embeddedRedis,
+    newRelic,
     scalaCheckShapeless,
     specs2ScalaCheck,
     specs2MatcherExtra,
