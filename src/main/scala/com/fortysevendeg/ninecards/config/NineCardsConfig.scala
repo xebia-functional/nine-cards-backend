@@ -8,6 +8,10 @@ object NineCardsConfig {
 
   def getConfigValue(key: String) = sys.props.getOrElse(key, config.getString(key))
 
+  def getOptionalConfigValue(key: String): Option[String] =
+    if (config.hasPath(key)) Option(getConfigValue(key)) map (_.trim) filterNot (_.isEmpty)
+    else None
+
   def getConfigNumber(key: String) = {
     val str = getConfigValue(key)
     try {
