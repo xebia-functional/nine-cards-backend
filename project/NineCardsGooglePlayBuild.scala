@@ -1,10 +1,9 @@
 import sbt._
-import Keys._
-
-import sbtprotobuf.{ProtobufPlugin=>PB}
+import com.typesafe.sbt.packager.archetypes.JavaAppPackaging
 
 object NineCardsBuild extends Build with Settings {
 
   lazy val root = project.in(file("."))
-    .settings(apiSettings ++ Dependencies.apiDeps ++ PB.protobufSettings : _*)
+    .enablePlugins(JavaAppPackaging)
+    .settings(apiSettings ++ Dependencies.apiDeps)
 }
