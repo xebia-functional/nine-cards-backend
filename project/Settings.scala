@@ -48,7 +48,6 @@ trait Settings {
     assemblyMergeStrategy in assembly := {
       case "application.conf" => concat
       case "reference.conf" => concat
-      case "unwanted.txt" => discard
       case entry =>
         val oldStrategy = (assemblyMergeStrategy in assembly).value
         val mergeStrategy = oldStrategy(entry)
