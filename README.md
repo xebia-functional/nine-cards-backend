@@ -12,12 +12,15 @@ The Nine-Cards Google Play backend is a server-side, REST service application, t
 the features for querying for some metadata of  the application from Google's Play Store servers,
 and storing this information
 
+The NCGP obtains some information from a [Google API](https://android.clients.google.com/fdfe/details),
+that is also used by the play store applications. For its API's, Google uses the
+[Protocol Buffers](https://developers.google.com/protocol-buffers/) to serialise its answers.
+The schema of the responses is specified in this [source file](src/main/protobuf/GooglePlay.proto).
 
 ## Developers Setup
 
 In this section, we describe the steps you have to take to setup your computer for developing and
 running the NCGP application.
-
 
 ### Redis Server
 
@@ -31,24 +34,6 @@ redis, as follows:
 Once you have installed redis, you should check if the `redis-server` is active, with the
 following command: `sudo service redis-server status`. If it is not active, you can restart it
 with the command `sudo service redis-server restart`.
-
-### Protocol Buffers
-
-The NCGP obtains some information from a [Google API](https://android.clients.google.com/fdfe/details),
-that is also used by the play store applications. For its API's, Google uses the
-[Protocol Buffers](https://developers.google.com/protocol-buffers/) to serialise its answers.
-The schema of the responses is specified in this [source file](src/main/protobuf/GooglePlay.proto).
-To build the application, it is necessary to compile that file into a set of Java classes that represent
-all the entities.
-
-    sudo apt-get install protobuf-compiler
-
-Once the compiler is installed, you can compile manually that file to see the Java classes created.
-
-    mkdir -p src/java
-    protoc --java_out=src/java/ src/main/protobuf/GooglePlay.proto
-
-The `.java` file should be located in `src/java/com/fortysevendeg/googleplay/proto/GooglePlay.java`.
 
 ### Building and running the application
 
