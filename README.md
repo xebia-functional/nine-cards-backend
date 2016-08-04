@@ -167,10 +167,10 @@ This information is only the user's email, so the scope used is `https://www.goo
     Press _Allow_.
 3. After pressing _Allow_, the playground page would change to a new view. The modified page shows you `Request/Response`.
    In the left pane there is a text field labelled _Authorization Code_, and a button labelled _Exchange authorization code for tokens_.
-   Press this button. Google OAuth playground generates then a new token, which is shown inside the textbox labelled _Access Token_.
-   This _Access Token_ identifies a session within the _Google Account Services_, which is to expire within the hour.
-4. Copy the value of the _Access Token_ generated. A request to login endpoint `POST {apiRoot}/login` should include in the
-   body a JSON object with the field `tokenId`. The value of this field should be the _Access Token_.
+   Press this button. Google OAuth playground generates then a new token, which is shown in the API response in the right pane, in a field named as _id_token_.
+   This _id_token_ identifies a session within the _Google Account Services_, which is to expire within the hour.
+4. Copy the value of the _id_token_ generated. A request to login endpoint `POST {apiRoot}/login` should include in the
+   body a JSON object with the field `tokenId`. The value of this field should be the _id_token_.
 
 
 ## Developers Setup

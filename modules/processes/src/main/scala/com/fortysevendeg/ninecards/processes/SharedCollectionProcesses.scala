@@ -34,11 +34,14 @@ class SharedCollectionProcesses[F[_]](
     message = "The required shared collection doesn't exist"
   )
 
-  def createCollection(request: CreateCollectionRequest): Free[F, CreateCollectionResponse] = {
+  def createCollection(request: CreateCollectionRequest): Free[F, CreateOrUpdateCollectionResponse] = {
     for {
       collection ← collectionPersistence.addCollection[SharedCollectionServices](request.collection)
-      response ← collectionPersistence.addPackages(collection.id, request.packages)
-    } yield toCreateCollectionResponse(collection, request.packages)
+      addedPackages ← collectionPersistence.addPackages(collection.id, request.packages)
+    } yield CreateOrUpdateCollectionResponse(
+      publicIdentifier = collection.publicIdentifier,
+      packagesStats    = PackagesStats(added = addedPackages)
+    )
   }.liftF[F]
 
   def getCollectionByPublicIdentifier(
@@ -95,6 +98,33 @@ class SharedCollectionProcesses[F[_]](
       _ ← subscriptionPersistence.removeSubscriptionByCollectionAndUser(collection.id, userId).rightXorT[Throwable]
     } yield UnsubscribeResponse()
   }.value.liftF
+
+  def updateCollection(
+    publicIdentifier: String,
+    collectionInfo: Option[SharedCollectionUpdateInfo],
+    packages: Option[List[String]]
+  ): Free[F, Xor[Throwable, CreateOrUpdateCollectionResponse]] = {
+
+    for {
+      collection ← findCollection(publicIdentifier)
+      _ ← updateCollectionInfo(collection.id, collectionInfo).rightXorT[Throwable]
+      info ← updatePackages(collection.id, packages).rightXorT[Throwable]
+      (added, removed) = info
+    } yield CreateOrUpdateCollectionResponse(
+      collection.publicIdentifier,
+      packagesStats = (PackagesStats.apply _).tupled((added, Option(removed)))
+    )
+  }.value.liftF
+
+  private[this] def updateCollectionInfo(collectionId: Long, info: Option[SharedCollectionUpdateInfo]) =
+    info
+      .map(c ⇒ collectionPersistence.updateCollectionInfo(collectionId, c.title, c.description))
+      .getOrElse(0.point[ConnectionIO])
+
+  private[this] def updatePackages(collectionId: Long, packagesName: Option[List[String]]) =
+    packagesName
+      .map(p ⇒ collectionPersistence.updatePackages(collectionId, p))
+      .getOrElse((0, 0).point[ConnectionIO])
 
   private[this] def addSubscription(
     subscription: Option[SharedCollectionSubscription],

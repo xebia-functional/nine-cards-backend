@@ -299,4 +299,53 @@ class SharedCollectionPersistenceServicesSpec
       }
     }
   }
+
+  "updateCollection" should {
+    "return 0 updated rows if the table is empty" in {
+      prop { (id: Long, title: String, description: Option[String]) ⇒
+        val updatedCollectionCount = sharedCollectionPersistenceServices.updateCollectionInfo(
+          id          = id,
+          title       = title,
+          description = description
+        ).transact(transactor).run
+
+        updatedCollectionCount must_== 0
+      }
+    }
+    "return 1 updated row if there is a collection with the given id in the database" in {
+      prop { (userData: UserData, collectionData: SharedCollectionData, newTitle: String, newDescription: Option[String]) ⇒
+        val id = (for {
+          u ← insertItem(User.Queries.insert, userData.toTuple)
+          c ← insertItem(SharedCollection.Queries.insert, collectionData.copy(userId = Option(u)).toTuple)
+          _ ← sharedCollectionPersistenceServices.updateCollectionInfo(c, newTitle, newDescription)
+        } yield c).transact(transactor).run
+
+        val storedCollection = sharedCollectionPersistenceServices.getCollectionById(
+          id = id
+        ).transact(transactor).run
+
+        storedCollection must beSome[SharedCollection].which {
+          collection ⇒
+            collection.name must_== newTitle
+            collection.description must_== newDescription
+        }
+      }
+    }
+    "return 0 updated rows if there isn't any collection with the given id in the database" in {
+      prop { (userData: UserData, collectionData: SharedCollectionData, newTitle: String, newDescription: Option[String]) ⇒
+        val id = (for {
+          u ← insertItem(User.Queries.insert, userData.toTuple)
+          c ← insertItem(SharedCollection.Queries.insert, collectionData.copy(userId = Option(u)).toTuple)
+        } yield c).transact(transactor).run
+
+        val updatedCollectionCount = sharedCollectionPersistenceServices.updateCollectionInfo(
+          id          = id + 1000000,
+          title       = newTitle,
+          description = newDescription
+        ).transact(transactor).run
+
+        updatedCollectionCount must_== 0
+      }
+    }
+  }
 }

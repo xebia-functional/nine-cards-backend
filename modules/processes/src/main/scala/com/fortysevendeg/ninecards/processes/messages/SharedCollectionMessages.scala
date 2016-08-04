@@ -40,7 +40,6 @@ object SharedCollectionMessages {
     description: Option[String],
     author: String,
     name: String,
-    sharedLink: String,
     installations: Int,
     views: Int,
     category: String,
@@ -49,12 +48,22 @@ object SharedCollectionMessages {
     packages: List[String]
   )
 
+  case class SharedCollectionUpdateInfo(
+    description: Option[String],
+    title: String
+  )
+
   case class CreateCollectionRequest(
     collection: SharedCollectionData,
     packages: List[String]
   )
 
-  case class CreateCollectionResponse(data: SharedCollection)
+  case class PackagesStats(added: Int, removed: Option[Int] = None)
+
+  case class CreateOrUpdateCollectionResponse(
+    publicIdentifier: String,
+    packagesStats: PackagesStats
+  )
 
   case class GetCollectionByPublicIdentifierResponse(data: SharedCollectionWithAppsInfo)
 

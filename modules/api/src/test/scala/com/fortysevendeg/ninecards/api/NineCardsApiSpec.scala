@@ -72,7 +72,7 @@ trait NineCardsApiSpecification
       Free.pure(Messages.updateInstallationResponse)
 
     sharedCollectionProcesses.createCollection(any) returns
-      Free.pure(Messages.createCollectionResponse)
+      Free.pure(Messages.createOrUpdateCollectionResponse)
 
     sharedCollectionProcesses.getCollectionByPublicIdentifier(any[String], any) returns
       Free.pure(Messages.getCollectionByPublicIdentifierResponse.right)
@@ -85,6 +85,9 @@ trait NineCardsApiSpecification
 
     sharedCollectionProcesses.getPublishedCollections(any[Long], any) returns
       Free.pure(Messages.getPublishedCollectionsResponse)
+
+    sharedCollectionProcesses.updateCollection(any, any, any) returns
+      Free.pure(Messages.createOrUpdateCollectionResponse.right)
 
     applicationProcesses.categorizeApps(any, any) returns
       Free.pure(Messages.categorizeAppsResponse)
@@ -110,6 +113,8 @@ trait NineCardsApiSpecification
     sharedCollectionProcesses.unsubscribe(any[String], any[Long]) returns
       Free.pure(Exceptions.sharedCollectionNotFoundException.left)
 
+    sharedCollectionProcesses.updateCollection(any, any, any) returns
+      Free.pure(Exceptions.sharedCollectionNotFoundException.left)
   }
 
   trait FailingScope extends BasicScope {
@@ -122,7 +127,7 @@ trait NineCardsApiSpecification
 
     val categorizeAppsTask: Task[CategorizeAppsResponse] = Task.fail(Exceptions.http4sException)
 
-    val createCollectionTask: Task[CreateCollectionResponse] = Task.fail(Exceptions.persistenceException)
+    val createCollectionTask: Task[CreateOrUpdateCollectionResponse] = Task.fail(Exceptions.persistenceException)
 
     val getCollectionByIdTask: Task[XorGetCollectionByPublicId] = Task.now(Exceptions.persistenceException.left)
 
@@ -329,6 +334,21 @@ class NineCardsApiSpec
           status.intValue shouldEqual StatusCodes.NotFound.intValue
         }
     }
+
+    unauthorizedNoHeaders(request)
+
+    internalServerError(request)
+
+    successOk(request)
+  }
+
+  "PUT /collections/collectionId" should {
+
+    val request = Put(Paths.collectionById, Messages.apiUpdateCollectionRequest)
+
+    authenticatedBadRequestEmptyBody(Put(Paths.collectionById))
+
+    notFoundSharedCollection(request)
 
     unauthorizedNoHeaders(request)
 
