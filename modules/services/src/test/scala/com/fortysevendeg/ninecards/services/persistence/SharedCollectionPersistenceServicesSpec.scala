@@ -16,13 +16,71 @@ import scalaz.std.list.listInstance // Traverse[List]
 
 import shapeless.syntax.std.product._
 
+trait SharedCollectionPersistenceServicesContext extends DomainDatabaseContext {
+
+  val communicationCategory = "COMMUNICATION"
+
+  val socialCategory = "SOCIAL"
+
+  val deleteSharedCollectionsQuery = "DELETE FROM sharedcollections"
+
+  val deleteUsersQuery = "DELETE FROM users"
+
+  def createCollectionWithUser(
+    collectionData: SharedCollectionData,
+    userId: Option[Long]
+  ): ConnectionIO[Long] =
+    insertItem(SharedCollection.Queries.insert, collectionData.copy(userId = userId))
+
+  def createCollectionsWithCategoryAndUser(
+    collectionsData: List[SharedCollectionData],
+    category: String,
+    userId: Option[Long]
+  ): ConnectionIO[Int] =
+    insertItems(
+      sql    = SharedCollection.Queries.insert,
+      values = collectionsData.map(_.copy(category = category, userId = userId))
+    )
+
+  def createPackages(collectionId: Long, packageNames: List[String]): ConnectionIO[Int] =
+    insertItems(SharedCollectionPackage.Queries.insert, packageNames map { (collectionId, _) })
+
+  def createUser(userData: UserData): ConnectionIO[Long] =
+    insertItem(User.Queries.insert, userData.toTuple)
+
+  def deleteSharedCollections: ConnectionIO[Int] = deleteItems(deleteSharedCollectionsQuery)
+
+  def deleteUsers: ConnectionIO[Int] = deleteItems(deleteUsersQuery)
+
+  def divideList[A](n: Int, list: List[A]): List[List[A]] = {
+    def merge(heads: List[A], tails: List[List[A]]): List[List[A]] = (heads, tails) match {
+      case (Nil, Nil) ⇒ Nil
+      case (h :: hs, Nil) ⇒ throw new Exception("This should not happen")
+      case (Nil, t :: ts) ⇒ tails
+      case (h :: hs, t :: ts) ⇒ (h :: t) :: merge(hs, ts)
+    }
+
+    @tailrec
+    def divideAux(xs: List[A], results: List[List[A]]): List[List[A]] =
+      if (xs.isEmpty)
+        results map (_.reverse)
+      else {
+        val (pre, post) = xs.splitAt(n)
+        divideAux(post, merge(pre, results))
+      }
+
+    divideAux(list, List.fill(n)(Nil))
+  }
+
+}
+
 class SharedCollectionPersistenceServicesSpec
   extends Specification
   with BeforeEach
   with ScalaCheck
-  with DomainDatabaseContext
   with DisjunctionMatchers
-  with NineCardsScalacheckGen {
+  with NineCardsScalacheckGen
+  with SharedCollectionPersistenceServicesContext {
 
   sequential
 
@@ -36,12 +94,12 @@ class SharedCollectionPersistenceServicesSpec
       prop { (userData: UserData, collectionData: SharedCollectionData) ⇒
         val id = (for {
           u ← createUser(userData)
-          c ← sharedCollectionPersistenceServices.addCollection[Long](
+          c ← collectionPersistenceServices.addCollection[Long](
             collectionData.copy(userId = Option(u))
           )
         } yield c).transact(transactor).run
 
-        val storedCollection = sharedCollectionPersistenceServices.getCollectionById(
+        val storedCollection = collectionPersistenceServices.getCollectionById(
           id = id
         ).transact(transactor).run
 
@@ -53,11 +111,11 @@ class SharedCollectionPersistenceServicesSpec
 
     "create a new shared collection without a defined user id" in {
       prop { (collectionData: SharedCollectionData) ⇒
-        val id: Long = sharedCollectionPersistenceServices.addCollection[Long](
+        val id: Long = collectionPersistenceServices.addCollection[Long](
           collectionData.copy(userId = None)
         ).transact(transactor).run
 
-        val storedCollection = sharedCollectionPersistenceServices.getCollectionById(
+        val storedCollection = collectionPersistenceServices.getCollectionById(
           id = id
         ).transact(transactor).run
 
@@ -71,7 +129,7 @@ class SharedCollectionPersistenceServicesSpec
   "getCollectionById" should {
     "return None if the table is empty" in {
       prop { (id: Long) ⇒
-        val collection = sharedCollectionPersistenceServices.getCollectionById(
+        val collection = collectionPersistenceServices.getCollectionById(
           id = id
         ).transact(transactor).run
 
@@ -85,7 +143,7 @@ class SharedCollectionPersistenceServicesSpec
           c ← insertItem(SharedCollection.Queries.insert, collectionData.copy(userId = Option(u)).toTuple)
         } yield c).transact(transactor).run
 
-        val storedCollection = sharedCollectionPersistenceServices.getCollectionById(
+        val storedCollection = collectionPersistenceServices.getCollectionById(
           id = id
         ).transact(transactor).run
 
@@ -101,7 +159,7 @@ class SharedCollectionPersistenceServicesSpec
           c ← insertItem(SharedCollection.Queries.insert, collectionData.copy(userId = Option(u)).toTuple)
         } yield c).transact(transactor).run
 
-        val storedCollection = sharedCollectionPersistenceServices.getCollectionById(
+        val storedCollection = collectionPersistenceServices.getCollectionById(
           id = id + 1000000
         ).transact(transactor).run
 
@@ -114,7 +172,7 @@ class SharedCollectionPersistenceServicesSpec
     "return None if the table is empty" in {
       prop { (publicIdentifier: String) ⇒
 
-        val collection = sharedCollectionPersistenceServices.getCollectionByPublicIdentifier(
+        val collection = collectionPersistenceServices.getCollectionByPublicIdentifier(
           publicIdentifier = publicIdentifier
         ).transact(transactor).run
 
@@ -128,7 +186,7 @@ class SharedCollectionPersistenceServicesSpec
           c ← insertItem(SharedCollection.Queries.insert, collectionData.copy(userId = Option(u)).toTuple)
         } yield c).transact(transactor).run
 
-        val storedCollection = sharedCollectionPersistenceServices.getCollectionByPublicIdentifier(
+        val storedCollection = collectionPersistenceServices.getCollectionByPublicIdentifier(
           publicIdentifier = collectionData.publicIdentifier
         ).transact(transactor).run
 
@@ -146,7 +204,7 @@ class SharedCollectionPersistenceServicesSpec
           c ← insertItem(SharedCollection.Queries.insert, collectionData.copy(userId = Option(u)).toTuple)
         } yield c).transact(transactor).run
 
-        val collection = sharedCollectionPersistenceServices.getCollectionByPublicIdentifier(
+        val collection = collectionPersistenceServices.getCollectionByPublicIdentifier(
           publicIdentifier = collectionData.publicIdentifier.reverse
         ).transact(transactor).run
 
@@ -156,26 +214,6 @@ class SharedCollectionPersistenceServicesSpec
   }
 
   "getCollectionsByUserId" should {
-
-    def divideList[A](n: Int, list: List[A]): List[List[A]] = {
-      def merge(heads: List[A], tails: List[List[A]]): List[List[A]] = (heads, tails) match {
-        case (Nil, Nil) ⇒ Nil
-        case (h :: hs, Nil) ⇒ throw new Exception("This should not happen")
-        case (Nil, t :: ts) ⇒ tails
-        case (h :: hs, t :: ts) ⇒ (h :: t) :: merge(hs, ts)
-      }
-
-      @tailrec
-      def divideAux(xs: List[A], results: List[List[A]]): List[List[A]] =
-        if (xs.isEmpty)
-          results map (_.reverse)
-        else {
-          val (pre, post) = xs.splitAt(n)
-          divideAux(post, merge(pre, results))
-        }
-
-      divideAux(list, List.fill(n)(Nil))
-    }
 
     "return the List of Collections created by the User" in {
 
@@ -193,7 +231,7 @@ class SharedCollectionPersistenceServicesSpec
         val (ownerId, otherId, owned, disowned, foreign) = setupTrans.transact(transactor).run
 
         val response: List[SharedCollection] =
-          sharedCollectionPersistenceServices
+          collectionPersistenceServices
             .getCollectionsByUserId(ownerId)
             .transact(transactor).run
 
@@ -202,14 +240,147 @@ class SharedCollectionPersistenceServicesSpec
     }
   }
 
-  def createCollectionWithUser(collectionData: SharedCollectionData, userId: Option[Long]): ConnectionIO[Long] =
-    insertItem(SharedCollection.Queries.insert, collectionData.copy(userId = userId))
+  "getLatestCollectionsByCategory" should {
 
-  def createUser(userData: UserData): ConnectionIO[Long] =
-    insertItem(User.Queries.insert, userData.toTuple)
+    "return an empty list of collections if the tabls is empty" in {
+      prop { category: String ⇒
 
-  def createPackages(collectionId: Long, packageNames: List[String]): ConnectionIO[Int] =
-    insertItems(SharedCollectionPackage.Queries.insert, packageNames map { (collectionId, _) })
+        val response: List[SharedCollection] =
+          collectionPersistenceServices
+            .getLatestCollectionsByCategory(category)
+            .transact(transactor).run
+
+        response must beEmpty
+      }
+    }
+
+    "return an empty list of collections if there are no records with the given category" in {
+      prop { (userData: UserData, collectionsData: List[SharedCollectionData]) ⇒
+
+        val setupTrans = for {
+          userId ← createUser(userData)
+          collections ← createCollectionsWithCategoryAndUser(
+            collectionsData = collectionsData,
+            category        = socialCategory,
+            userId          = Option(userId)
+          )
+        } yield (userId, collections)
+
+        val (userId, collections) = setupTrans.transact(transactor).run
+
+        val response: List[SharedCollection] =
+          collectionPersistenceServices
+            .getLatestCollectionsByCategory(communicationCategory)
+            .transact(transactor).run
+
+        response must beEmpty
+      }
+    }
+
+    "return a list of latest collections for the given category" in {
+      prop { (userData: UserData, collectionsData: List[SharedCollectionData]) ⇒
+
+        val List(socialCollections, otherCollections) = divideList(2, collectionsData)
+
+        val setupTrans = for {
+          userId ← createUser(userData)
+          socialCollections ← createCollectionsWithCategoryAndUser(
+            collectionsData = socialCollections,
+            category        = socialCategory,
+            userId          = Option(userId)
+          )
+          otherCollections ← createCollectionsWithCategoryAndUser(
+            collectionsData = otherCollections,
+            category        = communicationCategory,
+            userId          = Option(userId)
+          )
+        } yield socialCollections
+
+        val socialCollectionsCount = setupTrans.transact(transactor).run
+
+        val response = for {
+          response ← collectionPersistenceServices.getLatestCollectionsByCategory(socialCategory)
+          _ ← deleteSharedCollections
+        } yield response
+
+        val collections: List[SharedCollection] = response.transact(transactor).run
+
+        val sortedSocialCollections = socialCollections.sortWith(_.publishedOn.getTime > _.publishedOn.getTime)
+
+        collections.size must_== socialCollections.size
+        collections.headOption.map(_.publicIdentifier) must_== sortedSocialCollections.headOption.map(_.publicIdentifier)
+      }
+    }
+  }
+
+  "getTopCollectionsByCategory" should {
+
+    "return an empty list of collections if the tabls is empty" in {
+      prop { i: Int ⇒
+
+        val response: List[SharedCollection] =
+          collectionPersistenceServices
+            .getLatestCollectionsByCategory(socialCategory)
+            .transact(transactor).run
+
+        response must beEmpty
+      }
+    }
+
+    "return an empty list of collections if there are no records with the given category" in {
+      prop { (userData: UserData, collectionsData: List[SharedCollectionData]) ⇒
+
+        val setupTrans = for {
+          userId ← createUser(userData)
+          collections ← createCollectionsWithCategoryAndUser(collectionsData, socialCategory, Option(userId))
+        } yield collections
+
+        val collectionsCount = setupTrans.transact(transactor).run
+
+        val response: List[SharedCollection] =
+          collectionPersistenceServices
+            .getTopCollectionsByCategory(communicationCategory)
+            .transact(transactor).run
+
+        response must beEmpty
+      }
+    }
+
+    "return a list of top collections for the given category" in {
+      prop { (userData: UserData, collectionsData: List[SharedCollectionData]) ⇒
+
+        val List(socialCollections, otherCollections) = divideList(2, collectionsData)
+
+        val setupTrans = for {
+          userId ← createUser(userData)
+          socialCollections ← createCollectionsWithCategoryAndUser(
+            collectionsData = socialCollections,
+            category        = socialCategory,
+            userId          = Option(userId)
+          )
+          otherCollections ← createCollectionsWithCategoryAndUser(
+            collectionsData = otherCollections,
+            category        = communicationCategory,
+            userId          = Option(userId)
+          )
+        } yield socialCollections
+
+        val socialCollectionsCount = setupTrans.transact(transactor).run
+
+        val response = for {
+          response ← collectionPersistenceServices.getTopCollectionsByCategory(socialCategory)
+          _ ← deleteSharedCollections
+        } yield response
+
+        val collections: List[SharedCollection] = response.transact(transactor).run
+
+        val sortedSocialCollections = socialCollections.sortWith(_.installations > _.installations)
+
+        collections.size must_== socialCollections.size
+        collections.headOption.map(_.publicIdentifier) must_== sortedSocialCollections.headOption.map(_.publicIdentifier)
+      }
+    }
+  }
 
   "addPackage" should {
     "create a new package associated with an existing shared collection" in {
@@ -219,12 +390,12 @@ class SharedCollectionPersistenceServicesSpec
           c ← createCollectionWithUser(collectionData, Option(u))
         } yield c).transact(transactor).run
 
-        val packageId = sharedCollectionPersistenceServices.addPackage[Long](
+        val packageId = collectionPersistenceServices.addPackage[Long](
           collectionId,
           packageName
         ).transact(transactor).run
 
-        val storedPackages = sharedCollectionPersistenceServices.getPackagesByCollection(
+        val storedPackages = collectionPersistenceServices.getPackagesByCollection(
           collectionId
         ).transact(transactor).run
 
@@ -243,7 +414,7 @@ class SharedCollectionPersistenceServicesSpec
           c ← createCollectionWithUser(collectionData, Option(u))
         } yield c).transact(transactor).run
 
-        val created = sharedCollectionPersistenceServices.addPackages(
+        val created = collectionPersistenceServices.addPackages(
           collectionId,
           packagesName
         ).transact(transactor).run
@@ -256,7 +427,7 @@ class SharedCollectionPersistenceServicesSpec
   "getPackagesByCollection" should {
     "return an empty list if the table is empty" in {
       prop { (collectionId: Long) ⇒
-        val packages = sharedCollectionPersistenceServices.getPackagesByCollection(
+        val packages = collectionPersistenceServices.getPackagesByCollection(
           collectionId
         ).transact(transactor).run
 
@@ -272,7 +443,7 @@ class SharedCollectionPersistenceServicesSpec
           _ ← createPackages(c, packagesName)
         } yield c).transact(transactor).run
 
-        val packages = sharedCollectionPersistenceServices.getPackagesByCollection(
+        val packages = collectionPersistenceServices.getPackagesByCollection(
           collectionId
         ).transact(transactor).run
 
@@ -291,7 +462,7 @@ class SharedCollectionPersistenceServicesSpec
           _ ← createPackages(c, packagesName)
         } yield c).transact(transactor).run
 
-        val packages = sharedCollectionPersistenceServices.getPackagesByCollection(
+        val packages = collectionPersistenceServices.getPackagesByCollection(
           collectionId + 1000000
         ).transact(transactor).run
 
@@ -303,7 +474,7 @@ class SharedCollectionPersistenceServicesSpec
   "updateCollection" should {
     "return 0 updated rows if the table is empty" in {
       prop { (id: Long, title: String, description: Option[String]) ⇒
-        val updatedCollectionCount = sharedCollectionPersistenceServices.updateCollectionInfo(
+        val updatedCollectionCount = collectionPersistenceServices.updateCollectionInfo(
           id          = id,
           title       = title,
           description = description
@@ -317,10 +488,10 @@ class SharedCollectionPersistenceServicesSpec
         val id = (for {
           u ← insertItem(User.Queries.insert, userData.toTuple)
           c ← insertItem(SharedCollection.Queries.insert, collectionData.copy(userId = Option(u)).toTuple)
-          _ ← sharedCollectionPersistenceServices.updateCollectionInfo(c, newTitle, newDescription)
+          _ ← collectionPersistenceServices.updateCollectionInfo(c, newTitle, newDescription)
         } yield c).transact(transactor).run
 
-        val storedCollection = sharedCollectionPersistenceServices.getCollectionById(
+        val storedCollection = collectionPersistenceServices.getCollectionById(
           id = id
         ).transact(transactor).run
 
@@ -338,7 +509,7 @@ class SharedCollectionPersistenceServicesSpec
           c ← insertItem(SharedCollection.Queries.insert, collectionData.copy(userId = Option(u)).toTuple)
         } yield c).transact(transactor).run
 
-        val updatedCollectionCount = sharedCollectionPersistenceServices.updateCollectionInfo(
+        val updatedCollectionCount = collectionPersistenceServices.updateCollectionInfo(
           id          = id + 1000000,
           title       = newTitle,
           description = newDescription
@@ -348,4 +519,5 @@ class SharedCollectionPersistenceServicesSpec
       }
     }
   }
+
 }

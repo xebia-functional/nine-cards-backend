@@ -16,6 +16,8 @@ object NineCardsHeaders {
 
     case class AuthToken(value: String) extends AnyVal
 
+    case class Category(value: String) extends AnyVal
+
     case class CurrentDateTime(value: DateTime) extends AnyVal
 
     case class GooglePlayToken(value: String) extends AnyVal
