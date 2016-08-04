@@ -14,7 +14,7 @@ class NineCardsConfig(hocon: Option[String] = None) {
 
   def getOptionalInt(
     key: String
-  ) = getSysPropKeyAsInt(key).fold(config.getOptionalInt(key))(i ⇒ Option(i))
+  ) = getSysPropKeyAsInt(key).fold(config.getOptionalInt(key))(Option(_))
 
   def getString(key: String) = sys.props.getOrElse(key, config.getString(key))
 
