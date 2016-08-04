@@ -32,6 +32,7 @@ trait Dependencies {
   val circeGeneric = "io.circe" %% "circe-generic" % Versions.circe
   val mockserver = "org.mock-server" % "mockserver-netty" % Versions.mockserver
   val hasher = "com.roundeights" %% "hasher" % Versions.hasher
+  val newRelic = "com.newrelic.agent.java" % "newrelic-agent" % Versions.newRelic
 
   val baseDepts = Seq(
     typesafeConfig,
@@ -50,6 +51,7 @@ trait Dependencies {
     scalaz,
     scalazConcurrent,
     akkaActor,
+    newRelic,
     akkaTestKit % "test",
     cats % "test"))
 
