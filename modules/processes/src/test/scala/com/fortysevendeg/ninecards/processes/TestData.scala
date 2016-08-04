@@ -13,6 +13,8 @@ import org.joda.time.DateTime
 
 object TestData {
 
+  val addedPackages = 5
+
   val androidId = "50a4dbf7-85a2-4875-8c75-7232c237808c"
 
   val appCategory = "COUNTRY"
@@ -37,8 +39,6 @@ object TestData {
 
   val name = "The best social media apps"
 
-  val packagesSize = 0
-
   val publicIdentifier = "40daf308-fecf-4228-9262-a712d783cf49"
 
   val publishedOnDatetime = new DateTime(millis)
@@ -47,13 +47,15 @@ object TestData {
 
   val publisherId = 27L
 
-  val sharedLink = s"http://localhost:8080/collections/$publicIdentifier"
+  val removedPackages = 2
 
   val stars = 5.0d
 
   val subscriberId = 42L
 
   val token = "6d54dfed-bbcf-47a5-b8f2-d86cf3320631"
+
+  val updatedCollectionsCount = 1
 
   val userId = Option(publisherId)
 
@@ -72,6 +74,14 @@ object TestData {
     "earth.europe.italy",
     "earth.europe.unitedKingdom"
   )
+
+  val updatePackagesName = List(
+    "earth.europe.italy",
+    "earth.europe.unitedKingdom",
+    "earth.europe.germany"
+  )
+
+  val updatedPackagesCount = (addedPackages, removedPackages)
 
   object Values {
 
@@ -108,6 +118,10 @@ object TestData {
       case (n, id) ⇒
         SharedCollectionPackage(id, collectionId, n)
     }
+
+    val createPackagesStats = PackagesStats(addedPackages, None)
+
+    val updatePackagesStats = PackagesStats(addedPackages, Option(removedPackages))
 
     val appInfoList = packagesName map { packageName ⇒
       AppInfo(packageName, "Germany", true, icon, stars, "100.000+", appCategory)
@@ -147,13 +161,17 @@ object TestData {
       description      = description,
       author           = author,
       name             = name,
-      sharedLink       = sharedLink,
       installations    = installations,
       views            = views,
       category         = category,
       icon             = icon,
       community        = community,
       packages         = packagesName
+    )
+
+    val sharedCollectionUpdateInfo = SharedCollectionUpdateInfo(
+      description = description,
+      title       = name
     )
 
     val sharedCollectionWithAppsInfo = SharedCollectionWithAppsInfo(
@@ -177,7 +195,10 @@ object TestData {
       packages   = packagesName
     )
 
-    val createCollectionResponse = CreateCollectionResponse(data = sharedCollection)
+    val createCollectionResponse = CreateOrUpdateCollectionResponse(
+      publicIdentifier = publicIdentifier,
+      packagesStats    = createPackagesStats
+    )
 
     val getCollectionByPublicIdentifierResponse = GetCollectionByPublicIdentifierResponse(
       data = sharedCollectionWithAppsInfo

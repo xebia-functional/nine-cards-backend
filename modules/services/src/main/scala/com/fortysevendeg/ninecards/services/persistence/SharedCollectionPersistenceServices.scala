@@ -41,7 +41,9 @@ class SharedCollectionPersistenceServices(
     )
 
   def addPackages(collectionId: Long, packagesName: List[String]): ConnectionIO[Int] = {
-    val packages = packagesName map { (collectionId, _) }
+    val packages = packagesName map {
+      (collectionId, _)
+    }
 
     collectionPackagePersistence.updateMany(
       sql    = PackageQueries.insert,
@@ -51,6 +53,37 @@ class SharedCollectionPersistenceServices(
 
   def getPackagesByCollection(collectionId: Long): ConnectionIO[List[SharedCollectionPackage]] =
     collectionPackagePersistence.fetchList(PackageQueries.getBySharedCollection, collectionId)
+
+  def deletePackages(collectionId: Long, packagesName: List[String]): ConnectionIO[Int] = {
+    val packages = packagesName map {
+      (collectionId, _)
+    }
+
+    collectionPackagePersistence.updateMany(
+      sql    = PackageQueries.delete,
+      values = packages
+    )
+  }
+
+  def updateCollectionInfo(
+    id: Long,
+    title: String,
+    description: Option[String]
+  ): ConnectionIO[Int] =
+    collectionPersistence.update(
+      sql    = CollectionQueries.update,
+      values = (title, description, id)
+    )
+
+  def updatePackages(collectionId: Long, packages: List[String]): ConnectionIO[(Int, Int)] =
+    for {
+      oldPackages ← getPackagesByCollection(collectionId)
+      oldPackagesNames = oldPackages map (_.packageName)
+      newPackages = packages diff oldPackagesNames
+      removedPackages = oldPackagesNames diff packages
+      addedPackages ← addPackages(collectionId, newPackages)
+      deletedPackages ← deletePackages(collectionId, removedPackages)
+    } yield (addedPackages, deletedPackages)
 }
 
 object SharedCollectionPersistenceServices {

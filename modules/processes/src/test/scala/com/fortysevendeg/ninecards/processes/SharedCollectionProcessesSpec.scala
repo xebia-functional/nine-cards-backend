@@ -62,7 +62,7 @@ trait SharedCollectionProcessesSpecification
     sharedCollectionPersistenceServices.addPackages(
       collectionId = collectionId,
       packagesName = packagesName
-    ) returns packagesSize.point[ConnectionIO]
+    ) returns addedPackages.point[ConnectionIO]
 
     sharedCollectionPersistenceServices.getCollectionByPublicIdentifier(
       publicIdentifier = publicIdentifier
@@ -79,6 +79,17 @@ trait SharedCollectionProcessesSpecification
     sharedCollectionPersistenceServices.getCollectionsByUserId(
       userId = subscriberId
     ) returns List[SharedCollectionServices]().point[ConnectionIO]
+
+    sharedCollectionPersistenceServices.updateCollectionInfo(
+      id          = collectionId,
+      title       = name,
+      description = description
+    ) returns updatedCollectionsCount.point[ConnectionIO]
+
+    sharedCollectionPersistenceServices.updatePackages(
+      collectionId = collectionId,
+      packages     = updatePackagesName
+    ) returns updatedPackagesCount.point[ConnectionIO]
 
     sharedCollectionSubscriptionPersistenceServices
       .addSubscription[SharedCollectionSubscription](any, any)(any) returns
@@ -201,4 +212,48 @@ class SharedCollectionProcessesSpec
 
   }
 
+  "update" should {
+    "return the public identifier and the added and removed packages if the shared collection exists" in
+      new SharedCollectionSuccessfulScope {
+        val collectionInfo = sharedCollectionProcesses.updateCollection(
+          publicIdentifier = publicIdentifier,
+          collectionInfo   = Option(sharedCollectionUpdateInfo),
+          packages         = Option(updatePackagesName)
+        )
+
+        collectionInfo.foldMap(testInterpreters) must beXorRight[CreateOrUpdateCollectionResponse].which {
+          response ⇒
+            response.publicIdentifier must_== publicIdentifier
+            response.packagesStats.added must_== addedPackages
+            response.packagesStats.removed must beSome(removedPackages)
+        }
+      }
+
+    "return added and removed packages counts equal to 0 if the package list is not given" in
+      new SharedCollectionSuccessfulScope {
+        val collectionInfo = sharedCollectionProcesses.updateCollection(
+          publicIdentifier = publicIdentifier,
+          collectionInfo   = Option(sharedCollectionUpdateInfo),
+          packages         = None
+        )
+
+        collectionInfo.foldMap(testInterpreters) must beXorRight[CreateOrUpdateCollectionResponse].which {
+          response ⇒
+            response.publicIdentifier must_== publicIdentifier
+            response.packagesStats.added must_== 0
+            response.packagesStats.removed must beSome(0)
+        }
+      }
+
+    "return a SharedCollectionNotFoundException when the shared collection doesn't exist" in
+      new SharedCollectionUnsuccessfulScope {
+        val collectionInfo = sharedCollectionProcesses.updateCollection(
+          publicIdentifier = publicIdentifier,
+          collectionInfo   = Option(sharedCollectionUpdateInfo),
+          packages         = Option(updatePackagesName)
+        )
+
+        collectionInfo.foldMap(testInterpreters) must beXorLeft(sharedCollectionNotFoundException)
+      }
+  }
 }

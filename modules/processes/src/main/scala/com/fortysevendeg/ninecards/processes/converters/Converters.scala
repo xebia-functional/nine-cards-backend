@@ -29,14 +29,6 @@ object Converters {
 
   implicit def toTimestamp(datetime: DateTime): Timestamp = new Timestamp(datetime.getMillis)
 
-  def generateSharedCollectionLink(publicIdentifier: String) =
-    Uri.fromString(defaultConfig.getString("ninecards.sharedCollectionsBaseUrl")) map { uri ⇒
-      uri./(publicIdentifier).renderString
-    } fold (
-      error ⇒ "", //TODO: Maybe we should return an error if the url is malformed
-      uri ⇒ uri
-    )
-
   def toLoginResponse(info: (UserAppServices, InstallationServices)): LoginResponse = {
     val (user, _) = info
     LoginResponse(
@@ -44,14 +36,6 @@ object Converters {
       sessionToken = user.sessionToken
     )
   }
-
-  def toCreateCollectionResponse(
-    collection: SharedCollectionServices,
-    packages: List[String]
-  ): CreateCollectionResponse =
-    CreateCollectionResponse(
-      toSharedCollection(collection, packages)
-    )
 
   def toUpdateInstallationResponse(installation: InstallationServices): UpdateInstallationResponse =
     UpdateInstallationResponse(
@@ -86,7 +70,6 @@ object Converters {
       description      = collection.description,
       author           = collection.author,
       name             = collection.name,
-      sharedLink       = generateSharedCollectionLink(collection.publicIdentifier),
       installations    = collection.installations,
       views            = collection.views,
       category         = collection.category,

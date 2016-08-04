@@ -3,7 +3,7 @@ package com.fortysevendeg.ninecards.api
 import com.fortysevendeg.ninecards.api.NineCardsHeaders._
 import com.fortysevendeg.ninecards.api.messages.GooglePlayMessages.ApiCategorizeAppsRequest
 import com.fortysevendeg.ninecards.api.messages.InstallationsMessages.ApiUpdateInstallationRequest
-import com.fortysevendeg.ninecards.api.messages.SharedCollectionMessages.ApiCreateCollectionRequest
+import com.fortysevendeg.ninecards.api.messages.SharedCollectionMessages.{ ApiCreateCollectionRequest, ApiUpdateCollectionRequest }
 import com.fortysevendeg.ninecards.api.messages.UserMessages.ApiLoginRequest
 import com.fortysevendeg.ninecards.processes.ProcessesExceptions.SharedCollectionNotFoundException
 import com.fortysevendeg.ninecards.processes.messages.ApplicationMessages.CategorizeAppsResponse
@@ -15,6 +15,8 @@ import org.joda.time.DateTime
 import spray.http.HttpHeaders.RawHeader
 
 object TestData {
+
+  val addedPackages = 5
 
   val androidId = "f07a13984f6d116a"
 
@@ -48,11 +50,20 @@ object TestData {
 
   val now = DateTime.now
 
+  val packagesName = List(
+    "earth.europe.italy",
+    "earth.europe.unitedKingdom",
+    "earth.europe.germany",
+    "earth.europe.france",
+    "earth.europe.portugal",
+    "earth.europe.spain"
+  )
+
   val publicIdentifier = "40daf308-fecf-4228-9262-a712d783cf49"
 
-  val sessionToken = "1d1afeea-c7ec-45d8-a6f8-825b836f2785"
+  val removedPackages = None
 
-  val sharedLink = "link-to-shared-collection"
+  val sessionToken = "1d1afeea-c7ec-45d8-a6f8-825b836f2785"
 
   val tokenId = "6c7b303e-585e-4fe8-8b6f-586547317331-7f9b12dd-8946-4285-a72a-746e482834dd"
 
@@ -97,19 +108,22 @@ object TestData {
 
   object Messages {
 
+    val collectionInfo = SharedCollectionUpdateInfo(description = description, title = name)
+
+    val packagesStats = PackagesStats(addedPackages, removedPackages)
+
     val sharedCollection = SharedCollection(
       publicIdentifier = publicIdentifier,
       publishedOn      = now,
       description      = description,
       author           = author,
       name             = name,
-      sharedLink       = sharedLink,
       installations    = installations,
       views            = views,
       category         = category,
       icon             = icon,
       community        = community,
-      packages         = List.empty
+      packages         = packagesName
     )
 
     val sharedCollectionInfo = SharedCollectionWithAppsInfo(
@@ -128,16 +142,24 @@ object TestData {
       category      = category,
       icon          = icon,
       community     = community,
-      packages      = List.empty
+      packages      = packagesName
     )
 
     val apiLoginRequest = ApiLoginRequest(email, androidId, tokenId)
+
+    val apiUpdateCollectionRequest = ApiUpdateCollectionRequest(
+      collectionInfo = Option(collectionInfo),
+      packages       = Option(packagesName)
+    )
 
     val apiUpdateInstallationRequest = ApiUpdateInstallationRequest(deviceToken)
 
     val categorizeAppsResponse = CategorizeAppsResponse(Nil, Nil)
 
-    val createCollectionResponse = CreateCollectionResponse(data = sharedCollection)
+    val createOrUpdateCollectionResponse = CreateOrUpdateCollectionResponse(
+      publicIdentifier = publicIdentifier,
+      packagesStats    = packagesStats
+    )
 
     val getCollectionByPublicIdentifierResponse = GetCollectionByPublicIdentifierResponse(
       data = sharedCollectionInfo

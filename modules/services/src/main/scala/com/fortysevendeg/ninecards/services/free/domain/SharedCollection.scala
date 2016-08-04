@@ -38,6 +38,7 @@ object SharedCollection {
     val getByPublicIdentifier = "select * from sharedcollections where publicidentifier=?"
     val getByUser = "select * from sharedcollections where userId=?"
     val insert = "insert into sharedcollections(publicidentifier,userid,publishedon,description,author,name,installations,views,category,icon,community) values(?,?,?,?,?,?,?,?,?,?,?)"
+    val update = "update sharedcollections set name=?, description=? where id=?"
   }
 }
 
@@ -45,6 +46,7 @@ object SharedCollectionPackage {
   val allFields = List("id", "sharedcollectionid", "packagename")
 
   object Queries {
+    val delete = "delete from sharedcollectionpackages where sharedcollectionid=? and packagename=?"
     val getById = "select * from sharedcollectionpackages where id=?"
     val getBySharedCollection = "select * from sharedcollectionpackages where sharedcollectionid=?"
     val insert = "insert into sharedcollectionpackages(sharedcollectionid,packagename) values(?,?)"
