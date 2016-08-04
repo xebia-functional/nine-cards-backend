@@ -7,11 +7,14 @@ class NineCardsConfig(hocon: Option[String] = None) {
 
   val config = hocon.fold(ConfigFactory.load)(ConfigFactory.parseString)
 
-  def getInt(key: String) = sys.props.getOrElse(key, config.getInt(key))
+  def getSysPropKeyAsInt(key: String): Option[Int] =
+    sys.props.get(key).map(_.toInt)
+
+  def getInt(key: String) = getSysPropKeyAsInt(key).getOrElse(config.getInt(key))
 
   def getOptionalInt(
     key: String
-  ) = sys.props.get(key).fold(config.getOptionalInt(key))(i ⇒ Option(i.toInt))
+  ) = getSysPropKeyAsInt(key).fold(config.getOptionalInt(key))(i ⇒ Option(i))
 
   def getString(key: String) = sys.props.getOrElse(key, config.getString(key))
 
