@@ -1,3 +1,4 @@
+import CustomSettings._
 import com.typesafe.sbt.packager.archetypes.JavaAppPackaging
 import org.flywaydb.sbt.FlywayPlugin
 import sbt._
