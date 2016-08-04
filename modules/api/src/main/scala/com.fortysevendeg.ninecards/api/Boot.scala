@@ -1,6 +1,7 @@
 package com.fortysevendeg.ninecards.api
 
 import akka.actor.{ ActorSystem, Props }
+import akka.event.Logging
 import akka.io.IO
 import akka.pattern.ask
 import akka.util.Timeout
@@ -13,6 +14,7 @@ object Boot extends App {
 
   // we need an ActorSystem to host our application in
   implicit val system = ActorSystem("on-spray-can")
+  val log = Logging(system, getClass)
 
   // create and start our service actor
   val service = system.actorOf(Props[NineCardsApiActor], "ninecards-server")
@@ -22,6 +24,7 @@ object Boot extends App {
   val host = defaultConfig.getString("http.host")
   val port = defaultConfig.getInt("http.port")
 
-  // start a new HTTP server on port 8080 with our service actor as the handler
   IO(Http) ? Http.Bind(service, interface = host, port = port)
+
+  log.info("Application started!")
 }
