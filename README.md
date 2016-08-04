@@ -338,6 +338,12 @@ Note that you should provide the database configuration variables to the `sbt` c
 Otherwise, the `sbt` fails due to the `flyway` plugin.
 By default, the fat jar will be created in the `{appPath}/modules/api/target/scala-2.11/` folder.
 
+### Running SQL evolutions in Heroku
+
+This task should be done manually in this way:
+
+    $ heroku pg:psql --app nine-cards < /path/to/file.sql
+
 ## License
 
 Copyright (C) 2012 47 Degrees, LLC Reactive. http://47deg.com hello@47deg.com
