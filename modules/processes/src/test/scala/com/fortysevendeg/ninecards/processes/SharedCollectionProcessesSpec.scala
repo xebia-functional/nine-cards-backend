@@ -74,8 +74,8 @@ trait SharedCollectionProcessesSpecification
 
     sharedCollectionPersistenceServices.getLatestCollectionsByCategory(
       category = category,
-      offset   = offset,
-      limit    = limit
+      pageNumber   = pageNumber,
+      pageSize    = pageSize
     ) returns List(collection).point[ConnectionIO]
 
     sharedCollectionPersistenceServices.getCollectionsByUserId(
@@ -84,8 +84,8 @@ trait SharedCollectionProcessesSpecification
 
     sharedCollectionPersistenceServices.getTopCollectionsByCategory(
       category = category,
-      offset   = offset,
-      limit    = limit
+      pageNumber   = pageNumber,
+      pageSize    = pageSize
     ) returns List(collection).point[ConnectionIO]
 
     sharedCollectionPersistenceServices.getCollectionsByUserId(
@@ -163,8 +163,8 @@ class SharedCollectionProcessesSpec
       val collectionsInfo = sharedCollectionProcesses.getLatestCollectionsByCategory(
         category   = category,
         authParams = authParams,
-        offset     = offset,
-        limit      = limit
+        pageNumber     = pageNumber,
+        pageSize      = pageSize
       )
       collectionsInfo.foldMap(testInterpreters) mustEqual response
     }
@@ -200,8 +200,8 @@ class SharedCollectionProcessesSpec
       val collectionsInfo = sharedCollectionProcesses.getTopCollectionsByCategory(
         category   = category,
         authParams = authParams,
-        offset     = offset,
-        limit      = limit
+        pageNumber     = pageNumber,
+        pageSize      = pageSize
       )
       collectionsInfo.foldMap(testInterpreters) mustEqual response
     }

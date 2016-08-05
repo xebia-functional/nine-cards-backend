@@ -33,15 +33,15 @@ object TestData {
 
   val installations = 1
 
-  val limit = 25
-
   val localization = Option("en-EN")
 
   val millis = 1453226400000l
 
   val name = "The best social media apps"
 
-  val offset = 0
+  val pageNumber = 0
+
+  val pageSize = 25
 
   val publicIdentifier = "40daf308-fecf-4228-9262-a712d783cf49"
 

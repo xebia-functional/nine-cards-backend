@@ -17,9 +17,9 @@ class SharedCollectionQueriesSpec
 
   val category = "SOCIAL"
   val id = 12345l
-  val limit = 25
   val now = Timestamp.valueOf(LocalDateTime.now)
-  val offset = 25
+  val pageNumber = 25
+  val pageSize = 25
   val publicIdentifier = "7a2a4c1c-5260-40a5-ba06-db009a3ef7c4"
   val userId = Option(23456l)
 
@@ -57,13 +57,13 @@ class SharedCollectionQueriesSpec
 
   val getLatestCollectionsByCategoryQuery = collectionPersistence.generateQuery(
     sql    = getLatestByCategory,
-    values = (category, limit.toString, offset.toString)
+    values = (category, pageSize.toString, pageNumber.toString)
   )
   check(getLatestCollectionsByCategoryQuery)
 
   val getTopCollectionsByCategoryQuery = collectionPersistence.generateQuery(
     sql    = getTopByCategory,
-    values = (category, limit.toString, offset.toString)
+    values = (category, pageSize.toString, pageNumber.toString)
   )
   check(getTopCollectionsByCategoryQuery)
 

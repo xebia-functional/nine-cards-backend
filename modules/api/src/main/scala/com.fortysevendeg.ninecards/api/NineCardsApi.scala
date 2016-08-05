@@ -106,16 +106,32 @@ class NineCardsRoutes(
             }
           }
       } ~
-        path("latest" / TypedSegment[Category] / TypedIntSegment[Offset] / TypedIntSegment[Limit]) {
-          (category: Category, offset: Offset, limit: Limit) ⇒
+        path("latest" / TypedSegment[Category] / TypedIntSegment[PageNumber] / TypedIntSegment[PageSize]) {
+          (category: Category, pageNumber: PageNumber, pageSize: PageSize) ⇒
             nineCardsDirectives.googlePlayInfo { googlePlayContext ⇒
-              complete(getLatestCollectionsByCategory(category, googlePlayContext, userContext, offset, limit))
+              complete {
+                getLatestCollectionsByCategory(
+                  category          = category,
+                  googlePlayContext = googlePlayContext,
+                  userContext       = userContext,
+                  pageNumber        = pageNumber,
+                  pageSize          = pageSize
+                )
+              }
             }
         } ~
-        path("top" / TypedSegment[Category] / TypedIntSegment[Offset] / TypedIntSegment[Limit]) {
-          (category: Category, offset: Offset, limit: Limit) ⇒
+        path("top" / TypedSegment[Category] / TypedIntSegment[PageNumber] / TypedIntSegment[PageSize]) {
+          (category: Category, pageNumber: PageNumber, pageSize: PageSize) ⇒
             nineCardsDirectives.googlePlayInfo { googlePlayContext ⇒
-              complete(getTopCollectionsByCategory(category, googlePlayContext, userContext, offset, limit))
+              complete {
+                getTopCollectionsByCategory(
+                  category          = category,
+                  googlePlayContext = googlePlayContext,
+                  userContext       = userContext,
+                  pageNumber        = pageNumber,
+                  pageSize          = pageSize
+                )
+              }
             }
         } ~
         pathPrefix(TypedSegment[PublicIdentifier]) { publicIdentifier ⇒
@@ -192,15 +208,15 @@ class NineCardsRoutes(
     category: Category,
     googlePlayContext: GooglePlayContext,
     userContext: UserContext,
-    offset: Offset,
-    limit: Limit
+    pageNumber: PageNumber,
+    pageSize: PageSize
   ) =
     sharedCollectionProcesses
       .getLatestCollectionsByCategory(
         category   = category.value,
         authParams = toAuthParams(googlePlayContext, userContext),
-        offset     = offset.value,
-        limit      = limit.value
+        pageNumber = pageNumber.value,
+        pageSize   = pageSize.value
       )
       .map(_.collections.map(toApiSharedCollection))
 
@@ -216,15 +232,15 @@ class NineCardsRoutes(
     category: Category,
     googlePlayContext: GooglePlayContext,
     userContext: UserContext,
-    offset: Offset,
-    limit: Limit
+    pageNumber: PageNumber,
+    pageSize: PageSize
   ) =
     sharedCollectionProcesses
       .getTopCollectionsByCategory(
         category   = category.value,
         authParams = toAuthParams(googlePlayContext, userContext),
-        offset     = offset.value,
-        limit      = limit.value
+        pageNumber = pageNumber.value,
+        pageSize   = pageSize.value
       )
       .map(_.collections.map(toApiSharedCollection))
 
