@@ -29,7 +29,7 @@ trait NineCardsExceptionHandler extends HttpService {
         }
       case e: Throwable ⇒
         requestUri {
-          uri =>
+          uri ⇒
             log.warning("Request to {} could not be handled normally: {}", uri, e.getMessage)
             complete(InternalServerError, e.getMessage)
         }

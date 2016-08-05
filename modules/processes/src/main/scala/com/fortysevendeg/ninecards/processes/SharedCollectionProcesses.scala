@@ -66,23 +66,20 @@ class SharedCollectionProcesses[F[_]](
   def getLatestCollectionsByCategory(
     category: String,
     authParams: AuthParams
-  ): Free[F, GetCollectionsResponse] = {
-    getCollections(category, authParams)(collectionPersistence.getLatestCollectionsByCategory)
-  }
+  ): Free[F, GetCollectionsResponse] =
+    getCollections(collectionPersistence.getLatestCollectionsByCategory(category), authParams)
 
   def getPublishedCollections(
     userId: Long,
     authParams: AuthParams
-  ): Free[F, GetCollectionsResponse] = {
-    getCollections(userId, authParams)(collectionPersistence.getCollectionsByUserId)
-  }
+  ): Free[F, GetCollectionsResponse] =
+    getCollections(collectionPersistence.getCollectionsByUserId(userId), authParams)
 
   def getTopCollectionsByCategory(
     category: String,
     authParams: AuthParams
-  ): Free[F, GetCollectionsResponse] = {
-    getCollections(category, authParams)(collectionPersistence.getTopCollectionsByCategory)
-  }
+  ): Free[F, GetCollectionsResponse] =
+    getCollections(collectionPersistence.getTopCollectionsByCategory(category), authParams)
 
   /**
     * This process changes the application state to one where the user is subscribed to the collection.
@@ -92,8 +89,7 @@ class SharedCollectionProcesses[F[_]](
 
     def addSubscription(
       subscription: Option[SharedCollectionSubscription],
-      collectionId: Long,
-      userId: Long
+      collectionId: Long
     ): ConnectionIO[SubscribeResponse] =
       subscription
         .fold(subscriptionPersistence.addSubscription[SharedCollectionSubscription](collectionId, userId))(_.point[ConnectionIO])
@@ -102,7 +98,7 @@ class SharedCollectionProcesses[F[_]](
     for {
       collection ← findCollection(publicIdentifier)
       subscription ← subscriptionPersistence.getSubscriptionByCollectionAndUser(collection.id, userId).rightXorT[Throwable]
-      subscriptionInfo ← addSubscription(subscription, collection.id, userId).rightXorT[Throwable]
+      subscriptionInfo ← addSubscription(subscription, collection.id).rightXorT[Throwable]
     } yield subscriptionInfo
   }.value.liftF[F]
 
@@ -158,10 +154,10 @@ class SharedCollectionProcesses[F[_]](
     }
   }.rightXorT[Throwable]
 
-  private def getCollections[A](
-    a: A,
+  private def getCollections(
+    sharedCollections: ConnectionIO[List[SharedCollectionServices]],
     authParams: AuthParams
-  )(f: A ⇒ ConnectionIO[List[SharedCollectionServices]]) = {
+  ) = {
 
     import scalaz.std.list.listInstance
     import scalaz.syntax.traverse.ToTraverseOps
@@ -179,22 +175,18 @@ class SharedCollectionProcesses[F[_]](
       appsInfo: AppsInfo
     ) = GetCollectionsResponse {
       collections map { collection ⇒
-        val foundAppInfo = appsInfo.apps.collect {
-          case appInfo if collection.packages.contains(appInfo.packageName) ⇒
-            appInfo
-        }
+        val foundAppInfo = appsInfo.apps.filter(a ⇒ collection.packages.contains(a.packageName))
 
         toSharedCollectionWithAppsInfo(collection, foundAppInfo)
       }
     }
 
-    val collections = for {
-      collections ← f(a)
-      info ← collections.traverse[ConnectionIO, SharedCollection](getCollectionPackages)
-    } yield info
+    val collectionsWithPackages = sharedCollections flatMap { collections ⇒
+      collections.traverse[ConnectionIO, SharedCollection](getCollectionPackages)
+    }
 
     for {
-      collections ← collections.liftF[F]
+      collections ← collectionsWithPackages.liftF[F]
       appsInfo ← getGooglePlayInfoForPackages(collections, authParams)
     } yield fillGooglePlayInfoForPackages(collections, appsInfo)
   }

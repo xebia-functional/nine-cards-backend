@@ -226,9 +226,9 @@ class SharedCollectionPersistenceServicesSpec
           owned ← ownedData traverse (createCollectionWithUser(_, Option(ownerId)))
           foreign ← foreignData traverse (createCollectionWithUser(_, Option(otherId)))
           disowned ← disownedData traverse (createCollectionWithUser(_, None))
-        } yield (ownerId, otherId, owned, disowned, foreign)
+        } yield (ownerId, owned)
 
-        val (ownerId, otherId, owned, disowned, foreign) = setupTrans.transact(transactor).run
+        val (ownerId, owned) = setupTrans.transact(transactor).run
 
         val response: List[SharedCollection] =
           collectionPersistenceServices
@@ -294,9 +294,9 @@ class SharedCollectionPersistenceServicesSpec
             category        = communicationCategory,
             userId          = Option(userId)
           )
-        } yield socialCollections
+        } yield Unit
 
-        val socialCollectionsCount = setupTrans.transact(transactor).run
+        setupTrans.transact(transactor).run
 
         val response = for {
           response ← collectionPersistenceServices.getLatestCollectionsByCategory(socialCategory)
@@ -333,9 +333,9 @@ class SharedCollectionPersistenceServicesSpec
         val setupTrans = for {
           userId ← createUser(userData)
           collections ← createCollectionsWithCategoryAndUser(collectionsData, socialCategory, Option(userId))
-        } yield collections
+        } yield Unit
 
-        val collectionsCount = setupTrans.transact(transactor).run
+        setupTrans.transact(transactor).run
 
         val response: List[SharedCollection] =
           collectionPersistenceServices
@@ -363,9 +363,9 @@ class SharedCollectionPersistenceServicesSpec
             category        = communicationCategory,
             userId          = Option(userId)
           )
-        } yield socialCollections
+        } yield Unit
 
-        val socialCollectionsCount = setupTrans.transact(transactor).run
+        setupTrans.transact(transactor).run
 
         val response = for {
           response ← collectionPersistenceServices.getTopCollectionsByCategory(socialCategory)
