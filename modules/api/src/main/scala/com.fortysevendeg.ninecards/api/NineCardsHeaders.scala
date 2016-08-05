@@ -22,9 +22,13 @@ object NineCardsHeaders {
 
     case class GooglePlayToken(value: String) extends AnyVal
 
+    case class Limit(value: Int) extends AnyVal
+
     case class MarketLocalization(value: String) extends AnyVal
 
     case class NewSharedCollectionInfo(currentDate: CurrentDateTime, identifier: PublicIdentifier)
+
+    case class Offset(value: Int) extends AnyVal
 
     case class PublicIdentifier(value: String) extends AnyVal
 

@@ -195,11 +195,11 @@ object TestData {
 
     val invalid = "/chalkyTown"
 
-    val latestCollections = "/collections/latest/SOCIAL"
+    val latestCollections = "/collections/latest/SOCIAL/0/25"
 
     val login = "/login"
 
-    val topCollections = "/collections/top/SOCIAL"
+    val topCollections = "/collections/top/SOCIAL/0/25"
   }
 
 }

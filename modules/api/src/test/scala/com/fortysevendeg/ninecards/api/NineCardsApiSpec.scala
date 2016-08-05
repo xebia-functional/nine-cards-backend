@@ -83,13 +83,13 @@ trait NineCardsApiSpecification
     sharedCollectionProcesses.unsubscribe(any[String], any[Long]) returns
       Free.pure(Messages.unsubscribeResponse.right)
 
-    sharedCollectionProcesses.getLatestCollectionsByCategory(any, any) returns
+    sharedCollectionProcesses.getLatestCollectionsByCategory(any, any, any, any) returns
       Free.pure(Messages.getCollectionsResponse)
 
     sharedCollectionProcesses.getPublishedCollections(any[Long], any) returns
       Free.pure(Messages.getCollectionsResponse)
 
-    sharedCollectionProcesses.getTopCollectionsByCategory(any, any) returns
+    sharedCollectionProcesses.getTopCollectionsByCategory(any, any, any, any) returns
       Free.pure(Messages.getCollectionsResponse)
 
     sharedCollectionProcesses.updateCollection(any, any, any) returns

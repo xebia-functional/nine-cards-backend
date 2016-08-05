@@ -65,9 +65,11 @@ class SharedCollectionProcesses[F[_]](
 
   def getLatestCollectionsByCategory(
     category: String,
-    authParams: AuthParams
+    authParams: AuthParams,
+    offset: Int,
+    limit: Int
   ): Free[F, GetCollectionsResponse] =
-    getCollections(collectionPersistence.getLatestCollectionsByCategory(category), authParams)
+    getCollections(collectionPersistence.getLatestCollectionsByCategory(category, offset, limit), authParams)
 
   def getPublishedCollections(
     userId: Long,
@@ -77,9 +79,11 @@ class SharedCollectionProcesses[F[_]](
 
   def getTopCollectionsByCategory(
     category: String,
-    authParams: AuthParams
+    authParams: AuthParams,
+    offset: Int,
+    limit: Int
   ): Free[F, GetCollectionsResponse] =
-    getCollections(collectionPersistence.getTopCollectionsByCategory(category), authParams)
+    getCollections(collectionPersistence.getTopCollectionsByCategory(category, offset, limit), authParams)
 
   /**
     * This process changes the application state to one where the user is subscribed to the collection.

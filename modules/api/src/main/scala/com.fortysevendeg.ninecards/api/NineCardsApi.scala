@@ -106,15 +106,17 @@ class NineCardsRoutes(
             }
           }
       } ~
-        path("latest" / TypedSegment[Category]) { category ⇒
-          nineCardsDirectives.googlePlayInfo { googlePlayContext ⇒
-            complete(getLatestCollectionsByCategory(category, googlePlayContext, userContext))
-          }
+        path("latest" / TypedSegment[Category] / TypedIntSegment[Offset] / TypedIntSegment[Limit]) {
+          (category: Category, offset: Offset, limit: Limit) ⇒
+            nineCardsDirectives.googlePlayInfo { googlePlayContext ⇒
+              complete(getLatestCollectionsByCategory(category, googlePlayContext, userContext, offset, limit))
+            }
         } ~
-        path("top" / TypedSegment[Category]) { category ⇒
-          nineCardsDirectives.googlePlayInfo { googlePlayContext ⇒
-            complete(getTopCollectionsByCategory(category, googlePlayContext, userContext))
-          }
+        path("top" / TypedSegment[Category] / TypedIntSegment[Offset] / TypedIntSegment[Limit]) {
+          (category: Category, offset: Offset, limit: Limit) ⇒
+            nineCardsDirectives.googlePlayInfo { googlePlayContext ⇒
+              complete(getTopCollectionsByCategory(category, googlePlayContext, userContext, offset, limit))
+            }
         } ~
         pathPrefix(TypedSegment[PublicIdentifier]) { publicIdentifier ⇒
           pathEndOrSingleSlash {
@@ -189,10 +191,17 @@ class NineCardsRoutes(
   private[this] def getLatestCollectionsByCategory(
     category: Category,
     googlePlayContext: GooglePlayContext,
-    userContext: UserContext
+    userContext: UserContext,
+    offset: Offset,
+    limit: Limit
   ) =
     sharedCollectionProcesses
-      .getLatestCollectionsByCategory(category.value, toAuthParams(googlePlayContext, userContext))
+      .getLatestCollectionsByCategory(
+        category   = category.value,
+        authParams = toAuthParams(googlePlayContext, userContext),
+        offset     = offset.value,
+        limit      = limit.value
+      )
       .map(_.collections.map(toApiSharedCollection))
 
   private[this] def getPublishedCollections(
@@ -206,10 +215,17 @@ class NineCardsRoutes(
   private[this] def getTopCollectionsByCategory(
     category: Category,
     googlePlayContext: GooglePlayContext,
-    userContext: UserContext
+    userContext: UserContext,
+    offset: Offset,
+    limit: Limit
   ) =
     sharedCollectionProcesses
-      .getTopCollectionsByCategory(category.value, toAuthParams(googlePlayContext, userContext))
+      .getTopCollectionsByCategory(
+        category   = category.value,
+        authParams = toAuthParams(googlePlayContext, userContext),
+        offset     = offset.value,
+        limit      = limit.value
+      )
       .map(_.collections.map(toApiSharedCollection))
 
   private[this] def categorizeApps(
