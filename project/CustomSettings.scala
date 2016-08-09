@@ -13,7 +13,16 @@ object CustomSettings {
       val config = ConfigFactory.load()
       val prefix = "db.default"
 
-      def envOrElseConfig(name: String) = sys.props.get(name) getOrElse config.getString(name)
+      def envOrElseConfig(name: String) = {
+        sys.props.get(name) getOrElse {
+          if (config.hasPath(name))
+            config.getString(name)
+          else {
+            println(s"No configuration setting found for key '$name'")
+            ""
+          }
+        }
+      }
 
       DatabaseConfig(
         driver = envOrElseConfig(s"$prefix.driver"),

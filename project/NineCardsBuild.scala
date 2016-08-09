@@ -1,3 +1,5 @@
+import CustomSettings._
+import com.typesafe.sbt.packager.archetypes.JavaAppPackaging
 import org.flywaydb.sbt.FlywayPlugin
 import sbt._
 
@@ -17,6 +19,7 @@ object NineCardsBuild extends Build with Settings with Dependencies {
     .dependsOn(services)
 
   lazy val api = project.in(file("modules/api"))
+    .enablePlugins(JavaAppPackaging)
     .settings(apiSettings ++ apiDeps)
     .dependsOn(processes)
 

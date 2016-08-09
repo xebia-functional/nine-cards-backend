@@ -15,6 +15,7 @@ object Versions {
   val jodaTime = "2.9.4"
   val kindProjector = "0.7.1"
   val mockserver = "3.10.4"
+  val newRelic = "3.29.0"
   val scala = "2.11.8"
   val scalacheckShapeless = "1.1.0-RC3"
   val scalaz = "7.2.4"
