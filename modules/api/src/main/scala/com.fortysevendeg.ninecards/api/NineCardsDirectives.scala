@@ -60,10 +60,12 @@ class NineCardsDirectives(
 
   def authenticateUser: Directive1[UserContext] = for {
     uri ← requestUri
+    herokuForwardedProtocol ← optionalHeaderValueByName(headerHerokuForwardedProto)
+    herokuUri = herokuForwardedProtocol.filterNot(_.isEmpty).fold(uri)(uri.withScheme)
     sessionToken ← headerValueByName(headerSessionToken)
     androidId ← headerValueByName(headerAndroidId)
     authToken ← headerValueByName(headerAuthToken)
-    userId ← authenticate(validateUser(sessionToken, androidId, authToken, uri))
+    userId ← authenticate(validateUser(sessionToken, androidId, authToken, herokuUri))
   } yield UserContext(UserId(userId), AndroidId(androidId)) :: HNil
 
   val googlePlayInfo: Directive1[GooglePlayContext] = for {

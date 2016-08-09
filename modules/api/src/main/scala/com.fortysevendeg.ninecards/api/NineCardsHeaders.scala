@@ -9,6 +9,7 @@ object NineCardsHeaders {
   val headerMarketLocalization = "X-Android-Market-Localization"
   val headerSessionToken = "X-Session-Token"
   val headerAuthToken = "X-Auth-Token"
+  val headerHerokuForwardedProto = "x-forwarded-proto"
 
   object Domain {
 
