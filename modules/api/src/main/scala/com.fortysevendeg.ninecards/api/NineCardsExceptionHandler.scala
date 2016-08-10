@@ -2,6 +2,7 @@ package com.fortysevendeg.ninecards.api
 
 import com.fortysevendeg.ninecards.processes.ProcessesExceptions.SharedCollectionNotFoundException
 import com.fortysevendeg.ninecards.services.persistence.PersistenceExceptions.PersistenceException
+import org.http4s.client.UnexpectedStatus
 import spray.http.StatusCodes._
 import spray.routing.{ ExceptionHandler, HttpService }
 import spray.util.LoggingContext
@@ -13,13 +14,13 @@ trait NineCardsExceptionHandler extends HttpService {
         requestUri {
           uri ⇒
             log.warning("Request to {} could not be handled normally", uri)
-            complete(ServiceUnavailable, e.getMessage)
+            complete(ServiceUnavailable, Option(e.getMessage).getOrElse("Net connection error"))
         }
       case e: PersistenceException ⇒
         requestUri {
           uri ⇒
             log.warning("Request to {} could not be handled normally", uri)
-            complete(InternalServerError, e.getMessage)
+            complete(InternalServerError, Option(e.getMessage).getOrElse("Persistence error"))
         }
       case e: SharedCollectionNotFoundException ⇒
         requestUri {
@@ -27,11 +28,18 @@ trait NineCardsExceptionHandler extends HttpService {
             log.warning("Shared collection not found: {}", uri)
             complete(NotFound, e.getMessage)
         }
+      case e: UnexpectedStatus ⇒
+        requestUri {
+          uri ⇒
+            log.warning("Request to {} could not be handled normally: {}", uri, e.status.toString)
+            complete(InternalServerError, e.status.toString)
+        }
       case e: Throwable ⇒
         requestUri {
           uri ⇒
-            log.warning("Request to {} could not be handled normally: {}", uri, e.getMessage)
-            complete(InternalServerError, e.getMessage)
+            val exceptionMessage = Option(e.getMessage).getOrElse("Unexpected error")
+            log.warning("Request to {} could not be handled normally: {}", uri, exceptionMessage)
+            complete(InternalServerError, exceptionMessage)
         }
     }
 }
