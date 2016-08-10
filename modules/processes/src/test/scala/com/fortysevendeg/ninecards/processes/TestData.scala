@@ -39,6 +39,10 @@ object TestData {
 
   val name = "The best social media apps"
 
+  val pageNumber = 0
+
+  val pageSize = 25
+
   val publicIdentifier = "40daf308-fecf-4228-9262-a712d783cf49"
 
   val publishedOnDatetime = new DateTime(millis)

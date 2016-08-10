@@ -20,6 +20,10 @@ trait SharedCollectionPersistenceServicesContext extends DomainDatabaseContext {
 
   val communicationCategory = "COMMUNICATION"
 
+  val pageNumber = 0
+
+  val pageSize = 25
+
   val socialCategory = "SOCIAL"
 
   val deleteSharedCollectionsQuery = "DELETE FROM sharedcollections"
@@ -247,7 +251,7 @@ class SharedCollectionPersistenceServicesSpec
 
         val response: List[SharedCollection] =
           collectionPersistenceServices
-            .getLatestCollectionsByCategory(category)
+            .getLatestCollectionsByCategory(category, pageNumber, pageSize)
             .transact(transactor).run
 
         response must beEmpty
@@ -270,7 +274,7 @@ class SharedCollectionPersistenceServicesSpec
 
         val response: List[SharedCollection] =
           collectionPersistenceServices
-            .getLatestCollectionsByCategory(communicationCategory)
+            .getLatestCollectionsByCategory(communicationCategory, pageNumber, pageSize)
             .transact(transactor).run
 
         response must beEmpty
@@ -299,7 +303,11 @@ class SharedCollectionPersistenceServicesSpec
         setupTrans.transact(transactor).run
 
         val response = for {
-          response ← collectionPersistenceServices.getLatestCollectionsByCategory(socialCategory)
+          response ← collectionPersistenceServices.getLatestCollectionsByCategory(
+            category = socialCategory,
+            pageNumber   = pageNumber,
+            pageSize    = pageSize
+          )
           _ ← deleteSharedCollections
         } yield response
 
@@ -307,7 +315,7 @@ class SharedCollectionPersistenceServicesSpec
 
         val sortedSocialCollections = socialCollections.sortWith(_.publishedOn.getTime > _.publishedOn.getTime)
 
-        collections.size must_== socialCollections.size
+        collections.size must be_<=(pageSize)
         collections.headOption.map(_.publicIdentifier) must_== sortedSocialCollections.headOption.map(_.publicIdentifier)
       }
     }
@@ -320,7 +328,7 @@ class SharedCollectionPersistenceServicesSpec
 
         val response: List[SharedCollection] =
           collectionPersistenceServices
-            .getLatestCollectionsByCategory(socialCategory)
+            .getLatestCollectionsByCategory(socialCategory, pageNumber, pageSize)
             .transact(transactor).run
 
         response must beEmpty
@@ -339,7 +347,7 @@ class SharedCollectionPersistenceServicesSpec
 
         val response: List[SharedCollection] =
           collectionPersistenceServices
-            .getTopCollectionsByCategory(communicationCategory)
+            .getTopCollectionsByCategory(communicationCategory, pageNumber, pageSize)
             .transact(transactor).run
 
         response must beEmpty
@@ -368,7 +376,11 @@ class SharedCollectionPersistenceServicesSpec
         setupTrans.transact(transactor).run
 
         val response = for {
-          response ← collectionPersistenceServices.getTopCollectionsByCategory(socialCategory)
+          response ← collectionPersistenceServices.getTopCollectionsByCategory(
+            category = socialCategory,
+            pageNumber   = pageNumber,
+            pageSize    = pageSize
+          )
           _ ← deleteSharedCollections
         } yield response
 
@@ -376,7 +388,7 @@ class SharedCollectionPersistenceServicesSpec
 
         val sortedSocialCollections = socialCollections.sortWith(_.installations > _.installations)
 
-        collections.size must_== socialCollections.size
+        collections.size must be_<=(pageSize)
         collections.headOption.map(_.publicIdentifier) must_== sortedSocialCollections.headOption.map(_.publicIdentifier)
       }
     }

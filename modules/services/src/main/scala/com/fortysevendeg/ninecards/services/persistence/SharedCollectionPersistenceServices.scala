@@ -33,11 +33,19 @@ class SharedCollectionPersistenceServices(
   def getCollectionsByUserId(userId: Long): ConnectionIO[List[SharedCollection]] =
     collectionPersistence.fetchList(CollectionQueries.getByUser, userId)
 
-  def getLatestCollectionsByCategory(category: String): ConnectionIO[List[SharedCollection]] =
-    collectionPersistence.fetchList(CollectionQueries.getLatestByCategory, category)
+  def getLatestCollectionsByCategory(
+    category: String,
+    pageNumber: Int,
+    pageSize: Int
+  ): ConnectionIO[List[SharedCollection]] =
+    collectionPersistence.fetchList(CollectionQueries.getLatestByCategory, (category, pageSize, pageNumber))
 
-  def getTopCollectionsByCategory(category: String): ConnectionIO[List[SharedCollection]] =
-    collectionPersistence.fetchList(CollectionQueries.getTopByCategory, category)
+  def getTopCollectionsByCategory(
+    category: String,
+    pageNumber: Int,
+    pageSize: Int
+  ): ConnectionIO[List[SharedCollection]] =
+    collectionPersistence.fetchList(CollectionQueries.getTopByCategory, (category, pageSize, pageNumber))
 
   def addPackage[K: Composite](collectionId: Long, packageName: String): ConnectionIO[K] =
     collectionPackagePersistence.updateWithGeneratedKeys[K](

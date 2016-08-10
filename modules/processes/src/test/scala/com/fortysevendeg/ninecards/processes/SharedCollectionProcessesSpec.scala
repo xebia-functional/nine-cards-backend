@@ -73,7 +73,9 @@ trait SharedCollectionProcessesSpecification
     ) returns packages.point[ConnectionIO]
 
     sharedCollectionPersistenceServices.getLatestCollectionsByCategory(
-      category = category
+      category = category,
+      pageNumber   = pageNumber,
+      pageSize    = pageSize
     ) returns List(collection).point[ConnectionIO]
 
     sharedCollectionPersistenceServices.getCollectionsByUserId(
@@ -81,7 +83,9 @@ trait SharedCollectionProcessesSpecification
     ) returns List(collection).point[ConnectionIO]
 
     sharedCollectionPersistenceServices.getTopCollectionsByCategory(
-      category = category
+      category = category,
+      pageNumber   = pageNumber,
+      pageSize    = pageSize
     ) returns List(collection).point[ConnectionIO]
 
     sharedCollectionPersistenceServices.getCollectionsByUserId(
@@ -158,7 +162,9 @@ class SharedCollectionProcessesSpec
       val response = GetCollectionsResponse(List(sharedCollectionWithAppsInfo))
       val collectionsInfo = sharedCollectionProcesses.getLatestCollectionsByCategory(
         category   = category,
-        authParams = authParams
+        authParams = authParams,
+        pageNumber     = pageNumber,
+        pageSize      = pageSize
       )
       collectionsInfo.foldMap(testInterpreters) mustEqual response
     }
@@ -193,7 +199,9 @@ class SharedCollectionProcessesSpec
       val response = GetCollectionsResponse(List(sharedCollectionWithAppsInfo))
       val collectionsInfo = sharedCollectionProcesses.getTopCollectionsByCategory(
         category   = category,
-        authParams = authParams
+        authParams = authParams,
+        pageNumber     = pageNumber,
+        pageSize      = pageSize
       )
       collectionsInfo.foldMap(testInterpreters) mustEqual response
     }

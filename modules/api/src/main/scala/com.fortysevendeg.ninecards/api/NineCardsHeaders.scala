@@ -26,6 +26,10 @@ object NineCardsHeaders {
 
     case class NewSharedCollectionInfo(currentDate: CurrentDateTime, identifier: PublicIdentifier)
 
+    case class PageNumber(value: Int) extends AnyVal
+
+    case class PageSize(value: Int) extends AnyVal
+
     case class PublicIdentifier(value: String) extends AnyVal
 
     case class SessionToken(value: String) extends AnyVal
