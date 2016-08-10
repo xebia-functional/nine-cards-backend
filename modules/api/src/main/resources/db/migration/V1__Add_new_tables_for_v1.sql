@@ -19,7 +19,7 @@ CREATE TABLE SharedCollections (
   publicIdentifier character varying(100) NOT NULL,
   userId BIGINT REFERENCES Users(id),
   publishedOn timestamp NOT NULL,
-  description character varying(100),
+  description character varying(512),
   author character varying(100) NOT NULL,
   name character varying(100) NOT NULL,
   installations INTEGER NOT NULL DEFAULT 0,
