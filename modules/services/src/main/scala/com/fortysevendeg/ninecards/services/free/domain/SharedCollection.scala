@@ -37,6 +37,8 @@ object SharedCollection {
     val getById = "select * from sharedcollections where id=?"
     val getByPublicIdentifier = "select * from sharedcollections where publicidentifier=?"
     val getByUser = "select * from sharedcollections where userId=?"
+    val getLatestByCategory = "select * from sharedcollections where category=? order by publishedon desc limit ? offset ?"
+    val getTopByCategory = "select * from sharedcollections where category=? order by installations desc limit ? offset ?"
     val insert = "insert into sharedcollections(publicidentifier,userid,publishedon,description,author,name,installations,views,category,icon,community) values(?,?,?,?,?,?,?,?,?,?,?)"
     val update = "update sharedcollections set name=?, description=? where id=?"
   }

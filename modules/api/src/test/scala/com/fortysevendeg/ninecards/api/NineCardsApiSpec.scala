@@ -83,8 +83,14 @@ trait NineCardsApiSpecification
     sharedCollectionProcesses.unsubscribe(any[String], any[Long]) returns
       Free.pure(Messages.unsubscribeResponse.right)
 
+    sharedCollectionProcesses.getLatestCollectionsByCategory(any, any, any, any) returns
+      Free.pure(Messages.getCollectionsResponse)
+
     sharedCollectionProcesses.getPublishedCollections(any[Long], any) returns
-      Free.pure(Messages.getPublishedCollectionsResponse)
+      Free.pure(Messages.getCollectionsResponse)
+
+    sharedCollectionProcesses.getTopCollectionsByCategory(any, any, any, any) returns
+      Free.pure(Messages.getCollectionsResponse)
 
     sharedCollectionProcesses.updateCollection(any, any, any) returns
       Free.pure(Messages.createOrUpdateCollectionResponse.right)
@@ -386,6 +392,30 @@ class NineCardsApiSpec
   "GET /collections" should {
 
     val request = Get(Paths.collections) ~>
+      addHeaders(Headers.googlePlayHeaders)
+
+    unauthorizedNoHeaders(request)
+
+    internalServerError(request)
+
+    successOk(request)
+  }
+
+  "GET /collections/latest/category" should {
+
+    val request = Get(Paths.latestCollections) ~>
+      addHeaders(Headers.googlePlayHeaders)
+
+    unauthorizedNoHeaders(request)
+
+    internalServerError(request)
+
+    successOk(request)
+  }
+
+  "GET /collections/top/category" should {
+
+    val request = Get(Paths.topCollections) ~>
       addHeaders(Headers.googlePlayHeaders)
 
     unauthorizedNoHeaders(request)

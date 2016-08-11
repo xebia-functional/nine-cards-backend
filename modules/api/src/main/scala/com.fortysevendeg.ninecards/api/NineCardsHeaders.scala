@@ -17,6 +17,8 @@ object NineCardsHeaders {
 
     case class AuthToken(value: String) extends AnyVal
 
+    case class Category(value: String) extends AnyVal
+
     case class CurrentDateTime(value: DateTime) extends AnyVal
 
     case class GooglePlayToken(value: String) extends AnyVal
@@ -24,6 +26,10 @@ object NineCardsHeaders {
     case class MarketLocalization(value: String) extends AnyVal
 
     case class NewSharedCollectionInfo(currentDate: CurrentDateTime, identifier: PublicIdentifier)
+
+    case class PageNumber(value: Int) extends AnyVal
+
+    case class PageSize(value: Int) extends AnyVal
 
     case class PublicIdentifier(value: String) extends AnyVal
 

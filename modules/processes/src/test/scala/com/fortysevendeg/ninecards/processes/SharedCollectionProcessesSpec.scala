@@ -72,8 +72,20 @@ trait SharedCollectionProcessesSpecification
       collectionId = collectionId
     ) returns packages.point[ConnectionIO]
 
+    sharedCollectionPersistenceServices.getLatestCollectionsByCategory(
+      category = category,
+      pageNumber   = pageNumber,
+      pageSize    = pageSize
+    ) returns List(collection).point[ConnectionIO]
+
     sharedCollectionPersistenceServices.getCollectionsByUserId(
       userId = publisherId
+    ) returns List(collection).point[ConnectionIO]
+
+    sharedCollectionPersistenceServices.getTopCollectionsByCategory(
+      category = category,
+      pageNumber   = pageNumber,
+      pageSize    = pageSize
     ) returns List(collection).point[ConnectionIO]
 
     sharedCollectionPersistenceServices.getCollectionsByUserId(
@@ -144,10 +156,25 @@ class SharedCollectionProcessesSpec
       }
   }
 
+  "getLatestCollectionsByCategory" should {
+
+    "return a list of Shared collections of the given category" in new SharedCollectionSuccessfulScope {
+      val response = GetCollectionsResponse(List(sharedCollectionWithAppsInfo))
+      val collectionsInfo = sharedCollectionProcesses.getLatestCollectionsByCategory(
+        category   = category,
+        authParams = authParams,
+        pageNumber     = pageNumber,
+        pageSize      = pageSize
+      )
+      collectionsInfo.foldMap(testInterpreters) mustEqual response
+    }
+
+  }
+
   "getPublishedCollections" should {
 
     "return a list of Shared collections of the publisher user" in new SharedCollectionSuccessfulScope {
-      val response = GetPublishedCollectionsResponse(List(sharedCollectionWithAppsInfo))
+      val response = GetCollectionsResponse(List(sharedCollectionWithAppsInfo))
       val collectionsInfo = sharedCollectionProcesses.getPublishedCollections(
         userId     = publisherId,
         authParams = authParams
@@ -156,10 +183,25 @@ class SharedCollectionProcessesSpec
     }
 
     "return a list of Shared collections of the subscriber user" in new SharedCollectionSuccessfulScope {
-      val response = GetPublishedCollectionsResponse(List())
+      val response = GetCollectionsResponse(List())
       val collectionsInfo = sharedCollectionProcesses.getPublishedCollections(
         userId     = subscriberId,
         authParams = authParams
+      )
+      collectionsInfo.foldMap(testInterpreters) mustEqual response
+    }
+
+  }
+
+  "getTopCollectionsByCategory" should {
+
+    "return a list of Shared collections of the given category" in new SharedCollectionSuccessfulScope {
+      val response = GetCollectionsResponse(List(sharedCollectionWithAppsInfo))
+      val collectionsInfo = sharedCollectionProcesses.getTopCollectionsByCategory(
+        category   = category,
+        authParams = authParams,
+        pageNumber     = pageNumber,
+        pageSize      = pageSize
       )
       collectionsInfo.foldMap(testInterpreters) mustEqual response
     }

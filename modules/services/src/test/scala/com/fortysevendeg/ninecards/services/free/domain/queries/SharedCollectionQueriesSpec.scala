@@ -15,20 +15,24 @@ class SharedCollectionQueriesSpec
   with AnalysisSpec
   with DomainDatabaseContext {
 
+  val category = "SOCIAL"
   val id = 12345l
-  val publicIdentifier = "7a2a4c1c-5260-40a5-ba06-db009a3ef7c4"
   val now = Timestamp.valueOf(LocalDateTime.now)
+  val pageNumber = 25
+  val pageSize = 25
+  val publicIdentifier = "7a2a4c1c-5260-40a5-ba06-db009a3ef7c4"
+  val userId = Option(23456l)
 
   val data = SharedCollectionData(
     publicIdentifier = publicIdentifier,
-    userId           = Option(23456l),
+    userId           = userId,
     publishedOn      = now,
     description      = Option("Description about the collection"),
     author           = "John Doe",
     name             = "The name of the collection",
     installations    = 1,
     views            = 1,
-    category         = "SOCIAL",
+    category         = category,
     icon             = "path-to-icon",
     community        = true
   )
@@ -39,11 +43,29 @@ class SharedCollectionQueriesSpec
   )
   check(getCollectionByIdQuery)
 
-  val getPublicIdentifierQuery = collectionPersistence.generateQuery(
+  val getCollectionByPublicIdentifierQuery = collectionPersistence.generateQuery(
     sql    = getByPublicIdentifier,
     values = publicIdentifier
   )
-  check(getPublicIdentifierQuery)
+  check(getCollectionByPublicIdentifierQuery)
+
+  val getCollectionsByUserQuery = collectionPersistence.generateQuery(
+    sql    = getByUser,
+    values = userId
+  )
+  check(getCollectionsByUserQuery)
+
+  val getLatestCollectionsByCategoryQuery = collectionPersistence.generateQuery(
+    sql    = getLatestByCategory,
+    values = (category, pageSize.toString, pageNumber.toString)
+  )
+  check(getLatestCollectionsByCategoryQuery)
+
+  val getTopCollectionsByCategoryQuery = collectionPersistence.generateQuery(
+    sql    = getTopByCategory,
+    values = (category, pageSize.toString, pageNumber.toString)
+  )
+  check(getTopCollectionsByCategoryQuery)
 
   val insertCollectionQuery = collectionPersistence.generateUpdateWithGeneratedKeys(
     sql    = insert,

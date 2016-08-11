@@ -25,7 +25,7 @@ trait DomainDatabaseContext {
   implicit val collectionPackagePersistence = new Persistence[SharedCollectionPackage](supportsSelectForUpdate = false)
   implicit val collectionSubscriptionPersistence = new Persistence[SharedCollectionSubscription](supportsSelectForUpdate = false)
   val userPersistenceServices = new UserPersistenceServices
-  val sharedCollectionPersistenceServices = new SharedCollectionPersistenceServices
+  val collectionPersistenceServices = new SharedCollectionPersistenceServices
   val scSubscriptionPersistenceServices = new SharedCollectionSubscriptionPersistenceServices
 
   val flywaydb = new Flyway
@@ -37,4 +37,6 @@ trait DomainDatabaseContext {
 
   def insertItems[F[_]: Foldable, A: Composite](sql: String, values: F[A]): ConnectionIO[Int] =
     Update[A](sql).updateMany(values)
+
+  def deleteItems(sql: String): ConnectionIO[Int] = Update0(sql, None).run
 }

@@ -165,7 +165,7 @@ object TestData {
       data = sharedCollectionInfo
     )
 
-    val getPublishedCollectionsResponse = GetPublishedCollectionsResponse(Nil)
+    val getCollectionsResponse = GetCollectionsResponse(Nil)
 
     val loginRequest = LoginRequest(email, androidId, sessionToken, tokenId)
 
@@ -195,7 +195,11 @@ object TestData {
 
     val invalid = "/chalkyTown"
 
+    val latestCollections = "/collections/latest/SOCIAL/0/25"
+
     val login = "/login"
+
+    val topCollections = "/collections/top/SOCIAL/0/25"
   }
 
 }
