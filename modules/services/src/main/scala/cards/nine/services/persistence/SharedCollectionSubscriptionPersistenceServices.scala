@@ -42,7 +42,7 @@ class SharedCollectionSubscriptionPersistenceServices(
 }
 
 object SharedCollectionSubscriptionPersistenceServices {
-  implicit def sharedCollectionSubscriptionPersistenceServices(
+  implicit def persistenceServices(
     implicit
     subscriptionPersistence: Persistence[SharedCollectionSubscription]
   ) =

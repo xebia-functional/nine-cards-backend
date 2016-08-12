@@ -114,7 +114,7 @@ object SharedCollectionPersistenceServices {
     community: Boolean
   )
 
-  implicit def sharedCollectionPersistenceServices(
+  implicit def persistenceServices(
     implicit
     collectionPersistence: Persistence[SharedCollection],
     collectionPackagePersistence: Persistence[SharedCollectionPackage]

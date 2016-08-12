@@ -19,10 +19,11 @@ trait Dependencies {
   val scalazConcurrent = "org.scalaz" %% "scalaz-concurrent" % Versions.scalaz
   val jodaConvert = "org.joda" % "joda-convert" % Versions.jodaConvert
   val jodaTime = "joda-time" % "joda-time" % Versions.jodaTime
-  val doobieCore = "org.tpolecat" %% "doobie-core" % Versions.doobie
-  val doobieH2 = "org.tpolecat" %% "doobie-contrib-h2" % Versions.doobie
-  val doobiePostgresql = "org.tpolecat" %% "doobie-contrib-postgresql" % Versions.doobie
-  val doobieSpecs2 = "org.tpolecat" %% "doobie-contrib-specs2" % Versions.doobie
+  val doobieCore = "org.tpolecat" %% "doobie-core" % Versions.doobie exclude("org.scalaz", "scalaz-concurrent")
+  val doobieH2 = "org.tpolecat" %% "doobie-contrib-h2" % Versions.doobie exclude("org.scalaz", "scalaz-concurrent")
+  val doobieHikari = "org.tpolecat" %% "doobie-contrib-hikari" % Versions.doobie exclude("org.scalaz", "scalaz-concurrent")
+  val doobiePostgresql = "org.tpolecat" %% "doobie-contrib-postgresql" % Versions.doobie exclude("org.scalaz", "scalaz-concurrent")
+  val doobieSpecs2 = "org.tpolecat" %% "doobie-contrib-specs2" % Versions.doobie exclude("org.scalaz", "scalaz-concurrent")
   val typesafeConfig = "com.typesafe" % "config" % Versions.typesafeConfig
   val flywaydbCore = "org.flywaydb" % "flyway-core" % Versions.flywaydb
   val scalacheckShapeless = "com.github.alexarchambault" %% "scalacheck-shapeless_1.13" % Versions.scalacheckShapeless
@@ -37,6 +38,8 @@ trait Dependencies {
   val baseDepts = Seq(
     typesafeConfig,
     hasher,
+    scalaz,
+    scalazConcurrent,
     specs2Core % "test" exclude("org.scalaz", "*"),
     specs2Cats % "test",
     specs2Mockito % "test",
@@ -50,16 +53,12 @@ trait Dependencies {
     sprayTestKit,
     circe("-core"),
     circe("-spray"),
-    scalaz,
-    scalazConcurrent,
     akkaActor,
     newRelic,
     akkaTestKit % "test",
     cats % "test"))
 
-  val processesDeps = Seq(libraryDependencies ++= baseDepts ++ Seq(
-    scalaz,
-    scalazConcurrent))
+  val processesDeps = Seq(libraryDependencies ++= baseDepts)
 
   val servicesDeps = Seq(libraryDependencies ++= baseDepts ++ Seq(
     jodaConvert,
@@ -67,12 +66,11 @@ trait Dependencies {
     cats,
     doobieCore exclude("org.scalaz", "*"),
     doobieH2,
+    doobieHikari,
     doobiePostgresql,
     doobieSpecs2 % "test",
     enumeratum(""),
     enumeratum("-circe"),
-    scalaz,
-    scalazConcurrent,
     sprayJson,
     flywaydbCore % "test",
     mockserver % "test",

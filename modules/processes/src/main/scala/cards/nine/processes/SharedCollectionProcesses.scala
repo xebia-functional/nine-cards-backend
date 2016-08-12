@@ -20,6 +20,7 @@ import cards.nine.services.free.domain.{
   SharedCollection ⇒ SharedCollectionServices
 }
 import cards.nine.services.persistence._
+import doobie.contrib.hikari.hikaritransactor.HikariTransactor
 import doobie.imports._
 
 import scalaz.concurrent.Task
@@ -30,7 +31,7 @@ class SharedCollectionProcesses[F[_]](
   collectionPersistence: SharedCollectionPersistenceServices,
   subscriptionPersistence: SharedCollectionSubscriptionPersistenceServices,
   userPersistence: UserPersistenceServices,
-  transactor: Transactor[Task],
+  transactor: Task[HikariTransactor[Task]],
   dbOps: DBOps[F],
   firebaseNotificationsServices: Firebase.Services[F],
   googlePlayServices: GooglePlay.Services[F]
