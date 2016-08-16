@@ -73,6 +73,9 @@ object Converters {
       appsInfo         = info.appsInfo
     )
 
+  def toApiSharedCollectionList(response: GetCollectionsResponse): ApiSharedCollectionList =
+    ApiSharedCollectionList(response.collections map toApiSharedCollection)
+
   def toUpdateInstallationRequest(
     request: ApiUpdateInstallationRequest,
     userContext: UserContext

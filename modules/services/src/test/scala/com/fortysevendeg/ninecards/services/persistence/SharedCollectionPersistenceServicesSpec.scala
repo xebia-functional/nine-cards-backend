@@ -304,9 +304,9 @@ class SharedCollectionPersistenceServicesSpec
 
         val response = for {
           response ← collectionPersistenceServices.getLatestCollectionsByCategory(
-            category = socialCategory,
-            pageNumber   = pageNumber,
-            pageSize    = pageSize
+            category   = socialCategory,
+            pageNumber = pageNumber,
+            pageSize   = pageSize
           )
           _ ← deleteSharedCollections
         } yield response
@@ -377,9 +377,9 @@ class SharedCollectionPersistenceServicesSpec
 
         val response = for {
           response ← collectionPersistenceServices.getTopCollectionsByCategory(
-            category = socialCategory,
-            pageNumber   = pageNumber,
-            pageSize    = pageSize
+            category   = socialCategory,
+            pageNumber = pageNumber,
+            pageSize   = pageSize
           )
           _ ← deleteSharedCollections
         } yield response

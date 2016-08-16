@@ -1,10 +1,12 @@
 package com.fortysevendeg.ninecards.api
 
 import akka.actor.{ Actor, ActorRefFactory }
+import cats.data.Xor
+import cats.free.Free
 import com.fortysevendeg.ninecards.api.NineCardsDirectives._
 import com.fortysevendeg.ninecards.api.NineCardsHeaders.Domain._
 import com.fortysevendeg.ninecards.api.converters.Converters._
-import com.fortysevendeg.ninecards.api.messages.GooglePlayMessages.ApiCategorizeAppsRequest
+import com.fortysevendeg.ninecards.api.messages.GooglePlayMessages._
 import com.fortysevendeg.ninecards.api.messages.InstallationsMessages._
 import com.fortysevendeg.ninecards.api.messages.SharedCollectionMessages._
 import com.fortysevendeg.ninecards.api.messages.UserMessages._
@@ -53,7 +55,7 @@ class NineCardsRoutes(
     case _ ⇒ complete(NotFound)
   }
 
-  private[this] lazy val userRoute =
+  private[this] lazy val userRoute: Route =
     pathEndOrSingleSlash {
       post {
         entity(as[ApiLoginRequest]) { request ⇒
@@ -66,7 +68,7 @@ class NineCardsRoutes(
       }
     }
 
-  private[this] lazy val applicationRoute =
+  private[this] lazy val applicationRoute: Route =
     nineCardsDirectives.authenticateUser { userContext ⇒
       path("categorize") {
         post {
@@ -79,7 +81,7 @@ class NineCardsRoutes(
       }
     }
 
-  private[this] lazy val installationsRoute =
+  private[this] lazy val installationsRoute: Route =
     nineCardsDirectives.authenticateUser { implicit userContext: UserContext ⇒
       pathEndOrSingleSlash {
         put {
@@ -90,7 +92,7 @@ class NineCardsRoutes(
       }
     }
 
-  private[this] lazy val sharedCollectionsRoute =
+  private[this] lazy val sharedCollectionsRoute: Route =
     nineCardsDirectives.authenticateUser { userContext: UserContext ⇒
       pathEndOrSingleSlash {
         post {
@@ -106,7 +108,7 @@ class NineCardsRoutes(
             }
           }
       } ~
-        path("latest" / TypedSegment[Category] / TypedIntSegment[PageNumber] / TypedIntSegment[PageSize]) {
+        (path("latest" / TypedSegment[Category] / TypedIntSegment[PageNumber] / TypedIntSegment[PageSize]) & get) {
           (category: Category, pageNumber: PageNumber, pageSize: PageSize) ⇒
             nineCardsDirectives.googlePlayInfo { googlePlayContext ⇒
               complete {
@@ -120,7 +122,7 @@ class NineCardsRoutes(
               }
             }
         } ~
-        path("top" / TypedSegment[Category] / TypedIntSegment[PageNumber] / TypedIntSegment[PageSize]) {
+        (path("top" / TypedSegment[Category] / TypedIntSegment[PageNumber] / TypedIntSegment[PageSize]) & get) {
           (category: Category, pageNumber: PageNumber, pageSize: PageSize) ⇒
             nineCardsDirectives.googlePlayInfo { googlePlayContext ⇒
               complete {
@@ -154,7 +156,7 @@ class NineCardsRoutes(
         }
     }
 
-  private[this] lazy val swaggerRoute =
+  private[this] lazy val swaggerRoute: Route =
     // This path prefix grants access to the Swagger documentation.
     // Both /apiDocs/ and /apiDocs/index.html are valid paths to load Swagger-UI.
     pathEndOrSingleSlash {
@@ -163,7 +165,12 @@ class NineCardsRoutes(
       getFromResourceDirectory("apiDocs")
     }
 
-  private[this] def updateInstallation(request: ApiUpdateInstallationRequest, userContext: UserContext) =
+  private type NineCardsServed[A] = cats.free.Free[NineCardsServices, A]
+
+  private[this] def updateInstallation(
+    request: ApiUpdateInstallationRequest,
+    userContext: UserContext
+  ): NineCardsServed[ApiUpdateInstallationResponse] =
     userProcesses
       .updateInstallation(toUpdateInstallationRequest(request, userContext))
       .map(toApiUpdateInstallationResponse)
@@ -172,7 +179,7 @@ class NineCardsRoutes(
     publicId: PublicIdentifier,
     googlePlayContext: GooglePlayContext,
     userContext: UserContext
-  ) =
+  ): NineCardsServed[XorApiGetCollectionByPublicId] =
     sharedCollectionProcesses
       .getCollectionByPublicIdentifier(publicId.value, toAuthParams(googlePlayContext, userContext))
       .map(_.map(r ⇒ toApiSharedCollection(r.data)))
@@ -181,12 +188,15 @@ class NineCardsRoutes(
     request: ApiCreateCollectionRequest,
     collectionInfo: NewSharedCollectionInfo,
     userContext: UserContext
-  ) =
+  ): NineCardsServed[ApiCreateOrUpdateCollectionResponse] =
     sharedCollectionProcesses
       .createCollection(toCreateCollectionRequest(request, collectionInfo, userContext))
       .map(toApiCreateOrUpdateCollectionResponse)
 
-  private[this] def subscribe(publicId: PublicIdentifier, userContext: UserContext) =
+  private[this] def subscribe(
+    publicId: PublicIdentifier,
+    userContext: UserContext
+  ): NineCardsServed[Xor[Throwable, ApiSubscribeResponse]] =
     sharedCollectionProcesses
       .subscribe(publicId.value, userContext.userId.value)
       .map(_.map(toApiSubscribeResponse))
@@ -194,12 +204,15 @@ class NineCardsRoutes(
   private[this] def updateCollection(
     publicId: PublicIdentifier,
     request: ApiUpdateCollectionRequest
-  ) =
+  ): NineCardsServed[Xor[Throwable, ApiCreateOrUpdateCollectionResponse]] =
     sharedCollectionProcesses
       .updateCollection(publicId.value, request.collectionInfo, request.packages)
       .map(_.map(toApiCreateOrUpdateCollectionResponse))
 
-  private[this] def unsubscribe(publicId: PublicIdentifier, userContext: UserContext) =
+  private[this] def unsubscribe(
+    publicId: PublicIdentifier,
+    userContext: UserContext
+  ): NineCardsServed[Xor[Throwable, ApiUnsubscribeResponse]] =
     sharedCollectionProcesses
       .unsubscribe(publicId.value, userContext.userId.value)
       .map(_.map(toApiUnsubscribeResponse))
@@ -210,7 +223,7 @@ class NineCardsRoutes(
     userContext: UserContext,
     pageNumber: PageNumber,
     pageSize: PageSize
-  ) =
+  ): NineCardsServed[ApiSharedCollectionList] =
     sharedCollectionProcesses
       .getLatestCollectionsByCategory(
         category   = category.value,
@@ -218,15 +231,15 @@ class NineCardsRoutes(
         pageNumber = pageNumber.value,
         pageSize   = pageSize.value
       )
-      .map(_.collections.map(toApiSharedCollection))
+      .map(toApiSharedCollectionList)
 
   private[this] def getPublishedCollections(
     googlePlayContext: GooglePlayContext,
     userContext: UserContext
-  ) =
+  ): NineCardsServed[ApiSharedCollectionList] =
     sharedCollectionProcesses
       .getPublishedCollections(userContext.userId.value, toAuthParams(googlePlayContext, userContext))
-      .map(_.collections.map(toApiSharedCollection))
+      .map(toApiSharedCollectionList)
 
   private[this] def getTopCollectionsByCategory(
     category: Category,
@@ -234,7 +247,7 @@ class NineCardsRoutes(
     userContext: UserContext,
     pageNumber: PageNumber,
     pageSize: PageSize
-  ) =
+  ): NineCardsServed[ApiSharedCollectionList] =
     sharedCollectionProcesses
       .getTopCollectionsByCategory(
         category   = category.value,
@@ -242,13 +255,13 @@ class NineCardsRoutes(
         pageNumber = pageNumber.value,
         pageSize   = pageSize.value
       )
-      .map(_.collections.map(toApiSharedCollection))
+      .map(toApiSharedCollectionList)
 
   private[this] def categorizeApps(
     request: ApiCategorizeAppsRequest,
     googlePlayContext: GooglePlayContext,
     userContext: UserContext
-  ) =
+  ): NineCardsServed[ApiCategorizeAppsResponse] =
     applicationProcesses
       .categorizeApps(request.items, toAuthParams(googlePlayContext, userContext))
       .map(toApiCategorizeAppsResponse)
