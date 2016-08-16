@@ -106,7 +106,7 @@ class NineCardsRoutes(
             }
           }
       } ~
-        path("latest" / TypedSegment[Category] / TypedIntSegment[PageNumber] / TypedIntSegment[PageSize]) {
+        (path("latest" / TypedSegment[Category] / TypedIntSegment[PageNumber] / TypedIntSegment[PageSize]) & get) {
           (category: Category, pageNumber: PageNumber, pageSize: PageSize) ⇒
             nineCardsDirectives.googlePlayInfo { googlePlayContext ⇒
               complete {
@@ -120,7 +120,7 @@ class NineCardsRoutes(
               }
             }
         } ~
-        path("top" / TypedSegment[Category] / TypedIntSegment[PageNumber] / TypedIntSegment[PageSize]) {
+        (path("top" / TypedSegment[Category] / TypedIntSegment[PageNumber] / TypedIntSegment[PageSize]) & get) {
           (category: Category, pageNumber: PageNumber, pageSize: PageSize) ⇒
             nineCardsDirectives.googlePlayInfo { googlePlayContext ⇒
               complete {
@@ -162,6 +162,8 @@ class NineCardsRoutes(
     } ~ {
       getFromResourceDirectory("apiDocs")
     }
+
+  private type NineCardsServed[A] = cats.free.Free[NineCardsServices, A]
 
   private[this] def updateInstallation(request: ApiUpdateInstallationRequest, userContext: UserContext) =
     userProcesses
@@ -210,7 +212,7 @@ class NineCardsRoutes(
     userContext: UserContext,
     pageNumber: PageNumber,
     pageSize: PageSize
-  ) =
+  ): NineCardsServed[ApiSharedCollectionList] =
     sharedCollectionProcesses
       .getLatestCollectionsByCategory(
         category   = category.value,
@@ -218,15 +220,15 @@ class NineCardsRoutes(
         pageNumber = pageNumber.value,
         pageSize   = pageSize.value
       )
-      .map(_.collections.map(toApiSharedCollection))
+      .map(toApiSharedCollectionList)
 
   private[this] def getPublishedCollections(
     googlePlayContext: GooglePlayContext,
     userContext: UserContext
-  ) =
+  ): NineCardsServed[ApiSharedCollectionList] =
     sharedCollectionProcesses
       .getPublishedCollections(userContext.userId.value, toAuthParams(googlePlayContext, userContext))
-      .map(_.collections.map(toApiSharedCollection))
+      .map(toApiSharedCollectionList)
 
   private[this] def getTopCollectionsByCategory(
     category: Category,
@@ -234,7 +236,7 @@ class NineCardsRoutes(
     userContext: UserContext,
     pageNumber: PageNumber,
     pageSize: PageSize
-  ) =
+  ): NineCardsServed[ApiSharedCollectionList] =
     sharedCollectionProcesses
       .getTopCollectionsByCategory(
         category   = category.value,
@@ -242,7 +244,7 @@ class NineCardsRoutes(
         pageNumber = pageNumber.value,
         pageSize   = pageSize.value
       )
-      .map(_.collections.map(toApiSharedCollection))
+      .map(toApiSharedCollectionList)
 
   private[this] def categorizeApps(
     request: ApiCategorizeAppsRequest,

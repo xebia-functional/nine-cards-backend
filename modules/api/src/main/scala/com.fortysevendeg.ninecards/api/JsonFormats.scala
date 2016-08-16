@@ -54,7 +54,9 @@ trait JsonFormats
 
   implicit val appInfoFormat = jsonFormat7(AppInfo)
 
-  implicit val apiGetCollectionByPublicIdentifierResponseFormat = jsonFormat12(ApiSharedCollection)
+  implicit val apiSharedCollection = jsonFormat12(ApiSharedCollection)
+
+  implicit val apiSharedCollectionList = jsonFormat1(ApiSharedCollectionList)
 
   implicit val apiCreateCollectionRequestFormat = jsonFormat9(ApiCreateCollectionRequest)
 
