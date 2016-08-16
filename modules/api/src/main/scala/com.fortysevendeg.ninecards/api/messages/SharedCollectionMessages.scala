@@ -38,7 +38,7 @@ object SharedCollectionMessages {
     appsInfo: List[AppInfo]
   )
 
-  case class ApiSharedCollectionList(collections: List[ApiSharedCollection]) extends AnyVal
+  case class ApiSharedCollectionList(collections: List[ApiSharedCollection])
 
   case class ApiUpdateCollectionRequest(
     collectionInfo: Option[SharedCollectionUpdateInfo],
