@@ -44,16 +44,6 @@ object Converters {
     ))
   }
 
-  def checkResponse(scope: GeoScope, response: ResponseBody): Unit = {
-    val expectedHeader = ColumnHeader(
-      dimensions   = scope.dimensions.map(_.name),
-      metricHeader = MetricHeader(List(MetricHeaderEntry.eventValue))
-    )
-    assert(response.reports.size == 1)
-    val report: Report = response.reports.head
-    assert(report.columnHeader == expectedHeader)
-  }
-
   private[Converters] sealed trait GeoScope {
     def dimensions: List[Dimension]
     def dimensionFilters: DimensionFilter.Clauses
