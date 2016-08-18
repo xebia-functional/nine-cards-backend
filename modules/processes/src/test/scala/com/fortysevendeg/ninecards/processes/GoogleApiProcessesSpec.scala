@@ -48,18 +48,8 @@ trait GoogleApiProcessesContext {
   val tokenId = "eyJhbGciOiJSUzI1NiIsImtpZCI6IjcxMjI3MjFlZWQwYjQ1YmUxNWUzMGI2YThhOThjOTM3ZTJlNmQxN"
 
   val tokenInfo = TokenInfo(
-    iss            = "accounts.google.com",
-    at_hash        = "rXE2xjjK6YP9QtfKXTBZmQ",
-    aud            = "123456789012.apps.googleusercontent.com",
-    sub            = "106222693719864970737",
     email_verified = "true",
-    azp            = "123456789012.apps.googleusercontent.com",
-    hd             = Option("test.com"),
-    email          = email,
-    iat            = "1457529032",
-    exp            = "1457532632",
-    alg            = "RS256",
-    kid            = "7122721eed0b45be15e30b6a8a98c937e2e6d16d"
+    email          = email
   )
 
   val wrongTokenInfo = WrongTokenInfo(error_description = "Invalid Value")
