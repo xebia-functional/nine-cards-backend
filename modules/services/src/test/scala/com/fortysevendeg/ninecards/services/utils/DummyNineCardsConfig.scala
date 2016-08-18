@@ -33,6 +33,18 @@ trait DummyNineCardsConfig {
     }
   }
 
+  object googleanalytics {
+    val protocol = "http"
+    val host = "localhost"
+    val port = 8090
+    val uri = "/v4/reports:batchGet"
+    val viewId = "12345"
+    object default {
+      val dateRangeLength = 21
+      val rankingLength = 16
+    }
+  }
+
   val dummyConfigHocon =
     s"""
        |db {
@@ -60,6 +72,13 @@ trait DummyNineCardsConfig {
        |    resolveOne = ${googleplay.uri.resolveOne}
        |    resolveMany = ${googleplay.uri.resolveMany}
        |  }
+       |}
+       |ninecards.backend.googleanalytics {
+       |  host = "${googleanalytics.host}"
+       |  port = ${googleanalytics.port}
+       |  protocol = "${googleanalytics.protocol}"
+       |  uri = "${googleanalytics.uri}"
+       |  viewId = "${googleanalytics.viewId}"
        |}
 
      """.stripMargin
