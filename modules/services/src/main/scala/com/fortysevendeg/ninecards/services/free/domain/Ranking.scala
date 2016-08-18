@@ -9,6 +9,8 @@ object rankings {
 
   case class AuthParams(access_token: String) extends AnyVal
 
+  /* A date range specifies a contiguous set of days: startDate, startDate + 1 day, ..., endDate.
+   https://developers.google.com/analytics/devguides/reporting/core/v4/rest/v4/reports/batchGet#DateRange */
   case class DateRange(startDate: DateTime, endDate: DateTime)
 
   case class RankingParams(
@@ -42,14 +44,11 @@ object rankings {
   case class ContinentScope(continent: Continent) extends GeoScope
   case object WorldScope extends GeoScope
 
-  case class Ranking(categories: Map[Category, CategoryScore]) extends AnyVal
+  case class Ranking(categories: Map[Category, CategoryRanking]) extends AnyVal
 
-  case class CategoryScore(score: Map[PackageName, Int]) extends AnyVal
+  /*A CategoryRanking contains a list of application's package names */
+  case class CategoryRanking(ranking: List[PackageName]) extends AnyVal
 
-  /**
-    * A date range specifies a contiguous set of days: startDate, startDate + 1 day, ..., endDate.
-    *  https://developers.google.com/analytics/devguides/reporting/core/v4/rest/v4/reports/batchGet#DateRange
-    */
   case class RankingError(code: Int, message: String, status: String)
 
   type TryRanking = RankingError Xor Ranking

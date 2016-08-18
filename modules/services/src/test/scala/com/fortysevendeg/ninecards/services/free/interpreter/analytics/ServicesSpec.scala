@@ -163,6 +163,7 @@ object TestData {
         |        }
         |      ],
         |      "includeEmptyRows" : true,
+        |      "pageSize" : 10000,
         |      "hideTotals" : true,
         |      "hideValueRanges" : true
         |    }

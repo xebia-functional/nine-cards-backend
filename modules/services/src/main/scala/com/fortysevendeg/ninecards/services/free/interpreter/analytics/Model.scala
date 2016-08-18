@@ -6,14 +6,16 @@ import enumeratum._
 
 object model {
 
-  /**  https://developers.google.com/analytics/devguides/reporting/core/v4/rest/v4/reports/batchGet#request-body */
+  /*  https://developers.google.com/analytics/devguides/reporting/core/v4/rest/v4/reports/batchGet#request-body */
   case class RequestBody(reportRequests: List[ReportRequest])
 
   object RequestBody {
     def apply(reportRequest: ReportRequest): RequestBody = RequestBody(List(reportRequest))
   }
 
-  /** https://developers.google.com/analytics/devguides/reporting/core/v4/rest/v4/reports/batchGet#reportrequest */
+  val maxPageSize: Int = 10000
+
+  /* https://developers.google.com/analytics/devguides/reporting/core/v4/rest/v4/reports/batchGet#reportrequest */
   case class ReportRequest(
     viewId: String,
     dimensions: List[Dimension],
@@ -22,11 +24,12 @@ object model {
     dimensionFilterClauses: DimensionFilter.Clauses = List(),
     orderBys: order.OrderBys = List(),
     includeEmptyRows: Boolean = true,
+    pageSize: Int = maxPageSize,
     hideTotals: Boolean = true,
     hideValueRanges: Boolean = true
   )
 
-  /** https://developers.google.com/analytics/devguides/reporting/core/v4/rest/v4/reports/batchGet#dimension */
+  /* https://developers.google.com/analytics/devguides/reporting/core/v4/rest/v4/reports/batchGet#dimension */
   case class Dimension(name: String)
   object Dimension {
     val country = apply("ga:country")
@@ -35,7 +38,7 @@ object model {
     val packageName = apply("ga:eventLabel")
   }
 
-  /**  https://developers.google.com/analytics/devguides/reporting/core/v4/rest/v4/reports/batchGet#metric */
+  /*  https://developers.google.com/analytics/devguides/reporting/core/v4/rest/v4/reports/batchGet#metric */
   case class Metric(
     expression: String,
     alias: String,
@@ -54,13 +57,15 @@ object model {
     /* List of dimension filter clauses, combined with an AND */
     type Clauses = List[Clause]
 
-    /** https://developers.google.com/analytics/devguides/reporting/core/v4/rest/v4/reports/batchGet#DimensionFilterClause */
+    def singleClause(filter: Filter): Clauses = List(Clause(LogicalOperator.OPERATOR_UNSPECIFIED, List(filter)))
+
+    /* https://developers.google.com/analytics/devguides/reporting/core/v4/rest/v4/reports/batchGet#DimensionFilterClause */
     case class Clause(
       operator: LogicalOperator,
       filters: List[Filter]
     )
 
-    /** https://developers.google.com/analytics/devguides/reporting/core/v4/rest/v4/reports/batchGet#operator */
+    /* https://developers.google.com/analytics/devguides/reporting/core/v4/rest/v4/reports/batchGet#operator */
     sealed trait Operator extends EnumEntry
     object Operator extends Enum[Operator] {
 
@@ -75,7 +80,7 @@ object model {
       val values = super.findValues
     }
 
-    /** https://developers.google.com/analytics/devguides/reporting/core/v4/rest/v4/reports/batchGet#FilterLogicalOperator */
+    /* https://developers.google.com/analytics/devguides/reporting/core/v4/rest/v4/reports/batchGet#FilterLogicalOperator */
     sealed trait LogicalOperator extends EnumEntry
     object LogicalOperator extends Enum[LogicalOperator] {
       case object OPERATOR_UNSPECIFIED extends LogicalOperator
@@ -85,7 +90,7 @@ object model {
       val values = super.findValues
     }
 
-    /** https://developers.google.com/analytics/devguides/reporting/core/v4/rest/v4/reports/batchGet#dimensionfilter */
+    /* https://developers.google.com/analytics/devguides/reporting/core/v4/rest/v4/reports/batchGet#dimensionfilter */
     case class Filter(
       dimensionName: String,
       not: Boolean,
@@ -94,30 +99,25 @@ object model {
       caseSensitive: Boolean
     )
     object Filter {
-      def isCountry(country: Country) = Filter(
-        dimensionName = Dimension.country.name,
-        not           = false,
-        operator      = Operator.EXACT,
-        expressions   = List(country.entryName.replace('_', ' ')),
-        caseSensitive = false
-      )
 
-      def isContinent(continent: Continent) = Filter(
-        dimensionName = Dimension.continent.name,
-        operator      = Operator.EXACT,
-        expressions   = List(continent.entryName.replace('_', ' ')),
+      def isCountry(country: Country) = isEntry(Dimension.country, country)
+      def isContinent(continent: Continent) = isEntry(Dimension.continent, continent)
+
+      private def isEntry(dimension: Dimension, entry: EnumEntry): Filter = Filter(
+        dimensionName = dimension.name,
         not           = false,
+        operator      = Operator.EXACT,
+        expressions   = List(entry.entryName.replace('_', ' ')),
         caseSensitive = false
       )
 
     }
 
-    def singleton(filter: Filter): Clauses = List(Clause(LogicalOperator.OPERATOR_UNSPECIFIED, List(filter)))
   }
 
   object order {
 
-    /** List of OrderBys: lexicographycally*/
+    /* List of OrderBys: lexicographycally*/
     type OrderBys = List[order.OrderBy]
 
     object OrderBy {
@@ -143,14 +143,14 @@ object model {
       val eventValue = greatest(Metric.eventValue)
     }
 
-    /** https://developers.google.com/analytics/devguides/reporting/core/v4/rest/v4/reports/batchGet#orderby */
+    /* https://developers.google.com/analytics/devguides/reporting/core/v4/rest/v4/reports/batchGet#orderby */
     case class OrderBy(
       fieldName: String,
       orderType: OrderType,
       sortOrder: SortOrder
     )
 
-    /** https://developers.google.com/analytics/devguides/reporting/core/v4/rest/v4/reports/batchGet#ordertype */
+    /* https://developers.google.com/analytics/devguides/reporting/core/v4/rest/v4/reports/batchGet#ordertype */
     sealed trait OrderType extends EnumEntry
     object OrderType extends Enum[OrderType] {
       case object VALUE extends OrderType
@@ -158,7 +158,7 @@ object model {
       val values = super.findValues
     }
 
-    /** https://developers.google.com/analytics/devguides/reporting/core/v4/rest/v4/reports/batchGet#ordertype */
+    /* https://developers.google.com/analytics/devguides/reporting/core/v4/rest/v4/reports/batchGet#ordertype */
     sealed trait SortOrder extends EnumEntry
     object SortOrder extends Enum[SortOrder] {
       case object SORT_ORDER_UNSPECIFIED extends SortOrder
@@ -172,25 +172,25 @@ object model {
 
   /* Responses */
 
-  /** https://developers.google.com/analytics/devguides/reporting/core/v4/rest/v4/reports/batchGet#response-body */
+  /* https://developers.google.com/analytics/devguides/reporting/core/v4/rest/v4/reports/batchGet#response-body */
   case class ResponseBody(reports: List[Report]) extends AnyVal
 
-  /** https://developers.google.com/analytics/devguides/reporting/core/v4/rest/v4/reports/batchGet#Report */
+  /* https://developers.google.com/analytics/devguides/reporting/core/v4/rest/v4/reports/batchGet#Report */
   case class Report(
     columnHeader: ColumnHeader,
     data: ReportData
   )
 
-  /** https://developers.google.com/analytics/devguides/reporting/core/v4/rest/v4/reports/batchGet#columnheader*/
+  /* https://developers.google.com/analytics/devguides/reporting/core/v4/rest/v4/reports/batchGet#columnheader*/
   case class ColumnHeader(
     dimensions: List[String],
     metricHeader: MetricHeader
   )
 
-  /** https://developers.google.com/analytics/devguides/reporting/core/v4/rest/v4/reports/batchGet#metricheader*/
+  /* https://developers.google.com/analytics/devguides/reporting/core/v4/rest/v4/reports/batchGet#metricheader*/
   case class MetricHeader(metricHeaderEntries: List[MetricHeaderEntry])
 
-  /** https://developers.google.com/analytics/devguides/reporting/core/v4/rest/v4/reports/batchGet#MetricHeaderEntry*/
+  /* https://developers.google.com/analytics/devguides/reporting/core/v4/rest/v4/reports/batchGet#MetricHeaderEntry*/
   case class MetricHeaderEntry(
     name: String,
     `type`: MetricType
@@ -202,25 +202,23 @@ object model {
     )
   }
 
-  /** https://developers.google.com/analytics/devguides/reporting/core/v4/rest/v4/reports/batchGet#reportdata */
+  /* https://developers.google.com/analytics/devguides/reporting/core/v4/rest/v4/reports/batchGet#reportdata */
   case class ReportData(
     rows: List[ReportRow],
     rowCount: Int
   )
 
-  /**
-    * A Report Row is a "cell", that contains the values of metrics for one point in the dimension-space.
-    * https://developers.google.com/analytics/devguides/reporting/core/v4/rest/v4/reports/batchGet#reportrow
-    */
+  /* A ReportRow is a "cell", that contains the values of metrics for one point in the dimension-space.
+   * https://developers.google.com/analytics/devguides/reporting/core/v4/rest/v4/reports/batchGet#reportrow */
   case class ReportRow(
     dimensions: List[String],
     metrics: List[DateRangeValues]
   )
 
-  /** https://developers.google.com/analytics/devguides/reporting/core/v4/rest/v4/reports/batchGet#daterangevalues */
+  /* https://developers.google.com/analytics/devguides/reporting/core/v4/rest/v4/reports/batchGet#daterangevalues */
   case class DateRangeValues(values: List[String])
 
-  /** https://developers.google.com/analytics/devguides/reporting/core/v4/rest/v4/reports/batchGet#metrictype */
+  /* https://developers.google.com/analytics/devguides/reporting/core/v4/rest/v4/reports/batchGet#metrictype */
   sealed trait MetricType extends EnumEntry
   object MetricType extends Enum[MetricType] {
 

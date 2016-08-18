@@ -8,24 +8,23 @@ object Converters {
 
   import model._
 
-  type Cell = (Category, (PackageName, Int))
+  type Cell = (Category, PackageName)
 
   def parseRanking(response: ResponseBody, rankingSize: Int, geoScope: DomainScope): Ranking = {
     val scope = GeoScope(geoScope)
 
-    def buildScore(cells: List[Cell]): CategoryScore = {
-      val rankingOrder: Ordering[(PackageName, Int)] = Ordering.Int.reverse.on(_._2)
-      val map = cells
-        .map(_._2)
-        .sorted(rankingOrder)
-        .take(rankingSize)
-        .toMap
-      CategoryScore(map)
+    def buildScore(cells: List[Cell]): CategoryRanking = CategoryRanking(
+      cells.map(_._2).take(rankingSize)
+    )
+    val rows: List[ReportRow] = response.reports.headOption match {
+      case Some(report) ⇒ report.data.rows
+      case None ⇒ throw new RuntimeException("Response from Google API contained no report")
     }
-    val scores: Map[Category, CategoryScore] = response.reports.head.data.rows
-      .map(scope.parseCell)
-      .groupBy(_._1)
-      .mapValues(buildScore)
+    val scores: Map[Category, CategoryRanking] =
+      rows
+        .map(scope.parseCell)
+        .groupBy(_._1)
+        .mapValues(buildScore)
     Ranking(scores)
   }
 
@@ -71,21 +70,20 @@ object Converters {
 
   private[Converters] class GeoCountry(country: Country) extends GeoScope {
     override val dimensions = List(Dimension.country, Dimension.category, Dimension.packageName)
-    override val dimensionFilters = DimensionFilter.singleton(DimensionFilter.Filter.isCountry(country))
+    override val dimensionFilters = DimensionFilter.singleClause(DimensionFilter.Filter.isCountry(country))
     def parseCell(row: ReportRow): Cell = {
       val List(_country, categoryStr, packageStr) = row.dimensions
-      val List(DateRangeValues(List(value))) = row.metrics
-      makeCell(categoryStr, packageStr, value)
+      makeCell(categoryStr, packageStr)
     }
   }
 
   private[Converters] class GeoContinent(continent: Continent) extends GeoScope {
     override val dimensions = List(Dimension.continent, Dimension.category, Dimension.packageName)
-    override val dimensionFilters = DimensionFilter.singleton(DimensionFilter.Filter.isContinent(continent))
+    override val dimensionFilters =
+      DimensionFilter.singleClause(DimensionFilter.Filter.isContinent(continent))
     def parseCell(row: ReportRow): Cell = {
       val List(_continent, categoryStr, packageStr) = row.dimensions
-      val List(DateRangeValues(List(value))) = row.metrics
-      makeCell(categoryStr, packageStr, value)
+      makeCell(categoryStr, packageStr)
     }
   }
 
@@ -94,15 +92,11 @@ object Converters {
     override val dimensionFilters = List()
     def parseCell(row: ReportRow): Cell = {
       val List(categoryStr, packageStr) = row.dimensions
-      val List(DateRangeValues(List(value))) = row.metrics
-      makeCell(categoryStr, packageStr, value)
+      makeCell(categoryStr, packageStr)
     }
   }
 
-  private[this] def makeCell(categoryStr: String, packageStr: String, value: String) = {
-    val category = Category.withName(categoryStr)
-    val appPackage = PackageName(packageStr)
-    category → (appPackage → value.toInt)
-  }
+  private[this] def makeCell(categoryStr: String, packageStr: String): Cell =
+    Category.withName(categoryStr) → PackageName(packageStr)
 
 }
