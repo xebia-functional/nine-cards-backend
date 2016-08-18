@@ -10,6 +10,8 @@ import scalaz.concurrent.Task
 
 trait DomainDatabaseContext {
 
+  import CustomComposite._
+
   val emptyDeviceToken: Option[String] = None
 
   val testDriver = "org.h2.Driver"
@@ -24,9 +26,12 @@ trait DomainDatabaseContext {
   implicit val collectionPersistence = new Persistence[SharedCollection](supportsSelectForUpdate = false)
   implicit val collectionPackagePersistence = new Persistence[SharedCollectionPackage](supportsSelectForUpdate = false)
   implicit val collectionSubscriptionPersistence = new Persistence[SharedCollectionSubscription](supportsSelectForUpdate = false)
+  implicit val rankingPersistence: Persistence[rankings.Entry] =
+    new Persistence[rankings.Entry](supportsSelectForUpdate = false)
   val userPersistenceServices = new UserPersistenceServices
   val collectionPersistenceServices = new SharedCollectionPersistenceServices
   val scSubscriptionPersistenceServices = new SharedCollectionSubscriptionPersistenceServices
+  val rankingPersistenceServices = new ranking.Services(rankingPersistence)
 
   val flywaydb = new Flyway
   flywaydb.setDataSource(testUrl, testUsername, testPassword)

@@ -53,4 +53,41 @@ object rankings {
 
   type TryRanking = RankingError Xor Ranking
 
+  case class Entry(
+    packageName: PackageName,
+    category: Category,
+    ranking: Int
+  )
+
+  object Queries {
+
+    val allFields = List("packageName", "category", "ranking")
+    private[this] val fieldsStr = allFields.mkString(", ")
+
+    private def tableOf(scope: GeoScope): String = {
+      val suffix = scope match {
+        case CountryScope(country) ⇒
+          import Country._
+          val acron = country match {
+            case Spain ⇒ "es"
+            case United_Kingdom ⇒ "gb"
+            case United_States ⇒ "us"
+          }
+          s"country_$acron"
+        case ContinentScope(continent) ⇒ continent.entryName.toLowerCase
+        case WorldScope ⇒ "earth"
+      }
+      s"rankings_$suffix"
+    }
+
+    def getBy(scope: GeoScope): String =
+      s"select * from ${tableOf(scope)}"
+
+    def insertBy(scope: GeoScope): String =
+      s"insert into ${tableOf(scope)}($fieldsStr) values (?,?,?)"
+
+    def deleteBy(scope: GeoScope): String =
+      s"delete from ${tableOf(scope)}"
+  }
+
 }
