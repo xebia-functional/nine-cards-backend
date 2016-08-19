@@ -8,6 +8,7 @@ object Versions {
   val cats = "0.6.1"
   val circe = "0.5.0-M2"
   val doobie = "0.3.0"
+  val enumeratum = "1.4.9"
   val flywaydb = "3.2.1"
   val hasher = "1.2.0"
   val http4s = "0.14.1a"

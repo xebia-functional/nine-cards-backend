@@ -2,7 +2,8 @@ package com.fortysevendeg.ninecards.services.free.interpreter
 
 import cats._
 import com.fortysevendeg.ninecards.services.free.algebra.DBResult._
-import com.fortysevendeg.ninecards.services.free.algebra.{ GoogleApi, GooglePlay }
+import com.fortysevendeg.ninecards.services.free.algebra.{ GoogleAnalytics, GoogleApi, GooglePlay }
+import com.fortysevendeg.ninecards.services.free.interpreter.analytics.{ Services ⇒ AnalyticsServices }
 import com.fortysevendeg.ninecards.services.free.interpreter.googleapi.{ Services ⇒ GoogleApiServices }
 import com.fortysevendeg.ninecards.services.free.interpreter.googleplay.{ Services ⇒ GooglePlayServices }
 import scala.util.{ Failure, Success, Try }
@@ -33,6 +34,19 @@ abstract class Interpreters[M[_]](implicit A: ApplicativeError[M, Throwable]) {
         task2M(googlePlayServices.resolveMany(packageNames, auth))
       case GooglePlay.Resolve(packageName, auth) ⇒
         task2M(googlePlayServices.resolveOne(packageName, auth))
+    }
+  }
+
+  object analyticsInterpreter extends (GoogleAnalytics.Ops ~> M) {
+    private[this] val services: AnalyticsServices = AnalyticsServices.services
+
+    import GoogleAnalytics._
+
+    def apply[A](fa: Ops[A]): M[A] = {
+      val task: Task[A] = fa match {
+        case GetRanking(geoScope, params) ⇒ services.getRanking(geoScope, params)
+      }
+      task2M(task)
     }
   }
 }

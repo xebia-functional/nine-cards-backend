@@ -33,6 +33,7 @@ trait Dependencies {
   val mockserver = "org.mock-server" % "mockserver-netty" % Versions.mockserver
   val hasher = "com.roundeights" %% "hasher" % Versions.hasher
   val newRelic = "com.newrelic.agent.java" % "newrelic-agent" % Versions.newRelic
+  def enumeratum(suffix: String) = "com.beachape" %% s"enumeratum$suffix" % Versions.enumeratum
 
   val baseDepts = Seq(
     typesafeConfig,
@@ -67,6 +68,8 @@ trait Dependencies {
     doobieH2,
     doobiePostgresql,
     doobieSpecs2 % "test",
+    enumeratum(""),
+    enumeratum("-circe"),
     scalaz,
     scalazConcurrent,
     sprayJson,
