@@ -31,7 +31,7 @@ object ranking {
 
       for {
         del ← persistence update Queries.deleteBy(scope)
-        ins ← persistence.updateMany(Queries.insertBy(scope), toEntries(ranking))
+        ins ← persistence updateMany (Queries.insertBy(scope), toEntries(ranking))
       } yield (ins, del)
     }
 
