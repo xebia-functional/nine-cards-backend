@@ -14,7 +14,7 @@ object Encoders {
 
   implicit object dateRange extends Encoder[DateRange] {
     import org.joda.time.format.DateTimeFormat
-    private[this] val dayFormatter = DateTimeFormat.forPattern("yyyy-MM-dd")
+    private[this] val dayFormatter = DateTimeFormat.forPattern("yyyy-MM-dd").withZoneUTC
 
     def apply(dateRange: DateRange): Json = Json.obj(
       "startDate" → Encoder.encodeString(dayFormatter.print(dateRange.startDate)),

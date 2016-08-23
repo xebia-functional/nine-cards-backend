@@ -1,5 +1,6 @@
 package com.fortysevendeg.ninecards.api
 
+import cats.data.Xor
 import com.fortysevendeg.ninecards.api.NineCardsHeaders._
 import com.fortysevendeg.ninecards.api.messages.GooglePlayMessages.ApiCategorizeAppsRequest
 import com.fortysevendeg.ninecards.api.messages.InstallationsMessages.ApiUpdateInstallationRequest
@@ -178,6 +179,17 @@ object TestData {
     val updateInstallationRequest = UpdateInstallationRequest(userId, androidId, deviceToken)
 
     val updateInstallationResponse = UpdateInstallationResponse(androidId, deviceToken)
+
+    object rankings {
+      import com.fortysevendeg.ninecards.services.free.domain.{ Category, PackageName }
+      import com.fortysevendeg.ninecards.processes.messages.{ rankings ⇒ Proc }
+      import com.fortysevendeg.ninecards.services.free.domain.{ rankings ⇒ Domain }
+
+      val ranking = Domain.Ranking(Map(
+        Category.SOCIAL → Domain.CategoryRanking(List(PackageName("testApp")))
+      ))
+      val getResponse = Proc.Get.Response(ranking)
+    }
 
   }
 

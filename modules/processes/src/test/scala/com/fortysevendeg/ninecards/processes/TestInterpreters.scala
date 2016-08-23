@@ -9,7 +9,10 @@ trait TestInterpreters {
   val testInterpretersC01: NineCardsServicesC01 ~> Id =
     idInterpreters.googlePlayInterpreter or idInterpreters.googleApiInterpreter
 
+  val testInterpretersC02: NineCardsServicesC02 ~> Id =
+    idInterpreters.analyticsInterpreter or testInterpretersC01
+
   val testInterpreters: NineCardsServices ~> Id =
-    idInterpreters.dBResultInterpreter or testInterpretersC01
+    idInterpreters.dBResultInterpreter or testInterpretersC02
 
 }
