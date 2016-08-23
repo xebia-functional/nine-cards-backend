@@ -76,7 +76,7 @@ class ServicesSpec
     "respond 200 OK and return the Rankings object if a valid access token is provided" in {
       val params = RankingParams(dateRange, 5, AuthParams(auth.valid_token))
       val response = services.getRanking(CountryScope(Country.Spain), params)
-      response.attemptRun should be_\/-[TryRanking].which {
+      response.unsafePerformSyncAttempt should be_\/-[TryRanking].which {
         content ⇒ content should beXorRight[Ranking]
       }
     }
@@ -85,7 +85,7 @@ class ServicesSpec
     "respond 401 Unauthorized if the authToken is not authenticated" in {
       val params = RankingParams(dateRange, 5, AuthParams(auth.invalid_token))
       val response = services.getRanking(CountryScope(Country.Spain), params)
-      response.attemptRun should be_\/-[TryRanking].which {
+      response.unsafePerformSyncAttempt should be_\/-[TryRanking].which {
         content ⇒ content should beXorLeft[RankingError]
       }
     }.pendingUntilFixed("Server gives Unexpected Status")

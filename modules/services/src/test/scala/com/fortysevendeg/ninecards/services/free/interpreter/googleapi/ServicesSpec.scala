@@ -140,7 +140,7 @@ class GoogleApiServicesSpec
     "return the TokenInfo object when a valid token id is provided" in {
       val response = googleApiServices.getTokenInfo(validTokenId)
 
-      response.attemptRun should be_\/-[WrongTokenInfo Xor TokenInfo].which {
+      response.unsafePerformSyncAttempt should be_\/-[WrongTokenInfo Xor TokenInfo].which {
         content ⇒
           content should beXorRight[TokenInfo]
       }
@@ -149,7 +149,7 @@ class GoogleApiServicesSpec
       "included into the response" in {
         val response = googleApiServices.getTokenInfo(otherTokenId)
 
-        response.attemptRun should be_\/-[WrongTokenInfo Xor TokenInfo].which {
+        response.unsafePerformSyncAttempt should be_\/-[WrongTokenInfo Xor TokenInfo].which {
           content ⇒
             content should beXorRight[TokenInfo]
         }
@@ -157,7 +157,7 @@ class GoogleApiServicesSpec
     "return a WrongTokenInfo object when a wrong token id is provided" in {
       val result = googleApiServices.getTokenInfo(wrongTokenId)
 
-      result.attemptRun should be_\/-[WrongTokenInfo Xor TokenInfo].which {
+      result.unsafePerformSyncAttempt should be_\/-[WrongTokenInfo Xor TokenInfo].which {
         content ⇒
           content should beXorLeft[WrongTokenInfo]
       }
@@ -165,7 +165,7 @@ class GoogleApiServicesSpec
     "return an exception when something fails during the call to the Google API" in {
       val result = googleApiServices.getTokenInfo(failingTokenId)
 
-      result.attemptRun should be_-\/[Throwable]
+      result.unsafePerformSyncAttempt should be_-\/[Throwable]
     }
   }
 

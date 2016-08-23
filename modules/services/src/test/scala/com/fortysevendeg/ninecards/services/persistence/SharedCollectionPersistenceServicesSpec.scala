@@ -3,7 +3,7 @@ package com.fortysevendeg.ninecards.services.persistence
 import com.fortysevendeg.ninecards.services.free.domain._
 import com.fortysevendeg.ninecards.services.persistence.SharedCollectionPersistenceServices.SharedCollectionData
 import com.fortysevendeg.ninecards.services.persistence.UserPersistenceServices.UserData
-import doobie.imports._
+import doobie.imports.ConnectionIO
 import org.specs2.ScalaCheck
 import org.specs2.matcher.DisjunctionMatchers
 import org.specs2.mutable.Specification
@@ -101,11 +101,11 @@ class SharedCollectionPersistenceServicesSpec
           c ← collectionPersistenceServices.addCollection[Long](
             collectionData.copy(userId = Option(u))
           )
-        } yield c).transact(transactor).run
+        } yield c).transactAndRun
 
         val storedCollection = collectionPersistenceServices.getCollectionById(
           id = id
-        ).transact(transactor).run
+        ).transactAndRun
 
         storedCollection must beSome[SharedCollection].which {
           collection ⇒ collection.publicIdentifier must_== collectionData.publicIdentifier
@@ -117,11 +117,11 @@ class SharedCollectionPersistenceServicesSpec
       prop { (collectionData: SharedCollectionData) ⇒
         val id: Long = collectionPersistenceServices.addCollection[Long](
           collectionData.copy(userId = None)
-        ).transact(transactor).run
+        ).transactAndRun
 
         val storedCollection = collectionPersistenceServices.getCollectionById(
           id = id
-        ).transact(transactor).run
+        ).transactAndRun
 
         storedCollection must beSome[SharedCollection].which {
           collection ⇒ collection.publicIdentifier must_== collectionData.publicIdentifier
@@ -135,7 +135,7 @@ class SharedCollectionPersistenceServicesSpec
       prop { (id: Long) ⇒
         val collection = collectionPersistenceServices.getCollectionById(
           id = id
-        ).transact(transactor).run
+        ).transactAndRun
 
         collection must beNone
       }
@@ -145,11 +145,11 @@ class SharedCollectionPersistenceServicesSpec
         val id = (for {
           u ← insertItem(User.Queries.insert, userData.toTuple)
           c ← insertItem(SharedCollection.Queries.insert, collectionData.copy(userId = Option(u)).toTuple)
-        } yield c).transact(transactor).run
+        } yield c).transactAndRun
 
         val storedCollection = collectionPersistenceServices.getCollectionById(
           id = id
-        ).transact(transactor).run
+        ).transactAndRun
 
         storedCollection must beSome[SharedCollection].which {
           collection ⇒ collection.publicIdentifier must_== collectionData.publicIdentifier
@@ -161,11 +161,11 @@ class SharedCollectionPersistenceServicesSpec
         val id = (for {
           u ← insertItem(User.Queries.insert, userData.toTuple)
           c ← insertItem(SharedCollection.Queries.insert, collectionData.copy(userId = Option(u)).toTuple)
-        } yield c).transact(transactor).run
+        } yield c).transactAndRun
 
         val storedCollection = collectionPersistenceServices.getCollectionById(
           id = id + 1000000
-        ).transact(transactor).run
+        ).transactAndRun
 
         storedCollection must beNone
       }
@@ -178,7 +178,7 @@ class SharedCollectionPersistenceServicesSpec
 
         val collection = collectionPersistenceServices.getCollectionByPublicIdentifier(
           publicIdentifier = publicIdentifier
-        ).transact(transactor).run
+        ).transactAndRun
 
         collection must beNone
       }
@@ -188,11 +188,11 @@ class SharedCollectionPersistenceServicesSpec
         val id = (for {
           u ← insertItem(User.Queries.insert, userData.toTuple)
           c ← insertItem(SharedCollection.Queries.insert, collectionData.copy(userId = Option(u)).toTuple)
-        } yield c).transact(transactor).run
+        } yield c).transactAndRun
 
         val storedCollection = collectionPersistenceServices.getCollectionByPublicIdentifier(
           publicIdentifier = collectionData.publicIdentifier
-        ).transact(transactor).run
+        ).transactAndRun
 
         storedCollection must beSome[SharedCollection].which {
           collection ⇒
@@ -206,11 +206,11 @@ class SharedCollectionPersistenceServicesSpec
         val id = (for {
           u ← insertItem(User.Queries.insert, userData.toTuple)
           c ← insertItem(SharedCollection.Queries.insert, collectionData.copy(userId = Option(u)).toTuple)
-        } yield c).transact(transactor).run
+        } yield c).transactAndRun
 
         val collection = collectionPersistenceServices.getCollectionByPublicIdentifier(
           publicIdentifier = collectionData.publicIdentifier.reverse
-        ).transact(transactor).run
+        ).transactAndRun
 
         collection must beNone
       }
@@ -232,12 +232,12 @@ class SharedCollectionPersistenceServicesSpec
           disowned ← disownedData traverse (createCollectionWithUser(_, None))
         } yield (ownerId, owned)
 
-        val (ownerId, owned) = setupTrans.transact(transactor).run
+        val (ownerId, owned) = setupTrans.transactAndRun
 
         val response: List[SharedCollection] =
           collectionPersistenceServices
             .getCollectionsByUserId(ownerId)
-            .transact(transactor).run
+            .transactAndRun
 
         (response map (_.id)) must containTheSameElementsAs(owned)
       }
@@ -252,7 +252,7 @@ class SharedCollectionPersistenceServicesSpec
         val response: List[SharedCollection] =
           collectionPersistenceServices
             .getLatestCollectionsByCategory(category, pageNumber, pageSize)
-            .transact(transactor).run
+            .transactAndRun
 
         response must beEmpty
       }
@@ -270,12 +270,12 @@ class SharedCollectionPersistenceServicesSpec
           )
         } yield (userId, collections)
 
-        val (userId, collections) = setupTrans.transact(transactor).run
+        val (userId, collections) = setupTrans.transactAndRun
 
         val response: List[SharedCollection] =
           collectionPersistenceServices
             .getLatestCollectionsByCategory(communicationCategory, pageNumber, pageSize)
-            .transact(transactor).run
+            .transactAndRun
 
         response must beEmpty
       }
@@ -300,7 +300,7 @@ class SharedCollectionPersistenceServicesSpec
           )
         } yield Unit
 
-        setupTrans.transact(transactor).run
+        setupTrans.transactAndRun
 
         val response = for {
           response ← collectionPersistenceServices.getLatestCollectionsByCategory(
@@ -311,7 +311,7 @@ class SharedCollectionPersistenceServicesSpec
           _ ← deleteSharedCollections
         } yield response
 
-        val collections: List[SharedCollection] = response.transact(transactor).run
+        val collections: List[SharedCollection] = response.transactAndRun
 
         val sortedSocialCollections = socialCollections.sortWith(_.publishedOn.getTime > _.publishedOn.getTime)
 
@@ -329,7 +329,7 @@ class SharedCollectionPersistenceServicesSpec
         val response: List[SharedCollection] =
           collectionPersistenceServices
             .getLatestCollectionsByCategory(socialCategory, pageNumber, pageSize)
-            .transact(transactor).run
+            .transactAndRun
 
         response must beEmpty
       }
@@ -343,12 +343,12 @@ class SharedCollectionPersistenceServicesSpec
           collections ← createCollectionsWithCategoryAndUser(collectionsData, socialCategory, Option(userId))
         } yield Unit
 
-        setupTrans.transact(transactor).run
+        setupTrans.transactAndRun
 
         val response: List[SharedCollection] =
           collectionPersistenceServices
             .getTopCollectionsByCategory(communicationCategory, pageNumber, pageSize)
-            .transact(transactor).run
+            .transactAndRun
 
         response must beEmpty
       }
@@ -373,7 +373,7 @@ class SharedCollectionPersistenceServicesSpec
           )
         } yield Unit
 
-        setupTrans.transact(transactor).run
+        setupTrans.transactAndRun
 
         val response = for {
           response ← collectionPersistenceServices.getTopCollectionsByCategory(
@@ -384,7 +384,7 @@ class SharedCollectionPersistenceServicesSpec
           _ ← deleteSharedCollections
         } yield response
 
-        val collections: List[SharedCollection] = response.transact(transactor).run
+        val collections: List[SharedCollection] = response.transactAndRun
 
         val sortedSocialCollections = socialCollections.sortWith(_.installations > _.installations)
 
@@ -400,16 +400,16 @@ class SharedCollectionPersistenceServicesSpec
         val collectionId = (for {
           u ← createUser(userData)
           c ← createCollectionWithUser(collectionData, Option(u))
-        } yield c).transact(transactor).run
+        } yield c).transactAndRun
 
         val packageId = collectionPersistenceServices.addPackage[Long](
           collectionId,
           packageName
-        ).transact(transactor).run
+        ).transactAndRun
 
         val storedPackages = collectionPersistenceServices.getPackagesByCollection(
           collectionId
-        ).transact(transactor).run
+        ).transactAndRun
 
         storedPackages must contain { p: SharedCollectionPackage ⇒
           p.id must_== packageId
@@ -424,12 +424,12 @@ class SharedCollectionPersistenceServicesSpec
         val collectionId = (for {
           u ← createUser(userData)
           c ← createCollectionWithUser(collectionData, Option(u))
-        } yield c).transact(transactor).run
+        } yield c).transactAndRun
 
         val created = collectionPersistenceServices.addPackages(
           collectionId,
           packagesName
-        ).transact(transactor).run
+        ).transactAndRun
 
         created must_== packagesName.size
       }
@@ -441,7 +441,7 @@ class SharedCollectionPersistenceServicesSpec
       prop { (collectionId: Long) ⇒
         val packages = collectionPersistenceServices.getPackagesByCollection(
           collectionId
-        ).transact(transactor).run
+        ).transactAndRun
 
         packages must beEmpty
       }
@@ -453,11 +453,11 @@ class SharedCollectionPersistenceServicesSpec
           u ← createUser(userData)
           c ← createCollectionWithUser(collectionData, Option(u))
           _ ← createPackages(c, packagesName)
-        } yield c).transact(transactor).run
+        } yield c).transactAndRun
 
         val packages = collectionPersistenceServices.getPackagesByCollection(
           collectionId
-        ).transact(transactor).run
+        ).transactAndRun
 
         packages must haveSize(packagesName.size)
 
@@ -472,11 +472,11 @@ class SharedCollectionPersistenceServicesSpec
           u ← createUser(userData)
           c ← createCollectionWithUser(collectionData, Option(u))
           _ ← createPackages(c, packagesName)
-        } yield c).transact(transactor).run
+        } yield c).transactAndRun
 
         val packages = collectionPersistenceServices.getPackagesByCollection(
           collectionId + 1000000
-        ).transact(transactor).run
+        ).transactAndRun
 
         packages must beEmpty
       }
@@ -490,7 +490,7 @@ class SharedCollectionPersistenceServicesSpec
           id          = id,
           title       = title,
           description = description
-        ).transact(transactor).run
+        ).transactAndRun
 
         updatedCollectionCount must_== 0
       }
@@ -501,11 +501,11 @@ class SharedCollectionPersistenceServicesSpec
           u ← insertItem(User.Queries.insert, userData.toTuple)
           c ← insertItem(SharedCollection.Queries.insert, collectionData.copy(userId = Option(u)).toTuple)
           _ ← collectionPersistenceServices.updateCollectionInfo(c, newTitle, newDescription)
-        } yield c).transact(transactor).run
+        } yield c).transactAndRun
 
         val storedCollection = collectionPersistenceServices.getCollectionById(
           id = id
-        ).transact(transactor).run
+        ).transactAndRun
 
         storedCollection must beSome[SharedCollection].which {
           collection ⇒
@@ -519,13 +519,13 @@ class SharedCollectionPersistenceServicesSpec
         val id = (for {
           u ← insertItem(User.Queries.insert, userData.toTuple)
           c ← insertItem(SharedCollection.Queries.insert, collectionData.copy(userId = Option(u)).toTuple)
-        } yield c).transact(transactor).run
+        } yield c).transactAndRun
 
         val updatedCollectionCount = collectionPersistenceServices.updateCollectionInfo(
           id          = id + 1000000,
           title       = newTitle,
           description = newDescription
-        ).transact(transactor).run
+        ).transactAndRun
 
         updatedCollectionCount must_== 0
       }

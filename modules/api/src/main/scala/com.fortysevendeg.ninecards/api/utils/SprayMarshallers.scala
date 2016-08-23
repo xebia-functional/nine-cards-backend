@@ -28,7 +28,7 @@ object SprayMarshallers {
   ): ToResponseMarshaller[Task[A]] =
     ToResponseMarshaller[Task[A]] {
       (task, ctx) ⇒
-        task.runAsync {
+        task.unsafePerformAsync {
           _.fold(
             left ⇒ ctx.handleError(left),
             right ⇒ m(right, ctx)

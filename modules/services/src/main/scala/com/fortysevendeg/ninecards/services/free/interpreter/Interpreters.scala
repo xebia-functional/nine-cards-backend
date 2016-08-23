@@ -109,7 +109,7 @@ object Interpreters extends IdInstances with TaskInstances {
 
   val idInterpreters = new Interpreters[Id] {
     override val task2M: (Task ~> Id) = new (Task ~> Id) {
-      override def apply[A](fa: Task[A]): Id[A] = fa.attemptRun.fold(
+      override def apply[A](fa: Task[A]): Id[A] = fa.unsafePerformSyncAttempt.fold(
         error ⇒ idApplicativeError.raiseError(error),
         value ⇒ idApplicativeError.pure(value)
       )
