@@ -3,10 +3,18 @@ package com.fortysevendeg.ninecards.services.persistence
 import java.sql.Timestamp
 import java.time.Instant
 
+import cats.Monad
+import cats.syntax.traverse._
+import cats.std.list
+import com.fortysevendeg.ninecards.services.free.domain.rankings._
+import com.fortysevendeg.ninecards.services.free.domain.{ Category, PackageName }
 import com.fortysevendeg.ninecards.services.persistence.NineCardsGenEntities._
 import com.fortysevendeg.ninecards.services.persistence.SharedCollectionPersistenceServices._
 import com.fortysevendeg.ninecards.services.persistence.UserPersistenceServices.UserData
+import doobie.imports.ConnectionIO
+import enumeratum.{ Enum, EnumEntry }
 import org.scalacheck.{ Arbitrary, Gen }
+import scalaz.std.list.listInstance
 
 object NineCardsGenEntities {
 
@@ -84,4 +92,69 @@ trait NineCardsScalacheckGen {
   implicit val abSharedCollectionData: Arbitrary[SharedCollectionData] = Arbitrary(sharedCollectionDataGenerator)
 
   implicit val abUserData: Arbitrary[UserData] = Arbitrary(userDataGenerator)
+
+  def genEnumeratum[C <: EnumEntry](e: Enum[C]): Gen[C] =
+    for (i ← Gen.choose(0, e.values.length - 1)) yield e.values(i)
+
+  def abEnumeratum[C <: EnumEntry](e: Enum[C]): Arbitrary[C] = Arbitrary(genEnumeratum(e))
+
+  val genPackage: Gen[PackageName] =
+    Gen.nonEmptyListOf(Gen.alphaNumChar).map(chars ⇒ PackageName(chars.mkString))
+
+  implicit val abCategory: Arbitrary[Category] = abEnumeratum[Category](Category)
+
+  implicit val abCountry: Arbitrary[Country] = abEnumeratum[Country](Country)
+
+  implicit val abContinent: Arbitrary[Continent] = abEnumeratum[Continent](Continent)
+
+  val genGeoScope: Gen[GeoScope] = {
+    val countries = Country.values.toSeq map CountryScope.apply
+    val continents = Continent.values.toSeq map ContinentScope.apply
+    Gen.oneOf(countries ++ continents ++ Seq(WorldScope))
+  }
+
+  implicit val abGeoScope: Arbitrary[GeoScope] = Arbitrary(genGeoScope)
+
+  private[this] val genMonad: Monad[Gen] = new Monad[Gen] {
+    def pure[A](a: A): Gen[A] = Gen.const(a)
+    def flatMap[A, B](fa: Gen[A])(f: A ⇒ Gen[B]): Gen[B] = fa flatMap f
+  }
+
+  private[this] def listOfDistinctN[A](min: Int, max: Int, gen: Gen[A]): Gen[List[A]] =
+    for {
+      num ← Gen.choose(min, max)
+      elems ← Gen.listOfN(num, gen)
+    } yield elems.distinct
+
+  val genRankingEntries: Gen[List[Entry]] = {
+
+    def genCatEntries(cat: Category): Gen[List[Entry]] =
+      for /*Gen*/ {
+        packs ← listOfDistinctN(0, 10, genPackage)
+        entries = packs.zipWithIndex map {
+          case (pack, ind) ⇒ Entry(pack, cat, ind + 1)
+        }
+      } yield entries
+
+    for /*Gen */ {
+      cats ← listOfDistinctN(0, 10, genEnumeratum[Category](Category))
+      entries ← list.listInstance.traverse(cats)(genCatEntries)(genMonad)
+    } yield entries.flatten
+  }
+
+  implicit val abRankingEntries: Arbitrary[List[Entry]] = Arbitrary(genRankingEntries)
+
+  def genCatRanking(maxSize: Int): Gen[CategoryRanking] =
+    listOfDistinctN(0, maxSize, genPackage).map(CategoryRanking.apply)
+
+  val genRanking: Gen[Ranking] =
+    for {
+      cats ← listOfDistinctN(0, 10, genEnumeratum[Category](Category))
+      pairs ← list.listInstance.traverse(cats)({ cat ⇒
+        for (r ← genCatRanking(10)) yield (cat, r)
+      })(genMonad)
+    } yield Ranking(pairs.toMap)
+
+  implicit val abRanking: Arbitrary[Ranking] = Arbitrary(genRanking)
+
 }

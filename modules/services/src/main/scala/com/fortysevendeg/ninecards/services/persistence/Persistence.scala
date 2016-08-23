@@ -15,6 +15,8 @@ class Persistence[K: Composite](val supportsSelectForUpdate: Boolean = true) {
   def generateUpdateWithGeneratedKeys[A: Composite](sql: String, values: A): Update0 =
     Update[A](sql).toUpdate0(values)
 
+  def generateUpdate(sql: String): Update0 = Update0(sql, None)
+
   def fetchList(sql: String): ConnectionIO[List[K]] =
     Query[HNil, K](sql).toQuery0(HNil).to[List]
 
