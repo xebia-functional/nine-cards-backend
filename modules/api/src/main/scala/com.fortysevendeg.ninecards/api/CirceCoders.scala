@@ -23,6 +23,13 @@ object Decoders {
 }
 
 object Encoders {
+
+  implicit val dateTime: Encoder[DateTime] = {
+    import org.joda.time.format.DateTimeFormat
+    val dayFormatter = DateTimeFormat.forPattern("yyyy-MM-dd").withZoneUTC
+    Encoder.encodeString.contramap(dayFormatter.print)
+  }
+
   implicit val category: Encoder[Category] = CirceEnum.encoder(Category)
 
   implicit val catRanking: ObjectEncoder[rankings.CategoryRanking] = deriveEncoder[rankings.CategoryRanking]
@@ -31,7 +38,10 @@ object Encoders {
 
   implicit val error: ObjectEncoder[rankings.Reload.Error] = deriveEncoder[rankings.Reload.Error]
 
-  implicit val reloadRankingResponse: ObjectEncoder[rankings.Reload.Response] = deriveEncoder[rankings.Reload.Response]
+  implicit val reloadRankingRequest: ObjectEncoder[rankings.Reload.Request] =
+    deriveEncoder[rankings.Reload.Request]
+  implicit val reloadRankingResponse: ObjectEncoder[rankings.Reload.Response] =
+    deriveEncoder[rankings.Reload.Response]
 
 }
 

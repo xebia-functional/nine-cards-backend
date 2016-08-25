@@ -36,6 +36,8 @@ trait NineCardsApiSpecification
   with NineCardsExceptionHandler
   with Specs2RouteTest {
 
+  import NineCardsMarshallers._
+
   implicit def default(implicit system: ActorSystem) = RouteTestTimeout(20.second dilated system)
 
   implicit def actorRefFactory = system
@@ -47,7 +49,6 @@ trait NineCardsApiSpecification
     implicit val googleApiProcesses: GoogleApiProcesses[NineCardsServices] = mock[GoogleApiProcesses[NineCardsServices]]
 
     implicit val applicationProcesses: ApplicationProcesses[NineCardsServices] = mock[ApplicationProcesses[NineCardsServices]]
-
     implicit val rankingProcesses: RankingProcesses[NineCardsServices] = mock[RankingProcesses[NineCardsServices]]
 
     implicit val sharedCollectionProcesses: SharedCollectionProcesses[NineCardsServices] = mock[SharedCollectionProcesses[NineCardsServices]]
@@ -102,8 +103,10 @@ trait NineCardsApiSpecification
     applicationProcesses.categorizeApps(any, any) returns
       Free.pure(Messages.categorizeAppsResponse)
 
-    rankingProcesses.getRanking(any) returns
-      Free.pure(Messages.rankings.getResponse)
+    rankingProcesses.getRanking(any) returns Free.pure(Messages.rankings.getResponse)
+
+    rankingProcesses.reloadRanking(any, any) returns
+      Free.pure(Messages.rankings.reloadResponse.right)
   }
 
   trait UnsuccessfulScope extends BasicScope {
@@ -462,10 +465,18 @@ class NineCardsApiSpec
 
     }
 
-    //    s""" "POST $path", the endpoint to refresh an ranking,""" should {
-    //      val request = Post(path)
-    //
-    //    }
+    s""" "POST $path", the endpoint to refresh an ranking,""" should {
+
+      import NineCardsMarshallers._
+
+      val request = Post(path, Messages.rankings.reloadApiRequest)
+
+      "return a 200 OK Status code if the operation was carried out" in new SuccessfulScope {
+        request ~> addHeaders(Headers.googleAnalyticsHeaders) ~> sealRoute(nineCardsApi) ~> check {
+          status.intValue shouldEqual StatusCodes.OK.intValue
+        }
+      }
+    }
 
   }
 
