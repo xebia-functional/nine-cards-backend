@@ -8,7 +8,7 @@ import com.fortysevendeg.ninecards.processes.utils.DummyNineCardsConfig
 import com.fortysevendeg.ninecards.services.free.algebra.GoogleAnalytics
 import com.fortysevendeg.ninecards.services.free.domain.rankings._
 import com.fortysevendeg.ninecards.services.persistence.CustomComposite._
-import com.fortysevendeg.ninecards.services.persistence._
+import com.fortysevendeg.ninecards.services.persistence.{ transactor }
 import com.fortysevendeg.ninecards.services.persistence.rankings.{ Services ⇒ PersistenceServices }
 import doobie.imports._
 import org.mockito.Matchers.{ eq ⇒ mockEq }
@@ -33,6 +33,7 @@ trait RankingsProcessesSpecification
     implicit val analyticsServices: GoogleAnalytics.Services[NineCardsServices] =
       mock[GoogleAnalytics.Services[NineCardsServices]]
     implicit val persistenceServices = mock[PersistenceServices]
+
     implicit val rankingProcesses = new RankingProcesses[NineCardsServices]
 
   }
@@ -40,16 +41,13 @@ trait RankingsProcessesSpecification
   trait SuccessfulScope extends BasicScope {
 
     analyticsServices.getRanking(
-      scope  = mockEq(scope),
+      scope  = any,
       params = mockEq(params)
     ) returns Free.pure(Xor.right(ranking))
 
-    persistenceServices.getRanking(scope) returns ranking.point[ConnectionIO]
+    persistenceServices.getRanking(any) returns ranking.point[ConnectionIO]
 
-    //    persistenceServices.setRanking(
-    //      scope   = mockEq(scope),
-    //      ranking = mockEq(ranking)
-    //    ) returns (0,0).point[ConnectionIO]
+    persistenceServices.setRanking(scope, ranking) returns (0, 0).point[ConnectionIO]
   }
 
   trait UnsuccessfulScope extends BasicScope {
@@ -58,15 +56,8 @@ trait RankingsProcessesSpecification
 
     persistenceServices.getRanking(any) returns ranking.point[ConnectionIO]
 
-    persistenceServices.setRanking(any, any) returns (0, 0).point[ConnectionIO]
-
   }
 
-}
-
-trait RankingsProcessesContext {
-
-  val params = RankingParams
 }
 
 class RankingsProcessesSpec extends RankingsProcessesSpecification {
@@ -80,12 +71,12 @@ class RankingsProcessesSpec extends RankingsProcessesSpecification {
     }
   }
 
-  //  "reloadRanking" should {
-  //    "give a good answer" in new SuccessfulScope {
-  //      val response = rankingProcesses.reloadRanking(scope, params)
-  //      response.foldMap(testInterpreters) mustEqual Reload.Response()
-  //    }
-  //
-  //  }
+  "reloadRanking" should {
+    "give a good answer" in new SuccessfulScope {
+      val response = rankingProcesses.reloadRanking(scope, params)
+      response.foldMap(testInterpreters) mustEqual Xor.Right(Reload.Response())
+    }
+
+  }
 
 }

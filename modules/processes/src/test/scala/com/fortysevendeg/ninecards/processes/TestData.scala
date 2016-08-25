@@ -225,9 +225,7 @@ object TestData {
     lazy val startDate = new DateTime(2016, 1, 1, 0, 0, DateTimeZone.UTC)
     lazy val endDate = new DateTime(2016, 2, 1, 0, 0, DateTimeZone.UTC)
     lazy val params = RankingParams(DateRange(startDate, endDate), 5, AuthRanking("auth_token"))
-
     lazy val error = RankingError(401, "Unauthorized", "Unauthorized")
-
     lazy val ranking = Ranking(Map(Category.SOCIAL →
       CategoryRanking(List(PackageName("socialite"), PackageName("socialist")))))
 
