@@ -15,12 +15,12 @@ object rankings {
   object Reload {
 
     case class Request(
-      //      startDate: DateTime,
-      //      endDate: DateTime,
+      startDate: DateTime,
+      endDate: DateTime,
       rankingLength: Int
     ) {
-      //      if (!isValidDateRange(startDate, endDate))
-      //        throw new InvalidDate(startDate, endDate)
+      if (!isValidDateRange(startDate, endDate))
+        throw new InvalidDate(startDate, endDate)
     }
 
     val formatter = DateTimeFormat.forPattern("yyyy-MM-dd").withZoneUTC

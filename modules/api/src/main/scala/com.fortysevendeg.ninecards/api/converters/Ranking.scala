@@ -23,8 +23,7 @@ object rankings {
 
     def toRankingParams(token: String, request: Api.Reload.Request): RankingParams = {
       val length = request.rankingLength
-      // val dateRange = DateRange(request.startDate, request.endDate)
-      val dateRange = DateRange(DateTime.now().minusDays(30), DateTime.now())
+      val dateRange = DateRange(request.startDate, request.endDate)
       RankingParams(dateRange, length, AuthParams(token))
     }
 

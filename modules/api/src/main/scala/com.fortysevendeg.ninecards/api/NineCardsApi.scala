@@ -274,6 +274,14 @@ class NineCardsRoutes(
 
   private[this] object rankings {
 
+    import com.fortysevendeg.ninecards.api.converters.{ rankings ⇒ Converters }
+    import com.fortysevendeg.ninecards.api.messages.{ rankings ⇒ Api }
+    import io.circe.spray.JsonSupport._
+    import io.circe.spray.{ RootDecoder, JsonSupport }
+    import scalaz.concurrent.Task
+    import spray.httpx.marshalling.ToResponseMarshaller
+    import Decoders._
+
     lazy val route: Route =
       geographicScope { scope ⇒
         get {
@@ -283,9 +291,6 @@ class NineCardsRoutes(
             reloadParams(params ⇒ complete(reloadRanking(scope, params)))
           }
       }
-
-    import com.fortysevendeg.ninecards.api.messages.{ rankings ⇒ Api }
-    import com.fortysevendeg.ninecards.api.converters.{ rankings ⇒ Converters }
 
     private[this] lazy val geographicScope: Directive1[GeoScope] = {
       val continent: Directive1[GeoScope] =
@@ -305,6 +310,14 @@ class NineCardsRoutes(
         apiRequest ← entity(as[Api.Reload.Request])
       } yield Converters.reload.toRankingParams(authToken, apiRequest)
 
+    implicit lazy val reloadMarshall: ToResponseMarshaller[NineCardsServed[Api.Reload.XorResponse]] = {
+      import Api.Reload._
+      val resM: ToResponseMarshaller[Response] = JsonSupport.circeJsonMarshaller(Encoders.reloadRankingResponse)
+      val xorM: ToResponseMarshaller[XorResponse] = catsXorMarshaller[Error, Response](resM)
+      val taskM: ToResponseMarshaller[Task[XorResponse]] = tasksMarshaller(xorM)
+      freeTaskMarshaller[XorResponse](taskM)
+    }
+
     private[this] def reloadRanking(
       scope: GeoScope,
       params: RankingParams
@@ -313,6 +326,13 @@ class NineCardsRoutes(
 
     private[this] def getRanking(scope: GeoScope): NineCardsServed[Api.Ranking] =
       rankingProcesses.getRanking(scope).map(Converters.toApiRanking)
+
+    implicit lazy val rankingMarshall: ToResponseMarshaller[NineCardsServed[Api.Ranking]] = {
+      val resM: ToResponseMarshaller[Api.Ranking] = JsonSupport.circeJsonMarshaller(Encoders.ranking)
+      val taskM: ToResponseMarshaller[Task[Api.Ranking]] = tasksMarshaller(resM)
+      freeTaskMarshaller[Api.Ranking](taskM)
+    }
+
   }
 
 }
