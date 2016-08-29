@@ -5,6 +5,7 @@ import com.fortysevendeg.extracats._
 import com.fortysevendeg.ninecards.config.NineCardsConfig.getConfigValue
 import com.fortysevendeg.ninecards.googleplay.TestConfig._
 import com.fortysevendeg.ninecards.googleplay.domain._
+import com.fortysevendeg.ninecards.googleplay.service.free.algebra.GooglePlay
 import com.fortysevendeg.ninecards.googleplay.service.free.interpreter.{ Http4sGooglePlayApiClient, Http4sGooglePlayWebScraper, TaskInterpreter }
 import com.fortysevendeg.ninecards.googleplay.util.WithHttp1Client
 import io.circe.generic.auto._
@@ -48,7 +49,14 @@ class ApiIntegration extends Specification with Specs2RouteTest with WithHttp1Cl
     new TaskInterpreter(itemService, cardService)
   }
 
-  val route = sealRoute(NineCardsGooglePlayApi.googlePlayApiRoute[Task] )
+  val route = {
+    val trmFactory: TRMFactory[ GooglePlay.FreeOps ] =
+      NineCardsMarshallers.contraNaturalTransformFreeTRMFactory[GooglePlay.Ops, Task](
+        i, taskMonad, NineCardsMarshallers.TaskMarshallerFactory)
+
+    val api = new NineCardsGooglePlayApi[GooglePlay.Ops]()(GooglePlay.Service.service, trmFactory)
+    sealRoute(api.googlePlayApiRoute )
+  }
 
   val validPackages = List("air.fisherprice.com.shapesAndColors", "com.rockstargames.gtalcs", "com.ted.android")
   val invalidPackages = List("com.package.does.not.exist", "com.another.invalid.package")

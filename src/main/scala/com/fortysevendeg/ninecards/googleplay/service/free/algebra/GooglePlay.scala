@@ -36,4 +36,6 @@ object GooglePlay {
     implicit def service[F[_]](implicit I: Inject[Ops, F]): Service[F] = new Service[F]
   }
 
+  type FreeOps[A] = Free[Ops, A]
+
 }

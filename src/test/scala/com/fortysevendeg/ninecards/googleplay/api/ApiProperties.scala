@@ -13,6 +13,7 @@ import org.scalacheck._
 import spray.http.HttpHeaders.RawHeader
 import spray.http.StatusCodes._
 import spray.testkit.{RouteTest, TestFrameworkInterface}
+import spray.routing.Route
 
 trait ScalaCheckRouteTest extends RouteTest with TestFrameworkInterface {
   def failTest(msg: String): Nothing = throw new RuntimeException(msg)
@@ -21,6 +22,12 @@ trait ScalaCheckRouteTest extends RouteTest with TestFrameworkInterface {
 object ApiProperties extends Properties("Nine Cards Google Play API") with ScalaCheckRouteTest {
 
   import NineCardsMarshallers._
+
+  def makeRoute(interpreter: Ops ~> Id): Route = {
+    val marshallerFactory: TRMFactory[FreeOps] =
+      contraNaturalTransformFreeTRMFactory[Ops, Id](interpreter, Id, IdMarshallerFactory)
+    new NineCardsGooglePlayApi[Ops]()(Service.service, marshallerFactory).googlePlayApiRoute
+  }
 
   val requestHeaders = List(
     RawHeader(Headers.androidId, "androidId"),
@@ -67,12 +74,12 @@ object ApiProperties extends Properties("Nine Cards Google Play API") with Scala
   property("The ResolveOne endpoint returns the correct package name for a Google Play Store app") =
     forAll { (pkg: Package, item: Item) =>
 
-      implicit val interpreter: Ops ~> Id = resolveOneInterpreter { p =>
+      val interpreter: Ops ~> Id = resolveOneInterpreter { p =>
         if (p == pkg) Some(item)
         else None
       }
 
-      val route = NineCardsGooglePlayApi.googlePlayApiRoute[Id]
+      val route = makeRoute(interpreter)
 
       resolveOne(pkg) ~> route ~> check {
         val response = responseAs[String]
@@ -83,12 +90,11 @@ object ApiProperties extends Properties("Nine Cards Google Play API") with Scala
   property("fails with an Internal Server Error when the package is not known") =
     forAll {(unknownPackage: Package, wrongItem: Item) =>
 
-      implicit val interpreter: Ops ~> Id = resolveOneInterpreter { p =>
+      val interpreter: Ops ~> Id = resolveOneInterpreter { p =>
         if (p == unknownPackage) None
         else Some(wrongItem)
       }
-
-      val route = NineCardsGooglePlayApi.googlePlayApiRoute[Id]
+      val route = makeRoute( interpreter)
 
       resolveOne(unknownPackage) ~> route ~> check {
         status ?= InternalServerError
@@ -107,13 +113,13 @@ object ApiProperties extends Properties("Nine Cards Google Play API") with Scala
       val errors = errs.map(_.value).toSet
       val items = succs.map(i => database(i)).toSet
 
-      implicit val interpreter: Ops ~> Id = resolveManyInterpreter {
+      val interpreter: Ops ~> Id = resolveManyInterpreter {
         case PackageList(packages) =>
           val (errors, items) = splitFind[Package,Item](database, packages.map(Package.apply))
           PackageDetails(errors.map(_.value), items)
       }
 
-      val route = NineCardsGooglePlayApi.googlePlayApiRoute[Id]
+      val route = makeRoute(interpreter)
 
       val allPackages = (succs ++ errs).map(_.value)
 
@@ -138,7 +144,7 @@ object ApiProperties extends Properties("Nine Cards Google Play API") with Scala
         else Xor.Left( InfoError(p.value))
       }
 
-      val route = NineCardsGooglePlayApi.googlePlayApiRoute[Id]
+      val route = makeRoute(interpreter)
 
       getCard(pkg) ~> route ~> check {
         val response = responseAs[String]
@@ -151,11 +157,11 @@ object ApiProperties extends Properties("Nine Cards Google Play API") with Scala
 
       val infoError = InfoError(unknownPackage.value)
 
-      implicit val interpreter = getCardInterpreter{ p =>
+      val interpreter = getCardInterpreter{ p =>
         if (p == unknownPackage) Xor.Left(infoError)
         else Xor.Right(wrongCard)
       }
-      val route = NineCardsGooglePlayApi.googlePlayApiRoute[Id]
+      val route = makeRoute(interpreter)
 
       getCard(unknownPackage) ~> route ~> check {
         val response = responseAs[String]
@@ -175,12 +181,12 @@ object ApiProperties extends Properties("Nine Cards Google Play API") with Scala
       val errors = errs.map(_.value).toSet
       val items = succs.map(i => database(i)).toSet
 
-      implicit val interpreter: Ops ~> Id = getCardListInterpreter {
+      val interpreter: Ops ~> Id = getCardListInterpreter {
         case PackageList(packages) =>
           val (errors, items) = splitFind[Package,AppCard](database, packages.map(Package.apply))
           AppCardList(errors.map(_.value), items)
       }
-      val route = NineCardsGooglePlayApi.googlePlayApiRoute[Id]
+      val route = makeRoute(interpreter)
 
       val allPackages = (succs ++ errs).map(_.value)
 
