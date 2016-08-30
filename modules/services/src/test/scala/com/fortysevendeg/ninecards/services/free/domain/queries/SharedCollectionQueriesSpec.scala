@@ -27,7 +27,6 @@ class SharedCollectionQueriesSpec
     publicIdentifier = publicIdentifier,
     userId           = userId,
     publishedOn      = now,
-    description      = Option("Description about the collection"),
     author           = "John Doe",
     name             = "The name of the collection",
     installations    = 1,

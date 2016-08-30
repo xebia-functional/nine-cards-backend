@@ -53,19 +53,17 @@ trait NineCardsScalacheckGen {
   val sharedCollectionDataGenerator: Gen[SharedCollectionData] = for {
     publicIdentifier ← Gen.uuid
     publishedOn ← timestampGenerator
-    description ← Gen.option[String](stringGenerator)
     author ← stringGenerator
     name ← stringGenerator
     installations ← Gen.posNum[Int]
     views ← Gen.posNum[Int]
-    category ← stringGenerator
-    icon ← stringGenerator
+    category ← nonEmptyString(64)
+    icon ← nonEmptyString(64)
     community ← Gen.oneOf(true, false)
   } yield SharedCollectionData(
     publicIdentifier = publicIdentifier.toString,
     userId           = None,
     publishedOn      = publishedOn,
-    description      = description,
     author           = author,
     name             = name,
     installations    = installations,

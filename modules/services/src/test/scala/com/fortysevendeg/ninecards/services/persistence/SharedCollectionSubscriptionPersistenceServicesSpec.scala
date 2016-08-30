@@ -232,33 +232,6 @@ class SharedCollectionSubscriptionPersistenceServicesSpec
     }
   }
 
-  "removeSubscription" should {
-    "return 0 there isn't any subscription for the given id in the database" in {
-      prop { (id: Long) ⇒
-        val count = scSubscriptionPersistenceServices.removeSubscription(
-          subscriptionId = id
-        ).transact(transactor).run
-
-        count must_== 0
-      }
-    }
-    "return 1 if there is a subscription for the given id in the database" in {
-      prop { (userData: UserData, collectionData: SharedCollectionData) ⇒
-        val id = (for {
-          u ← insertItem(User.Queries.insert, userData.toTuple)
-          c ← insertItem(SharedCollection.Queries.insert, collectionData.copy(userId = Option(u)).toTuple)
-          s ← insertItem(SharedCollectionSubscription.Queries.insert, (c, u))
-        } yield s).transact(transactor).run
-
-        val deleted = scSubscriptionPersistenceServices.removeSubscription(
-          subscriptionId = id
-        ).transact(transactor).run
-
-        deleted must_== 1
-      }
-    }
-  }
-
   "removeSubscriptionByCollectionAndUser" should {
     "return 0 there isn't any subscription for the given user and collection in the database" in {
       prop { (userId: Long, collectionId: Long) ⇒

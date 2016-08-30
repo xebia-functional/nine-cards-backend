@@ -7,7 +7,6 @@ import org.joda.time.DateTime
 object SharedCollectionMessages {
 
   case class ApiCreateCollectionRequest(
-    description: Option[String],
     author: String,
     name: String,
     installations: Option[Int] = None,
@@ -26,7 +25,6 @@ object SharedCollectionMessages {
   case class ApiSharedCollection(
     publicIdentifier: String,
     publishedOn: DateTime,
-    description: Option[String],
     author: String,
     name: String,
     installations: Int,

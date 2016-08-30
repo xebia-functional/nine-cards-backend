@@ -31,8 +31,6 @@ object TestData {
 
   val community = true
 
-  val description = Option("Description about the collection")
-
   val deviceToken = Option("d897b6f1-c6a9-42bd-bf42-c787883c7d3e")
 
   val email = "valid.email@test.com"
@@ -115,14 +113,13 @@ object TestData {
 
   object Messages {
 
-    val collectionInfo = SharedCollectionUpdateInfo(description = description, title = name)
+    val collectionInfo = SharedCollectionUpdateInfo(title = name)
 
     val packagesStats = PackagesStats(addedPackages, removedPackages)
 
     val sharedCollection = SharedCollection(
       publicIdentifier = publicIdentifier,
       publishedOn      = now,
-      description      = description,
       author           = author,
       name             = name,
       installations    = installations,
@@ -141,7 +138,6 @@ object TestData {
     val apiCategorizeAppsRequest = ApiCategorizeAppsRequest(items = List("", "", ""))
 
     val apiCreateCollectionRequest = ApiCreateCollectionRequest(
-      description   = description,
       author        = author,
       name          = name,
       installations = Option(installations),

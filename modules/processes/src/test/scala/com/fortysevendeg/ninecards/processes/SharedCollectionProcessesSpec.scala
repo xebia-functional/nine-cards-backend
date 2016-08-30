@@ -93,9 +93,8 @@ trait SharedCollectionProcessesSpecification
     ) returns List[SharedCollectionServices]().point[ConnectionIO]
 
     sharedCollectionPersistenceServices.updateCollectionInfo(
-      id          = collectionId,
-      title       = name,
-      description = description
+      id    = collectionId,
+      title = name
     ) returns updatedCollectionsCount.point[ConnectionIO]
 
     sharedCollectionPersistenceServices.updatePackages(

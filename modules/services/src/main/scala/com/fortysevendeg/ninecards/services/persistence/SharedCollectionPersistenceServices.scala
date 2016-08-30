@@ -81,12 +81,11 @@ class SharedCollectionPersistenceServices(
 
   def updateCollectionInfo(
     id: Long,
-    title: String,
-    description: Option[String]
+    title: String
   ): ConnectionIO[Int] =
     collectionPersistence.update(
       sql    = CollectionQueries.update,
-      values = (title, description, id)
+      values = (title, id)
     )
 
   def updatePackages(collectionId: Long, packages: List[String]): ConnectionIO[(Int, Int)] =
@@ -106,7 +105,6 @@ object SharedCollectionPersistenceServices {
     publicIdentifier: String,
     userId: Option[Long],
     publishedOn: Timestamp,
-    description: Option[String] = None,
     author: String,
     name: String,
     installations: Int,

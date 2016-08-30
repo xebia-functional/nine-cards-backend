@@ -41,12 +41,6 @@ class SharedCollectionSubscriptionPersistenceServices(
       values = userId
     )
 
-  def removeSubscription[K](subscriptionId: Long): ConnectionIO[Int] =
-    subscriptionPersistence.update(
-      sql    = delete,
-      values = subscriptionId
-    )
-
   def removeSubscriptionByCollectionAndUser(collectionId: Long, userId: Long): ConnectionIO[Int] =
     subscriptionPersistence.update(
       sql    = deleteByCollectionAndUser,
