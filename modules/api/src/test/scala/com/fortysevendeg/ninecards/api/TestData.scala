@@ -1,5 +1,6 @@
 package com.fortysevendeg.ninecards.api
 
+import cats.data.Xor
 import com.fortysevendeg.ninecards.api.NineCardsHeaders._
 import com.fortysevendeg.ninecards.api.messages.GooglePlayMessages.ApiCategorizeAppsRequest
 import com.fortysevendeg.ninecards.api.messages.InstallationsMessages.ApiUpdateInstallationRequest
@@ -11,7 +12,7 @@ import com.fortysevendeg.ninecards.processes.messages.InstallationsMessages._
 import com.fortysevendeg.ninecards.processes.messages.SharedCollectionMessages._
 import com.fortysevendeg.ninecards.processes.messages.UserMessages.{ LoginRequest, LoginResponse }
 import com.fortysevendeg.ninecards.services.persistence.PersistenceExceptions.PersistenceException
-import org.joda.time.DateTime
+import org.joda.time.{ DateTime, DateTimeZone }
 import spray.http.HttpHeaders.RawHeader
 
 object TestData {
@@ -30,8 +31,6 @@ object TestData {
 
   val community = true
 
-  val description = Option("Description about the collection")
-
   val deviceToken = Option("d897b6f1-c6a9-42bd-bf42-c787883c7d3e")
 
   val email = "valid.email@test.com"
@@ -39,6 +38,8 @@ object TestData {
   val failingAuthToken = "a439c00e-9a01-4b0e-a446-1d8410229072"
 
   val googlePlayToken = "8d8f9814-d5cc-4e69-9225-517a5257e5b7"
+
+  val googleAnalyticsToken = "yada-yada-yada"
 
   val icon = "path-to-icon"
 
@@ -104,18 +105,21 @@ object TestData {
       RawHeader(headerSessionToken, sessionToken),
       RawHeader(headerAuthToken, failingAuthToken)
     )
+
+    val googleAnalyticsHeaders = List(
+      RawHeader(headerGoogleAnalyticsToken, googleAnalyticsToken)
+    )
   }
 
   object Messages {
 
-    val collectionInfo = SharedCollectionUpdateInfo(description = description, title = name)
+    val collectionInfo = SharedCollectionUpdateInfo(title = name)
 
     val packagesStats = PackagesStats(addedPackages, removedPackages)
 
     val sharedCollection = SharedCollection(
       publicIdentifier = publicIdentifier,
       publishedOn      = now,
-      description      = description,
       author           = author,
       name             = name,
       installations    = installations,
@@ -134,7 +138,6 @@ object TestData {
     val apiCategorizeAppsRequest = ApiCategorizeAppsRequest(items = List("", "", ""))
 
     val apiCreateCollectionRequest = ApiCreateCollectionRequest(
-      description   = description,
       author        = author,
       name          = name,
       installations = Option(installations),
@@ -179,6 +182,29 @@ object TestData {
 
     val updateInstallationResponse = UpdateInstallationResponse(androidId, deviceToken)
 
+    object rankings {
+      import com.fortysevendeg.ninecards.services.free.domain.{ Category, PackageName }
+      import com.fortysevendeg.ninecards.processes.messages.{ rankings ⇒ Proc }
+      import com.fortysevendeg.ninecards.services.free.domain.{ rankings ⇒ Domain }
+      import com.fortysevendeg.ninecards.api.messages.{ rankings ⇒ Api }
+
+      val ranking = Domain.Ranking(Map(
+        Category.SOCIAL → Domain.CategoryRanking(List(PackageName("testApp")))
+      ))
+      val getResponse = Proc.Get.Response(ranking)
+
+      val apiRanking = Api.Ranking(List(
+        Api.CategoryRanking(Category.SOCIAL, List("socialite", "socialist")),
+        Api.CategoryRanking(Category.COMMUNICATION, List("es.elpais", "es.elmundo", "uk.theguardian"))
+      ))
+
+      val reloadResponse = Proc.Reload.Response()
+      val startDate: DateTime = new DateTime(2016, 7, 15, 0, 0, DateTimeZone.UTC)
+      val endDate: DateTime = new DateTime(2016, 8, 21, 0, 0, DateTimeZone.UTC)
+      val reloadApiRequest = Api.Reload.Request(startDate, endDate, 5)
+      val reloadApiResponse = Api.Reload.Response()
+
+    }
   }
 
   object Paths {

@@ -9,7 +9,7 @@ CREATE TABLE Users (
 CREATE TABLE Installations (
   id serial NOT NULL PRIMARY KEY,
   userId BIGINT NOT NULL REFERENCES Users(id),
-  deviceToken character varying(100),
+  deviceToken character varying(256),
   androidId character varying(100) NOT NULL,
   unique (userId, androidId)
 );
@@ -19,13 +19,12 @@ CREATE TABLE SharedCollections (
   publicIdentifier character varying(100) NOT NULL,
   userId BIGINT REFERENCES Users(id),
   publishedOn timestamp NOT NULL,
-  description character varying(512),
   author character varying(100) NOT NULL,
   name character varying(100) NOT NULL,
   installations INTEGER NOT NULL DEFAULT 0,
   views INTEGER NOT NULL DEFAULT 0,
-  category character varying(100) NOT NULL,
-  icon character varying(100) NOT NULL,
+  category character varying(64) NOT NULL,
+  icon character varying(64) NOT NULL,
   community BOOLEAN NOT NULL DEFAULT FALSE
 );
 

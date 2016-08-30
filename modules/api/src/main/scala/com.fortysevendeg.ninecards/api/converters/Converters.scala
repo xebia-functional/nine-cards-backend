@@ -44,7 +44,6 @@ object Converters {
         publicIdentifier = collectionInfo.identifier.value,
         userId           = Option(userContext.userId.value),
         publishedOn      = collectionInfo.currentDate.value,
-        description      = request.description,
         author           = request.author,
         name             = request.name,
         installations    = request.installations,
@@ -61,7 +60,6 @@ object Converters {
     ApiSharedCollection(
       publicIdentifier = info.collection.publicIdentifier,
       publishedOn      = info.collection.publishedOn,
-      description      = info.collection.description,
       author           = info.collection.author,
       name             = info.collection.name,
       installations    = info.collection.installations,

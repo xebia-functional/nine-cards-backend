@@ -1,5 +1,6 @@
 package com.fortysevendeg.ninecards.services.persistence
 
+import com.fortysevendeg.ninecards.services.free.domain
 import com.fortysevendeg.ninecards.services.free.domain._
 import doobie.imports._
 import org.flywaydb.core.Flyway
@@ -31,12 +32,12 @@ trait DomainDatabaseContext {
   implicit val collectionPersistence = new Persistence[SharedCollection](supportsSelectForUpdate = false)
   implicit val collectionPackagePersistence = new Persistence[SharedCollectionPackage](supportsSelectForUpdate = false)
   implicit val collectionSubscriptionPersistence = new Persistence[SharedCollectionSubscription](supportsSelectForUpdate = false)
-  implicit val rankingPersistence: Persistence[rankings.Entry] =
-    new Persistence[rankings.Entry](supportsSelectForUpdate = false)
+  implicit val rankingPersistence: Persistence[domain.rankings.Entry] =
+    new Persistence[domain.rankings.Entry](supportsSelectForUpdate = false)
   val userPersistenceServices = new UserPersistenceServices
   val collectionPersistenceServices = new SharedCollectionPersistenceServices
   val scSubscriptionPersistenceServices = new SharedCollectionSubscriptionPersistenceServices
-  val rankingPersistenceServices = new ranking.Services(rankingPersistence)
+  val rankingPersistenceServices = new rankings.Services(rankingPersistence)
 
   val flywaydb = new Flyway
   flywaydb.setDataSource(testUrl, testUsername, testPassword)

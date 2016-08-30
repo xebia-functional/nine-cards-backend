@@ -5,7 +5,7 @@ import com.fortysevendeg.ninecards.services.free.domain.{ Category, PackageName 
 import com.fortysevendeg.ninecards.services.free.domain.rankings._
 import scalaz.std.iterable._
 
-object ranking {
+object rankings {
 
   class Services(persistence: Persistence[Entry]) {
 

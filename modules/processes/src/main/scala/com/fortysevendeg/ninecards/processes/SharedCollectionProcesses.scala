@@ -121,7 +121,7 @@ class SharedCollectionProcesses[F[_]](
 
     def updateCollectionInfo(collectionId: Long, info: Option[SharedCollectionUpdateInfo]) =
       info
-        .map(c ⇒ collectionPersistence.updateCollectionInfo(collectionId, c.title, c.description))
+        .map(c ⇒ collectionPersistence.updateCollectionInfo(collectionId, c.title))
         .getOrElse(0.point[ConnectionIO])
 
     def updatePackages(collectionId: Long, packagesName: Option[List[String]]) =

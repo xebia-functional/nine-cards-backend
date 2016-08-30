@@ -14,6 +14,8 @@ import com.fortysevendeg.ninecards.api.utils.SprayMarshallers._
 import com.fortysevendeg.ninecards.api.utils.SprayMatchers._
 import com.fortysevendeg.ninecards.processes.NineCardsServices._
 import com.fortysevendeg.ninecards.processes._
+import com.fortysevendeg.ninecards.services.free.domain.Category
+import com.fortysevendeg.ninecards.services.free.domain.rankings._
 import spray.http.StatusCodes.NotFound
 import spray.routing._
 
@@ -29,6 +31,8 @@ class NineCardsApiActor
 
   implicit val executionContext: ExecutionContext = actorRefFactory.dispatcher
 
+  import com.fortysevendeg.ninecards.services.persistence.CustomComposite.rankingEntry
+
   def receive = runRoute(new NineCardsRoutes().nineCardsRoutes)
 
 }
@@ -38,6 +42,7 @@ class NineCardsRoutes(
   userProcesses: UserProcesses[NineCardsServices],
   googleApiProcesses: GoogleApiProcesses[NineCardsServices],
   applicationProcesses: ApplicationProcesses[NineCardsServices],
+  rankingProcesses: RankingProcesses[NineCardsServices],
   sharedCollectionProcesses: SharedCollectionProcesses[NineCardsServices],
   refFactory: ActorRefFactory,
   executionContext: ExecutionContext
@@ -52,6 +57,7 @@ class NineCardsRoutes(
     case "applications" ⇒ applicationRoute
     case "installations" ⇒ installationsRoute
     case "login" ⇒ userRoute
+    case "rankings" ⇒ rankings.route
     case _ ⇒ complete(NotFound)
   }
 
@@ -108,7 +114,7 @@ class NineCardsRoutes(
             }
           }
       } ~
-        (path("latest" / TypedSegment[Category] / TypedIntSegment[PageNumber] / TypedIntSegment[PageSize]) & get) {
+        (path("latest" / CategorySegment / TypedIntSegment[PageNumber] / TypedIntSegment[PageSize]) & get) {
           (category: Category, pageNumber: PageNumber, pageSize: PageSize) ⇒
             nineCardsDirectives.googlePlayInfo { googlePlayContext ⇒
               complete {
@@ -122,7 +128,7 @@ class NineCardsRoutes(
               }
             }
         } ~
-        (path("top" / TypedSegment[Category] / TypedIntSegment[PageNumber] / TypedIntSegment[PageSize]) & get) {
+        (path("top" / CategorySegment / TypedIntSegment[PageNumber] / TypedIntSegment[PageSize]) & get) {
           (category: Category, pageNumber: PageNumber, pageSize: PageSize) ⇒
             nineCardsDirectives.googlePlayInfo { googlePlayContext ⇒
               complete {
@@ -226,7 +232,7 @@ class NineCardsRoutes(
   ): NineCardsServed[ApiSharedCollectionList] =
     sharedCollectionProcesses
       .getLatestCollectionsByCategory(
-        category   = category.value,
+        category   = category.entryName,
         authParams = toAuthParams(googlePlayContext, userContext),
         pageNumber = pageNumber.value,
         pageSize   = pageSize.value
@@ -250,7 +256,7 @@ class NineCardsRoutes(
   ): NineCardsServed[ApiSharedCollectionList] =
     sharedCollectionProcesses
       .getTopCollectionsByCategory(
-        category   = category.value,
+        category   = category.entryName,
         authParams = toAuthParams(googlePlayContext, userContext),
         pageNumber = pageNumber.value,
         pageSize   = pageSize.value
@@ -265,4 +271,52 @@ class NineCardsRoutes(
     applicationProcesses
       .categorizeApps(request.items, toAuthParams(googlePlayContext, userContext))
       .map(toApiCategorizeAppsResponse)
+
+  private[this] object rankings {
+
+    import com.fortysevendeg.ninecards.api.converters.{ rankings ⇒ Converters }
+    import com.fortysevendeg.ninecards.api.messages.{ rankings ⇒ Api }
+    import io.circe.spray.JsonSupport._
+    import NineCardsMarshallers._
+    import Decoders.reloadRankingRequest
+
+    lazy val route: Route =
+      geographicScope { scope ⇒
+        get {
+          complete(getRanking(scope))
+        } ~
+          post {
+            reloadParams(params ⇒ complete(reloadRanking(scope, params)))
+          }
+      }
+
+    private[this] lazy val geographicScope: Directive1[GeoScope] = {
+      val continent: Directive1[GeoScope] =
+        path("continents" / ContinentSegment)
+          .map(c ⇒ ContinentScope(c): GeoScope)
+      val country: Directive1[GeoScope] =
+        path("countries" / CountrySegment)
+          .map(c ⇒ CountryScope(c): GeoScope)
+      val world = path("world") & provide(WorldScope: GeoScope)
+
+      world | continent | country
+    }
+
+    private[this] lazy val reloadParams: Directive1[RankingParams] =
+      for {
+        authToken ← headerValueByName(NineCardsHeaders.headerGoogleAnalyticsToken)
+        apiRequest ← entity(as[Api.Reload.Request])
+      } yield Converters.reload.toRankingParams(authToken, apiRequest)
+
+    private[this] def reloadRanking(
+      scope: GeoScope,
+      params: RankingParams
+    ): NineCardsServed[Api.Reload.XorResponse] =
+      rankingProcesses.reloadRanking(scope, params).map(Converters.reload.toXorResponse)
+
+    private[this] def getRanking(scope: GeoScope): NineCardsServed[Api.Ranking] =
+      rankingProcesses.getRanking(scope).map(Converters.toApiRanking)
+
+  }
+
 }

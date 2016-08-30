@@ -6,10 +6,11 @@ import java.time.Instant
 import com.fortysevendeg.ninecards.processes.ProcessesExceptions.SharedCollectionNotFoundException
 import com.fortysevendeg.ninecards.processes.messages.ApplicationMessages.AuthParams
 import com.fortysevendeg.ninecards.processes.messages.SharedCollectionMessages._
+import com.fortysevendeg.ninecards.services.free.domain.{ PackageName, Category }
 import com.fortysevendeg.ninecards.services.free.domain.GooglePlay.{ AppInfo ⇒ AppInfoServices, AppsInfo }
 import com.fortysevendeg.ninecards.services.free.domain.{ SharedCollection ⇒ SharedCollectionServices, SharedCollectionPackage, SharedCollectionSubscription }
 import com.fortysevendeg.ninecards.services.persistence.SharedCollectionPersistenceServices.{ SharedCollectionData ⇒ SharedCollectionDataServices }
-import org.joda.time.DateTime
+import org.joda.time.{ DateTime, DateTimeZone }
 
 object TestData {
 
@@ -26,8 +27,6 @@ object TestData {
   val collectionId = 1l
 
   val community = true
-
-  val description = Option("Description about the collection")
 
   val icon = "path-to-icon"
 
@@ -106,7 +105,6 @@ object TestData {
       publicIdentifier = publicIdentifier,
       userId           = userId,
       publishedOn      = publishedOnTimestamp,
-      description      = description,
       author           = author,
       name             = name,
       installations    = installations,
@@ -135,7 +133,6 @@ object TestData {
       publicIdentifier = publicIdentifier,
       userId           = userId,
       publishedOn      = publishedOnTimestamp,
-      description      = description,
       author           = author,
       name             = name,
       installations    = installations,
@@ -149,7 +146,6 @@ object TestData {
       publicIdentifier = publicIdentifier,
       userId           = userId,
       publishedOn      = publishedOnDatetime,
-      description      = description,
       author           = author,
       name             = name,
       installations    = Option(installations),
@@ -162,7 +158,6 @@ object TestData {
     val sharedCollection = SharedCollection(
       publicIdentifier = publicIdentifier,
       publishedOn      = new DateTime(publishedOnTimestamp.getTime),
-      description      = description,
       author           = author,
       name             = name,
       installations    = installations,
@@ -174,8 +169,7 @@ object TestData {
     )
 
     val sharedCollectionUpdateInfo = SharedCollectionUpdateInfo(
-      description = description,
-      title       = name
+      title = name
     )
 
     val sharedCollectionWithAppsInfo = SharedCollectionWithAppsInfo(
@@ -215,5 +209,18 @@ object TestData {
     val sharedCollectionNotFoundException = SharedCollectionNotFoundException(
       message = "The required shared collection doesn't exist"
     )
+  }
+
+  object rankings {
+    import com.fortysevendeg.ninecards.services.free.domain.rankings.{ AuthParams ⇒ AuthRanking, _ }
+
+    lazy val scope = CountryScope(Country.Spain)
+    lazy val startDate = new DateTime(2016, 1, 1, 0, 0, DateTimeZone.UTC)
+    lazy val endDate = new DateTime(2016, 2, 1, 0, 0, DateTimeZone.UTC)
+    lazy val params = RankingParams(DateRange(startDate, endDate), 5, AuthRanking("auth_token"))
+    lazy val error = RankingError(401, "Unauthorized", "Unauthorized")
+    lazy val ranking = Ranking(Map(Category.SOCIAL →
+      CategoryRanking(List(PackageName("socialite"), PackageName("socialist")))))
+
   }
 }

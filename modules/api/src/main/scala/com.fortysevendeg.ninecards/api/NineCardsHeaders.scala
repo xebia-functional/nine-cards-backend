@@ -6,6 +6,7 @@ object NineCardsHeaders {
 
   val headerAndroidId = "X-Android-ID"
   val headerGooglePlayToken = "X-Google-Play-Token"
+  val headerGoogleAnalyticsToken = "X-Google-Analytics-Token"
   val headerMarketLocalization = "X-Android-Market-Localization"
   val headerSessionToken = "X-Session-Token"
   val headerAuthToken = "X-Auth-Token"
@@ -17,11 +18,11 @@ object NineCardsHeaders {
 
     case class AuthToken(value: String) extends AnyVal
 
-    case class Category(value: String) extends AnyVal
-
     case class CurrentDateTime(value: DateTime) extends AnyVal
 
     case class GooglePlayToken(value: String) extends AnyVal
+
+    case class GoogleAnalyticsToken(value: String) extends AnyVal
 
     case class MarketLocalization(value: String) extends AnyVal
 

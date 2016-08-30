@@ -1,5 +1,8 @@
 package com.fortysevendeg.ninecards.api.utils
 
+import com.fortysevendeg.ninecards.services.free.domain.Category
+import com.fortysevendeg.ninecards.services.free.domain.rankings.{ Continent, Country }
+import enumeratum.{ Enum, EnumEntry }
 import shapeless._
 import spray.http.Uri.Path
 import spray.routing.PathMatcher.{ Matched, Unmatched }
@@ -14,6 +17,20 @@ object SprayMatchers {
       case _ ⇒ Unmatched
     }
   }
+
+  class EnumSegment[E <: EnumEntry](implicit En: Enum[E]) extends PathMatcher1[E] {
+    def apply(path: Path) = path match {
+      case Path.Segment(segment, tail) ⇒ En.withNameOption(segment) match {
+        case Some(e) ⇒ Matched(tail, e :: HNil)
+        case None ⇒ Unmatched
+      }
+      case _ ⇒ Unmatched
+    }
+  }
+
+  val CategorySegment: PathMatcher1[Category] = new EnumSegment[Category]
+  val ContinentSegment: PathMatcher1[Continent] = new EnumSegment[Continent]
+  val CountrySegment: PathMatcher1[Country] = new EnumSegment[Country]
 
   object TypedSegment {
     def apply[T](implicit gen: Generic.Aux[T, String :: HNil]) = new TypedSegment[T]

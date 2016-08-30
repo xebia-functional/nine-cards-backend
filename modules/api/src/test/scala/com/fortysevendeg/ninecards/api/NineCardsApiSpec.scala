@@ -36,6 +36,8 @@ trait NineCardsApiSpecification
   with NineCardsExceptionHandler
   with Specs2RouteTest {
 
+  import NineCardsMarshallers._
+
   implicit def default(implicit system: ActorSystem) = RouteTestTimeout(20.second dilated system)
 
   implicit def actorRefFactory = system
@@ -47,8 +49,11 @@ trait NineCardsApiSpecification
     implicit val googleApiProcesses: GoogleApiProcesses[NineCardsServices] = mock[GoogleApiProcesses[NineCardsServices]]
 
     implicit val applicationProcesses: ApplicationProcesses[NineCardsServices] = mock[ApplicationProcesses[NineCardsServices]]
+    implicit val rankingProcesses: RankingProcesses[NineCardsServices] = mock[RankingProcesses[NineCardsServices]]
 
     implicit val sharedCollectionProcesses: SharedCollectionProcesses[NineCardsServices] = mock[SharedCollectionProcesses[NineCardsServices]]
+
+    import com.fortysevendeg.ninecards.services.persistence.CustomComposite._
 
     val nineCardsApi = new NineCardsRoutes().nineCardsRoutes
 
@@ -97,6 +102,11 @@ trait NineCardsApiSpecification
 
     applicationProcesses.categorizeApps(any, any) returns
       Free.pure(Messages.categorizeAppsResponse)
+
+    rankingProcesses.getRanking(any) returns Free.pure(Messages.rankings.getResponse)
+
+    rankingProcesses.reloadRanking(any, any) returns
+      Free.pure(Messages.rankings.reloadResponse.right)
   }
 
   trait UnsuccessfulScope extends BasicScope {
@@ -438,4 +448,44 @@ class NineCardsApiSpec
 
     successOk(request)
   }
+
+  def testRanking(scopePath: String) = {
+    val path = s"/rankings/$scopePath"
+
+    s""" "GET ${path}", the endpoint to read a ranking,""" should {
+      val request = Get(path)
+
+      internalServerError(request)
+
+      "return a 200 OK Status code if the operation was carried out" in new SuccessfulScope {
+        request ~> sealRoute(nineCardsApi) ~> check {
+          status.intValue shouldEqual StatusCodes.OK.intValue
+        }
+      }
+
+    }
+
+    s""" "POST $path", the endpoint to refresh an ranking,""" should {
+
+      import NineCardsMarshallers._
+
+      val request = Post(path, Messages.rankings.reloadApiRequest)
+
+      "return a 200 OK Status code if the operation was carried out" in new SuccessfulScope {
+        request ~> addHeaders(Headers.googleAnalyticsHeaders) ~> sealRoute(nineCardsApi) ~> check {
+          status.intValue shouldEqual StatusCodes.OK.intValue
+        }
+      }
+    }
+
+  }
+
+  val rankingPaths: List[String] = {
+    import com.fortysevendeg.ninecards.services.free.domain.rankings.{ Continent, Country }
+    val countries = Country.values.map(c ⇒ s"countries/$c").toList
+    val continents = Continent.values.map(c ⇒ s"continents/$c").toList
+    "world" :: (continents ++ countries)
+  }
+
+  rankingPaths foreach testRanking
 }

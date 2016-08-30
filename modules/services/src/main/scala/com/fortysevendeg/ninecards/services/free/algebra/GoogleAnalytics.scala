@@ -14,14 +14,16 @@ object GoogleAnalytics {
 
   class Services[F[_]](implicit I: Inject[Ops, F]) {
 
-    def getCountryRanking(country: Country, params: RankingParams): Free[F, TryRanking] =
-      Free.inject[Ops, F](GetRanking(CountryScope(country), params))
+    def getRanking(scope: GeoScope, params: RankingParams): Free[F, TryRanking] =
+      Free.inject[Ops, F](GetRanking(scope, params))
 
-    def getContinentalRanking(continent: Continent, params: RankingParams): Free[F, TryRanking] =
-      Free.inject[Ops, F](GetRanking(ContinentScope(continent), params))
+  }
 
-    def getWorldRanking(params: RankingParams): Free[F, TryRanking] =
-      Free.inject[Ops, F](GetRanking(WorldScope, params))
+  object Services {
+
+    implicit def services[F[_]](implicit I: Inject[Ops, F]): Services[F] =
+      new Services
+
   }
 
 }

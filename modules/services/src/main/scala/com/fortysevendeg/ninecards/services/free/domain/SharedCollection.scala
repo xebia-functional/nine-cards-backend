@@ -7,7 +7,6 @@ case class SharedCollection(
   publicIdentifier: String,
   userId: Option[Long],
   publishedOn: Timestamp,
-  description: Option[String],
   author: String,
   name: String,
   installations: Int,
@@ -30,8 +29,12 @@ case class SharedCollectionSubscription(
 )
 
 object SharedCollection {
-  val allFields = List("id", "publicidentifier", "userid", "publishedon", "description", "author",
-    "name", "installations", "views", "category", "icon", "community")
+  val fields = List("publicidentifier", "userid", "publishedon", "author", "name",
+    "installations", "views", "category", "icon", "community")
+  val allFields = "id" +: fields
+
+  val insertFields = fields.mkString(",")
+  val insertWildCards = fields.map(_ ⇒ "?").mkString(",")
 
   object Queries {
     val getById = "select * from sharedcollections where id=?"
@@ -39,32 +42,39 @@ object SharedCollection {
     val getByUser = "select * from sharedcollections where userId=?"
     val getLatestByCategory = "select * from sharedcollections where category=? order by publishedon desc limit ? offset ?"
     val getTopByCategory = "select * from sharedcollections where category=? order by installations desc limit ? offset ?"
-    val insert = "insert into sharedcollections(publicidentifier,userid,publishedon,description,author,name,installations,views,category,icon,community) values(?,?,?,?,?,?,?,?,?,?,?)"
-    val update = "update sharedcollections set name=?, description=? where id=?"
+    val insert = s"insert into sharedcollections($insertFields) values($insertWildCards)"
+    val update = "update sharedcollections set name=? where id=?"
   }
 }
 
 object SharedCollectionPackage {
-  val allFields = List("id", "sharedcollectionid", "packagename")
+  val fields = List("sharedcollectionid", "packagename")
+  val allFields = "id" +: fields
+
+  val insertFields = fields.mkString(",")
+  val insertWildCards = fields.map(_ ⇒ "?").mkString(",")
 
   object Queries {
     val delete = "delete from sharedcollectionpackages where sharedcollectionid=? and packagename=?"
     val getById = "select * from sharedcollectionpackages where id=?"
     val getBySharedCollection = "select * from sharedcollectionpackages where sharedcollectionid=?"
-    val insert = "insert into sharedcollectionpackages(sharedcollectionid,packagename) values(?,?)"
+    val insert = s"insert into sharedcollectionpackages($insertFields) values($insertWildCards)"
   }
 }
 
 object SharedCollectionSubscription {
-  val allFields = List("id", "sharedcollectionid", "userid")
+  val fields = List("sharedcollectionid", "userid")
+  val allFields = "id" +: fields
+
+  val insertFields = fields.mkString(",")
+  val insertWildCards = fields.map(_ ⇒ "?").mkString(",")
 
   object Queries {
     val getById = "select * from sharedcollectionsubscriptions where id=?"
     val getByCollection = "select * from sharedcollectionsubscriptions where sharedcollectionid=?"
     val getByCollectionAndUser = "select * from sharedcollectionsubscriptions where sharedcollectionid=? and userid=?"
     val getByUser = "select * from sharedcollectionsubscriptions where userid=?"
-    val insert = "insert into sharedcollectionsubscriptions(sharedcollectionid,userid) values(?,?)"
-    val delete = "delete from sharedcollectionsubscriptions where id=?"
+    val insert = s"insert into sharedcollectionsubscriptions($insertFields) values($insertWildCards)"
     val deleteByCollectionAndUser = "delete from sharedcollectionsubscriptions where sharedcollectionid=? and userid=?"
   }
 }

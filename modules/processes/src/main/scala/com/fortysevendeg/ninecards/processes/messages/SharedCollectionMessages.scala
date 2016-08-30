@@ -19,7 +19,6 @@ object SharedCollectionMessages {
     publicIdentifier: String,
     userId: Option[Long],
     publishedOn: DateTime,
-    description: Option[String],
     author: String,
     name: String,
     installations: Option[Int] = None,
@@ -37,7 +36,6 @@ object SharedCollectionMessages {
   case class SharedCollection(
     publicIdentifier: String,
     publishedOn: DateTime,
-    description: Option[String],
     author: String,
     name: String,
     installations: Int,
@@ -49,7 +47,6 @@ object SharedCollectionMessages {
   )
 
   case class SharedCollectionUpdateInfo(
-    description: Option[String],
     title: String
   )
 
