@@ -10,14 +10,14 @@ class ApplicationProcesses[F[_]](implicit services: GooglePlay.Services[F]) {
   def categorizeApps(
     packagesName: List[String],
     authParams: AuthParams
-  ): Free[F, CategorizeAppsResponse] = packagesName match {
-    case Nil ⇒ Free.pure[F, CategorizeAppsResponse](CategorizeAppsResponse(Nil, Nil))
-    case _ ⇒
+  ): Free[F, CategorizeAppsResponse] =
+    if (packagesName.isEmpty)
+      Free.pure[F, CategorizeAppsResponse](CategorizeAppsResponse(Nil, Nil))
+    else
       services.resolveMany(
         packageNames = packagesName,
         auth         = toAuthParamsServices(authParams)
       ) map toCategorizeAppsResponse
-  }
 }
 
 object ApplicationProcesses {

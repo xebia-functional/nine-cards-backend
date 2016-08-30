@@ -2,9 +2,9 @@ package com.fortysevendeg.ninecards.processes
 
 import cats.free.Free
 import com.fortysevendeg.ninecards.processes.NineCardsServices._
-import com.fortysevendeg.ninecards.processes.messages.ApplicationMessages.{AuthParams, CategorizeAppsResponse, CategorizedApp}
+import com.fortysevendeg.ninecards.processes.messages.ApplicationMessages.{ AuthParams, CategorizeAppsResponse, CategorizedApp }
 import com.fortysevendeg.ninecards.services.free.algebra.GooglePlay.Services
-import com.fortysevendeg.ninecards.services.free.domain.GooglePlay.{AppInfo, AppsInfo, AuthParams => GooglePlayAuthParams}
+import com.fortysevendeg.ninecards.services.free.domain.GooglePlay.{ AppInfo, AppsInfo, AuthParams ⇒ GooglePlayAuthParams }
 import org.specs2.matcher.Matchers
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
