@@ -61,6 +61,8 @@ object Category extends Enum[Category] {
   case object GAME_SIMULATION extends Category
   case object GAME_WIDGETS extends Category
 
+  case object FREE extends Category
+
   /* These Are NineCards MOMENTS, not CategorieS*/
   case object HOME extends Category
   case object WORK extends Category

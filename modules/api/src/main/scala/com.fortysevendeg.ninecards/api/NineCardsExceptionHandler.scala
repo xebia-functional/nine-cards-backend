@@ -28,6 +28,17 @@ trait NineCardsExceptionHandler extends HttpService {
             log.warning("Shared collection not found: {}", uri)
             complete(NotFound, e.getMessage)
         }
+      case e: messages.rankings.Reload.InvalidDate ⇒
+        requestUri { uri ⇒
+          log.warning("Request to {} could not be handled normally", uri)
+          complete(BadRequest, e.getMessage)
+        }
+      case e: messages.rankings.Reload.Error ⇒
+        requestUri { uri ⇒
+          log.warning("Request to {} could not be handled normally", uri)
+          val status = if (e.code == 401) Unauthorized else InternalServerError
+          complete(status, e.message)
+        }
       case e: UnexpectedStatus ⇒
         requestUri {
           uri ⇒
