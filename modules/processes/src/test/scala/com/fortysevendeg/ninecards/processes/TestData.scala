@@ -27,8 +27,6 @@ object TestData {
 
   val community = true
 
-  val description = Option("Description about the collection")
-
   val icon = "path-to-icon"
 
   val installations = 1
@@ -106,7 +104,6 @@ object TestData {
       publicIdentifier = publicIdentifier,
       userId           = userId,
       publishedOn      = publishedOnTimestamp,
-      description      = description,
       author           = author,
       name             = name,
       installations    = installations,
@@ -135,7 +132,6 @@ object TestData {
       publicIdentifier = publicIdentifier,
       userId           = userId,
       publishedOn      = publishedOnTimestamp,
-      description      = description,
       author           = author,
       name             = name,
       installations    = installations,
@@ -149,7 +145,6 @@ object TestData {
       publicIdentifier = publicIdentifier,
       userId           = userId,
       publishedOn      = publishedOnDatetime,
-      description      = description,
       author           = author,
       name             = name,
       installations    = Option(installations),
@@ -162,7 +157,6 @@ object TestData {
     val sharedCollection = SharedCollection(
       publicIdentifier = publicIdentifier,
       publishedOn      = new DateTime(publishedOnTimestamp.getTime),
-      description      = description,
       author           = author,
       name             = name,
       installations    = installations,
@@ -174,8 +168,7 @@ object TestData {
     )
 
     val sharedCollectionUpdateInfo = SharedCollectionUpdateInfo(
-      description = description,
-      title       = name
+      title = name
     )
 
     val sharedCollectionWithAppsInfo = SharedCollectionWithAppsInfo(

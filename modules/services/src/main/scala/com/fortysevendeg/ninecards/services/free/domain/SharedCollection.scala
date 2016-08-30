@@ -7,7 +7,6 @@ case class SharedCollection(
   publicIdentifier: String,
   userId: Option[Long],
   publishedOn: Timestamp,
-  description: Option[String],
   author: String,
   name: String,
   installations: Int,
@@ -30,8 +29,8 @@ case class SharedCollectionSubscription(
 )
 
 object SharedCollection {
-  val allFields = List("id", "publicidentifier", "userid", "publishedon", "description", "author",
-    "name", "installations", "views", "category", "icon", "community")
+  val allFields = List("id", "publicidentifier", "userid", "publishedon", "author", "name",
+    "installations", "views", "category", "icon", "community")
 
   object Queries {
     val getById = "select * from sharedcollections where id=?"
@@ -39,8 +38,8 @@ object SharedCollection {
     val getByUser = "select * from sharedcollections where userId=?"
     val getLatestByCategory = "select * from sharedcollections where category=? order by publishedon desc limit ? offset ?"
     val getTopByCategory = "select * from sharedcollections where category=? order by installations desc limit ? offset ?"
-    val insert = "insert into sharedcollections(publicidentifier,userid,publishedon,description,author,name,installations,views,category,icon,community) values(?,?,?,?,?,?,?,?,?,?,?)"
-    val update = "update sharedcollections set name=?, description=? where id=?"
+    val insert = "insert into sharedcollections(publicidentifier,userid,publishedon,author,name,installations,views,category,icon,community) values(?,?,?,?,?,?,?,?,?,?)"
+    val update = "update sharedcollections set name=? where id=?"
   }
 }
 

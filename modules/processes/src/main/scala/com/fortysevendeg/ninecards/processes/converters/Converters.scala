@@ -50,7 +50,6 @@ object Converters {
       publicIdentifier = data.publicIdentifier,
       userId           = data.userId,
       publishedOn      = data.publishedOn,
-      description      = data.description,
       author           = data.author,
       name             = data.name,
       installations    = data.installations.getOrElse(0),
@@ -67,7 +66,6 @@ object Converters {
     SharedCollection(
       publicIdentifier = collection.publicIdentifier,
       publishedOn      = collection.publishedOn,
-      description      = collection.description,
       author           = collection.author,
       name             = collection.name,
       installations    = collection.installations,
