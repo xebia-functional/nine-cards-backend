@@ -47,7 +47,7 @@ object OnCompleteTaskMagnet {
   implicit def apply[T](task: ⇒ Task[T]): OnCompleteTaskMagnet[T] =
     new OnCompleteTaskMagnet[T] {
       def happly(f: ((Throwable \/ T) :: HNil) ⇒ Route): Route = ctx ⇒
-        task.runAsync { t ⇒
+        task.unsafePerformAsync { t ⇒
           try f(t :: HNil)(ctx)
           catch { case NonFatal(error) ⇒ ctx.failWith(error) }
         }
@@ -67,7 +67,7 @@ object OnSuccessTaskMagnet {
 
       def directive = this
 
-      def happly(f: Out ⇒ Route) = ctx ⇒ task.runAsync {
+      def happly(f: Out ⇒ Route) = ctx ⇒ task.unsafePerformAsync {
 
         case \/-(t) ⇒
           try f(hl(t))(ctx)
@@ -84,7 +84,7 @@ trait OnFailureTaskMagnet extends Directive1[Throwable]
 object OnFailureTaskMagnet {
   implicit def apply[T](task: ⇒ Task[T])(implicit m: ToResponseMarshaller[T]) =
     new OnFailureTaskMagnet {
-      def happly(f: (Throwable :: HNil) ⇒ Route) = ctx ⇒ task.runAsync {
+      def happly(f: (Throwable :: HNil) ⇒ Route) = ctx ⇒ task.unsafePerformAsync {
         case \/-(t) ⇒ ctx.complete(t)
         case -\/(error) ⇒
           try f(error :: HNil)(ctx)

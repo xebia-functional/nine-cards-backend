@@ -6,7 +6,7 @@ import doobie.imports._
 import org.flywaydb.core.Flyway
 
 import scala.util.Random
-import scalaz.Foldable
+import scalaz.{ \/, Foldable }
 import scalaz.concurrent.Task
 
 trait DomainDatabaseContext {
@@ -21,6 +21,11 @@ trait DomainDatabaseContext {
   val testPassword = ""
 
   val transactor: Transactor[Task] = DriverManagerTransactor[Task](testDriver, testUrl, testUsername, testPassword)
+
+  implicit class Transacting[A](operation: ConnectionIO[A]) {
+    def transactAndRun(): A = operation.transact(transactor).unsafePerformSync
+    def transactAndAttempt(): \/[Throwable, A] = operation.transact(transactor).unsafePerformSyncAttempt
+  }
 
   implicit val userPersistence = new Persistence[User](supportsSelectForUpdate = false)
   implicit val installationPersistence = new Persistence[Installation](supportsSelectForUpdate = false)

@@ -3,7 +3,7 @@ package com.fortysevendeg.ninecards.services.persistence
 import com.fortysevendeg.ninecards.services.free.domain.{ Category, PackageName }
 import com.fortysevendeg.ninecards.services.free.domain.rankings._
 import com.fortysevendeg.ninecards.services.persistence.NineCardsGenEntities._
-import doobie.imports._
+import doobie.imports.ConnectionIO
 import org.specs2.ScalaCheck
 import org.specs2.matcher.DisjunctionMatchers
 import org.specs2.mutable.Specification
@@ -31,7 +31,7 @@ class RankingPersistenceServicesSpec
 
     "return an empty ranking if the table is empty" in prop {
       (scope: GeoScope) ⇒
-        val storeRanking = rankingPersistenceServices.getRanking(scope).transact(transactor).run
+        val storeRanking = rankingPersistenceServices.getRanking(scope).transactAndRun
         storeRanking shouldEqual Ranking(Map.empty)
     }
 
@@ -39,9 +39,9 @@ class RankingPersistenceServicesSpec
       val id: Long = (for {
         d ← deleteItems(Queries.deleteBy(scope))
         i ← insertItems[List, Entry](Queries.insertBy(scope), entries)
-      } yield i).transact(transactor).run
+      } yield i).transactAndRun
 
-      val storeRanking = rankingPersistenceServices.getRanking(scope).transact(transactor).run
+      val storeRanking = rankingPersistenceServices.getRanking(scope).transactAndRun
 
       val cats = storeRanking.categories
 
@@ -72,9 +72,9 @@ class RankingPersistenceServicesSpec
       prop { (scope: GeoScope) ⇒
         val pp = rankingPersistenceServices
           .setRanking(scope, Ranking(Map.empty))
-          .transact(transactor).run
+          .transactAndRun
 
-        val storeRanking = rankingPersistenceServices.getRanking(scope).transact(transactor).run
+        val storeRanking = rankingPersistenceServices.getRanking(scope).transactAndRun
 
         storeRanking shouldEqual Ranking(Map.empty)
       }
@@ -84,9 +84,9 @@ class RankingPersistenceServicesSpec
       prop { (scope: GeoScope, ranking: Ranking) ⇒
         val pp = rankingPersistenceServices
           .setRanking(scope, ranking)
-          .transact(transactor).run
+          .transactAndRun
 
-        val storeRanking = rankingPersistenceServices.getRanking(scope).transact(transactor).run
+        val storeRanking = rankingPersistenceServices.getRanking(scope).transactAndRun
         val expected = Ranking(ranking.categories.filterNot(_._2.ranking.isEmpty))
         storeRanking shouldEqual expected
       }

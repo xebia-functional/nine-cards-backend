@@ -86,7 +86,7 @@ class GooglePlayServicesSpec
 
     "return the App object when a valid package name is provided" in {
       val response = services.resolveOne(appsNames.italy, auth.params)
-      response.attemptRun should be_\/-[String Xor AppInfo].which {
+      response.unsafePerformSyncAttempt should be_\/-[String Xor AppInfo].which {
         content ⇒ content should beXorRight[AppInfo]
       }
     }
@@ -96,7 +96,7 @@ class GooglePlayServicesSpec
   "resolveMany" should {
     "return the list of apps that are valid" in {
       val response = services.resolveMany(List(appsNames.italy, appsNames.prussia), auth.params)
-      response.attemptRun should be_\/-[AppsInfo]
+      response.unsafePerformSyncAttempt should be_\/-[AppsInfo]
     }
   }
 

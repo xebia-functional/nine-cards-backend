@@ -15,7 +15,7 @@ object ConnectionIOOps {
 
   implicit class ConnectionIOOps[A](c: ConnectionIO[A]) {
     def liftF[F[_]](implicit dbOps: DBOps[F], transactor: Transactor[Task]): cats.free.Free[F, A] =
-      transactor.trans(c).attemptRun match {
+      transactor.trans(c).unsafePerformSyncAttempt match {
         case \/-(value) ⇒ dbOps.success(value)
         case -\/(e) ⇒
           dbOps.failure(
@@ -28,7 +28,7 @@ object ConnectionIOOps {
   }
 
   implicit class TaskOps[A](task: Task[A]) {
-    def liftF[F[_]](implicit dbOps: DBOps[F]): cats.free.Free[F, A] = task.attemptRun match {
+    def liftF[F[_]](implicit dbOps: DBOps[F]): cats.free.Free[F, A] = task.unsafePerformSyncAttempt match {
       case \/-(value) ⇒ dbOps.success(value)
       case -\/(e) ⇒
         dbOps.failure(

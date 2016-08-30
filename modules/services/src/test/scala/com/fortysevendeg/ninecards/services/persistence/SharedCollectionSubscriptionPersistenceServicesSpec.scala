@@ -3,7 +3,7 @@ package com.fortysevendeg.ninecards.services.persistence
 import com.fortysevendeg.ninecards.services.free.domain._
 import com.fortysevendeg.ninecards.services.persistence.SharedCollectionPersistenceServices.SharedCollectionData
 import com.fortysevendeg.ninecards.services.persistence.UserPersistenceServices.UserData
-import doobie.imports._
+import doobie.imports.ConnectionIO
 import org.specs2.ScalaCheck
 import org.specs2.matcher.DisjunctionMatchers
 import org.specs2.mutable.Specification
@@ -31,15 +31,15 @@ class SharedCollectionSubscriptionPersistenceServicesSpec
         val (userId: Long, collectionId: Long) = (for {
           u ← insertItem(User.Queries.insert, userData.toTuple)
           c ← insertItem(SharedCollection.Queries.insert, collectionData.copy(userId = Option(u)).toTuple)
-        } yield (u, c)).transact(transactor).run
+        } yield (u, c)).transactAndRun
 
         val id: Long = scSubscriptionPersistenceServices.addSubscription[Long](
           collectionId = collectionId,
           userId       = userId
-        ).transact(transactor).run
+        ).transactAndRun
 
         val storedSubscription =
-          scSubscriptionPersistenceServices.getSubscriptionById(id).transact(transactor).run
+          scSubscriptionPersistenceServices.getSubscriptionById(id).transactAndRun
 
         storedSubscription must beSome[SharedCollectionSubscription].which { subscription ⇒
           subscription.sharedCollectionId must_== collectionId
@@ -55,7 +55,7 @@ class SharedCollectionSubscriptionPersistenceServicesSpec
         val subscriptions =
           scSubscriptionPersistenceServices.getSubscriptionsByCollection(
             collectionId = collectionId
-          ).transact(transactor).run
+          ).transactAndRun
 
         subscriptions must beEmpty
       }
@@ -66,12 +66,12 @@ class SharedCollectionSubscriptionPersistenceServicesSpec
           u ← insertItem(User.Queries.insert, userData.toTuple)
           c ← insertItem(SharedCollection.Queries.insert, collectionData.copy(userId = Option(u)).toTuple)
           s ← insertItem(SharedCollectionSubscription.Queries.insert, (c, u))
-        } yield c).transact(transactor).run
+        } yield c).transactAndRun
 
         val storedSubscriptions =
           scSubscriptionPersistenceServices.getSubscriptionsByCollection(
             collectionId = collectionId
-          ).transact(transactor).run
+          ).transactAndRun
 
         storedSubscriptions must contain { subscription: SharedCollectionSubscription ⇒
           subscription.sharedCollectionId must_== collectionId
@@ -84,11 +84,11 @@ class SharedCollectionSubscriptionPersistenceServicesSpec
           u ← insertItem(User.Queries.insert, userData.toTuple)
           c ← insertItem(SharedCollection.Queries.insert, collectionData.copy(userId = Option(u)).toTuple)
           _ ← insertItem(SharedCollectionSubscription.Queries.insert, (c, u))
-        } yield c).transact(transactor).run
+        } yield c).transactAndRun
 
         val subscriptions = scSubscriptionPersistenceServices.getSubscriptionsByCollection(
           collectionId = collectionId + 1000000
-        ).transact(transactor).run
+        ).transactAndRun
 
         subscriptions must beEmpty
       }
@@ -101,7 +101,7 @@ class SharedCollectionSubscriptionPersistenceServicesSpec
         val subscription = scSubscriptionPersistenceServices.getSubscriptionByCollectionAndUser(
           collectionId = collectionId,
           userId       = userId
-        ).transact(transactor).run
+        ).transactAndRun
 
         subscription must beNone
       }
@@ -112,12 +112,12 @@ class SharedCollectionSubscriptionPersistenceServicesSpec
           u ← insertItem(User.Queries.insert, userData.toTuple)
           c ← insertItem(SharedCollection.Queries.insert, collectionData.copy(userId = Option(u)).toTuple)
           _ ← insertItem(SharedCollectionSubscription.Queries.insert, (c, u))
-        } yield (u, c)).transact(transactor).run
+        } yield (u, c)).transactAndRun
 
         val subscription = scSubscriptionPersistenceServices.getSubscriptionByCollectionAndUser(
           collectionId = collectionId,
           userId       = userId
-        ).transact(transactor).run
+        ).transactAndRun
 
         subscription must beSome[SharedCollectionSubscription].which { s ⇒
           s.sharedCollectionId must_== collectionId
@@ -131,12 +131,12 @@ class SharedCollectionSubscriptionPersistenceServicesSpec
           u ← insertItem(User.Queries.insert, userData.toTuple)
           c ← insertItem(SharedCollection.Queries.insert, collectionData.copy(userId = Option(u)).toTuple)
           _ ← insertItem(SharedCollectionSubscription.Queries.insert, (c, u))
-        } yield (u, c)).transact(transactor).run
+        } yield (u, c)).transactAndRun
 
         val subscription = scSubscriptionPersistenceServices.getSubscriptionByCollectionAndUser(
           collectionId = collectionId + 1000000,
           userId       = userId + 1000000
-        ).transact(transactor).run
+        ).transactAndRun
 
         subscription must beNone
       }
@@ -148,7 +148,7 @@ class SharedCollectionSubscriptionPersistenceServicesSpec
       prop { (id: Long) ⇒
         val subscription = scSubscriptionPersistenceServices.getSubscriptionById(
           subscriptionId = id
-        ).transact(transactor).run
+        ).transactAndRun
 
         subscription must beNone
       }
@@ -159,11 +159,11 @@ class SharedCollectionSubscriptionPersistenceServicesSpec
           u ← insertItem(User.Queries.insert, userData.toTuple)
           c ← insertItem(SharedCollection.Queries.insert, collectionData.copy(userId = Option(u)).toTuple)
           s ← insertItem(SharedCollectionSubscription.Queries.insert, (c, u))
-        } yield (u, c, s)).transact(transactor).run
+        } yield (u, c, s)).transactAndRun
 
         val storedSubscription = scSubscriptionPersistenceServices.getSubscriptionById(
           subscriptionId = id
-        ).transact(transactor).run
+        ).transactAndRun
 
         storedSubscription must beSome[SharedCollectionSubscription].which { subscription ⇒
           subscription.sharedCollectionId must_== collectionId
@@ -177,11 +177,11 @@ class SharedCollectionSubscriptionPersistenceServicesSpec
           u ← insertItem(User.Queries.insert, userData.toTuple)
           c ← insertItem(SharedCollection.Queries.insert, collectionData.copy(userId = Option(u)).toTuple)
           s ← insertItem(SharedCollectionSubscription.Queries.insert, (c, u))
-        } yield s).transact(transactor).run
+        } yield s).transactAndRun
 
         val storedSubscription = scSubscriptionPersistenceServices.getSubscriptionById(
           subscriptionId = id + 1000000
-        ).transact(transactor).run
+        ).transactAndRun
 
         storedSubscription must beNone
       }
@@ -193,7 +193,7 @@ class SharedCollectionSubscriptionPersistenceServicesSpec
       prop { (userId: Long) ⇒
         val subscriptions = scSubscriptionPersistenceServices.getSubscriptionsByUser(
           userId = userId
-        ).transact(transactor).run
+        ).transactAndRun
 
         subscriptions must beEmpty
       }
@@ -204,11 +204,11 @@ class SharedCollectionSubscriptionPersistenceServicesSpec
           u ← insertItem(User.Queries.insert, userData.toTuple)
           c ← insertItem(SharedCollection.Queries.insert, collectionData.copy(userId = Option(u)).toTuple)
           _ ← insertItem(SharedCollectionSubscription.Queries.insert, (c, u))
-        } yield u).transact(transactor).run
+        } yield u).transactAndRun
 
         val storedSubscriptions = scSubscriptionPersistenceServices.getSubscriptionsByUser(
           userId = userId
-        ).transact(transactor).run
+        ).transactAndRun
 
         storedSubscriptions must contain { subscription: SharedCollectionSubscription ⇒
           subscription.userId must_== userId
@@ -221,11 +221,11 @@ class SharedCollectionSubscriptionPersistenceServicesSpec
           u ← insertItem(User.Queries.insert, userData.toTuple)
           c ← insertItem(SharedCollection.Queries.insert, collectionData.copy(userId = Option(u)).toTuple)
           _ ← insertItem(SharedCollectionSubscription.Queries.insert, (c, u))
-        } yield u).transact(transactor).run
+        } yield u).transactAndRun
 
         val subscriptions = scSubscriptionPersistenceServices.getSubscriptionsByUser(
           userId = userId + 1000000
-        ).transact(transactor).run
+        ).transactAndRun
 
         subscriptions must beEmpty
       }
@@ -238,7 +238,7 @@ class SharedCollectionSubscriptionPersistenceServicesSpec
         val deleted = scSubscriptionPersistenceServices.removeSubscriptionByCollectionAndUser(
           collectionId = collectionId,
           userId       = userId
-        ).transact(transactor).run
+        ).transactAndRun
 
         deleted must_== 0
       }
@@ -249,12 +249,12 @@ class SharedCollectionSubscriptionPersistenceServicesSpec
           u ← insertItem(User.Queries.insert, userData.toTuple)
           c ← insertItem(SharedCollection.Queries.insert, collectionData.copy(userId = Option(u)).toTuple)
           s ← insertItem(SharedCollectionSubscription.Queries.insert, (c, u))
-        } yield (u, c)).transact(transactor).run
+        } yield (u, c)).transactAndRun
 
         val deleted = scSubscriptionPersistenceServices.removeSubscriptionByCollectionAndUser(
           collectionId = collectionId,
           userId       = userId
-        ).transact(transactor).run
+        ).transactAndRun
 
         deleted must_== 1
       }

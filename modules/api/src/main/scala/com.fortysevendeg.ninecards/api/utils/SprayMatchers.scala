@@ -21,9 +21,10 @@ object SprayMatchers {
   class EnumSegment[E <: EnumEntry](implicit En: Enum[E]) extends PathMatcher1[E] {
     def apply(path: Path) = path match {
       case Path.Segment(segment, tail) ⇒ En.withNameOption(segment) match {
-        case Some(e) => Matched(tail, e :: HNil)
-        case None => Unmatched
+        case Some(e) ⇒ Matched(tail, e :: HNil)
+        case None ⇒ Unmatched
       }
+      case _ ⇒ Unmatched
     }
   }
 

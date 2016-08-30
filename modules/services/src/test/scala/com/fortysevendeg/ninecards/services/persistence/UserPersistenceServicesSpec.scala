@@ -2,7 +2,7 @@ package com.fortysevendeg.ninecards.services.persistence
 
 import com.fortysevendeg.ninecards.services.free.domain.{ Installation, User }
 import com.fortysevendeg.ninecards.services.persistence.NineCardsGenEntities._
-import doobie.imports._
+import doobie.imports.ConnectionIO
 import org.specs2.ScalaCheck
 import org.specs2.matcher.DisjunctionMatchers
 import org.specs2.mutable.Specification
@@ -30,9 +30,9 @@ class UserPersistenceServicesSpec
           email        = email.value,
           apiKey       = apiKey.value,
           sessionToken = sessionToken.value
-        ).transact(transactor).run
+        ).transactAndRun
 
-        val storeUser = userPersistenceServices.getUserByEmail(email.value).transact(transactor).run
+        val storeUser = userPersistenceServices.getUserByEmail(email.value).transactAndRun
 
         storeUser should beSome[User].which {
           user ⇒ user.email shouldEqual email.value
@@ -44,7 +44,7 @@ class UserPersistenceServicesSpec
   "getUserByEmail" should {
     "return None if the table is empty" in {
       prop { (email: Email) ⇒
-        val storeUser = userPersistenceServices.getUserByEmail(email.value).transact(transactor).run
+        val storeUser = userPersistenceServices.getUserByEmail(email.value).transactAndRun
         storeUser should beNone
       }
     }
@@ -54,8 +54,8 @@ class UserPersistenceServicesSpec
           email        = email.value,
           apiKey       = apiKey.value,
           sessionToken = sessionToken.value
-        ).transact(transactor).run
-        val storeUser = userPersistenceServices.getUserByEmail(email.value).transact(transactor).run
+        ).transactAndRun
+        val storeUser = userPersistenceServices.getUserByEmail(email.value).transactAndRun
 
         storeUser should beSome[User].which {
           user ⇒
@@ -77,8 +77,8 @@ class UserPersistenceServicesSpec
           email        = email.value,
           apiKey       = apiKey.value,
           sessionToken = sessionToken.value
-        ).transact(transactor).run
-        val storeUser = userPersistenceServices.getUserByEmail(email.value.reverse).transact(transactor).run
+        ).transactAndRun
+        val storeUser = userPersistenceServices.getUserByEmail(email.value.reverse).transactAndRun
 
         storeUser should beNone
       }
@@ -91,7 +91,7 @@ class UserPersistenceServicesSpec
 
         val user = userPersistenceServices.getUserBySessionToken(
           sessionToken = sessionToken.value
-        ).transact(transactor).run
+        ).transactAndRun
 
         user should beNone
       }
@@ -101,11 +101,11 @@ class UserPersistenceServicesSpec
         insertItem(
           sql    = User.Queries.insert,
           values = (email.value, sessionToken.value, apiKey.value)
-        ).transact(transactor).run
+        ).transactAndRun
 
         val user = userPersistenceServices.getUserBySessionToken(
           sessionToken = sessionToken.value
-        ).transact(transactor).run
+        ).transactAndRun
 
         user should beSome[User]
       }
@@ -115,11 +115,11 @@ class UserPersistenceServicesSpec
         insertItem(
           sql    = User.Queries.insert,
           values = (email.value, sessionToken.value, apiKey.value)
-        ).transact(transactor).run
+        ).transactAndRun
 
         val user = userPersistenceServices.getUserBySessionToken(
           sessionToken = sessionToken.value.reverse
-        ).transact(transactor).run
+        ).transactAndRun
 
         user should beNone
       }
@@ -132,17 +132,17 @@ class UserPersistenceServicesSpec
         val userId = insertItem(
           sql    = User.Queries.insert,
           values = (email.value, sessionToken.value, apiKey.value)
-        ).transact(transactor).run
+        ).transactAndRun
 
         val id = userPersistenceServices.createInstallation[Long](
           userId      = userId,
           deviceToken = None,
           androidId   = androidId.value
-        ).transact(transactor).run
+        ).transactAndRun
 
         val storeInstallation = userPersistenceServices.getInstallationById(
           id = id
-        ).transact(transactor).run
+        ).transactAndRun
 
         storeInstallation should beSome[Installation].which {
           install ⇒ install shouldEqual Installation(id = id, userId = userId, deviceToken = None, androidId = androidId.value)
@@ -157,7 +157,7 @@ class UserPersistenceServicesSpec
         val storeInstallation = userPersistenceServices.getInstallationByUserAndAndroidId(
           userId    = userId,
           androidId = androidId.value
-        ).transact(transactor).run
+        ).transactAndRun
 
         storeInstallation should beNone
       }
@@ -167,17 +167,17 @@ class UserPersistenceServicesSpec
         val userId = insertItem(
           sql    = User.Queries.insert,
           values = (email.value, sessionToken.value, apiKey.value)
-        ).transact(transactor).run
+        ).transactAndRun
 
         val id = insertItem(
           sql    = Installation.Queries.insert,
           values = (userId, emptyDeviceToken, androidId.value)
-        ).transact(transactor).run
+        ).transactAndRun
 
         val storeInstallation = userPersistenceServices.getInstallationByUserAndAndroidId(
           userId    = userId,
           androidId = androidId.value
-        ).transact(transactor).run
+        ).transactAndRun
 
         storeInstallation should beSome[Installation].which {
           install ⇒ install.id shouldEqual id
@@ -189,16 +189,16 @@ class UserPersistenceServicesSpec
         val userId = insertItem(
           sql    = User.Queries.insert,
           values = (email.value, sessionToken.value, apiKey.value)
-        ).transact(transactor).run
+        ).transactAndRun
         val id = insertItem(
           sql    = Installation.Queries.insert,
           values = (userId, emptyDeviceToken, androidId.value)
-        ).transact(transactor).run
+        ).transactAndRun
 
         val storeInstallation = userPersistenceServices.getInstallationByUserAndAndroidId(
           userId    = userId,
           androidId = androidId.value.reverse
-        ).transact(transactor).run
+        ).transactAndRun
 
         storeInstallation should beNone
       }
