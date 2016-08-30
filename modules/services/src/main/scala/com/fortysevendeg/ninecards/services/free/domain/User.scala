@@ -27,12 +27,16 @@ object User {
 }
 
 object Installation {
-  val allFields = List("id", "userid", "devicetoken", "androidid")
+  val fields = List("userid", "devicetoken", "androidid")
+  val allFields = "id" +: fields
+
+  val insertFields = fields.mkString(",")
+  val insertWildCards = fields.map(_ ⇒ "?").mkString(",")
 
   object Queries {
     val getByUserAndAndroidId = "select * from installations where userid=? and androidid=?"
     val getById = "select * from installations where id=?"
-    val insert = "insert into installations(userid,devicetoken,androidid) values(?,?,?)"
+    val insert = s"insert into installations($insertFields) values($insertWildCards)"
     val updateDeviceToken = "update installations set devicetoken=? where userid=? and androidid=?"
   }
 

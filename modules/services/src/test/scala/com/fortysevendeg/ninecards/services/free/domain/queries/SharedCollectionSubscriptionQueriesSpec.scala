@@ -44,12 +44,6 @@ class SharedCollectionSubscriptionQueriesSpec
   )
   check(insertQuery)
 
-  val deleteQuery = collectionSubscriptionPersistence.generateUpdateWithGeneratedKeys(
-    sql    = delete,
-    values = id
-  )
-  check(deleteQuery)
-
   val deleteByCollectionAndUserQuery = collectionSubscriptionPersistence.generateUpdateWithGeneratedKeys(
     sql    = deleteByCollectionAndUser,
     values = (collectionId, userId)
