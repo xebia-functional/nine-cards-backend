@@ -1,39 +1,37 @@
 package com.fortysevendeg.ninecards.api
 
-import com.fortysevendeg.ninecards.services.free.domain.Category
 import org.joda.time.{ DateTime, DateTimeZone }
-import org.joda.time.format.DateTimeFormat
 import org.specs2.matcher.Matchers
 import org.specs2.mutable.Specification
+import spray.json.DefaultJsonProtocol._
 import spray.json._
 
-class JsonFormatsSpecification extends Specification with Matchers {
+class JsonFormatsSpec extends Specification with Matchers {
 
   sequential
 
   "JodaDateTimeFormat, the Json Format for dates," should {
 
     import com.fortysevendeg.ninecards.api.JsonFormats.JodaDateTimeFormat
-    import DefaultJsonProtocol._
 
     val date = new DateTime(2013, 5, 23, 0, 0, DateTimeZone.UTC)
 
     "transfer it to a Json string as format" in {
-      date.toJson must beEqualTo(JsString("2013-05-23T00:00:00.000000"))
-    }.pendingUntilFixed()
+      date.toJson must beEqualTo(JsString("2013-05-23T00:00:00.000+0000"))
+    }
 
     "parse it from a Json String" in {
-      val str = """ "2013-05-23T00:00:00.000000" """
+      val str = """ "2013-05-23T00:00:00.000+0000" """
       str.parseJson.convertTo[DateTime] shouldEqual date
-    }.pendingUntilFixed()
+    }
 
     case class MyDate(date: DateTime)
     implicit val format = jsonFormat1(MyDate)
 
     "use it properly in a record" in {
-      val str = """ { "date" : "2013-05-23T00:00:00.000000" } """
+      val str = """ { "date" : "2013-05-23T00:00:00.000Z" } """
       str.parseJson.convertTo[MyDate] shouldEqual MyDate(date)
-    }.pendingUntilFixed()
+    }
 
   }
 
