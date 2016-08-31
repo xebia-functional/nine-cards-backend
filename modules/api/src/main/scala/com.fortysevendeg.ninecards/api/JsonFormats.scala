@@ -18,7 +18,7 @@ trait JsonFormats
   with SprayJsonSupport {
 
   implicit object JodaDateTimeFormat extends RootJsonFormat[DateTime] {
-    val formatter = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZ")
+    val formatter = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZ").withZoneUTC
     val dateExample = formatter.print(0)
 
     def error(v: String) = deserializationError(
@@ -41,7 +41,7 @@ trait JsonFormats
     )
 
     def read(json: JsValue): DateTime = json match {
-      case JsString(s) ⇒ decodeDateTime(Json.fromString(s).hcursor).fold(error(s), d ⇒ d)
+      case JsString(s) ⇒ decodeDateTime(Json.fromString(s).hcursor).fold(_ ⇒ error(s), d ⇒ d)
       case _ ⇒ error(json.toString)
     }
 
