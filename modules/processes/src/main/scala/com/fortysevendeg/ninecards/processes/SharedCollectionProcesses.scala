@@ -98,10 +98,13 @@ class SharedCollectionProcesses[F[_]](
       subscription: Option[SharedCollectionSubscription],
       collectionId: Long,
       collectionPublicId: String
-    ): ConnectionIO[SubscribeResponse] =
+    ): ConnectionIO[SubscribeResponse] = {
+      val subscriptionCount = 1
+
       subscription
-        .fold(subscriptionPersistence.addSubscription[SharedCollectionSubscription](collectionId, userId, collectionPublicId))(_.point[ConnectionIO])
+        .fold(subscriptionPersistence.addSubscription(collectionId, userId, collectionPublicId))(_ ⇒ subscriptionCount.point[ConnectionIO])
         .map(_ ⇒ SubscribeResponse())
+    }
 
     for {
       collection ← findCollection(publicIdentifier)

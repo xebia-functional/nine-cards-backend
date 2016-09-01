@@ -103,8 +103,8 @@ trait SharedCollectionProcessesSpecification
     ) returns updatedPackagesCount.point[ConnectionIO]
 
     sharedCollectionSubscriptionPersistenceServices
-      .addSubscription[SharedCollectionSubscription](any, any, any)(any) returns
-      subscription.point[ConnectionIO]
+      .addSubscription(any, any, any) returns
+      updatedSubscriptionsCount.point[ConnectionIO]
 
     sharedCollectionSubscriptionPersistenceServices
       .getSubscriptionsByUser(any) returns

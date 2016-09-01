@@ -1,6 +1,5 @@
 package com.fortysevendeg.ninecards.api
 
-import cats.data.Xor
 import com.fortysevendeg.ninecards.api.NineCardsHeaders._
 import com.fortysevendeg.ninecards.api.messages.GooglePlayMessages.ApiCategorizeAppsRequest
 import com.fortysevendeg.ninecards.api.messages.InstallationsMessages.ApiUpdateInstallationRequest
@@ -226,6 +225,8 @@ object TestData {
     val latestCollections = "/collections/latest/SOCIAL/0/25"
 
     val login = "/login"
+
+    val subscriptionByCollectionId = "/collections/subscriptions/40daf308-fecf-4228-9262-a712d783cf49"
 
     val subscriptionsByUser = "/collections/subscriptions"
 

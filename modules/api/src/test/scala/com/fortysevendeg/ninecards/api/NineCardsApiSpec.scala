@@ -392,9 +392,9 @@ class NineCardsApiSpec
     successOk(request)
   }
 
-  "PUT /collections/collectionId/subscribe" should {
+  "PUT /collections/subscriptions/collectionId" should {
 
-    val request = Put(s"${Paths.collectionById}/subscribe")
+    val request = Put(Paths.subscriptionByCollectionId)
 
     unauthorizedNoHeaders(request)
 
@@ -405,9 +405,9 @@ class NineCardsApiSpec
     successOk(request)
   }
 
-  "DELETE /collections/collectionId/subscribe" should {
+  "DELETE /collections/subscriptions/collectionId" should {
 
-    val request = Delete(s"${Paths.collectionById}/subscribe")
+    val request = Delete(Paths.subscriptionByCollectionId)
 
     unauthorizedNoHeaders(request)
 

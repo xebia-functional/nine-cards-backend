@@ -43,6 +43,9 @@ trait DomainDatabaseContext {
   flywaydb.setDataSource(testUrl, testUsername, testPassword)
   flywaydb.migrate()
 
+  def insertItemWithoutGeneratedKeys[A: Composite](sql: String, values: A): ConnectionIO[Int] =
+    Update[A](sql).toUpdate0(values).run
+
   def insertItem[A: Composite](sql: String, values: A): ConnectionIO[Long] =
     Update[A](sql).toUpdate0(values).withUniqueGeneratedKeys[Long]("id")
 

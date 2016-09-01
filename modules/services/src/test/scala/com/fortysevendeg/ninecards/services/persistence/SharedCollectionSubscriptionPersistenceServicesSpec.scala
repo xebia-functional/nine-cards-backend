@@ -3,7 +3,6 @@ package com.fortysevendeg.ninecards.services.persistence
 import com.fortysevendeg.ninecards.services.free.domain._
 import com.fortysevendeg.ninecards.services.persistence.SharedCollectionPersistenceServices.SharedCollectionData
 import com.fortysevendeg.ninecards.services.persistence.UserPersistenceServices.UserData
-import doobie.imports.ConnectionIO
 import org.specs2.ScalaCheck
 import org.specs2.matcher.DisjunctionMatchers
 import org.specs2.mutable.Specification
@@ -25,6 +24,17 @@ class SharedCollectionSubscriptionPersistenceServicesSpec
     flywaydb.migrate()
   }
 
+  def generateSubscription(userData: UserData, collectionData: SharedCollectionData) = {
+    for {
+      u ← insertItem(User.Queries.insert, userData.toTuple)
+      c ← insertItem(SharedCollection.Queries.insert, collectionData.copy(userId = Option(u)).toTuple)
+      _ ← insertItemWithoutGeneratedKeys(
+        sql    = SharedCollectionSubscription.Queries.insert,
+        values = (c, u, collectionData.publicIdentifier)
+      )
+    } yield (u, c)
+  }.transactAndRun
+
   "addSubscription" should {
     "create a new subscriptions when an existing user and shared collection is given" in {
       prop { (userData: UserData, collectionData: SharedCollectionData) ⇒
@@ -33,14 +43,17 @@ class SharedCollectionSubscriptionPersistenceServicesSpec
           c ← insertItem(SharedCollection.Queries.insert, collectionData.copy(userId = Option(u)).toTuple)
         } yield (u, c)).transactAndRun
 
-        val id: Long = scSubscriptionPersistenceServices.addSubscription[Long](
+        scSubscriptionPersistenceServices.addSubscription(
           collectionId       = collectionId,
           userId             = userId,
           collectionPublicId = collectionData.publicIdentifier
         ).transactAndRun
 
         val storedSubscription =
-          scSubscriptionPersistenceServices.getSubscriptionById(id).transactAndRun
+          scSubscriptionPersistenceServices.getSubscriptionByCollectionAndUser(
+            collectionId = collectionId,
+            userId       = userId
+          ).transactAndRun
 
         storedSubscription must beSome[SharedCollectionSubscription].which { subscription ⇒
           subscription.sharedCollectionId must_== collectionId
@@ -63,11 +76,7 @@ class SharedCollectionSubscriptionPersistenceServicesSpec
     }
     "return a list of subscriptions associated with the given collection" in {
       prop { (userData: UserData, collectionData: SharedCollectionData) ⇒
-        val collectionId = (for {
-          u ← insertItem(User.Queries.insert, userData.toTuple)
-          c ← insertItem(SharedCollection.Queries.insert, collectionData.copy(userId = Option(u)).toTuple)
-          s ← insertItem(SharedCollectionSubscription.Queries.insert, (c, u, collectionData.publicIdentifier))
-        } yield c).transactAndRun
+        val (_, collectionId) = generateSubscription(userData, collectionData)
 
         val storedSubscriptions =
           scSubscriptionPersistenceServices.getSubscriptionsByCollection(
@@ -81,11 +90,7 @@ class SharedCollectionSubscriptionPersistenceServicesSpec
     }
     "return an empty list if there isn't any subscription associated with the given collection" in {
       prop { (userData: UserData, collectionData: SharedCollectionData) ⇒
-        val collectionId = (for {
-          u ← insertItem(User.Queries.insert, userData.toTuple)
-          c ← insertItem(SharedCollection.Queries.insert, collectionData.copy(userId = Option(u)).toTuple)
-          _ ← insertItem(SharedCollectionSubscription.Queries.insert, (c, u, collectionData.publicIdentifier))
-        } yield c).transactAndRun
+        val (_, collectionId) = generateSubscription(userData, collectionData)
 
         val subscriptions = scSubscriptionPersistenceServices.getSubscriptionsByCollection(
           collectionId = collectionId + 1000000
@@ -109,11 +114,7 @@ class SharedCollectionSubscriptionPersistenceServicesSpec
     }
     "return a subscription if there is a record for the given user and collection in the database" in {
       prop { (userData: UserData, collectionData: SharedCollectionData) ⇒
-        val (userId: Long, collectionId: Long) = (for {
-          u ← insertItem(User.Queries.insert, userData.toTuple)
-          c ← insertItem(SharedCollection.Queries.insert, collectionData.copy(userId = Option(u)).toTuple)
-          _ ← insertItem(SharedCollectionSubscription.Queries.insert, (c, u, collectionData.publicIdentifier))
-        } yield (u, c)).transactAndRun
+        val (userId, collectionId) = generateSubscription(userData, collectionData)
 
         val subscription = scSubscriptionPersistenceServices.getSubscriptionByCollectionAndUser(
           collectionId = collectionId,
@@ -128,11 +129,7 @@ class SharedCollectionSubscriptionPersistenceServicesSpec
     }
     "return None if there isn't any subscription for the given user and collection in the database" in {
       prop { (userData: UserData, collectionData: SharedCollectionData) ⇒
-        val (userId: Long, collectionId: Long) = (for {
-          u ← insertItem(User.Queries.insert, userData.toTuple)
-          c ← insertItem(SharedCollection.Queries.insert, collectionData.copy(userId = Option(u)).toTuple)
-          _ ← insertItem(SharedCollectionSubscription.Queries.insert, (c, u, collectionData.publicIdentifier))
-        } yield (u, c)).transactAndRun
+        val (userId, collectionId) = generateSubscription(userData, collectionData)
 
         val subscription = scSubscriptionPersistenceServices.getSubscriptionByCollectionAndUser(
           collectionId = collectionId + 1000000,
@@ -140,51 +137,6 @@ class SharedCollectionSubscriptionPersistenceServicesSpec
         ).transactAndRun
 
         subscription must beNone
-      }
-    }
-  }
-
-  "getSubscriptionById" should {
-    "return None if the table is empty" in {
-      prop { (id: Long) ⇒
-        val subscription = scSubscriptionPersistenceServices.getSubscriptionById(
-          subscriptionId = id
-        ).transactAndRun
-
-        subscription must beNone
-      }
-    }
-    "return a subscription if there is a record for the given id in the database" in {
-      prop { (userData: UserData, collectionData: SharedCollectionData) ⇒
-        val (userId: Long, collectionId: Long, id: Long) = (for {
-          u ← insertItem(User.Queries.insert, userData.toTuple)
-          c ← insertItem(SharedCollection.Queries.insert, collectionData.copy(userId = Option(u)).toTuple)
-          s ← insertItem(SharedCollectionSubscription.Queries.insert, (c, u, collectionData.publicIdentifier))
-        } yield (u, c, s)).transactAndRun
-
-        val storedSubscription = scSubscriptionPersistenceServices.getSubscriptionById(
-          subscriptionId = id
-        ).transactAndRun
-
-        storedSubscription must beSome[SharedCollectionSubscription].which { subscription ⇒
-          subscription.sharedCollectionId must_== collectionId
-          subscription.userId must_== userId
-        }
-      }
-    }
-    "return None if there isn't any subscription for the given id in the database" in {
-      prop { (userData: UserData, collectionData: SharedCollectionData) ⇒
-        val id = (for {
-          u ← insertItem(User.Queries.insert, userData.toTuple)
-          c ← insertItem(SharedCollection.Queries.insert, collectionData.copy(userId = Option(u)).toTuple)
-          s ← insertItem(SharedCollectionSubscription.Queries.insert, (c, u, collectionData.publicIdentifier))
-        } yield s).transactAndRun
-
-        val storedSubscription = scSubscriptionPersistenceServices.getSubscriptionById(
-          subscriptionId = id + 1000000
-        ).transactAndRun
-
-        storedSubscription must beNone
       }
     }
   }
@@ -201,11 +153,7 @@ class SharedCollectionSubscriptionPersistenceServicesSpec
     }
     "return a list of subscriptions associated for the given user" in {
       prop { (userData: UserData, collectionData: SharedCollectionData) ⇒
-        val userId = (for {
-          u ← insertItem(User.Queries.insert, userData.toTuple)
-          c ← insertItem(SharedCollection.Queries.insert, collectionData.copy(userId = Option(u)).toTuple)
-          _ ← insertItem(SharedCollectionSubscription.Queries.insert, (c, u, collectionData.publicIdentifier))
-        } yield u).transactAndRun
+        val (userId, _) = generateSubscription(userData, collectionData)
 
         val storedSubscriptions = scSubscriptionPersistenceServices.getSubscriptionsByUser(
           userId = userId
@@ -218,11 +166,7 @@ class SharedCollectionSubscriptionPersistenceServicesSpec
     }
     "return an empty list if there isn't any subscription associated for the given user" in {
       prop { (userData: UserData, collectionData: SharedCollectionData) ⇒
-        val userId = (for {
-          u ← insertItem(User.Queries.insert, userData.toTuple)
-          c ← insertItem(SharedCollection.Queries.insert, collectionData.copy(userId = Option(u)).toTuple)
-          _ ← insertItem(SharedCollectionSubscription.Queries.insert, (c, u, collectionData.publicIdentifier))
-        } yield u).transactAndRun
+        val (userId, _) = generateSubscription(userData, collectionData)
 
         val subscriptions = scSubscriptionPersistenceServices.getSubscriptionsByUser(
           userId = userId + 1000000
@@ -246,11 +190,7 @@ class SharedCollectionSubscriptionPersistenceServicesSpec
     }
     "return 1 if there is a subscription for the given user and collection in the database" in {
       prop { (userData: UserData, collectionData: SharedCollectionData) ⇒
-        val (userId: Long, collectionId: Long) = (for {
-          u ← insertItem(User.Queries.insert, userData.toTuple)
-          c ← insertItem(SharedCollection.Queries.insert, collectionData.copy(userId = Option(u)).toTuple)
-          s ← insertItem(SharedCollectionSubscription.Queries.insert, (c, u, collectionData.publicIdentifier))
-        } yield (u, c)).transactAndRun
+        val (userId, collectionId) = generateSubscription(userData, collectionData)
 
         val deleted = scSubscriptionPersistenceServices.removeSubscriptionByCollectionAndUser(
           collectionId = collectionId,

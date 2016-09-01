@@ -2,7 +2,6 @@ package com.fortysevendeg.ninecards.api
 
 import akka.actor.{ Actor, ActorRefFactory }
 import cats.data.Xor
-import cats.free.Free
 import com.fortysevendeg.ninecards.api.NineCardsDirectives._
 import com.fortysevendeg.ninecards.api.NineCardsHeaders.Domain._
 import com.fortysevendeg.ninecards.api.converters.Converters._
@@ -142,10 +141,16 @@ class NineCardsRoutes(
               }
             }
         } ~
-        path("subscriptions") {
-          get {
-            complete(getSubscriptionsByUser(userContext))
-          }
+        pathPrefix("subscriptions") {
+          pathEndOrSingleSlash {
+            get {
+              complete(getSubscriptionsByUser(userContext))
+            }
+          } ~
+            path(TypedSegment[PublicIdentifier]) { publicIdentifier ⇒
+              put(complete(subscribe(publicIdentifier, userContext))) ~
+                delete(complete(unsubscribe(publicIdentifier, userContext)))
+            }
         } ~
         pathPrefix(TypedSegment[PublicIdentifier]) { publicIdentifier ⇒
           pathEndOrSingleSlash {
@@ -159,11 +164,7 @@ class NineCardsRoutes(
                   complete(updateCollection(publicIdentifier, request))
                 }
               }
-          } ~
-            path("subscribe") {
-              put(complete(subscribe(publicIdentifier, userContext))) ~
-                delete(complete(unsubscribe(publicIdentifier, userContext)))
-            }
+          }
         }
     }
 
