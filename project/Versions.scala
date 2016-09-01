@@ -23,6 +23,7 @@ object Versions {
   val redisClient = "3.0"
   val embeddedRedis = "0.6"
   val newRelic = "3.29.0"
+  val enumeratum = "1.4.9"
   
   // Test Libs
   val specs2 = "3.6.6" // this is the last version depending on scalaz 7.1.4. Http4s needs Scalaz 7.1

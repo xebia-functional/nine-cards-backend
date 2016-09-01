@@ -34,6 +34,8 @@ object Dependencies {
   private val newRelic = "com.newrelic.agent.java" % "newrelic-agent" % Versions.newRelic
   private val baseDepts = Seq(specs2Core)
 
+  def enumeratum(suffix: String) = "com.beachape" %% s"enumeratum$suffix" % Versions.enumeratum
+
   val apiDeps = Seq(libraryDependencies ++= baseDepts ++ Seq(
     cats,
     sprayHttp,
@@ -44,6 +46,7 @@ object Dependencies {
     circe("core"),
     circe("generic"),
     circe("parser"),
+    enumeratum(""),
     redisClient,
     embeddedRedis,
     newRelic,
