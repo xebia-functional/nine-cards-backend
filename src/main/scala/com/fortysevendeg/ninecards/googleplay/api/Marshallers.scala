@@ -52,8 +52,10 @@ object NineCardsMarshallers {
       o.fold(ctx.marshalTo(response))(itemMarshaller(_, ctx))
     }
 
-  implicit val xorAppMarshaller: ToResponseMarshaller[Xor[InfoError,AppCard]] =
-    ToResponseMarshaller[Xor[InfoError,AppCard]] { (xor, ctx) => xor match {
+  implicit def xorAppMarshaller[A](implicit im: ToResponseMarshaller[A]): ToResponseMarshaller[InfoError Xor A] =
+    ToResponseMarshaller[Xor[InfoError,A]] { (xor, ctx) => xor match {
+      case Xor.Right(a) =>
+        im(a,ctx)
       case Xor.Left(infoError) =>
         val im = implicitly[Marshaller[InfoError]]
         val response = HttpResponse(
@@ -61,11 +63,11 @@ object NineCardsMarshallers {
           entity = spray.httpx.marshalling.marshalUnsafe(infoError)
         )
         ctx.marshalTo(response)
-      case Xor.Right(appCard) =>
-        val im = implicitly[ToResponseMarshaller[AppCard]]
-        im(appCard,ctx)
     }
   }
+
+  implicit val appRecommendationListMarshaller: ToResponseMarshaller[AppRecommendationList] =
+    circeJsonMarshaller(implicitly[Encoder[AppRecommendationList]])
 
   /**
     *  A to response marshaller capable of completing Scalaz concurrent tasks
@@ -78,14 +80,13 @@ object NineCardsMarshallers {
     implicit def makeTRM[A](implicit ma: TRM[A]): TRM[F[A]]
   }
 
-  class TaskMarshaller[A](base: TRM[A]) extends TRM[Task[A]] {
+  class TaskMarshaller[A](m: TRM[A]) extends TRM[Task[A]] {
     override def apply( task: Task[A], ctx: ToResponseMarshallingContext) =
       task.runAsync {
         _.fold(
           left => ctx.handleError(left),
-          right => base.apply(right, ctx))
+          right => m(right, ctx))
       }
-
   }
 
   implicit object TaskMarshallerFactory extends TRMFactory[Task] {

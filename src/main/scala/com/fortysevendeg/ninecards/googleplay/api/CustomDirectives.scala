@@ -32,6 +32,11 @@ object CustomDirectives {
     }
   }
 
+  val priceFilterPath: Directive[PriceFilter :: HNil] =
+    path(CustomMatchers.PriceFilterSegment) |
+    (pathEndOrSingleSlash & provide(PriceFilter.ALL: PriceFilter) )
+
+
 }
 
 object AuthHeadersRejectionHandler {

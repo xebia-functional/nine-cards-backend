@@ -37,6 +37,7 @@ class NineCardsGooglePlayApi[Ops[_]] (
   marshallerFactory: TRMFactory[({type L[A] = Free[Ops, A]})#L ]
 ){
   import CustomDirectives._
+  import CustomMatchers._
   import Directives._
   import NineCardsMarshallers._
   import marshallerFactory._
@@ -48,6 +49,7 @@ class NineCardsGooglePlayApi[Ops[_]] (
           case "cards" => cardsRoute
           case "package" => packageRoute
           case "packages" => packagesRoute
+          case "recommendations" => recommendationsRoute
           case _ => complete(NotFound)
         }}
       }
@@ -77,4 +79,12 @@ class NineCardsGooglePlayApi[Ops[_]] (
       }
     }
 
+  private[this] lazy val recommendationsRoute: Route =
+    requestHeaders { authParams =>
+      (pathPrefix(CategorySegment) & get) { category =>
+        priceFilterPath { filter =>
+          complete ( googlePlayService.recommendationsByCategory(authParams, category, filter) )
+        }
+      }
+    }
 }
