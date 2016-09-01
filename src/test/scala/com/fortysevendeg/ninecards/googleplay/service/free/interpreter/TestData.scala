@@ -5,7 +5,7 @@ import com.fortysevendeg.ninecards.config.NineCardsConfig
 
 object TestData {
 
-  def apiEndpoint = NineCardsConfig.getConfigValue("ninecards.googleplay.api.endpoint")
+  def googleApiConf = googleapi.Configuration.load()
   def webEndpoint = NineCardsConfig.getConfigValue("ninecards.googleplay.web.endpoint")
 
   object nonexisting {

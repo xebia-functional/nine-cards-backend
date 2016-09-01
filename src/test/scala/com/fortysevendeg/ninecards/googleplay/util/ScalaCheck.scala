@@ -9,7 +9,12 @@ import org.scalacheck.Gen._
 
 object ScalaCheck {
 
+  case class PathSegment(value: String)
+
   // The automatic generator would produce empty strings. We want non-empty ones.
+
+  implicit val arbPathSegment: Arbitrary[PathSegment] =
+    Arbitrary( ScalaCheck_Aux.genUriPathString.map(PathSegment.apply(_) ))
 
   implicit val arbPackage: Arbitrary[Package] =
     Arbitrary(nonEmptyListOf(alphaNumChar).map(chars => Package(chars.mkString)))
@@ -52,6 +57,13 @@ object ScalaCheck {
 
 object ScalaCheck_Aux {
   import org.scalacheck.Shapeless._
+
+  val genUriPathString : Gen[String] = {
+    val unreserved: Gen[Char] = Gen.frequency( (9, Gen.alphaNumChar), (1, oneOf('-','.','_','~')) )
+    Gen.containerOf[Array, Char](unreserved).map(_.mkString)
+  }
+
+  val usAsciiStringGen = Gen.containerOf[Array, Char](Gen.choose[Char](0,127)).map(_.mkString)
 
   val arbAuth = implicitly[Arbitrary[GoogleAuthParams]]
 

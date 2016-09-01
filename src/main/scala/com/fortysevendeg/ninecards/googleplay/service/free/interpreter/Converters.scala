@@ -3,73 +3,9 @@ package com.fortysevendeg.ninecards.googleplay.service.free.interpreter
 import com.fortysevendeg.ninecards.googleplay.domain._
 import org.ccil.cowan.tagsoup.jaxp.SAXFactoryImpl
 import org.xml.sax.InputSource
-import scala.collection.JavaConversions._
 import scala.xml.Node
 import scala.xml.parsing.NoBindingFactoryAdapter
 import scodec.bits.ByteVector
-
-object GoogleApiItemParser {
-
-  import com.fortysevendeg.googleplay.proto.{GooglePlay => Proto}
-
-  private def toItem(docV2: Proto.DocV2) : Item = {
-    val details = docV2.getDetails
-    val appDetails = details.getAppDetails
-    val agg = docV2.getAggregateRating
-
-    Item(
-      DocV2(
-        title   = docV2.getTitle,
-        creator = docV2.getCreator,
-        docid   = docV2.getDocid,
-        details = Details(
-          appDetails = AppDetails(
-            appCategory  = appDetails.getAppCategoryList.toList,
-            numDownloads = appDetails.getNumDownloads,
-            permission   = appDetails.getPermissionList.toList
-          )
-        ),
-        aggregateRating = AggregateRating(
-          ratingsCount     = agg.getRatingsCount,
-          oneStarRatings   = agg.getOneStarRatings,
-          twoStarRatings   = agg.getTwoStarRatings,
-          threeStarRatings = agg.getThreeStarRatings,
-          fourStarRatings  = agg.getFourStarRatings,
-          fiveStarRatings  = agg.getFiveStarRatings,
-          starRating       = agg.getStarRating
-        ),
-        image = Nil,
-        offer = Nil
-      )
-    )
-  }
-
-
-  private def toAppCard(docV2: Proto.DocV2) : AppCard = {
-    val appDetails = docV2.getDetails.getAppDetails
-    AppCard(
-      packageName = docV2.getDocid,
-      title   = docV2.getTitle,
-      free = docV2.getOfferList.exists(_.getMicros == 0),
-      icon = docV2.getImageList
-        .find(_.getImageType == 4)
-        .fold("")(_.getImageUrl.replaceFirst("https","http") ),
-      stars = docV2.getAggregateRating.getStarRating,
-      downloads = appDetails.getNumDownloads,
-      categories = appDetails.getAppCategoryList.toList
-    )
-  }
-
-  def parseItem(byteVector: ByteVector) : Item = {
-    val docV2 = Proto.ResponseWrapper.parseFrom(byteVector.toArray).getPayload.getDetailsResponse.getDocV2
-    toItem(docV2)
-  }
-
-  def parseCard(byteVector: ByteVector) : AppCard = {
-    val docV2 = Proto.ResponseWrapper.parseFrom(byteVector.toArray).getPayload.getDetailsResponse.getDocV2
-    toAppCard(docV2)
-  }
-}
 
 object GooglePlayPageParser {
 

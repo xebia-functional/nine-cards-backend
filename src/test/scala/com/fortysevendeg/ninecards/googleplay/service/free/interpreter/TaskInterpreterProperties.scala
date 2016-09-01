@@ -2,7 +2,7 @@ package com.fortysevendeg.ninecards.googleplay.service.free.interpreter
 
 import com.fortysevendeg.extracats.XorTaskOrComposer
 import com.fortysevendeg.ninecards.googleplay.domain._
-import com.fortysevendeg.ninecards.googleplay.service.free.algebra.GooglePlay.{ ResolveMany, Resolve }
+import com.fortysevendeg.ninecards.googleplay.service.free.algebra.GooglePlay.{ ResolveMany, Resolve, RecommendationsByCategory }
 import org.scalacheck._
 import org.scalacheck.Prop._
 import scalaz.concurrent.Task
@@ -25,8 +25,11 @@ object TaskInterpreterProperties extends Properties("Task interpreter") {
     def apply(req: AppRequest) = Task.fail(new RuntimeException("No App Cards"))
   }
 
+  val recommendService: RecommendationsByCategory => Task[Xor[InfoError, AppRecommendationList]] =
+    (req => Task.now( Xor.Right(AppRecommendationList(Nil))))
+
   def itemTaskInterpreter( one: AppRequest => Task[Xor[String,Item]], two: AppRequest => Task[Xor[String,Item]]) = 
-    new TaskInterpreter( new XorTaskOrComposer(one, two),appCardService )
+    new TaskInterpreter( new XorTaskOrComposer(one, two),appCardService, recommendService )
 
 
 

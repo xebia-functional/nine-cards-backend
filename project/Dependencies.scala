@@ -11,7 +11,7 @@ object Dependencies {
 
   private def specs(name: String) = "org.specs2" %% s"specs2-${name}" % Versions.specs2
 
-  private val specs2Core = specs("core") % "test"
+  private val specs2Core = specs("core") % "test" exclude("org.scalaz", "*")
   private val specs2MatcherExtra = specs("matcher-extra") % "test"
   private val specs2ScalaCheck = specs("scalacheck") % "test"
 
