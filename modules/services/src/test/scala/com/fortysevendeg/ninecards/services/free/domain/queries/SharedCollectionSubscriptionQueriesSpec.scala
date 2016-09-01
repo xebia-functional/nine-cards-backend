@@ -12,6 +12,7 @@ class SharedCollectionSubscriptionQueriesSpec
 
   val collectionId = 12345l
   val id = 23456l
+  val publicIdentifier = "40daf308-fecf-4228-9262-a712d783cf49"
   val userId = 34567l
 
   val getSubscriptionByIdQuery = collectionSubscriptionPersistence.generateQuery(
@@ -40,7 +41,7 @@ class SharedCollectionSubscriptionQueriesSpec
 
   val insertQuery = collectionSubscriptionPersistence.generateUpdateWithGeneratedKeys(
     sql    = insert,
-    values = (collectionId, userId)
+    values = (collectionId, userId, publicIdentifier)
   )
   check(insertQuery)
 

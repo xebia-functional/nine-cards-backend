@@ -25,7 +25,8 @@ case class SharedCollectionPackage(
 case class SharedCollectionSubscription(
   id: Long,
   sharedCollectionId: Long,
-  userId: Long
+  userId: Long,
+  sharedCollectionPublicId: String
 )
 
 object SharedCollection {
@@ -63,7 +64,7 @@ object SharedCollectionPackage {
 }
 
 object SharedCollectionSubscription {
-  val fields = List("sharedcollectionid", "userid")
+  val fields = List("sharedcollectionid", "userid", "sharedcollectionpublicid")
   val allFields = "id" +: fields
 
   val insertFields = fields.mkString(",")

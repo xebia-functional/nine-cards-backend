@@ -178,9 +178,10 @@ object TestData {
     )
 
     val subscription = SharedCollectionSubscription(
-      id                 = 1L,
-      sharedCollectionId = collectionId,
-      userId             = subscriberId
+      id                       = 1L,
+      sharedCollectionId       = collectionId,
+      userId                   = subscriberId,
+      sharedCollectionPublicId = publicIdentifier
     )
   }
 

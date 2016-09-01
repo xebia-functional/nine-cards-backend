@@ -6,7 +6,6 @@ import com.fortysevendeg.ninecards.processes.messages.ApplicationMessages._
 import com.fortysevendeg.ninecards.processes.messages.InstallationsMessages._
 import com.fortysevendeg.ninecards.processes.messages.SharedCollectionMessages._
 import com.fortysevendeg.ninecards.processes.messages.UserMessages.LoginResponse
-import com.fortysevendeg.ninecards.services.common.NineCardsConfig.defaultConfig
 import com.fortysevendeg.ninecards.services.free.domain.GooglePlay.{
   AppsInfo,
   AppInfo ⇒ AppInfoServices,
@@ -15,12 +14,12 @@ import com.fortysevendeg.ninecards.services.free.domain.GooglePlay.{
 import com.fortysevendeg.ninecards.services.free.domain.{
   Installation ⇒ InstallationServices,
   SharedCollection ⇒ SharedCollectionServices,
+  SharedCollectionSubscription ⇒ SharedCollectionSubscriptionServices,
   User ⇒ UserAppServices
 }
 import com.fortysevendeg.ninecards.services.persistence.SharedCollectionPersistenceServices.{
   SharedCollectionData ⇒ SharedCollectionDataServices
 }
-import org.http4s.Uri
 import org.joda.time.DateTime
 
 object Converters {
@@ -117,4 +116,9 @@ object Converters {
       token        = authParams.token
     )
   }
+
+  def toGetSubscriptionsByUserResponse(subscriptions: List[SharedCollectionSubscriptionServices]) =
+    GetSubscriptionsByUserResponse(
+      subscriptions map (_.sharedCollectionPublicId)
+    )
 }

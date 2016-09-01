@@ -94,6 +94,9 @@ trait NineCardsApiSpecification
     sharedCollectionProcesses.getPublishedCollections(any[Long], any) returns
       Free.pure(Messages.getCollectionsResponse)
 
+    sharedCollectionProcesses.getSubscriptionsByUser(any) returns
+      Free.pure(Messages.getSubscriptionsByUserResponse)
+
     sharedCollectionProcesses.getTopCollectionsByCategory(any, any, any, any) returns
       Free.pure(Messages.getCollectionsResponse)
 
@@ -147,6 +150,8 @@ trait NineCardsApiSpecification
 
     val getCollectionByIdTask: Task[XorGetCollectionByPublicId] = Task.now(Exceptions.persistenceException.left)
 
+    val getSubscriptionsByUserTask: Task[GetSubscriptionsByUserResponse] = Task.fail(Exceptions.persistenceException)
+
     googleApiProcesses.checkGoogleTokenId(email, tokenId) returns Free.pure(true)
 
     userProcesses.checkAuthToken(
@@ -167,6 +172,9 @@ trait NineCardsApiSpecification
 
     sharedCollectionProcesses.getCollectionByPublicIdentifier(any[String], any) returns
       getCollectionByIdTask.liftF[NineCardsServices]
+
+    sharedCollectionProcesses.getSubscriptionsByUser(any) returns
+      getSubscriptionsByUserTask.liftF[NineCardsServices]
 
     applicationProcesses.categorizeApps(any, any) returns
       categorizeAppsTask.liftF[NineCardsServices]
@@ -365,6 +373,17 @@ class NineCardsApiSpec
     authenticatedBadRequestEmptyBody(Put(Paths.collectionById))
 
     notFoundSharedCollection(request)
+
+    unauthorizedNoHeaders(request)
+
+    internalServerError(request)
+
+    successOk(request)
+  }
+
+  "GET /collections/subscriptions" should {
+
+    val request = Get(Paths.subscriptionsByUser)
 
     unauthorizedNoHeaders(request)
 

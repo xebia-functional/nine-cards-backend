@@ -23,8 +23,8 @@ trait DomainDatabaseContext {
   val transactor: Transactor[Task] = DriverManagerTransactor[Task](testDriver, testUrl, testUsername, testPassword)
 
   implicit class Transacting[A](operation: ConnectionIO[A]) {
-    def transactAndRun(): A = operation.transact(transactor).unsafePerformSync
-    def transactAndAttempt(): \/[Throwable, A] = operation.transact(transactor).unsafePerformSyncAttempt
+    def transactAndRun: A = operation.transact(transactor).unsafePerformSync
+    def transactAndAttempt: \/[Throwable, A] = operation.transact(transactor).unsafePerformSyncAttempt
   }
 
   implicit val userPersistence = new Persistence[User](supportsSelectForUpdate = false)

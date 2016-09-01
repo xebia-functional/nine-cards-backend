@@ -10,11 +10,11 @@ class SharedCollectionSubscriptionPersistenceServices(
 
   import SharedCollectionSubscription.Queries._
 
-  def addSubscription[K](collectionId: Long, userId: Long)(implicit ev: Composite[K]): ConnectionIO[K] =
+  def addSubscription[K](collectionId: Long, userId: Long, collectionPublicId: String)(implicit ev: Composite[K]): ConnectionIO[K] =
     subscriptionPersistence.updateWithGeneratedKeys[K](
       sql    = insert,
       fields = SharedCollectionSubscription.allFields,
-      values = (collectionId, userId)
+      values = (collectionId, userId, collectionPublicId)
     )
 
   def getSubscriptionsByCollection(collectionId: Long): ConnectionIO[List[SharedCollectionSubscription]] =

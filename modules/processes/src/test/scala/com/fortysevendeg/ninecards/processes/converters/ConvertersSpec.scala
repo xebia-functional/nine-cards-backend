@@ -1,10 +1,8 @@
 package com.fortysevendeg.ninecards.processes.converters
 
 import com.fortysevendeg.ninecards.processes.messages.ApplicationMessages.AuthParams
-import com.fortysevendeg.ninecards.services.free.domain.GooglePlay.{ AppInfo, AppsInfo }
-import com.fortysevendeg.ninecards.services.free.domain.{ Installation, User }
-import org.scalacheck.Arbitrary._
-import org.scalacheck.Gen._
+import com.fortysevendeg.ninecards.services.free.domain.GooglePlay.AppsInfo
+import com.fortysevendeg.ninecards.services.free.domain._
 import org.scalacheck.Shapeless._
 import org.specs2.ScalaCheck
 import org.specs2.mutable.Specification
@@ -68,4 +66,16 @@ class ConvertersSpec
     }
   }
 
+  "toGetSubscriptionsByUserResponse" should {
+    "convert a list of SharedCollectionSubscription to a GetSubscriptionsByUserResponse object" in {
+      prop { subscriptions: List[SharedCollectionSubscription] ⇒
+
+        val response = Converters.toGetSubscriptionsByUserResponse(subscriptions)
+
+        forall(response.subscriptions) { publicId ⇒
+          subscriptions.exists(_.sharedCollectionPublicId == publicId)
+        }
+      }
+    }
+  }
 }

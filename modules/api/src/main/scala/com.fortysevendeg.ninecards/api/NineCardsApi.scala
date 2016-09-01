@@ -142,6 +142,11 @@ class NineCardsRoutes(
               }
             }
         } ~
+        path("subscriptions") {
+          get {
+            complete(getSubscriptionsByUser(userContext))
+          }
+        } ~
         pathPrefix(TypedSegment[PublicIdentifier]) { publicIdentifier ⇒
           pathEndOrSingleSlash {
             get {
@@ -246,6 +251,13 @@ class NineCardsRoutes(
     sharedCollectionProcesses
       .getPublishedCollections(userContext.userId.value, toAuthParams(googlePlayContext, userContext))
       .map(toApiSharedCollectionList)
+
+  private[this] def getSubscriptionsByUser(
+    userContext: UserContext
+  ): NineCardsServed[ApiGetSubscriptionsByUser] =
+    sharedCollectionProcesses
+      .getSubscriptionsByUser(userContext.userId.value)
+      .map(toApiGetSubscriptionsByUser)
 
   private[this] def getTopCollectionsByCategory(
     category: Category,

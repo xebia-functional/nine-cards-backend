@@ -110,4 +110,9 @@ object Converters {
       items  = response.items,
       errors = response.errors
     )
+
+  def toApiGetSubscriptionsByUser(response: GetSubscriptionsByUserResponse): ApiGetSubscriptionsByUser =
+    ApiGetSubscriptionsByUser(
+      subscriptions = response.subscriptions
+    )
 }

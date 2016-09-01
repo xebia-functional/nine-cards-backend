@@ -170,6 +170,8 @@ object TestData {
 
     val getCollectionsResponse = GetCollectionsResponse(Nil)
 
+    val getSubscriptionsByUserResponse = GetSubscriptionsByUserResponse(List(publicIdentifier))
+
     val loginRequest = LoginRequest(email, androidId, sessionToken, tokenId)
 
     val loginResponse = LoginResponse(apiToken, sessionToken)
@@ -224,6 +226,8 @@ object TestData {
     val latestCollections = "/collections/latest/SOCIAL/0/25"
 
     val login = "/login"
+
+    val subscriptionsByUser = "/collections/subscriptions"
 
     val topCollections = "/collections/top/SOCIAL/0/25"
   }

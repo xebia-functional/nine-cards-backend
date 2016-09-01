@@ -89,20 +89,24 @@ class SharedCollectionProcesses[F[_]](
     * This process changes the application state to one where the user is subscribed to the collection.
     */
 
+  def getSubscriptionsByUser(userId: Long): Free[F, GetSubscriptionsByUserResponse] =
+    subscriptionPersistence.getSubscriptionsByUser(userId).liftF map toGetSubscriptionsByUserResponse
+
   def subscribe(publicIdentifier: String, userId: Long): Free[F, Xor[Throwable, SubscribeResponse]] = {
 
     def addSubscription(
       subscription: Option[SharedCollectionSubscription],
-      collectionId: Long
+      collectionId: Long,
+      collectionPublicId: String
     ): ConnectionIO[SubscribeResponse] =
       subscription
-        .fold(subscriptionPersistence.addSubscription[SharedCollectionSubscription](collectionId, userId))(_.point[ConnectionIO])
+        .fold(subscriptionPersistence.addSubscription[SharedCollectionSubscription](collectionId, userId, collectionPublicId))(_.point[ConnectionIO])
         .map(_ ⇒ SubscribeResponse())
 
     for {
       collection ← findCollection(publicIdentifier)
       subscription ← subscriptionPersistence.getSubscriptionByCollectionAndUser(collection.id, userId).rightXorT[Throwable]
-      subscriptionInfo ← addSubscription(subscription, collection.id).rightXorT[Throwable]
+      subscriptionInfo ← addSubscription(subscription, collection.id, collection.publicIdentifier).rightXorT[Throwable]
     } yield subscriptionInfo
   }.value.liftF[F]
 

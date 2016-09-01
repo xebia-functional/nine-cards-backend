@@ -64,6 +64,8 @@ object SharedCollectionMessages {
 
   case class GetCollectionByPublicIdentifierResponse(data: SharedCollectionWithAppsInfo)
 
+  case class GetSubscriptionsByUserResponse(subscriptions: List[String])
+
   case class SubscribeResponse()
 
   case class UnsubscribeResponse()
