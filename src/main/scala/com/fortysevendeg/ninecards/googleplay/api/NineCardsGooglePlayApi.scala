@@ -45,46 +45,64 @@ class NineCardsGooglePlayApi[Ops[_]] (
   val googlePlayApiRoute: Route =
     pathPrefix("googleplay") {
       requestHeaders { _auth =>
-        pathPrefix(Segment) { segment => segment match {
-          case "cards" => cardsRoute
-          case "package" => packageRoute
-          case "packages" => packagesRoute
-          case "recommendations" => recommendationsRoute
-          case _ => complete(NotFound)
-        }}
+        cardsRoute ~
+        packageRoute ~
+        packagesRoute ~
+        recommendationsRoute
       }
     }
 
   private[this] lazy val packageRoute: Route =
-    requestHeaders { authParams =>
-      (path(Segment) & get) { packageName =>
-        complete ( googlePlayService.resolve( authParams, Package(packageName)) )
+    pathPrefix("package") {
+      requestHeaders { authParams =>
+        path(Segment) { packageName =>
+          get {
+            complete ( googlePlayService.resolve( authParams, Package(packageName)) )
+          }
+        }
       }
     }
 
   private[this] lazy val packagesRoute: Route =
-    requestHeaders { authParams =>
-      (path("detailed") & post & entity(as[PackageList])) { req =>
-        complete ( googlePlayService.resolveMany(authParams, req) )
+    pathPrefix("packages" / "detailed" ) {
+      post {
+        requestHeaders { authParams =>
+          entity(as[PackageList]){ req =>
+            complete ( googlePlayService.resolveMany(authParams, req) )
+          }
+        }
       }
     }
 
   private[this] lazy val cardsRoute: Route =
-    requestHeaders { authParams =>
-      (pathEndOrSingleSlash & post & entity(as[PackageList])) { packageList =>
-        complete ( googlePlayService.getCardList( authParams, packageList) )
-      } ~
-      (pathPrefix(Segment) & get) { packageName =>
-        complete ( googlePlayService.getCard( authParams, Package(packageName)) )
+    pathPrefix("cards") {
+      requestHeaders { authParams =>
+        pathEndOrSingleSlash {
+          post {
+            entity(as[PackageList]) { packageList =>
+              complete ( googlePlayService.getCardList( authParams, packageList) )
+            }
+          }
+        } ~
+        pathPrefix(Segment) { packageName =>
+          get {
+            complete ( googlePlayService.getCard( authParams, Package(packageName)) )
+          }
+        }
       }
     }
 
   private[this] lazy val recommendationsRoute: Route =
-    requestHeaders { authParams =>
-      (pathPrefix(CategorySegment) & get) { category =>
-        priceFilterPath { filter =>
-          complete ( googlePlayService.recommendationsByCategory(authParams, category, filter) )
+    pathPrefix("recommendations") {
+      requestHeaders { authParams =>
+        pathPrefix(CategorySegment) { category =>
+          priceFilterPath { filter =>
+            get {
+              complete ( googlePlayService.recommendationsByCategory(authParams, category, filter) )
+            }
+          }
         }
       }
     }
+
 }
