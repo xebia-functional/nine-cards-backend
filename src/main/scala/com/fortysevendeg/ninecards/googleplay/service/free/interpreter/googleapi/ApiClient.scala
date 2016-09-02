@@ -13,12 +13,14 @@ import scodec.bits.ByteVector
 
 class ApiClient(config: Configuration, client: Client ) {
 
+  private[this] val baseUri = Uri(
+    scheme = Option(config.protocol.ci),
+    authority = Option(Uri.Authority(host = Uri.RegName(config.host) ))
+  )
+
   object details {
 
-    val uri: Uri = Uri(
-      scheme = Option(config.protocol.ci),
-      authority = Option(Uri.Authority(host = Uri.RegName(config.host) ))
-    ).withPath(config.detailsPath)
+    val uri: Uri = baseUri.withPath(config.detailsPath)
 
     def apply( packageName: Package, authParams: GoogleAuthParams ) : Task[Xor[Response, DocV2]] = {
       def toDocV2(byteVector: ByteVector) : DocV2 =
@@ -37,10 +39,7 @@ class ApiClient(config: Configuration, client: Client ) {
 
   object list {
 
-    val uri: Uri = Uri(
-      scheme = Option(config.protocol.ci),
-      authority = Option( Uri.Authority(host = Uri.RegName(config.host) ) )
-    ).withPath(config.listPath)
+    val uri: Uri = baseUri.withPath(config.listPath)
 
     def apply( category: Category, priceFilter: PriceFilter, auth: GoogleAuthParams ): Task[Xor[Response, ListResponse]] = {
 
@@ -64,9 +63,24 @@ class ApiClient(config: Configuration, client: Client ) {
 
       run[Response, ListResponse]( httpRequest, (r => r), toListResponse)
     }
+  }
 
-    private[this] def toListResponse(bv: ByteVector) =
-      ResponseWrapper.parseFrom(bv.toArray).getPayload.getListResponse
+  object recommendations {
+    val uri: Uri = baseUri.withPath(config.recommendationsPath)
+
+    def apply( packageName: Package, auth: GoogleAuthParams) : Task[Xor[Response, ListResponse]] = {
+      val query: Query = Query.fromPairs(
+        ("c", "3"),
+        ("rt", "1"),
+        ("doc", packageName.value)
+      )
+      val httpRequest: Request = new Request(
+        method = Method.GET,
+        uri = uri.copy(query = query),
+        headers = Headers( authHeaders(auth) ++ fixedHeaders)
+      )
+      run[Response, ListResponse](httpRequest, (r => r), toListResponse)
+    }
   }
 
   private[this] def run[L,R](request: Request, failed: Response => L, success: ByteVector => R ): Task[Xor[L,R]] = {
@@ -121,5 +135,8 @@ class ApiClient(config: Configuration, client: Client ) {
       Header("X-DFE-SmallestScreenWidthDp", "320")
     )
   }
+
+  private[this] def toListResponse(bv: ByteVector) =
+    ResponseWrapper.parseFrom(bv.toArray).getPayload.getListResponse
 
 }

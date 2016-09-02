@@ -6,7 +6,8 @@ case class Configuration(
   protocol: String,
   host: String,
   detailsPath: String,
-  listPath: String
+  listPath: String,
+  recommendationsPath: String
 )
 
 object Configuration {
@@ -17,7 +18,8 @@ object Configuration {
       protocol = getApiConf("protocol"),
       host = getApiConf("host"),
       detailsPath = getApiConf("paths.details"),
-      listPath = getApiConf("paths.list")
+      listPath = getApiConf("paths.list"),
+      recommendationsPath = getApiConf("paths.recommendations")
     )
   }
 

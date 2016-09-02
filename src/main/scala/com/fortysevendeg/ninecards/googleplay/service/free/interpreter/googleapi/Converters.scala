@@ -15,6 +15,9 @@ object Converters {
     } yield docId
   }
 
+  def listResponseListToPackages(listResponses: List[ListResponse]) : List[String] =
+    listResponses.flatMap(listResponseToPackages).toSet.toList
+
   sealed abstract class ImageType(val index: Int)
   case object Screenshot extends ImageType(1)
   case object Icon extends ImageType(4)

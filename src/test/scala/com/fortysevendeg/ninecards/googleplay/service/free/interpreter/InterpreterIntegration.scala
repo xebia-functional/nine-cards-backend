@@ -3,7 +3,7 @@ package com.fortysevendeg.ninecards.googleplay.service.free.interpreter
 import cats.data.Xor
 import com.fortysevendeg.extracats.XorTaskOrComposer
 import com.fortysevendeg.ninecards.googleplay.domain._
-import com.fortysevendeg.ninecards.googleplay.service.free.algebra.GooglePlay.{Resolve, ResolveMany, RecommendationsByCategory}
+import com.fortysevendeg.ninecards.googleplay.service.free.algebra.GooglePlay._
 import com.fortysevendeg.ninecards.googleplay.TestConfig._
 import com.fortysevendeg.ninecards.googleplay.util.WithHttp1Client
 import org.specs2.matcher.TaskMatchers
@@ -74,7 +74,7 @@ class TaskInterpreterIntegration extends Specification with TaskMatchers with Wi
   val interpreter = {
     val itemService = new XorTaskOrComposer[AppRequest,String,Item](apiService.getItem, webClient.getItem)
     val cardService = new XorTaskOrComposer[AppRequest,InfoError, AppCard](apiService.getCard, webClient.getCard)
-    new TaskInterpreter(itemService, cardService, apiService.recommendationsByCategory)
+    new TaskInterpreter(itemService, cardService, (apiService.recommendByCategory _), (apiService.recommendByAppList) )
   }
 
   def categoryOption(item: Item): Option[String] =
@@ -120,9 +120,11 @@ class TaskInterpreterIntegration extends Specification with TaskMatchers with Wi
           new XorTaskOrComposer( badApiRequest, webClient.getItem)
         val appCardService: AppRequest => Task[Xor[InfoError, AppCard]] =
           (_ => Task.fail( new RuntimeException("Should not ask for App Card")))
-        val recommend: RecommendationsByCategory => Task[Xor[InfoError,AppRecommendationList]] =
+        val recommendByCategory: RecommendationsByCategory => Task[Xor[InfoError,AppRecommendationList]] =
           ( _ => Task.fail( new RuntimeException("Should not ask for recommendations")))
-        new TaskInterpreter( itemService, appCardService, recommend)
+        val recommendByAppList: RecommendationsByAppList => Task[AppRecommendationList] =
+          ( _ => Task.fail( new RuntimeException("Should not ask for recommendations")))
+        new TaskInterpreter( itemService, appCardService, recommendByCategory, recommendByAppList )
       }
 
       val retrievedCategory: Task[Option[String]] = interpreter
