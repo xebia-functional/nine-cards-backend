@@ -47,7 +47,7 @@ class ApiClient(config: Configuration, client: Client ) {
       val subCategory: String = priceFilter match {
         case PriceFilter.FREE => "apps_topselling_free"
         case PriceFilter.PAID => "apps_topselling_paid"
-        case PriceFilter.ALL => "apps_togrossing"
+        case PriceFilter.ALL => "apps_topgrossing"
       }
 
       val query: Query = Query.fromPairs(
