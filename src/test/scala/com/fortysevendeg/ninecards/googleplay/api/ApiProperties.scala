@@ -229,7 +229,7 @@ object ApiProperties
     }
 
   def recommendByCategory( category: String, filter: String) =
-    Get(s"/googleplay/recommendation/$category/$filter") ~> addHeaders(requestHeaders)
+    Get(s"/googleplay/recommendations/$category/$filter") ~> addHeaders(requestHeaders)
 
   property( s" ${endpoints.recommendCategory} fails with NotFound if the category does not exist")  = {
     val route = makeRoute()
@@ -258,7 +258,7 @@ object ApiProperties
   property( s"${endpoints.recommendCategory} fails with Unauthorized if the auth headers are missing") = {
     val route = makeRoute()
     forAll { (category: Category, filter: PriceFilter) => {
-      checkUnauthorized( Get(s"/googleplay/recommendation/$category/$filter") )
+      checkUnauthorized( Get(s"/googleplay/recommendations/$category/$filter") )
     }}
   }
 

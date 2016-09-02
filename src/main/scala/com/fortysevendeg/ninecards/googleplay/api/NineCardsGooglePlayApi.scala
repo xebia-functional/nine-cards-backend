@@ -8,7 +8,6 @@ import com.fortysevendeg.ninecards.googleplay.domain._
 import com.fortysevendeg.ninecards.googleplay.service.free.algebra.GooglePlay
 import io.circe.generic.auto._
 import scalaz.concurrent.Task
-import spray.http.StatusCodes.NotFound
 import spray.routing.{Directives, HttpService, Route}
 import NineCardsMarshallers.TRMFactory
 
