@@ -53,7 +53,7 @@ object NineCardsMarshallers {
     }
 
   implicit def xorAppMarshaller[A](implicit im: ToResponseMarshaller[A]): ToResponseMarshaller[InfoError Xor A] =
-    ToResponseMarshaller[Xor[InfoError,A]] { (xor, ctx) => xor match {
+    ToResponseMarshaller[InfoError Xor A] { (xor, ctx) => xor match {
       case Xor.Right(a) =>
         im(a,ctx)
       case Xor.Left(infoError) =>

@@ -166,15 +166,11 @@ class ApiIntegration extends Specification with Specs2RouteTest with WithHttp1Cl
 
     failUnauthorized(request)
 
-//    "Successfully connect to Google Play and give the information for recommended apps" in {
-//
-//      request ~> addHeaders(requestHeaders) ~> route ~> check {
-//        status must_=== OK
-//
-//        val sets = decode[AppRecommendationList](responseAs[String]).map {
-//          case AppCardList(errors, apps) => (errors.toSet, apps.map(_.packageName).toSet)
-//        }
-//      }
-//    }
+    "Successfully connect to Google Play and give the information for recommended apps" in {
+      request ~> addHeaders(requestHeaders) ~> route ~> check {
+        status must_=== OK
+        decode[AppRecommendationList](responseAs[String]).map(_.apps).toEither must beRight
+      }
+    }
   }
 }

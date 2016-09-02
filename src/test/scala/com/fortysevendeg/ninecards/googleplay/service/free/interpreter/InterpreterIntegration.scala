@@ -20,6 +20,8 @@ class InterpretersIntegration extends Specification with WithHttp1Client {
     new googleapi.ApiClient( googleApiConf, pooledClient))
   private val webClient = new Http4sGooglePlayWebScraper(webEndpoint, pooledClient)
 
+  sequential
+
   "Http4sGooglePlayWebScraper, the parser of Google Play's pages" should {
 
     val auth = GoogleAuthParams(AndroidId(""), Token(""), Some(localization))

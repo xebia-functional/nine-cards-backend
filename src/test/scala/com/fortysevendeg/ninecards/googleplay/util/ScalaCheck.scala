@@ -58,7 +58,9 @@ object ScalaCheck {
 object ScalaCheck_Aux {
   import org.scalacheck.Shapeless._
 
+  // A generator of strings that served as non-interpreted parts of an URI (path, query param or value)
   val genUriPathString : Gen[String] = {
+    // Unreserved characters, per URI syntax: https://tools.ietf.org/html/rfc2396#section-2.3
     val unreserved: Gen[Char] = Gen.frequency( (9, Gen.alphaNumChar), (1, oneOf('-','.','_','~')) )
     Gen.containerOf[Array, Char](unreserved).map(_.mkString)
   }
