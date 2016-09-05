@@ -42,10 +42,10 @@ class InterpretersIntegration extends Specification with WithHttp1Client {
       response must returnValue(Xor.left(nonexisting.packageName))
     }
 
-    "result in an AppCard for packages that exist" in {
+    "result in an FullCard for packages that exist" in {
       val appRequest = AppRequest(fisherPrice.packageObj, auth)
-      val response: Task[Xor[InfoError, AppCard]] = webClient.getCard(appRequest)
-      val relevantDetails = response.map { xor => xor.map { c: AppCard =>
+      val response: Task[Xor[InfoError, FullCard]] = webClient.getCard(appRequest)
+      val relevantDetails = response.map { xor => xor.map { c: FullCard =>
         (c.packageName, c.categories, c.title)
       }}
       val expected = (fisherPrice.packageName, fisherPrice.card.categories, fisherPrice.card.title)
@@ -73,7 +73,7 @@ class TaskInterpreterIntegration extends Specification with TaskMatchers with Wi
   // Most of this should be moved to a wiring module, with the cache.
   val interpreter = {
     val itemService = new XorTaskOrComposer[AppRequest,String,Item](apiService.getItem, webClient.getItem)
-    val cardService = new XorTaskOrComposer[AppRequest,InfoError, AppCard](apiService.getCard, webClient.getCard)
+    val cardService = new XorTaskOrComposer[AppRequest,InfoError, FullCard](apiService.getCard, webClient.getCard)
     new TaskInterpreter(itemService, cardService, apiService.recommendByCategory, apiService.recommendByAppList )
   }
 
@@ -118,11 +118,11 @@ class TaskInterpreterIntegration extends Specification with TaskMatchers with Wi
           ( _ => Task.fail(new RuntimeException("Failed request")) )
         val itemService: AppRequest => Task[Xor[String,Item]] =
           new XorTaskOrComposer( badApiRequest, webClient.getItem)
-        val appCardService: AppRequest => Task[Xor[InfoError, AppCard]] =
+        val appCardService: AppRequest => Task[Xor[InfoError, FullCard]] =
           (_ => Task.fail( new RuntimeException("Should not ask for App Card")))
-        val recommendByCategory: RecommendationsByCategory => Task[Xor[InfoError,AppRecommendationList]] =
+        val recommendByCategory: RecommendationsByCategory => Task[Xor[InfoError,FullCardList]] =
           ( _ => Task.fail( new RuntimeException("Should not ask for recommendations")))
-        val recommendByAppList: RecommendationsByAppList => Task[AppRecommendationList] =
+        val recommendByAppList: RecommendationsByAppList => Task[FullCardList] =
           ( _ => Task.fail( new RuntimeException("Should not ask for recommendations")))
         new TaskInterpreter( itemService, appCardService, recommendByCategory, recommendByAppList )
       }

@@ -1,6 +1,7 @@
 package com.fortysevendeg.ninecards.googleplay.util
 
 import com.fortysevendeg.ninecards.googleplay.domain._
+import com.fortysevendeg.ninecards.googleplay.api._
 import cats.data.Xor
 import enumeratum.{Enum, EnumEntry}
 import org.scalacheck._
@@ -22,8 +23,11 @@ object ScalaCheck {
   implicit val arbAuth: Arbitrary[GoogleAuthParams] =
     ScalaCheck_Aux.arbAuth
 
-  implicit val arbAppCard: Arbitrary[AppCard] =
-    ScalaCheck_Aux.arbAppCard
+  implicit val arbFullCard: Arbitrary[FullCard] =
+    ScalaCheck_Aux.arbFullCard
+
+  implicit val arbApiCard: Arbitrary[ApiCard] =
+    ScalaCheck_Aux.arbApiCard
 
   implicit val arbItem: Arbitrary[Item] =
     ScalaCheck_Aux.arbItem
@@ -31,7 +35,7 @@ object ScalaCheck {
   implicit val arbString: Arbitrary[String] =
     ScalaCheck_Aux.arbString
 
-  implicit val arbGetCardAnswer: Arbitrary[Xor[InfoError,AppCard]] =
+  implicit val arbGetCardAnswer: Arbitrary[Xor[InfoError,FullCard]] =
     ScalaCheck_Aux.arbGetCardAnswer
 
   implicit val arbResolveAnswer: Arbitrary[Xor[String,Item]] =
@@ -82,20 +86,40 @@ object ScalaCheck_Aux {
 
   val arbPriceFilter: Arbitrary[PriceFilter] = enumeratumArbitrary[PriceFilter](PriceFilter)
 
-  val arbAppCard: Arbitrary[AppCard] = Arbitrary(for {
-    title <- identifier
-    docid <- identifier
-    appDetails <- listOf(identifier)
-  } yield AppCard(
-    packageName   = docid,
-    title   = title,
-    free = false,
-    icon = "",
-    stars = 0.0,
-    categories  = appDetails,
-    downloads = ""
-  )
-  )
+  val genApiCard: Gen[ApiCard] =
+    for /*scalacheck.Gen*/ {
+      title <- identifier
+      docid <- identifier
+      appDetails <- listOf(identifier)
+    } yield ApiCard(
+      packageName   = docid,
+      title   = title,
+      free = false,
+      icon = "",
+      stars = 0.0,
+      categories  = appDetails,
+      downloads = ""
+    )
+
+  val genFullCard: Gen[FullCard] =
+    for /*ScalaCheck.Gen*/ {
+      title <- identifier
+      docid <- identifier
+      appDetails <- listOf(identifier)
+    } yield FullCard(
+      packageName   = docid,
+      title   = title,
+      free = false,
+      icon = "",
+      stars = 0.0,
+      categories  = appDetails,
+      screenshots = List(),
+      downloads = ""
+    )
+
+  val arbApiCard: Arbitrary[ApiCard] = Arbitrary( genApiCard )
+
+  val arbFullCard: Arbitrary[FullCard] = Arbitrary( genFullCard )
 
   val arbItem: Arbitrary[Item] = Arbitrary(for {
     title <- identifier
@@ -120,9 +144,9 @@ object ScalaCheck_Aux {
   ))
 
   val arbGetCardAnswer = {
-    implicit val app: Arbitrary[AppCard] = arbAppCard
+    implicit val app: Arbitrary[FullCard] = arbFullCard
     implicit val fail: Arbitrary[String] = arbString
-    implicitly[Arbitrary[Xor[InfoError,AppCard]]]
+    implicitly[Arbitrary[Xor[InfoError,FullCard]]]
   }
 
   val arbResolveAnswer: Arbitrary[Xor[String,Item]] = {

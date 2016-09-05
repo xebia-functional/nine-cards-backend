@@ -1,6 +1,6 @@
 package com.fortysevendeg.ninecards.googleplay.service.free.interpreter.googleapi
 
-import com.fortysevendeg.ninecards.googleplay.domain.{AppCard, AppRecommendation, AppRecommendationList, Item}
+import com.fortysevendeg.ninecards.googleplay.domain.{FullCard, FullCardList, Item}
 import com.fortysevendeg.ninecards.googleplay.service.free.interpreter.TestData.{ fisherPrice, minecraft }
 import java.nio.file.{ Files, Paths}
 import org.specs2.mutable.Specification
@@ -32,7 +32,7 @@ class ConvertersSpec extends Specification with Specs2RouteTest {
 
     "result in a Card to send to the client" in {
       val docV2: DocV2 = getDetailsResponse( readProtobufFile(fisherPrice.packageName) )
-      val card: AppCard = toCard(docV2)
+      val card: FullCard = toFullCard(docV2)
       card.packageName must_=== fisherPrice.packageName
       card.free must_=== fisherPrice.card.free
       card.icon must_=== fisherPrice.card.icon
@@ -40,14 +40,14 @@ class ConvertersSpec extends Specification with Specs2RouteTest {
 
     "correctly interpret if the app is free (zero price) or not" in {
       val docV2: DocV2 = getDetailsResponse( readProtobufFile(minecraft.packageName) )
-      val card: AppCard = toCard(docV2)
+      val card: FullCard = toFullCard(docV2)
       card.free must_=== minecraft.card.free
       card.icon must_=== minecraft.card.icon
     }
 
-    "get an App recommendation with some screenshots" in {
+    "get a full card with some screenshots" in {
       val docV2: DocV2 = getDetailsResponse( readProtobufFile(fisherPrice.packageName) )
-      val rec: AppRecommendation = toAppRecommendation(docV2)
+      val rec: FullCard = toFullCard(docV2)
       rec.packageName must_=== fisherPrice.packageName
       rec.screenshots.length must beGreaterThan(0)
     }
@@ -78,8 +78,8 @@ class ConvertersSpec extends Specification with Specs2RouteTest {
     }
 
     "build incomplete cards of it" in {
-      val apps: AppRecommendationList = toAppRecommendationList(listRes)
-      apps.apps.map(_.packageName) must_=== listResponseToPackages(listRes)
+      val apps: FullCardList = toFullCardList(listRes)
+      apps.cards.map(_.packageName) must_=== listResponseToPackages(listRes)
     }
 
   }

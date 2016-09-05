@@ -30,10 +30,10 @@ class ConvertersSpec extends Specification with Specs2RouteTest {
       parsedItem.docV2.title must_=== fisherPrice.card.title
     }
 
-    "result in an AppCard to send to the client" in {
+    "result in an FullCard to send to the client" in {
       val card = GooglePlayPageParser
         .parseCardAux(readHtmlFile(fisherPrice.packageName))
-        .getOrElse(failTest("AppCard should parse correctly"))
+        .getOrElse(failTest("FullCard should parse correctly"))
 
       card.categories must_=== fisherPrice.card.categories
       card.packageName must_=== fisherPrice.packageName
@@ -48,7 +48,7 @@ class ConvertersSpec extends Specification with Specs2RouteTest {
     "correctly interpret if the app is free (zero price) or not" in {
       val card = GooglePlayPageParser
         .parseCardAux(readHtmlFile(minecraft.packageName))
-        .getOrElse(failTest("AppCard should parse correctly"))
+        .getOrElse(failTest("FullCard should parse correctly"))
 
       card.free must beEqualTo( minecraft.card.free)
       card.icon must beEqualTo( minecraft.card.icon)

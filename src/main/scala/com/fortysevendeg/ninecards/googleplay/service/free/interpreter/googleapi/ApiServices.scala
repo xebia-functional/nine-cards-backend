@@ -18,15 +18,15 @@ class ApiServices( apiClient: ApiClient) {
       )
     }
 
-  def getCard(request: AppRequest): Task[Xor[InfoError, AppCard]] =
+  def getCard(request: AppRequest): Task[Xor[InfoError, FullCard]] =
     apiClient.details(request.packageName, request.authParams).map { xor =>
       xor.bimap(
         _ => InfoError(request.packageName.value),
-        docV2 => Converters.toCard(docV2)
+        docV2 => Converters.toFullCard(docV2)
       )
     }
 
-  def recommendByCategory( request: RecommendationsByCategory ) : Task[InfoError Xor AppRecommendationList] = {
+  def recommendByCategory( request: RecommendationsByCategory ) : Task[InfoError Xor FullCardList] = {
     import request._
 
     lazy val infoError = InfoError( s"Recommendations for category $category that are $filter")
@@ -47,7 +47,7 @@ class ApiServices( apiClient: ApiClient) {
 
   }
 
-  def recommendByAppList( request: RecommendationsByAppList) : Task[AppRecommendationList] = {
+  def recommendByAppList( request: RecommendationsByAppList) : Task[FullCardList] = {
     import request._
     for /* Task */ {
       xors <- packageList.items.traverse { pack =>
@@ -60,11 +60,11 @@ class ApiServices( apiClient: ApiClient) {
 
   private[this] def getRecommendationList(
     ids: List[String], auth: GoogleAuthParams
-  ) : Task[AppRecommendationList] =
+  ) : Task[FullCardList] =
     for {
       xors <- ids traverse (id => apiClient.details( Package(id), auth))
       docV2s = splitXors(xors)._2
-    } yield Converters.toAppRecommendationList(docV2s)
+    } yield Converters.toFullCardList(docV2s)
 
 
 }

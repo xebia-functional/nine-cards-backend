@@ -21,15 +21,15 @@ object TaskInterpreterProperties extends Properties("Task interpreter") {
     def apply(req: AppRequest) = Task.now( req.packageName.value.left )
   }
 
-  object appCardService extends (AppRequest => Task[Xor[InfoError, AppCard]]) {
+  object appCardService extends (AppRequest => Task[Xor[InfoError, FullCard]]) {
     def apply(req: AppRequest) = Task.fail(new RuntimeException("No App Cards"))
   }
 
-  val recommendByCategory: RecommendationsByCategory => Task[Xor[InfoError, AppRecommendationList]] =
-    (req => Task.now( Xor.Right(AppRecommendationList(Nil))))
+  val recommendByCategory: RecommendationsByCategory => Task[Xor[InfoError, FullCardList]] =
+    (req => Task.now( Xor.Right(FullCardList(Nil, Nil))))
 
-  val recommendByAppList: RecommendationsByAppList => Task[AppRecommendationList] =
-    (req => Task.now( AppRecommendationList(Nil)))
+  val recommendByAppList: RecommendationsByAppList => Task[FullCardList] =
+    (req => Task.now( FullCardList(Nil, Nil)))
 
   def itemTaskInterpreter( one: AppRequest => Task[Xor[String,Item]], two: AppRequest => Task[Xor[String,Item]]) = 
     new TaskInterpreter( new XorTaskOrComposer(one, two),appCardService, recommendByCategory, recommendByAppList )

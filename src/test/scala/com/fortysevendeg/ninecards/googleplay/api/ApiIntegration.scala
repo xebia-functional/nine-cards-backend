@@ -48,7 +48,7 @@ class ApiIntegration extends Specification with Specs2RouteTest with WithHttp1Cl
 
     val webClient = new Http4sGooglePlayWebScraper( getConfigValue("ninecards.googleplay.web.endpoint") , pooledClient)
     val itemService = new XorTaskOrComposer[AppRequest,String,Item](apiService.getItem, webClient.getItem)
-    val cardService = new XorTaskOrComposer[AppRequest,InfoError, AppCard](apiService.getCard, webClient.getCard)
+    val cardService = new XorTaskOrComposer[AppRequest,InfoError, FullCard](apiService.getCard, webClient.getCard)
     new TaskInterpreter(itemService, cardService, apiService.recommendByCategory, apiService.recommendByAppList)
   }
 
@@ -125,7 +125,7 @@ class ApiIntegration extends Specification with Specs2RouteTest with WithHttp1Cl
       val packageName = validPackages.head
       Get(s"/googleplay/cards/$packageName") ~> addHeaders(requestHeaders) ~> route ~> check {
         status must_=== OK
-        val docid = decode[AppCard](responseAs[String]).map(_.packageName)
+        val docid = decode[ApiCard](responseAs[String]).map(_.packageName)
         docid must_=== packageName.right
       }
     }
@@ -151,8 +151,8 @@ class ApiIntegration extends Specification with Specs2RouteTest with WithHttp1Cl
       request ~> addHeaders(requestHeaders) ~> route ~> check {
         status must_=== OK
 
-        val sets = decode[AppCardList](responseAs[String]).map {
-          case AppCardList(errors, apps) => (errors.toSet, apps.map(_.packageName).toSet)
+        val sets = decode[ApiCardList](responseAs[String]).map {
+          case ApiCardList(errors, apps) => (errors.toSet, apps.map(_.packageName).toSet)
         }
 
         sets must_=== (invalidPackages.toSet, validPackages.toSet).right
@@ -169,7 +169,7 @@ class ApiIntegration extends Specification with Specs2RouteTest with WithHttp1Cl
     "Successfully connect to Google Play and give the information for recommended apps" in {
       request ~> addHeaders(requestHeaders) ~> route ~> check {
         status must_=== OK
-        decode[AppRecommendationList](responseAs[String]).map(_.apps).toEither must beRight
+        decode[ApiRecommendationList](responseAs[String]).map(_.apps).toEither must beRight
       }
     }
   }

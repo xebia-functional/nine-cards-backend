@@ -19,10 +19,10 @@ import spray.routing.{ HttpService, Route }
 class MockInterpreter(
   resolveOne: Package => Option[Item],
   resolveMany: PackageList => PackageDetails,
-  getCard: Package => Xor[InfoError, AppCard],
-  getCardList: PackageList => AppCardList,
-  recommendByCategory: RecommendationsByCategory => Xor[InfoError, AppRecommendationList],
-  recommendByAppList: RecommendationsByAppList => AppRecommendationList
+  getCard: Package => Xor[InfoError, FullCard],
+  getCardList: PackageList => FullCardList,
+  recommendByCategory: RecommendationsByCategory => Xor[InfoError, FullCardList],
+  recommendByAppList: RecommendationsByAppList => FullCardList
 ) extends (Ops ~> Id) {
 
   def apply[A](fa: Ops[A]): Id[A] = fa match {
@@ -46,25 +46,25 @@ object MockInterpreter {
   private[this] val failResolveMany: (PackageList => PackageDetails) =
     failFunction[PackageList, PackageDetails]("Should not ask to ResolveMany packages")
 
-  private[this] val failGetCard: Package => Xor[InfoError, AppCard] =
-    failFunction[Package, Xor[InfoError, AppCard]]("Should not ask to GetCard for a package")
+  private[this] val failGetCard: Package => Xor[InfoError, FullCard] =
+    failFunction[Package, Xor[InfoError, FullCard]]("Should not ask to GetCard for a package")
 
-  private[this] val failGetCardList: PackageList => AppCardList =
-    failFunction[PackageList, AppCardList]("Should not ask to GetCards for a List of packages")
+  private[this] val failGetCardList: PackageList => FullCardList =
+    failFunction[PackageList, FullCardList]("Should not ask to GetCards for a List of packages")
 
-  private[this] val failRecommendByCategory: RecommendationsByCategory => Xor[InfoError, AppRecommendationList] =
+  private[this] val failRecommendByCategory: RecommendationsByCategory => Xor[InfoError, FullCardList] =
     failFunction("Should not ask for the Recommendations of a Category")
 
-  private[this] val failRecommendByAppList: RecommendationsByAppList => AppRecommendationList =
+  private[this] val failRecommendByAppList: RecommendationsByAppList => FullCardList =
     failFunction("Should not ask for Recommendations of app list")
 
   def apply(
     resolveOne: Package => Option[Item] = failResolveOne,
     resolveMany: PackageList => PackageDetails = failResolveMany,
-    getCard: Package => Xor[InfoError, AppCard] = failGetCard,
-    getCardList: PackageList => AppCardList = failGetCardList,
-    recommendByCategory: RecommendationsByCategory => Xor[InfoError, AppRecommendationList] = failRecommendByCategory,
-    recommendByAppList: RecommendationsByAppList => AppRecommendationList = failRecommendByAppList
+    getCard: Package => Xor[InfoError, FullCard] = failGetCard,
+    getCardList: PackageList => FullCardList = failGetCardList,
+    recommendByCategory: RecommendationsByCategory => Xor[InfoError, FullCardList] = failRecommendByCategory,
+    recommendByAppList: RecommendationsByAppList => FullCardList = failRecommendByAppList
   ): MockInterpreter =
     new MockInterpreter(resolveOne, resolveMany,getCard, getCardList, recommendByCategory, recommendByAppList )
 
@@ -171,7 +171,8 @@ object ApiProperties
   def getCard(pkg: Package) = Get(s"/googleplay/cards/${pkg.value}") ~> addHeaders(requestHeaders)
 
   property(s"${endpoints.card} returns a valid card for an app") =
-    forAll { (pkg: Package, card: AppCard) =>
+    forAll { (pkg: Package, card: FullCard) =>
+      val apiCard = Converters.toApiCard(card)
 
       val route = makeRoute(MockInterpreter( getCard = { (p: Package) =>
         xorThenElse( p != pkg, InfoError(p.value), card)
@@ -179,12 +180,12 @@ object ApiProperties
 
       getCard(pkg) ~> route ~> check {
         val response = responseAs[String]
-          (status ?= OK) && (decode[AppCard](response) ?= Xor.Right(card))
+          (status ?= OK) && (decode[ApiCard](response) ?= Xor.Right( apiCard ))
       }
     }
 
   property(s"${endpoints.card} fails with a NotFound Error when the package is not known") =
-    forAll {(unknownPackage: Package, wrongCard: AppCard) =>
+    forAll {(unknownPackage: Package, wrongCard: FullCard) =>
 
       val infoError = InfoError(unknownPackage.value)
       val getCardSer = ( (p: Package) => xorThenElse( p == unknownPackage, infoError, wrongCard) )
@@ -207,7 +208,7 @@ object ApiProperties
     }
 
   property(s"${endpoints.cardList} fails with a NotFound Error when the package is not known") =
-    forAll(genPick[Package, AppCard]) { (data: (Map[Package, AppCard], List[Package], List[Package])) =>
+    forAll(genPick[Package, FullCard]) { (data: (Map[Package, FullCard], List[Package], List[Package])) =>
 
       val (database, succs, errs) = data
 
@@ -215,9 +216,9 @@ object ApiProperties
       val errors = errs.map(_.value).toSet
       val items = succs.map(i => database(i)).toSet
 
-      val getCardListSer: PackageList => AppCardList = { case PackageList(packages) =>
-        val (errors, items) = splitFind[Package,AppCard](database, packages.map(Package.apply))
-        AppCardList(errors.map(_.value), items)
+      val getCardListSer: PackageList => FullCardList = { case PackageList(packages) =>
+        val (errors, items) = splitFind[Package,FullCard](database, packages.map(Package.apply))
+        FullCardList(errors.map(_.value), items)
       }
 
       val route = makeRoute( MockInterpreter( getCardList = getCardListSer) )
@@ -226,11 +227,11 @@ object ApiProperties
 
       getCardList( PackageList(allPackages)) ~> addHeaders(requestHeaders) ~> route ~> check {
         val response = responseAs[String]
-        val decoded = decode[AppCardList](response)
+        val decoded = decode[ApiCardList](response)
           .getOrElse(throw new RuntimeException(s"Unable to parse response [$response]"))
         (status ?= OK) &&
         (decoded.missing.toSet ?= errors) &&
-        (decoded.apps.toSet ?= items)
+        (decoded.apps.toSet ?= (items map Converters.toApiCard) )
       }
     }
 
