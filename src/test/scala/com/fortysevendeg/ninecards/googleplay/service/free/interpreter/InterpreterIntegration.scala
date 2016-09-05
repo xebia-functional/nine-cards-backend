@@ -74,7 +74,7 @@ class TaskInterpreterIntegration extends Specification with TaskMatchers with Wi
   val interpreter = {
     val itemService = new XorTaskOrComposer[AppRequest,String,Item](apiService.getItem, webClient.getItem)
     val cardService = new XorTaskOrComposer[AppRequest,InfoError, AppCard](apiService.getCard, webClient.getCard)
-    new TaskInterpreter(itemService, cardService, (apiService.recommendByCategory _), (apiService.recommendByAppList) )
+    new TaskInterpreter(itemService, cardService, apiService.recommendByCategory, apiService.recommendByAppList )
   }
 
   def categoryOption(item: Item): Option[String] =

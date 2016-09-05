@@ -63,6 +63,7 @@ object ScalaCheck_Aux {
     // Unreserved characters, per URI syntax: https://tools.ietf.org/html/rfc2396#section-2.3
     val unreserved: Gen[Char] = Gen.frequency( (9, Gen.alphaNumChar), (1, oneOf('-','.','_','~')) )
     Gen.containerOf[Array, Char](unreserved).map(_.mkString)
+      .filter( path => ! List( ".", "..").contains(path) )
   }
 
   val usAsciiStringGen = Gen.containerOf[Array, Char](Gen.choose[Char](0,127)).map(_.mkString)
