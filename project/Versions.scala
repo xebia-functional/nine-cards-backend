@@ -17,6 +17,7 @@ object Versions {
 
   resolvers += Resolver.sonatypeRepo("snapshots")
   val circe = "0.4.1"
+  val jodaTime = "2.9.4"
 
   val tagSoup = "1.2.1"
 

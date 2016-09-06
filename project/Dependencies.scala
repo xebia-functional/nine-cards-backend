@@ -27,6 +27,8 @@ object Dependencies {
 
   private val http4sClient = "org.http4s" %% "http4s-blaze-client" % Versions.http4sClient
 
+  private val jodaTime = "joda-time" % "joda-time" % Versions.jodaTime
+
   private val redisClient = "net.debasishg" %% "redisclient" % Versions.redisClient
 
   private val tagSoup = "org.ccil.cowan.tagsoup" % "tagsoup" % Versions.tagSoup
@@ -47,6 +49,8 @@ object Dependencies {
     circe("generic"),
     circe("parser"),
     enumeratum(""),
+    enumeratum("-circe"),
+    jodaTime,
     redisClient,
     embeddedRedis,
     newRelic,
