@@ -35,7 +35,8 @@ CREATE TABLE SharedCollectionPackages (
 );
 
 CREATE TABLE SharedCollectionSubscriptions (
- id serial NOT NULL PRIMARY KEY,
  sharedCollectionId BIGINT NOT NULL REFERENCES SharedCollections(id),
- userId BIGINT NOT NULL REFERENCES Users(id)
+ userId BIGINT NOT NULL REFERENCES Users(id),
+ sharedCollectionPublicId character varying(100) NOT NULL,
+ PRIMARY KEY (sharedCollectionId, userId)
 );

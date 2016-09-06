@@ -23,8 +23,8 @@ trait DomainDatabaseContext {
   val transactor: Transactor[Task] = DriverManagerTransactor[Task](testDriver, testUrl, testUsername, testPassword)
 
   implicit class Transacting[A](operation: ConnectionIO[A]) {
-    def transactAndRun(): A = operation.transact(transactor).unsafePerformSync
-    def transactAndAttempt(): \/[Throwable, A] = operation.transact(transactor).unsafePerformSyncAttempt
+    def transactAndRun: A = operation.transact(transactor).unsafePerformSync
+    def transactAndAttempt: \/[Throwable, A] = operation.transact(transactor).unsafePerformSyncAttempt
   }
 
   implicit val userPersistence = new Persistence[User](supportsSelectForUpdate = false)
@@ -42,6 +42,9 @@ trait DomainDatabaseContext {
   val flywaydb = new Flyway
   flywaydb.setDataSource(testUrl, testUsername, testPassword)
   flywaydb.migrate()
+
+  def insertItemWithoutGeneratedKeys[A: Composite](sql: String, values: A): ConnectionIO[Int] =
+    Update[A](sql).toUpdate0(values).run
 
   def insertItem[A: Composite](sql: String, values: A): ConnectionIO[Long] =
     Update[A](sql).toUpdate0(values).withUniqueGeneratedKeys[Long]("id")

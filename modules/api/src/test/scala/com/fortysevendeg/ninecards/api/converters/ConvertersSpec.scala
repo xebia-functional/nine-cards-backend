@@ -110,4 +110,15 @@ class ConvertersSpec
       }
     }
   }
+
+  "toApiGetSubscriptionsByUserResponse" should {
+    "convert GetSubscriptionsByUserResponse to ApiGetSubscriptionsByUserResponse" in {
+      prop { (response: GetSubscriptionsByUserResponse) ⇒
+
+        val apiResponse = Converters.toApiGetSubscriptionsByUser(response)
+
+        apiResponse.subscriptions shouldEqual response.subscriptions
+      }
+    }
+  }
 }

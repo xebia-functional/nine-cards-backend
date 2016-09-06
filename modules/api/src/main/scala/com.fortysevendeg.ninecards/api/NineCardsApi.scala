@@ -2,7 +2,6 @@ package com.fortysevendeg.ninecards.api
 
 import akka.actor.{ Actor, ActorRefFactory }
 import cats.data.Xor
-import cats.free.Free
 import com.fortysevendeg.ninecards.api.NineCardsDirectives._
 import com.fortysevendeg.ninecards.api.NineCardsHeaders.Domain._
 import com.fortysevendeg.ninecards.api.converters.Converters._
@@ -142,6 +141,17 @@ class NineCardsRoutes(
               }
             }
         } ~
+        pathPrefix("subscriptions") {
+          pathEndOrSingleSlash {
+            get {
+              complete(getSubscriptionsByUser(userContext))
+            }
+          } ~
+            path(TypedSegment[PublicIdentifier]) { publicIdentifier ⇒
+              put(complete(subscribe(publicIdentifier, userContext))) ~
+                delete(complete(unsubscribe(publicIdentifier, userContext)))
+            }
+        } ~
         pathPrefix(TypedSegment[PublicIdentifier]) { publicIdentifier ⇒
           pathEndOrSingleSlash {
             get {
@@ -154,11 +164,7 @@ class NineCardsRoutes(
                   complete(updateCollection(publicIdentifier, request))
                 }
               }
-          } ~
-            path("subscribe") {
-              put(complete(subscribe(publicIdentifier, userContext))) ~
-                delete(complete(unsubscribe(publicIdentifier, userContext)))
-            }
+          }
         }
     }
 
@@ -246,6 +252,13 @@ class NineCardsRoutes(
     sharedCollectionProcesses
       .getPublishedCollections(userContext.userId.value, toAuthParams(googlePlayContext, userContext))
       .map(toApiSharedCollectionList)
+
+  private[this] def getSubscriptionsByUser(
+    userContext: UserContext
+  ): NineCardsServed[ApiGetSubscriptionsByUser] =
+    sharedCollectionProcesses
+      .getSubscriptionsByUser(userContext.userId.value)
+      .map(toApiGetSubscriptionsByUser)
 
   private[this] def getTopCollectionsByCategory(
     category: Category,

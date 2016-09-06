@@ -103,8 +103,12 @@ trait SharedCollectionProcessesSpecification
     ) returns updatedPackagesCount.point[ConnectionIO]
 
     sharedCollectionSubscriptionPersistenceServices
-      .addSubscription[SharedCollectionSubscription](any, any)(any) returns
-      subscription.point[ConnectionIO]
+      .addSubscription(any, any, any) returns
+      updatedSubscriptionsCount.point[ConnectionIO]
+
+    sharedCollectionSubscriptionPersistenceServices
+      .getSubscriptionsByUser(any) returns
+      List(subscription).point[ConnectionIO]
 
     googlePlayServices.resolveMany(any, any) returns Free.pure(appsInfo)
   }
@@ -188,6 +192,18 @@ class SharedCollectionProcessesSpec
         authParams = authParams
       )
       collectionsInfo.foldMap(testInterpreters) mustEqual response
+    }
+
+  }
+
+  "getSubscriptionsByUser" should {
+
+    "return a list of public identifiers of collections which the user is subscribed to" in new SharedCollectionSuccessfulScope {
+      val response = GetSubscriptionsByUserResponse(List(publicIdentifier))
+      val subscriptions = sharedCollectionProcesses.getSubscriptionsByUser(
+        userId = subscriberId
+      )
+      subscriptions.foldMap(testInterpreters) mustEqual response
     }
 
   }

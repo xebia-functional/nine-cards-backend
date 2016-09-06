@@ -23,9 +23,9 @@ case class SharedCollectionPackage(
 )
 
 case class SharedCollectionSubscription(
-  id: Long,
   sharedCollectionId: Long,
-  userId: Long
+  userId: Long,
+  sharedCollectionPublicId: String
 )
 
 object SharedCollection {
@@ -63,14 +63,12 @@ object SharedCollectionPackage {
 }
 
 object SharedCollectionSubscription {
-  val fields = List("sharedcollectionid", "userid")
-  val allFields = "id" +: fields
+  val fields = List("sharedcollectionid", "userid", "sharedcollectionpublicid")
 
   val insertFields = fields.mkString(",")
   val insertWildCards = fields.map(_ ⇒ "?").mkString(",")
 
   object Queries {
-    val getById = "select * from sharedcollectionsubscriptions where id=?"
     val getByCollection = "select * from sharedcollectionsubscriptions where sharedcollectionid=?"
     val getByCollectionAndUser = "select * from sharedcollectionsubscriptions where sharedcollectionid=? and userid=?"
     val getByUser = "select * from sharedcollectionsubscriptions where userid=?"

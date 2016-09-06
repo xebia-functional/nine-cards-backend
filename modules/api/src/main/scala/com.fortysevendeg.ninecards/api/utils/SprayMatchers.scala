@@ -11,13 +11,6 @@ import spray.routing._
 
 object SprayMatchers {
 
-  class TypedSegment[T](implicit gen: Generic.Aux[T, String :: HNil]) extends PathMatcher1[T] {
-    def apply(path: Path) = path match {
-      case Path.Segment(segment, tail) ⇒ Matched(tail, gen.from(segment :: HNil) :: HNil)
-      case _ ⇒ Unmatched
-    }
-  }
-
   class EnumSegment[E <: EnumEntry](implicit En: Enum[E]) extends PathMatcher1[E] {
     def apply(path: Path) = path match {
       case Path.Segment(segment, tail) ⇒ En.withNameOption(segment) match {
@@ -31,6 +24,13 @@ object SprayMatchers {
   val CategorySegment: PathMatcher1[Category] = new EnumSegment[Category]
   val ContinentSegment: PathMatcher1[Continent] = new EnumSegment[Continent]
   val CountrySegment: PathMatcher1[Country] = new EnumSegment[Country]
+
+  class TypedSegment[T](implicit gen: Generic.Aux[T, String :: HNil]) extends PathMatcher1[T] {
+    def apply(path: Path) = path match {
+      case Path.Segment(segment, tail) ⇒ Matched(tail, gen.from(segment :: HNil) :: HNil)
+      case _ ⇒ Unmatched
+    }
+  }
 
   object TypedSegment {
     def apply[T](implicit gen: Generic.Aux[T, String :: HNil]) = new TypedSegment[T]

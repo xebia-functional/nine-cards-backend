@@ -81,6 +81,7 @@ trait JsonFormats
 
   implicit val apiCategorizeAppsResponseFormat = jsonFormat2(ApiCategorizeAppsResponse)
 
+  implicit val apiGetSubscriptionsByUserResponseFormat = jsonFormat1(ApiGetSubscriptionsByUser)
 }
 
 object JsonFormats extends JsonFormats
