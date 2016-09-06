@@ -54,7 +54,7 @@ class ConvertersSpec extends Specification with Specs2RouteTest {
   }
 
   "From a ListResponse carrying the result of a category recommendations, it" should {
-    val fileName = "recommend_SOCIAL_FREE"
+    val fileName = "recommend/SOCIAL_FREE"
     val listRes: ListResponse = getListResponse( readProtobufFile(fileName))
 
     "read the list of ids of the recommended apps" in {
@@ -83,5 +83,28 @@ class ConvertersSpec extends Specification with Specs2RouteTest {
     }
 
   }
+
+  "From a series of lists responses, each one carrying the recommendations for a different app, it" should {
+
+    val files = List( "com.facebook.katana", "com.instagram.android", "com.pinterest")
+    def listResponseOf(file: String) = getListResponse(readProtobufFile(s"recommend/$file" ))
+    def packagesOf( file: String) = listResponseToPackages( listResponseOf( file))
+
+    "read the list of ids of the recommended apps" in {
+      packagesOf( files(0) ) must_===( List( "com.instagram.android", "com.facebook.orca", "com.whatsapp") )
+      packagesOf( files(1) ) must_===( List( "com.facebook.katana", "com.whatsapp", "com.facebook.orca") )
+      packagesOf( files(2) ) must_===( List( "com.tumblr", "com.weheartit", "com.instagram.android") )
+    }
+
+    "extract a union list of recommended apps without repetitions" in {
+      val ids: List[String] = listResponseListToPackages(files map listResponseOf)
+      ids must_===( List(
+        "com.tumblr", "com.weheartit", "com.whatsapp",
+        "com.instagram.android", "com.facebook.katana", "com.facebook.orca"
+      ))
+    }
+  }
+
+
 
 }

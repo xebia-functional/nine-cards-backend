@@ -49,7 +49,7 @@ class ApiIntegration extends Specification with Specs2RouteTest with WithHttp1Cl
     val webClient = new Http4sGooglePlayWebScraper( getConfigValue("ninecards.googleplay.web.endpoint") , pooledClient)
     val itemService = new XorTaskOrComposer[AppRequest,String,Item](apiService.getItem, webClient.getItem)
     val cardService = new XorTaskOrComposer[AppRequest,InfoError, AppCard](apiService.getCard, webClient.getCard)
-    new TaskInterpreter(itemService, cardService, apiService.recommendationsByCategory)
+    new TaskInterpreter(itemService, cardService, apiService.recommendByCategory, apiService.recommendByAppList)
   }
 
   val route = {
@@ -173,4 +173,18 @@ class ApiIntegration extends Specification with Specs2RouteTest with WithHttp1Cl
       }
     }
   }
+
+  endpoints.recommendAppList should {
+    val request = Post("/googleplay/recommendations", PackageList(allPackages))
+
+    failUnauthorized(request)
+
+    "Successfully connect to Google Play" in {
+      request ~> addHeaders(requestHeaders) ~> route ~> check {
+        status must_=== OK
+      }
+    }
+
+  }
+
 }

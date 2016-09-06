@@ -21,7 +21,8 @@ class MockInterpreter(
   resolveMany: PackageList => PackageDetails,
   getCard: Package => Xor[InfoError, AppCard],
   getCardList: PackageList => AppCardList,
-  recommendByCategory: RecommendationsByCategory => Xor[InfoError, AppRecommendationList]
+  recommendByCategory: RecommendationsByCategory => Xor[InfoError, AppRecommendationList],
+  recommendByAppList: RecommendationsByAppList => AppRecommendationList
 ) extends (Ops ~> Id) {
 
   def apply[A](fa: Ops[A]): Id[A] = fa match {
@@ -30,6 +31,7 @@ class MockInterpreter(
     case GetCard(_, p) => getCard(p)
     case GetCardList(_, pl) => getCardList(pl)
     case rec@RecommendationsByCategory(_,_,_) => recommendByCategory(rec)
+    case rec@RecommendationsByAppList(_,_) => recommendByAppList(rec)
   }
 }
 
@@ -50,17 +52,21 @@ object MockInterpreter {
   private[this] val failGetCardList: PackageList => AppCardList =
     failFunction[PackageList, AppCardList]("Should not ask to GetCards for a List of packages")
 
-  private[this] val failRecommendByCategory: RecommendationsByCategory  => Xor[InfoError, AppRecommendationList] =
-    failFunction[RecommendationsByCategory, Xor[InfoError, AppRecommendationList]]("Should not ask for the Recommendations of a Category")
+  private[this] val failRecommendByCategory: RecommendationsByCategory => Xor[InfoError, AppRecommendationList] =
+    failFunction("Should not ask for the Recommendations of a Category")
+
+  private[this] val failRecommendByAppList: RecommendationsByAppList => AppRecommendationList =
+    failFunction("Should not ask for Recommendations of app list")
 
   def apply(
     resolveOne: Package => Option[Item] = failResolveOne,
     resolveMany: PackageList => PackageDetails = failResolveMany,
     getCard: Package => Xor[InfoError, AppCard] = failGetCard,
     getCardList: PackageList => AppCardList = failGetCardList,
-    recommendByCategory: RecommendationsByCategory => Xor[InfoError, AppRecommendationList] = failRecommendByCategory
+    recommendByCategory: RecommendationsByCategory => Xor[InfoError, AppRecommendationList] = failRecommendByCategory,
+    recommendByAppList: RecommendationsByAppList => AppRecommendationList = failRecommendByAppList
   ): MockInterpreter =
-    new MockInterpreter(resolveOne, resolveMany,getCard, getCardList, recommendByCategory)
+    new MockInterpreter(resolveOne, resolveMany,getCard, getCardList, recommendByCategory, recommendByAppList )
 
 }
 
@@ -261,5 +267,12 @@ object ApiProperties
       checkUnauthorized( Get(s"/googleplay/recommendations/$category/$filter") )
     }}
   }
+
+  def recommendByAppList(packageList: PackageList) = Post("/googleplay/recommendations", packageList)
+
+  property( s"${endpoints.recommendAppList} fails with Unauthorized if the auth headers are missing") =
+    forAll { (packages: List[Package]) =>
+      checkUnauthorized( recommendByAppList(PackageList(packages.map(_.value))) )
+    }
 
 }

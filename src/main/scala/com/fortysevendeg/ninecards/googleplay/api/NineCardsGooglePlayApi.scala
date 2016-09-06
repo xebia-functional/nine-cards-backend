@@ -94,6 +94,13 @@ class NineCardsGooglePlayApi[Ops[_]] (
   private[this] lazy val recommendationsRoute: Route =
     pathPrefix("recommendations") {
       requestHeaders { authParams =>
+        pathEndOrSingleSlash {
+          post {
+            entity(as[PackageList])  { packageList =>
+              complete( googlePlayService.recommendationsByAppList(authParams, packageList))
+            }
+          }
+        } ~
         pathPrefix(CategorySegment) { category =>
           priceFilterPath { filter =>
             get {

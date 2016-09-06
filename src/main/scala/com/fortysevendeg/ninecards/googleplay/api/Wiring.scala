@@ -35,7 +35,7 @@ object Wiring {
       new CachedAppService( "apiClient_app", apiServices.getCard, redisPool),
       new CachedAppService( "webScrape_app", webClient.getCard, redisPool)
     )
-    new TaskInterpreter(itemService, appService, apiServices.recommendationsByCategory )
+    new TaskInterpreter(itemService, appService, apiServices.recommendByCategory, apiServices.recommendByAppList)
   }
 
 }
