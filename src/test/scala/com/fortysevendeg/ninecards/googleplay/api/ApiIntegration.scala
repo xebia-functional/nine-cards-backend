@@ -5,7 +5,8 @@ import com.fortysevendeg.extracats._
 import com.fortysevendeg.ninecards.config.NineCardsConfig.getConfigValue
 import com.fortysevendeg.ninecards.googleplay.TestConfig._
 import com.fortysevendeg.ninecards.googleplay.domain._
-import com.fortysevendeg.ninecards.googleplay.service.free.interpreter.{ Http4sGooglePlayApiClient, Http4sGooglePlayWebScraper, TaskInterpreter }
+import com.fortysevendeg.ninecards.googleplay.service.free.algebra.GooglePlay
+import com.fortysevendeg.ninecards.googleplay.service.free.interpreter._
 import com.fortysevendeg.ninecards.googleplay.util.WithHttp1Client
 import io.circe.generic.auto._
 import io.circe.parser._
@@ -40,15 +41,25 @@ class ApiIntegration extends Specification with Specs2RouteTest with WithHttp1Cl
     RawHeader(Headers.localization, localization.value)
   )
 
+  val googleApiConf: googleapi.Configuration = googleapi.Configuration.load()
+
   implicit val i = {
-    val apiClient = new Http4sGooglePlayApiClient( getConfigValue("ninecards.googleplay.api.endpoint") , pooledClient)
+    val apiService = new googleapi.ApiServices( new googleapi.ApiClient( googleApiConf , pooledClient) )
+
     val webClient = new Http4sGooglePlayWebScraper( getConfigValue("ninecards.googleplay.web.endpoint") , pooledClient)
-    val itemService = new XorTaskOrComposer[AppRequest,String,Item](apiClient.getItem, webClient.getItem)
-    val cardService = new XorTaskOrComposer[AppRequest,InfoError, AppCard](apiClient.getCard, webClient.getCard)
-    new TaskInterpreter(itemService, cardService)
+    val itemService = new XorTaskOrComposer[AppRequest,String,Item](apiService.getItem, webClient.getItem)
+    val cardService = new XorTaskOrComposer[AppRequest,InfoError, AppCard](apiService.getCard, webClient.getCard)
+    new TaskInterpreter(itemService, cardService, apiService.recommendByCategory, apiService.recommendByAppList)
   }
 
-  val route = sealRoute(NineCardsGooglePlayApi.googlePlayApiRoute[Task] )
+  val route = {
+    val trmFactory: TRMFactory[ GooglePlay.FreeOps ] =
+      NineCardsMarshallers.contraNaturalTransformFreeTRMFactory[GooglePlay.Ops, Task](
+        i, taskMonad, NineCardsMarshallers.TaskMarshallerFactory)
+
+    val api = new NineCardsGooglePlayApi[GooglePlay.Ops]()(GooglePlay.Service.service, trmFactory)
+    sealRoute(api.googlePlayApiRoute )
+  }
 
   val validPackages = List("air.fisherprice.com.shapesAndColors", "com.rockstargames.gtalcs", "com.ted.android")
   val invalidPackages = List("com.package.does.not.exist", "com.another.invalid.package")
@@ -64,7 +75,7 @@ class ApiIntegration extends Specification with Specs2RouteTest with WithHttp1Cl
     }
   }
 
-  """ GET "/googleplay/package/${packageName}", the endpoint to get one app's Item,""" should {
+  s"${endpoints.item}," should {
 
     failUnauthorized( Get(s"/googleplay/package/${validPackages.head}") )
 
@@ -86,7 +97,7 @@ class ApiIntegration extends Specification with Specs2RouteTest with WithHttp1Cl
     }
   }
 
-  """ POST "/googleplay/packages/detailed", the endpoint to get several app's items, """ should {
+  endpoints.itemList should {
 
     val request = Post(s"/googleplay/packages/detailed", PackageList(allPackages))
 
@@ -106,7 +117,7 @@ class ApiIntegration extends Specification with Specs2RouteTest with WithHttp1Cl
 
   }
 
-  """ GET "/googleplay/cards/{packageName}", the endpoint to get the card of one app, """ should {
+  endpoints.card should {
 
     failUnauthorized(Get(s"/googleplay/cards/{validPackages.head}"))
 
@@ -130,8 +141,7 @@ class ApiIntegration extends Specification with Specs2RouteTest with WithHttp1Cl
 
   }
 
-
-  """ POST "/googleplay/cards", the endpoint to get the cards of several apps, """ should {
+  endpoints.cardList should {
 
     val request = Post(s"/googleplay/cards", PackageList(allPackages))
 
@@ -148,6 +158,33 @@ class ApiIntegration extends Specification with Specs2RouteTest with WithHttp1Cl
         sets must_=== (invalidPackages.toSet, validPackages.toSet).right
       }
     }
+  }
+
+  endpoints.recommendCategory should {
+
+    val request = Get("/googleplay/recommendations/SOCIAL/FREE")
+
+    failUnauthorized(request)
+
+    "Successfully connect to Google Play and give the information for recommended apps" in {
+      request ~> addHeaders(requestHeaders) ~> route ~> check {
+        status must_=== OK
+        decode[AppRecommendationList](responseAs[String]).map(_.apps).toEither must beRight
+      }
+    }
+  }
+
+  endpoints.recommendAppList should {
+    val request = Post("/googleplay/recommendations", PackageList(allPackages))
+
+    failUnauthorized(request)
+
+    "Successfully connect to Google Play" in {
+      request ~> addHeaders(requestHeaders) ~> route ~> check {
+        status must_=== OK
+      }
+    }
 
   }
+
 }

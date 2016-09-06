@@ -3,7 +3,7 @@ package com.fortysevendeg.ninecards.googleplay.service.free.interpreter
 import cats.data.Xor
 import com.fortysevendeg.extracats.XorTaskOrComposer
 import com.fortysevendeg.ninecards.googleplay.domain._
-import com.fortysevendeg.ninecards.googleplay.service.free.algebra.GooglePlay.{Resolve, ResolveMany}
+import com.fortysevendeg.ninecards.googleplay.service.free.algebra.GooglePlay._
 import com.fortysevendeg.ninecards.googleplay.TestConfig._
 import com.fortysevendeg.ninecards.googleplay.util.WithHttp1Client
 import org.specs2.matcher.TaskMatchers
@@ -16,56 +16,11 @@ class InterpretersIntegration extends Specification with WithHttp1Client {
 
   import TaskMatchers._
 
-  private val apiClient = new Http4sGooglePlayApiClient(apiEndpoint, pooledClient)
+  private val apiService = new googleapi.ApiServices(
+    new googleapi.ApiClient( googleApiConf, pooledClient))
   private val webClient = new Http4sGooglePlayWebScraper(webEndpoint, pooledClient)
 
   sequential
-
-  "Http4sGooglePlayApiClient, the client to Google Play unofficial API" should {
-
-    "Making an API request for an Item" should {
-      "retrieve an Item for packages that exist" in {
-        val response = apiClient.getItem(AppRequest(fisherPrice.packageObj,authParams))
-        val fetchedDocId = response.map { xor => xor.map { item => (
-          item.docV2.docid,
-          item.docV2.title,
-          item.docV2.details.appDetails.appCategory
-        )}}
-        val expected = {
-          import fisherPrice.card
-          (card.packageName, card.title, card.categories.take(1) )
-        }
-        fetchedDocId must returnValue( Xor.Right(expected) )
-        // todo should this be more comprehensive? check all other tests too
-      }
-
-      "result in an error state for packages that do not exist" in {
-        val appRequest = AppRequest(nonexisting.packageObj, authParams )
-        apiClient.getItem(appRequest) must returnValue(Xor.left(nonexisting.packageName))
-      }
-    }
-
-    "Making an API request for a Card" should {
-
-      "result in an Item for packages that exist" in {
-        def eraseDetails( card: AppCard) : AppCard = card.copy(
-          downloads = "",
-          categories = card.categories.take(1),
-          stars = 3.145
-        )
-        val appRequest = AppRequest(fisherPrice.packageObj, authParams )
-        val response = apiClient.getCard(appRequest)
-        val fields = response.map( _.map(eraseDetails))
-        // The number of downloads can be different from the Google API.
-        fields must returnValue( Xor.Right( eraseDetails(fisherPrice.card)))
-      }
-
-      "result in an error state for packages that do not exist" in {
-        val appRequest = AppRequest(nonexisting.packageObj, authParams )
-        apiClient.getCard(appRequest) must returnValue(Xor.left(nonexisting.infoError))
-      }
-    }
-  }
 
   "Http4sGooglePlayWebScraper, the parser of Google Play's pages" should {
 
@@ -111,14 +66,15 @@ class TaskInterpreterIntegration extends Specification with TaskMatchers with Wi
 
   sequential
 
-  val apiClient = new Http4sGooglePlayApiClient(apiEndpoint, pooledClient)
+  private val apiService = new googleapi.ApiServices(
+    new googleapi.ApiClient( googleApiConf, pooledClient))
   val webClient = new Http4sGooglePlayWebScraper(webEndpoint, pooledClient)
 
   // Most of this should be moved to a wiring module, with the cache.
   val interpreter = {
-    val itemService = new XorTaskOrComposer[AppRequest,String,Item](apiClient.getItem, webClient.getItem)
-    val cardService = new XorTaskOrComposer[AppRequest,InfoError, AppCard](apiClient.getCard, webClient.getCard)
-    new TaskInterpreter(itemService, cardService)
+    val itemService = new XorTaskOrComposer[AppRequest,String,Item](apiService.getItem, webClient.getItem)
+    val cardService = new XorTaskOrComposer[AppRequest,InfoError, AppCard](apiService.getCard, webClient.getCard)
+    new TaskInterpreter(itemService, cardService, apiService.recommendByCategory, apiService.recommendByAppList )
   }
 
   def categoryOption(item: Item): Option[String] =
@@ -164,7 +120,11 @@ class TaskInterpreterIntegration extends Specification with TaskMatchers with Wi
           new XorTaskOrComposer( badApiRequest, webClient.getItem)
         val appCardService: AppRequest => Task[Xor[InfoError, AppCard]] =
           (_ => Task.fail( new RuntimeException("Should not ask for App Card")))
-        new TaskInterpreter( itemService, appCardService)
+        val recommendByCategory: RecommendationsByCategory => Task[Xor[InfoError,AppRecommendationList]] =
+          ( _ => Task.fail( new RuntimeException("Should not ask for recommendations")))
+        val recommendByAppList: RecommendationsByAppList => Task[AppRecommendationList] =
+          ( _ => Task.fail( new RuntimeException("Should not ask for recommendations")))
+        new TaskInterpreter( itemService, appCardService, recommendByCategory, recommendByAppList )
       }
 
       val retrievedCategory: Task[Option[String]] = interpreter

@@ -17,6 +17,12 @@ object GooglePlay {
   case class GetCardList(auth: GoogleAuthParams, packageList: PackageList)
       extends Ops[AppCardList]
 
+  case class RecommendationsByCategory(auth: GoogleAuthParams, category: Category, filter: PriceFilter)
+      extends Ops[InfoError Xor AppRecommendationList]
+
+  case class RecommendationsByAppList(auth: GoogleAuthParams, packageList: PackageList)
+      extends Ops[AppRecommendationList]
+
   class Service[F[_]](implicit I: Inject[Ops, F]) {
 
     def resolve(auth: GoogleAuthParams, pkg: Package): Free[F, Option[Item]] =
@@ -30,10 +36,20 @@ object GooglePlay {
     def getCardList(auth: GoogleAuthParams, packageList: PackageList): Free[F, AppCardList] =
       Free.inject[Ops, F](GetCardList(auth, packageList))
 
+    def recommendationsByCategory (
+      auth: GoogleAuthParams, category: Category, filter: PriceFilter
+    ):  Free[F, Xor[InfoError, AppRecommendationList]] =
+      Free.inject[Ops, F](RecommendationsByCategory(auth, category, filter))
+
+    def recommendationsByAppList ( auth: GoogleAuthParams, packageList: PackageList) :
+        Free[F, AppRecommendationList] =
+      Free.inject[Ops, F](RecommendationsByAppList(auth, packageList))
   }
 
   object Service {
     implicit def service[F[_]](implicit I: Inject[Ops, F]): Service[F] = new Service[F]
   }
+
+  type FreeOps[A] = Free[Ops, A]
 
 }

@@ -1,12 +1,12 @@
-package com.fortysevendeg.ninecards.googleplay.proto
+package com.fortysevendeg.ninecards.googleplay.service.free.interpreter.googleapi
 
 import java.io.File
 import java.io.FileInputStream
 import org.specs2.mutable.Specification
 
-import com.fortysevendeg.googleplay.proto.GooglePlay._
-
 class ProtoParsingSpec extends Specification {
+
+  import proto.GooglePlay.ResponseWrapper
 
   val packageName = "air.fisherprice.com.shapesAndColors"
 

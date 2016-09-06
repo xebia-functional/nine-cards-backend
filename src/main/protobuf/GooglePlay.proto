@@ -1,4 +1,4 @@
-option java_package = "com.fortysevendeg.googleplay.proto";
+option java_package = "com.fortysevendeg.ninecards.googleplay.service.free.interpreter.googleapi.proto";
 
 message AndroidAppPatchData {
   optional int32 baseVersionCode = 1;

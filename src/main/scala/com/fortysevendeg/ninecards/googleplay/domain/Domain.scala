@@ -1,5 +1,7 @@
 package com.fortysevendeg.ninecards.googleplay.domain
 
+import enumeratum.{Enum, EnumEntry}
+
 case class Package(value: String) extends AnyVal
 case class AndroidId(value: String) extends AnyVal
 case class Token(value: String) extends AnyVal
@@ -49,3 +51,23 @@ case class AppCardList(
   apps: List[AppCard]
 )
 
+sealed trait PriceFilter extends EnumEntry
+object PriceFilter extends Enum[PriceFilter] {
+  case object ALL extends PriceFilter
+  case object FREE extends PriceFilter
+  case object PAID extends PriceFilter
+
+  val values = super.findValues
+}
+
+case class AppRecommendation (
+  packageName: String,
+  name: String,
+  free: Boolean,
+  icon: String,
+  stars: Double,
+  downloads: String,
+  screenshots: List[String]
+)
+
+case class AppRecommendationList(apps: List[AppRecommendation])

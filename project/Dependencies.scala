@@ -11,7 +11,7 @@ object Dependencies {
 
   private def specs(name: String) = "org.specs2" %% s"specs2-${name}" % Versions.specs2
 
-  private val specs2Core = specs("core") % "test"
+  private val specs2Core = specs("core") % "test" exclude("org.scalaz", "*")
   private val specs2MatcherExtra = specs("matcher-extra") % "test"
   private val specs2ScalaCheck = specs("scalacheck") % "test"
 
@@ -34,6 +34,8 @@ object Dependencies {
   private val newRelic = "com.newrelic.agent.java" % "newrelic-agent" % Versions.newRelic
   private val baseDepts = Seq(specs2Core)
 
+  def enumeratum(suffix: String) = "com.beachape" %% s"enumeratum$suffix" % Versions.enumeratum
+
   val apiDeps = Seq(libraryDependencies ++= baseDepts ++ Seq(
     cats,
     sprayHttp,
@@ -44,6 +46,7 @@ object Dependencies {
     circe("core"),
     circe("generic"),
     circe("parser"),
+    enumeratum(""),
     redisClient,
     embeddedRedis,
     newRelic,
