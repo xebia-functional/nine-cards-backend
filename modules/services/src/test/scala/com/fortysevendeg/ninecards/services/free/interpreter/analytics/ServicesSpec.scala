@@ -1,6 +1,5 @@
 package com.fortysevendeg.ninecards.services.free.interpreter.analytics
 
-import cats.data.Xor
 import com.fortysevendeg.ninecards.services.free.domain.rankings._
 import com.fortysevendeg.ninecards.services.utils.MockServerService
 import org.joda.time.{ DateTime, DateTimeZone }
@@ -95,8 +94,6 @@ class ServicesSpec
 }
 
 object TestData {
-
-  // def compactJson(s: String) = s.split('\n').map(_.trim.filter(_ != ' ')).mkString
 
   val viewId = "analytics_view_id"
 

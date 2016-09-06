@@ -15,6 +15,16 @@ trait DummyNineCardsConfig {
     }
   }
 
+  object firebase {
+    val authorizationKey = "1a2b3cb4d5e"
+    val protocol = "http"
+    val port = 8080
+    val host = "localhost"
+    object uri {
+      val sendNotification = "/fcm/send"
+    }
+  }
+
   object googleapi {
     val protocol = "http"
     val port = 8080
@@ -53,6 +63,15 @@ trait DummyNineCardsConfig {
        |    url = "${db.default.url}"
        |    user = "${db.default.user}"
        |    password = "${db.default.password}"
+       |  }
+       |}
+       |firebase {
+       |  authorizationKey = "${firebase.authorizationKey}"
+       |  protocol = "${firebase.protocol}"
+       |  host = "${firebase.host}"
+       |  port = ${firebase.port}
+       |  uri {
+       |    sendNotification = "${firebase.uri.sendNotification}"
        |  }
        |}
        |googleapi {

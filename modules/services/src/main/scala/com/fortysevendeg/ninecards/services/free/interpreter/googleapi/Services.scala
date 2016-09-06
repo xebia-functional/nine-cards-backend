@@ -21,7 +21,7 @@ class Services(config: Configuration) {
       .withPath(config.tokenInfoUri)
       .withQueryParam(config.tokenIdQueryParameter, tokenId)
 
-    client.getAs[WrongTokenInfo Xor TokenInfo](getTokenInfoUri)
+    client.expect[WrongTokenInfo Xor TokenInfo](getTokenInfoUri)
   }
 }
 

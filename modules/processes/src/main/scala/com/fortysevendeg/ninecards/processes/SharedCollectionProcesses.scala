@@ -10,7 +10,7 @@ import com.fortysevendeg.ninecards.processes.utils.XorTSyntax._
 import com.fortysevendeg.ninecards.processes.utils.MonadInstances._
 import com.fortysevendeg.ninecards.services.common.ConnectionIOOps._
 import com.fortysevendeg.ninecards.services.free.algebra.DBResult.DBOps
-import com.fortysevendeg.ninecards.services.free.algebra.GooglePlay
+import com.fortysevendeg.ninecards.services.free.algebra.{ Firebase, GooglePlay }
 import com.fortysevendeg.ninecards.services.free.domain.GooglePlay.AppsInfo
 import com.fortysevendeg.ninecards.services.free.domain.{
   SharedCollection ⇒ SharedCollectionServices,
@@ -28,6 +28,7 @@ class SharedCollectionProcesses[F[_]](
   subscriptionPersistence: SharedCollectionSubscriptionPersistenceServices,
   transactor: Transactor[Task],
   dbOps: DBOps[F],
+  firebaseNotificationsServices: Firebase.Services[F],
   googlePlayServices: GooglePlay.Services[F]
 ) {
 
@@ -215,6 +216,7 @@ object SharedCollectionProcesses {
     implicit
     sharedCollectionPersistenceServices: SharedCollectionPersistenceServices,
     dbOps: DBOps[F],
+    firebaseNotificationsServices: Firebase.Services[F],
     googlePlayServices: GooglePlay.Services[F]
   ) = new SharedCollectionProcesses
 
