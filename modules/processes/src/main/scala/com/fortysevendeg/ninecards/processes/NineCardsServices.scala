@@ -4,6 +4,7 @@ import cats.data.Coproduct
 import cats.{ Monad, ~> }
 import com.fortysevendeg.ninecards.services.free.algebra.DBResult.DBResult
 import com.fortysevendeg.ninecards.services.free.algebra._
+import com.fortysevendeg.ninecards.services.free.interpreter.Interpreters
 import com.fortysevendeg.ninecards.services.free.interpreter.Interpreters._
 
 import scalaz.concurrent.Task
@@ -17,15 +18,18 @@ object NineCardsServices {
   type NineCardsServicesC01[A] = Coproduct[Firebase.Ops, NineCardsServicesC02, A]
   type NineCardsServices[A] = Coproduct[DBResult, NineCardsServicesC01, A]
 
-  val prodInterpretersC03: NineCardsServicesC03 ~> Task =
-    taskInterpreters.googlePlayInterpreter or taskInterpreters.googleApiInterpreter
+  class NineCardsInterpreters[F[_]](int: Interpreters[F]) {
 
-  val prodInterpretersC02: NineCardsServicesC02 ~> Task =
-    taskInterpreters.analyticsInterpreter or prodInterpretersC03
+    val interpretersC03: NineCardsServicesC03 ~> F = int.googlePlayInterpreter or int.googleApiInterpreter
 
-  val prodInterpretersC01: NineCardsServicesC01 ~> Task =
-    taskInterpreters.firebaseInterpreter or prodInterpretersC02
+    val interpretersC02: NineCardsServicesC02 ~> F = int.analyticsInterpreter or interpretersC03
 
-  val prodInterpreters: NineCardsServices ~> Task =
-    taskInterpreters.dBResultInterpreter or prodInterpretersC01
+    val interpretersC01: NineCardsServicesC01 ~> F = int.firebaseInterpreter or interpretersC02
+
+    val interpreters: NineCardsServices ~> F = int.dBResultInterpreter or interpretersC01
+  }
+
+  val prodNineCardsInterpreters = new NineCardsInterpreters(taskInterpreters)
+
+  val prodInterpreters: NineCardsServices ~> Task = prodNineCardsInterpreters.interpreters
 }

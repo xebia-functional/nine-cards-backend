@@ -13,7 +13,7 @@ class ConfigurationSpec extends Specification with DummyNineCardsConfig {
       configuration.protocol shouldEqual firebase.protocol
       configuration.host shouldEqual firebase.host
       configuration.port shouldEqual Option(firebase.port)
-      configuration.sendNotificationUri shouldEqual firebase.uri.sendNotification
+      configuration.sendNotificationPath shouldEqual firebase.paths.sendNotification
     }
   }
 

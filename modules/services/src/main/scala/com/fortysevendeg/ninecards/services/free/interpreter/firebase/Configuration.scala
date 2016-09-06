@@ -6,20 +6,20 @@ case class Configuration(
   protocol: String,
   host: String,
   port: Option[Int],
-  sendNotificationUri: String,
+  sendNotificationPath: String,
   authorizationKey: String
 )
 
 object Configuration {
   implicit def configuration(implicit config: NineCardsConfig): Configuration = {
-    val base = "firebase"
+    val base = "ninecards.backend.firebase"
 
     Configuration(
-      protocol            = config.getString(s"$base.protocol"),
-      host                = config.getString(s"$base.host"),
-      port                = config.getOptionalInt(s"$base.port"),
-      sendNotificationUri = config.getString(s"$base.uri.sendNotification"),
-      authorizationKey    = config.getString(s"$base.authorizationKey")
+      protocol             = config.getString(s"$base.protocol"),
+      host                 = config.getString(s"$base.host"),
+      port                 = config.getOptionalInt(s"$base.port"),
+      sendNotificationPath = config.getString(s"$base.paths.sendNotification"),
+      authorizationKey     = config.getString(s"$base.authorizationKey")
     )
   }
 }

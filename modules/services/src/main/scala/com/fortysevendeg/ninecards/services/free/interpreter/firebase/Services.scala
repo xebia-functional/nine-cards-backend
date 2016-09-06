@@ -21,14 +21,17 @@ class Services(config: Configuration) {
       Header("Authorization", s"key=${config.authorizationKey}")
     )
 
+  private[this] val uri = Uri(
+    scheme    = Option(config.protocol.ci),
+    authority = Option(Authority(host = RegName(config.host), port = config.port)),
+    path      = config.sendNotificationPath
+  )
+
+  private[this] val baseRequest = Request(Method.POST, uri = uri, headers = authHeaders)
+
   def sendUpdatedCollectionNotification(
     info: UpdatedCollectionNotificationInfo
   ): Task[FirebaseError Xor NotificationResponse] = {
-    val uri = Uri(
-      scheme    = Option(config.protocol.ci),
-      authority = Option(Authority(host = RegName(config.host), port = config.port)),
-      path      = config.sendNotificationUri
-    )
 
     val notificationRequest = SendNotificationRequest(
       registration_ids = info.deviceTokens,
@@ -41,7 +44,7 @@ class Services(config: Configuration) {
       )
     )
 
-    val request = Request(Method.POST, uri = uri, headers = authHeaders)
+    val request = baseRequest
       .withBody[SendNotificationRequest[UpdateCollectionNotificationPayload]](notificationRequest)
 
     client.expect[NotificationResponse](request)

@@ -20,7 +20,7 @@ trait DummyNineCardsConfig {
     val protocol = "http"
     val port = 8080
     val host = "localhost"
-    object uri {
+    object paths {
       val sendNotification = "/fcm/send"
     }
   }
@@ -65,15 +65,6 @@ trait DummyNineCardsConfig {
        |    password = "${db.default.password}"
        |  }
        |}
-       |firebase {
-       |  authorizationKey = "${firebase.authorizationKey}"
-       |  protocol = "${firebase.protocol}"
-       |  host = "${firebase.host}"
-       |  port = ${firebase.port}
-       |  uri {
-       |    sendNotification = "${firebase.uri.sendNotification}"
-       |  }
-       |}
        |googleapi {
        |  host = "${googleapi.host}"
        |  port = ${googleapi.port}
@@ -92,12 +83,23 @@ trait DummyNineCardsConfig {
        |    resolveMany = ${googleplay.uri.resolveMany}
        |  }
        |}
-       |ninecards.backend.googleanalytics {
-       |  host = "${googleanalytics.host}"
-       |  port = ${googleanalytics.port}
-       |  protocol = "${googleanalytics.protocol}"
-       |  uri = "${googleanalytics.uri}"
-       |  viewId = "${googleanalytics.viewId}"
+       |ninecards.backend {
+       |  firebase {
+       |    authorizationKey = "${firebase.authorizationKey}"
+       |    protocol = "${firebase.protocol}"
+       |    host = "${firebase.host}"
+       |    port = ${firebase.port}
+       |    paths {
+       |      sendNotification = "${firebase.paths.sendNotification}"
+       |    }
+       |  }
+       |  googleanalytics {
+       |    host = "${googleanalytics.host}"
+       |    port = ${googleanalytics.port}
+       |    protocol = "${googleanalytics.protocol}"
+       |    uri = "${googleanalytics.uri}"
+       |    viewId = "${googleanalytics.viewId}"
+       |  }
        |}
 
      """.stripMargin

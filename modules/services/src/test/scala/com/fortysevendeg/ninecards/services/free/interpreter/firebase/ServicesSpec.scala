@@ -81,11 +81,11 @@ class ServicesSpec
   import TestData._
 
   val configuration: Configuration = Configuration(
-    protocol            = "http",
-    host                = "localhost",
-    port                = Option(mockServerPort),
-    sendNotificationUri = paths.sendNotification,
-    authorizationKey    = auth.valid_token
+    protocol             = "http",
+    host                 = "localhost",
+    port                 = Option(mockServerPort),
+    sendNotificationPath = paths.sendNotification,
+    authorizationKey     = auth.valid_token
   )
 
   val services = Services.services(configuration)
