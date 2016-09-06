@@ -20,12 +20,15 @@ object NineCardsGenEntities {
 
   case class ApiKey(value: String) extends AnyVal
 
+  case class DeviceToken(value: String) extends AnyVal
+
   case class Email(value: String) extends AnyVal
 
   case class SessionToken(value: String) extends AnyVal
 
   case class AndroidId(value: String) extends AnyVal
 
+  case class PublicIdentifier(value: String) extends AnyVal
 }
 
 trait NineCardsScalacheckGen {
@@ -83,7 +86,11 @@ trait NineCardsScalacheckGen {
 
   implicit val abApiKey: Arbitrary[ApiKey] = Arbitrary(Gen.uuid.map(u ⇒ ApiKey(u.toString)))
 
+  implicit val abDeviceToken: Arbitrary[DeviceToken] = Arbitrary(Gen.uuid.map(u ⇒ DeviceToken(u.toString)))
+
   implicit val abEmail: Arbitrary[Email] = Arbitrary(emailGenerator.map(Email.apply))
+
+  implicit val abPublicIdentifier: Arbitrary[PublicIdentifier] = Arbitrary(Gen.uuid.map(u ⇒ PublicIdentifier(u.toString)))
 
   implicit val abSessionToken: Arbitrary[SessionToken] = Arbitrary(Gen.uuid.map(u ⇒ SessionToken(u.toString)))
 

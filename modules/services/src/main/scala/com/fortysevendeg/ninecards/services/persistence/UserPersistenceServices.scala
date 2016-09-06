@@ -42,6 +42,9 @@ class UserPersistenceServices(
   def getInstallationById(id: Long): CIO[Option[Installation]] =
     installationPersistence.fetchOption(InstallationQueries.getById, id)
 
+  def getSubscribedInstallationByCollection(publicIdentifier: String): CIO[List[Installation]] =
+    installationPersistence.fetchList(InstallationQueries.getSubscribedByCollection, publicIdentifier)
+
   def updateInstallation[K: Composite](userId: Long, deviceToken: Option[String], androidId: String): CIO[K] =
     userPersistence.updateWithGeneratedKeys[K](
       sql    = InstallationQueries.updateDeviceToken,

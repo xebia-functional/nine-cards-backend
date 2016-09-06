@@ -1,12 +1,14 @@
 package com.fortysevendeg.ninecards.services.persistence
 
-import com.fortysevendeg.ninecards.services.free.domain.{ Installation, User }
+import com.fortysevendeg.ninecards.services.free.domain.{ Installation, SharedCollection, SharedCollectionSubscription, User }
 import com.fortysevendeg.ninecards.services.persistence.NineCardsGenEntities._
-import doobie.imports.ConnectionIO
+import com.fortysevendeg.ninecards.services.persistence.SharedCollectionPersistenceServices.SharedCollectionData
+import com.fortysevendeg.ninecards.services.persistence.UserPersistenceServices.UserData
 import org.specs2.ScalaCheck
 import org.specs2.matcher.DisjunctionMatchers
 import org.specs2.mutable.Specification
 import org.specs2.specification.BeforeEach
+import shapeless.syntax.std.product._
 
 class UserPersistenceServicesSpec
   extends Specification
@@ -22,6 +24,23 @@ class UserPersistenceServicesSpec
     flywaydb.clean()
     flywaydb.migrate()
   }
+
+  def generateSubscribedInstallation(
+    userData: UserData,
+    collectionData: SharedCollectionData,
+    androidId: AndroidId,
+    deviceToken: DeviceToken
+  ) = {
+    for {
+      u ← insertItem(User.Queries.insert, userData.toTuple)
+      i ← insertItem(Installation.Queries.insert, (u, Option(deviceToken.value), androidId.value))
+      c ← insertItem(SharedCollection.Queries.insert, collectionData.copy(userId = Option(u)).toTuple)
+      _ ← insertItemWithoutGeneratedKeys(
+        sql    = SharedCollectionSubscription.Queries.insert,
+        values = (c, u, collectionData.publicIdentifier)
+      )
+    } yield i
+  }.transactAndRun
 
   "addUser" should {
     "new users can be created" in {
@@ -201,6 +220,40 @@ class UserPersistenceServicesSpec
         ).transactAndRun
 
         storeInstallation should beNone
+      }
+    }
+  }
+
+  "getSubscribedInstallationByCollection" should {
+    "return an empty list if the table is empty" in {
+      prop { (publicIdentifier: PublicIdentifier) ⇒
+        val storeInstallation = userPersistenceServices.getSubscribedInstallationByCollection(
+          publicIdentifier = publicIdentifier.value
+        ).transactAndRun
+
+        storeInstallation must beEmpty
+      }
+    }
+    "return a list of installations that are subscribed to the collection" in {
+      prop { (userData: UserData, collectionData: SharedCollectionData, androidId: AndroidId, deviceToken: DeviceToken) ⇒
+        generateSubscribedInstallation(userData, collectionData, androidId, deviceToken)
+
+        val storeInstallation = userPersistenceServices.getSubscribedInstallationByCollection(
+          publicIdentifier = collectionData.publicIdentifier
+        ).transactAndRun
+
+        storeInstallation must haveSize(be_>(0))
+      }
+    }
+    "return an empty list if there is no installation subscribed to the collection" in {
+      prop { (userData: UserData, collectionData: SharedCollectionData, androidId: AndroidId, deviceToken: DeviceToken) ⇒
+        generateSubscribedInstallation(userData, collectionData, androidId, deviceToken)
+
+        val storeInstallation = userPersistenceServices.getSubscribedInstallationByCollection(
+          publicIdentifier = collectionData.publicIdentifier.reverse
+        ).transactAndRun
+
+        storeInstallation must beEmpty
       }
     }
   }

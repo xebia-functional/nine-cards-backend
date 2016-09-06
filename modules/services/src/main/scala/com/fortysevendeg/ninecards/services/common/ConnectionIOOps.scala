@@ -1,5 +1,6 @@
 package com.fortysevendeg.ninecards.services.common
 
+import cats.data.{ Xor, XorT }
 import com.fortysevendeg.ninecards.services.free.algebra.DBResult.DBOps
 import com.fortysevendeg.ninecards.services.persistence.PersistenceExceptions.PersistenceException
 import doobie.imports.{ ConnectionIO, Transactor }
@@ -25,6 +26,14 @@ object ConnectionIOOps {
             )
           )
       }
+  }
+
+  implicit class CatsFreeOps[F[_], A, T](c: cats.free.Free[F, T Xor A]) {
+    def toXorT = XorT[cats.free.Free[F, ?], T, A](c)
+  }
+
+  implicit class ScalazFreeOps[F[_], A, T](c: scalaz.Free[F, T Xor A]) {
+    def toXorT = XorT[scalaz.Free[F, ?], T, A](c)
   }
 
   implicit class TaskOps[A](task: Task[A]) {
