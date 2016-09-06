@@ -24,7 +24,7 @@ object Converters {
   def toApiRecommendation(fullCard: FullCard) : ApiRecommendation =
     ApiRecommendation(
       packageName = fullCard.packageName,
-      name = fullCard.title,
+      title = fullCard.title,
       free = fullCard.free,
       icon = fullCard.icon,
       stars = fullCard.stars,

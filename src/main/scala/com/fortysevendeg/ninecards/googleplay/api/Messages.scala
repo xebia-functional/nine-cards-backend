@@ -17,7 +17,7 @@ case class ApiCardList(
 
 case class ApiRecommendation (
   packageName: String,
-  name: String,
+  title: String,
   free: Boolean,
   icon: String,
   stars: Double,
