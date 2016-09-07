@@ -1,5 +1,6 @@
 package com.fortysevendeg.ninecards.processes
 
+import cats.data.Xor
 import cats.free.Free
 import com.fortysevendeg.ninecards.processes.NineCardsServices._
 import com.fortysevendeg.ninecards.processes.TestData.Exceptions._
@@ -8,11 +9,9 @@ import com.fortysevendeg.ninecards.processes.TestData.Values._
 import com.fortysevendeg.ninecards.processes.TestData._
 import com.fortysevendeg.ninecards.processes.messages.SharedCollectionMessages._
 import com.fortysevendeg.ninecards.processes.utils.DummyNineCardsConfig
-import com.fortysevendeg.ninecards.services.free.algebra.GooglePlay
-import com.fortysevendeg.ninecards.services.free.domain.{
-  SharedCollectionSubscription,
-  SharedCollection ⇒ SharedCollectionServices
-}
+import com.fortysevendeg.ninecards.services.free.algebra.{ Firebase, GooglePlay }
+import com.fortysevendeg.ninecards.services.free.domain.Firebase.FirebaseError
+import com.fortysevendeg.ninecards.services.free.domain.{ SharedCollectionSubscription, SharedCollection ⇒ SharedCollectionServices }
 import com.fortysevendeg.ninecards.services.persistence._
 import doobie.imports._
 import org.mockito.Matchers.{ eq ⇒ mockEq }
@@ -34,19 +33,21 @@ trait SharedCollectionProcessesSpecification
 
   trait BasicScope extends Scope {
 
-    implicit val sharedCollectionPersistenceServices = mock[SharedCollectionPersistenceServices]
-    implicit val sharedCollectionSubscriptionPersistenceServices = mock[SharedCollectionSubscriptionPersistenceServices]
+    implicit val collectionPersistenceServices = mock[SharedCollectionPersistenceServices]
+    implicit val subscriptionPersistenceServices = mock[SharedCollectionSubscriptionPersistenceServices]
+    implicit val userPersistenceServices = mock[UserPersistenceServices]
+    implicit val firebaseServices = mock[Firebase.Services[NineCardsServices]]
     implicit val googlePlayServices = mock[GooglePlay.Services[NineCardsServices]]
     implicit val sharedCollectionProcesses = new SharedCollectionProcesses[NineCardsServices]
 
     def mockGetSubscription(res: Option[SharedCollectionSubscription]) = {
-      sharedCollectionSubscriptionPersistenceServices
+      subscriptionPersistenceServices
         .getSubscriptionByCollectionAndUser(any, any) returns
         res.point[ConnectionIO]
     }
 
     def mockRemoveSubscription(res: Int) = {
-      sharedCollectionSubscriptionPersistenceServices
+      subscriptionPersistenceServices
         .removeSubscriptionByCollectionAndUser(any, any) returns
         res.point[ConnectionIO]
     }
@@ -55,67 +56,73 @@ trait SharedCollectionProcessesSpecification
 
   trait SharedCollectionSuccessfulScope extends BasicScope {
 
-    sharedCollectionPersistenceServices.addCollection[SharedCollectionServices](
+    collectionPersistenceServices.addCollection[SharedCollectionServices](
       data = mockEq(sharedCollectionDataServices)
     )(any) returns collection.point[ConnectionIO]
 
-    sharedCollectionPersistenceServices.addPackages(
+    collectionPersistenceServices.addPackages(
       collectionId = collectionId,
       packagesName = packagesName
-    ) returns addedPackages.point[ConnectionIO]
+    ) returns addedPackagesCount.point[ConnectionIO]
 
-    sharedCollectionPersistenceServices.getCollectionByPublicIdentifier(
+    collectionPersistenceServices.getCollectionByPublicIdentifier(
       publicIdentifier = publicIdentifier
     ) returns Option(collection).point[ConnectionIO]
 
-    sharedCollectionPersistenceServices.getPackagesByCollection(
+    collectionPersistenceServices.getPackagesByCollection(
       collectionId = collectionId
     ) returns packages.point[ConnectionIO]
 
-    sharedCollectionPersistenceServices.getLatestCollectionsByCategory(
+    collectionPersistenceServices.getLatestCollectionsByCategory(
       category   = category,
       pageNumber = pageNumber,
       pageSize   = pageSize
     ) returns List(collection).point[ConnectionIO]
 
-    sharedCollectionPersistenceServices.getCollectionsByUserId(
+    collectionPersistenceServices.getCollectionsByUserId(
       userId = publisherId
     ) returns List(collection).point[ConnectionIO]
 
-    sharedCollectionPersistenceServices.getTopCollectionsByCategory(
+    collectionPersistenceServices.getTopCollectionsByCategory(
       category   = category,
       pageNumber = pageNumber,
       pageSize   = pageSize
     ) returns List(collection).point[ConnectionIO]
 
-    sharedCollectionPersistenceServices.getCollectionsByUserId(
+    collectionPersistenceServices.getCollectionsByUserId(
       userId = subscriberId
     ) returns List[SharedCollectionServices]().point[ConnectionIO]
 
-    sharedCollectionPersistenceServices.updateCollectionInfo(
+    collectionPersistenceServices.updateCollectionInfo(
       id    = collectionId,
       title = name
     ) returns updatedCollectionsCount.point[ConnectionIO]
 
-    sharedCollectionPersistenceServices.updatePackages(
+    collectionPersistenceServices.updatePackages(
       collectionId = collectionId,
       packages     = updatePackagesName
-    ) returns updatedPackagesCount.point[ConnectionIO]
+    ) returns updatedPackages.point[ConnectionIO]
 
-    sharedCollectionSubscriptionPersistenceServices
+    firebaseServices.sendUpdatedCollectionNotification(any) returns Free.pure(Xor.right(notificationResponse))
+
+    subscriptionPersistenceServices
       .addSubscription(any, any, any) returns
       updatedSubscriptionsCount.point[ConnectionIO]
 
-    sharedCollectionSubscriptionPersistenceServices
+    subscriptionPersistenceServices
       .getSubscriptionsByUser(any) returns
       List(subscription).point[ConnectionIO]
 
     googlePlayServices.resolveMany(any, any) returns Free.pure(appsInfo)
+
+    userPersistenceServices
+      .getSubscribedInstallationByCollection(any) returns
+      List(installation).point[ConnectionIO]
   }
 
   trait SharedCollectionUnsuccessfulScope extends BasicScope {
 
-    sharedCollectionPersistenceServices.getCollectionByPublicIdentifier(
+    collectionPersistenceServices.getCollectionByPublicIdentifier(
       publicIdentifier = publicIdentifier
     ) returns nonExistentSharedCollection.point[ConnectionIO]
   }
@@ -281,8 +288,8 @@ class SharedCollectionProcessesSpec
         collectionInfo.foldMap(testInterpreters) must beXorRight[CreateOrUpdateCollectionResponse].which {
           response ⇒
             response.publicIdentifier must_== publicIdentifier
-            response.packagesStats.added must_== addedPackages
-            response.packagesStats.removed must beSome(removedPackages)
+            response.packagesStats.added must_== addedPackagesCount
+            response.packagesStats.removed must beSome(removedPackagesCount)
         }
       }
 

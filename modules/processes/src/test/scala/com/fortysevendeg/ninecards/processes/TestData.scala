@@ -6,15 +6,15 @@ import java.time.Instant
 import com.fortysevendeg.ninecards.processes.ProcessesExceptions.SharedCollectionNotFoundException
 import com.fortysevendeg.ninecards.processes.messages.ApplicationMessages.AuthParams
 import com.fortysevendeg.ninecards.processes.messages.SharedCollectionMessages._
-import com.fortysevendeg.ninecards.services.free.domain.{ PackageName, Category }
-import com.fortysevendeg.ninecards.services.free.domain.GooglePlay.{ AppInfo ⇒ AppInfoServices, AppsInfo }
-import com.fortysevendeg.ninecards.services.free.domain.{ SharedCollection ⇒ SharedCollectionServices, SharedCollectionPackage, SharedCollectionSubscription }
+import com.fortysevendeg.ninecards.services.free.domain.Firebase.{ NotificationIndividualResult, NotificationResponse }
+import com.fortysevendeg.ninecards.services.free.domain.{ Category, Installation, PackageName, SharedCollectionPackage, SharedCollectionSubscription, SharedCollection ⇒ SharedCollectionServices }
+import com.fortysevendeg.ninecards.services.free.domain.GooglePlay.{ AppsInfo, AppInfo ⇒ AppInfoServices }
 import com.fortysevendeg.ninecards.services.persistence.SharedCollectionPersistenceServices.{ SharedCollectionData ⇒ SharedCollectionDataServices }
 import org.joda.time.{ DateTime, DateTimeZone }
 
 object TestData {
 
-  val addedPackages = 5
+  val addedPackagesCount = 2
 
   val androidId = "50a4dbf7-85a2-4875-8c75-7232c237808c"
 
@@ -22,19 +22,31 @@ object TestData {
 
   val author = "John Doe"
 
+  val canonicalId = 0
+
   val category = "SOCIAL"
 
   val collectionId = 1l
 
   val community = true
 
+  val deviceToken = "5d56922c-5257-4392-817e-503166cd7afd"
+
+  val failure = 0
+
   val icon = "path-to-icon"
+
+  val installationId = 10l
 
   val installations = 1
 
   val localization = Option("en-EN")
 
+  val messageId = "a000dcbd-5419-446f-b2c6-6eaefd88480c"
+
   val millis = 1453226400000l
+
+  val multicastId = 15L
 
   val name = "The best social media apps"
 
@@ -50,11 +62,13 @@ object TestData {
 
   val publisherId = 27L
 
-  val removedPackages = 2
+  val removedPackagesCount = 1
 
   val stars = 5.0d
 
   val subscriberId = 42L
+
+  val success = 1
 
   val token = "6d54dfed-bbcf-47a5-b8f2-d86cf3320631"
 
@@ -84,7 +98,16 @@ object TestData {
     "earth.europe.germany"
   )
 
-  val updatedPackagesCount = (addedPackages, removedPackages)
+  val addedPackages = List(
+    "earth.europe.italy",
+    "earth.europe.unitedKingdom"
+  )
+
+  val removedPackages = List(
+    "earth.europe.germany"
+  )
+
+  val updatedPackages = (addedPackages, removedPackages)
 
   object Values {
 
@@ -121,13 +144,34 @@ object TestData {
         SharedCollectionPackage(id, collectionId, n)
     }
 
-    val createPackagesStats = PackagesStats(addedPackages, None)
+    val createPackagesStats = PackagesStats(addedPackagesCount, None)
 
-    val updatePackagesStats = PackagesStats(addedPackages, Option(removedPackages))
+    val updatePackagesStats = PackagesStats(addedPackagesCount, Option(removedPackagesCount))
 
     val appInfoList = packagesName map { packageName ⇒
       AppInfo(packageName, "Germany", true, icon, stars, "100.000+", appCategory)
     }
+
+    val installation = Installation(
+      id          = installationId,
+      userId      = subscriberId,
+      deviceToken = Option(deviceToken),
+      androidId   = androidId
+    )
+
+    val notificationResponse = NotificationResponse(
+      multicast_id  = multicastId,
+      success       = success,
+      failure       = failure,
+      canonical_ids = canonicalId,
+      results       = Option(
+        List(NotificationIndividualResult(
+          message_id      = Option(messageId),
+          registration_id = None,
+          error           = None
+        ))
+      )
+    )
 
     val sharedCollectionDataServices = SharedCollectionDataServices(
       publicIdentifier = publicIdentifier,

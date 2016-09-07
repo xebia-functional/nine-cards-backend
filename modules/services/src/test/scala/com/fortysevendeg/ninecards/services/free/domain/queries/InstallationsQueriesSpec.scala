@@ -16,6 +16,12 @@ class InstallationsQueriesSpec
   )
   check(getByIdQuery)
 
+  val getSubscribedByCollectionQuery = installationPersistence.generateQuery(
+    sql    = getSubscribedByCollection,
+    values = "111a-222b-33c-444d13"
+  )
+  check(getSubscribedByCollectionQuery)
+
   val getByUserAndAndroidIdQuery = installationPersistence.generateQuery(
     sql    = getByUserAndAndroidId,
     values = (1l, "111a-222b-33c-444d13")
