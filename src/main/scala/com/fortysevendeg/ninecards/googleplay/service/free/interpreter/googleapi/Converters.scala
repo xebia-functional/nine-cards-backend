@@ -40,27 +40,16 @@ object Converters {
     lazy val isFree: Boolean = docV2.getOfferList.exists(_.getMicros == 0)
     lazy val starRating: Double = docV2.getAggregateRating.getStarRating
 
-    def toAppCard(): AppCard =
-      AppCard(
-        packageName = docid,
-        title = title,
-        free = isFree,
-        icon = icon,
-        stars = starRating,
-        downloads = numDownloads,
-        categories = categories
-      )
-
-    def toAppRecommendation(): AppRecommendation =
-      AppRecommendation(
-        packageName = docid,
-        name = title,
-        free = isFree,
-        icon = icon,
-        stars = starRating,
-        downloads = numDownloads,
-        screenshots = imageUrls(Screenshot)
-      )
+    def toFullCard(): FullCard = FullCard(
+      packageName = docid,
+      title = title,
+      free = isFree,
+      icon = icon,
+      stars = starRating,
+      downloads = numDownloads,
+      screenshots = imageUrls(Screenshot),
+      categories = categories
+    )
 
     def toItem() : Item = {
       val details = docV2.getDetails
@@ -93,24 +82,21 @@ object Converters {
 
   def toItem(docV2: DocV2) : Item = new WrapperDocV2(docV2).toItem
 
-  def toCard(docV2: DocV2) : AppCard = new WrapperDocV2(docV2).toAppCard
+  def toFullCard(docV2: DocV2) : FullCard = new WrapperDocV2(docV2).toFullCard
 
-  def toAppRecommendation(docV2: DocV2) = new WrapperDocV2(docV2).toAppRecommendation
-
-  def toAppRecommendationList(listResponse: ListResponse) : AppRecommendationList = {
+  def toFullCardList(listResponse: ListResponse) : FullCardList = {
     val docs: List[DocV2] = listResponse.getDoc(0).getChildList().toList
-    toAppRecommendationList(docs)
+    toFullCardList(docs)
   }
 
-  def toAppRecommendationList( docs: List[DocV2]) : AppRecommendationList = {
-    val apps = for /*List*/ {
+  def toFullCardList( docs: List[DocV2]) : FullCardList = {
+    val apps: List[FullCard] = for /*List*/ {
       doc <- docs
       wr = new WrapperDocV2(doc)
       if (! wr.docid.isEmpty)
       // If a DocV2 corresponds to no app, it is a DefaultInstance and as such has an empty docId
-    } yield wr.toAppRecommendation
-
-    AppRecommendationList(apps)
+    } yield wr.toFullCard
+    FullCardList(List(), apps)
   }
 
 }

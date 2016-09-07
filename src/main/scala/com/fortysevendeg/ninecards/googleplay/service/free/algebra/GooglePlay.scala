@@ -12,16 +12,16 @@ object GooglePlay {
   case class ResolveMany(auth: GoogleAuthParams, packageList: PackageList) extends Ops[PackageDetails]
 
   case class GetCard(auth: GoogleAuthParams, pkg: Package)
-      extends Ops[InfoError Xor AppCard]
+      extends Ops[InfoError Xor FullCard]
 
   case class GetCardList(auth: GoogleAuthParams, packageList: PackageList)
-      extends Ops[AppCardList]
+      extends Ops[FullCardList]
 
   case class RecommendationsByCategory(auth: GoogleAuthParams, category: Category, filter: PriceFilter)
-      extends Ops[InfoError Xor AppRecommendationList]
+      extends Ops[InfoError Xor FullCardList]
 
   case class RecommendationsByAppList(auth: GoogleAuthParams, packageList: PackageList)
-      extends Ops[AppRecommendationList]
+      extends Ops[FullCardList]
 
   class Service[F[_]](implicit I: Inject[Ops, F]) {
 
@@ -30,19 +30,19 @@ object GooglePlay {
     def resolveMany(auth: GoogleAuthParams, packageList: PackageList): Free[F, PackageDetails] =
       Free.inject[Ops, F](ResolveMany(auth, packageList))
 
-    def getCard(auth: GoogleAuthParams, pkg: Package): Free[F,Xor[InfoError, AppCard]] =
+    def getCard(auth: GoogleAuthParams, pkg: Package): Free[F,Xor[InfoError, FullCard]] =
       Free.inject[Ops, F](GetCard(auth, pkg))
 
-    def getCardList(auth: GoogleAuthParams, packageList: PackageList): Free[F, AppCardList] =
+    def getCardList(auth: GoogleAuthParams, packageList: PackageList): Free[F, FullCardList] =
       Free.inject[Ops, F](GetCardList(auth, packageList))
 
     def recommendationsByCategory (
       auth: GoogleAuthParams, category: Category, filter: PriceFilter
-    ):  Free[F, Xor[InfoError, AppRecommendationList]] =
+    ):  Free[F, Xor[InfoError, FullCardList]] =
       Free.inject[Ops, F](RecommendationsByCategory(auth, category, filter))
 
     def recommendationsByAppList ( auth: GoogleAuthParams, packageList: PackageList) :
-        Free[F, AppRecommendationList] =
+        Free[F, FullCardList] =
       Free.inject[Ops, F](RecommendationsByAppList(auth, packageList))
   }
 

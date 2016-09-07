@@ -30,8 +30,8 @@ object NineCardsMarshallers {
   implicit val itemMarshaller: ToResponseMarshaller[Item] =
     circeJsonMarshaller(implicitly[Encoder[Item]])
 
-  implicit val appCardMarshaller: ToResponseMarshaller[AppCard] =
-    circeJsonMarshaller(implicitly[Encoder[AppCard]])
+  implicit val apiCardMarshaller: ToResponseMarshaller[ApiCard] =
+    circeJsonMarshaller(implicitly[Encoder[ApiCard]])
 
   // Domain-specific marshalling and unmarshalling
   implicit object packageListUnmarshaller extends Unmarshaller[PackageList] {
@@ -66,8 +66,8 @@ object NineCardsMarshallers {
     }
   }
 
-  implicit val appRecommendationListMarshaller: ToResponseMarshaller[AppRecommendationList] =
-    circeJsonMarshaller(implicitly[Encoder[AppRecommendationList]])
+  implicit val apiRecommendationListMarshaller: ToResponseMarshaller[ApiRecommendationList] =
+    circeJsonMarshaller(implicitly[Encoder[ApiRecommendationList]])
 
   /**
     *  A to response marshaller capable of completing Scalaz concurrent tasks

@@ -54,17 +54,19 @@ object GooglePlayPageParser {
 
     /*We exclude from the URL the portions after the equals symbol, which are parameters
      to choose smaller icons */
-    val IconSrcRegex = "//([^=]+)=??.*".r
+    val ImageUrlRegex = "//([^=]+)=??.*".r
 
-    def getIcon(): Seq[String] =
+    def getImages(kind: String): Seq[String] =
       for /*Seq*/ {
         n <- doc \\ "img"
-        if n.isProperty("image") 
+        if n.isProperty(kind)
         url = n.getAttribute("src") match {
-          case IconSrcRegex(uri) => uri
+          case ImageUrlRegex(uri) => uri
         }
       } yield s"http://$url"
 
+    def getIcon(): Seq[String] = getImages("image")
+    def getScreenshots(): Seq[String] = getImages("screenshot")
 
     val CategoryHrefRegex = "/store/apps/category/(\\w+)".r
 
@@ -84,7 +86,7 @@ object GooglePlayPageParser {
         price = n.getAttribute("content").trim
       } yield price == "0" 
 
-    def parseCardAux(): Seq[AppCard] =
+    def parseCardAux(): Seq[FullCard] =
       for { /*Seq*/
         docId <- getDocId()
         title <- getTitle()
@@ -93,17 +95,18 @@ object GooglePlayPageParser {
         stars <- getStars()
         downloads <- getDownloads()
       } yield
-        AppCard(
+        FullCard(
           packageName = docId,
           title = title,
           free = free,
           icon = icon,
           stars = stars,
           downloads = downloads,
+          screenshots = getScreenshots().toList,
           categories = getCategories().toList
         )
 
-    def parseCard(): Option[AppCard] = parseCardAux.headOption
+    def parseCard(): Option[FullCard] = parseCardAux.headOption
 
     def parseItem(): Option[Item] =
       for { /*Option*/
@@ -136,10 +139,10 @@ object GooglePlayPageParser {
   def parseItemAux(document: Node): Option[Item] =
     new NodeWrapper(document).parseItem()
 
-  def parseCard(byteVector: ByteVector): Option[AppCard] =
+  def parseCard(byteVector: ByteVector): Option[FullCard] =
     parseCardAux(decodeNode(byteVector))
 
-  def parseCardAux(document: Node): Option[AppCard] =
+  def parseCardAux(document: Node): Option[FullCard] =
     new NodeWrapper(document).parseCard()
 
 }

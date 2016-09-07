@@ -11,9 +11,9 @@ import scalaz.concurrent.Task
 
 class TaskInterpreter(
   itemService: AppRequest => Task[Xor[String,Item]],
-  appCardService: AppRequest => Task[Xor[InfoError,AppCard]],
-  recommendByCategory: GooglePlay.RecommendationsByCategory => Task[Xor[InfoError, AppRecommendationList]],
-  recommendByAppList: GooglePlay.RecommendationsByAppList => Task[AppRecommendationList]
+  appCardService: AppRequest => Task[Xor[InfoError,FullCard]],
+  recommendByCategory: GooglePlay.RecommendationsByCategory => Task[Xor[InfoError, FullCardList]],
+  recommendByAppList: GooglePlay.RecommendationsByAppList => Task[ FullCardList]
 ) extends (GooglePlay.Ops ~> Task) {
 
   def apply[A](fa: GooglePlay.Ops[A]): Task[A] = fa match {
@@ -37,8 +37,8 @@ class TaskInterpreter(
         xors <- packageNames.traverse{ pkg =>
           appCardService( AppRequest(Package(pkg), auth))
         }
-        (errors, apps) = splitXors[InfoError, AppCard](xors)
-      } yield AppCardList(errors.map(_.message), apps)
+        (errors, apps) = splitXors[InfoError, FullCard](xors)
+      } yield FullCardList(errors.map(_.message), apps)
 
     case message @ GooglePlay.RecommendationsByCategory(_,_,_) =>
       recommendByCategory( message)

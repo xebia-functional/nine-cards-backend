@@ -43,9 +43,10 @@ class GoogleApiClientIntegration extends Specification with WithHttp1Client {
     "Making an API request for a Card" should {
 
       "result in an Item for packages that exist" in {
-        def eraseDetails( card: AppCard) : AppCard = card.copy(
+        def eraseDetails( card: FullCard) : FullCard = card.copy(
           downloads = "",
           categories = card.categories.take(1),
+          screenshots = List(),
           stars = 3.145
         )
         val appRequest = AppRequest(fisherPrice.packageObj, authParams )
