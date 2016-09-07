@@ -27,17 +27,17 @@ class CirceCodersSpec extends Specification  {
   val fortysevenDeg = "com.fortyseven.deg"
   val packageName = Package( fortysevenDeg)
 
-  val resolvedKey = CacheKey( packageName, KeyType.Resolved, None)
+  val resolvedKey = CacheKey.resolved( packageName)
   val resolvedStr = """
-    | { "name" : "com.fortyseven.deg",
-    |   "type" : "Resolved",
+    | { "package" : "com.fortyseven.deg",
+    |   "keyType" : "Resolved",
     |   "date" : null }
     """.stripMargin.filter(_ > ' ').trim // to remove whitespace
 
-  val pendingKey = CacheKey( packageName, KeyType.Pending, Some(date) )
-  val pendingJsonStr = """
-    | { "name" : "com.fortyseven.deg",
-    |   "type" : "Pending",
+  val errorKey = CacheKey.error(packageName, date)
+  val errorJsonStr = """
+    | { "package" : "com.fortyseven.deg",
+    |   "keyType" : "Error",
     |   "date" : "16072312001400" }
   """.stripMargin.filter( _ > ' ').trim
 
@@ -67,7 +67,7 @@ class CirceCodersSpec extends Specification  {
 
   checkCoders[CacheKey]("Cache Keys for Resolved Packages", resolvedKey, resolvedStr)
 
-  checkCoders[CacheKey]("Cache keys for a pending package", pendingKey, pendingJsonStr)
+  checkCoders[CacheKey]("Cache keys for an Error package", errorKey, errorJsonStr)
 
   checkCoders[FullCard]("A Full Card", fullCard, fullCardJsonStr)
 

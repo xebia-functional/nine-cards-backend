@@ -20,16 +20,13 @@ class CachedAppService(
   override protected[this] val decodeVal: Decoder[CacheVal] = CirceCoders.cacheValD
   override protected[this] val encodeVal: Encoder[CacheVal] = CirceCoders.cacheValE
 
-  private[this] def pendingKey(input: AppRequest) = CacheKey( input.packageName, KeyType.Resolved, None)
-  private[this] def resolveKey(input: AppRequest) = CacheKey( input.packageName, KeyType.Pending, None)
-
-  override protected[this] def extractKeys(query: AppRequest): List[CacheKey] =
-    List( resolveKey(query), pendingKey(query) )
+  override protected[this] def extractKeys(input: AppRequest): List[CacheKey] =
+    List( CacheKey.resolved(input.packageName), CacheKey.pending(input.packageName) )
 
   override protected[this] def extractEntry(input: AppRequest, result: Xor[InfoError, FullCard]) : (Key, Val) =
     result match {
-      case Xor.Right(fullCard) => ( resolveKey(input), CacheVal( Some( fullCard) ) )
-      case Xor.Left(infoError) => ( pendingKey(input), CacheVal( None) )
+      case Xor.Right(fullCard) => CacheEntry.resolved(input.packageName, fullCard)
+      case Xor.Left(infoError) => CacheEntry.pending(input.packageName)
     }
 
   override protected[this] def rebuildValue(input: AppRequest, cacheVal: CacheVal): Xor[InfoError, FullCard] =
