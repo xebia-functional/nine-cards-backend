@@ -21,11 +21,11 @@ object CirceCoders {
   implicit val packageD: Decoder[Package] = Decoder.decodeString.map( Package.apply)
   implicit val packageE: Encoder[Package] = Encoder.encodeString.contramap( _.value)
 
-  implicit val keyD: Decoder[CacheKey] = deriveDecoder[CacheKey]
-  implicit val keyE: Encoder[CacheKey] = deriveEncoder[CacheKey]
-
   implicit val fullCardD: Decoder[FullCard] = deriveDecoder[FullCard]
   implicit val fullCardE: Encoder[FullCard] = deriveEncoder[FullCard]
+
+  implicit val cacheKeyD: Decoder[CacheKey] = deriveDecoder[CacheKey]
+  implicit val cacheKeyE: Encoder[CacheKey] = deriveEncoder[CacheKey]
 
   implicit val cacheValD: Decoder[CacheVal] = Decoder.decodeOption[FullCard].map( CacheVal.apply)
   implicit val cacheValE: Encoder[CacheVal] = Encoder.encodeOption[FullCard].contramap( _.card)

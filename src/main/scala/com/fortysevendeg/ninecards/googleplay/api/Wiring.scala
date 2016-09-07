@@ -6,6 +6,7 @@ import com.fortysevendeg.ninecards.config.NineCardsConfig._
 import com.fortysevendeg.ninecards.googleplay.domain.{FullCard, AppRequest, InfoError, Item}
 import com.fortysevendeg.ninecards.googleplay.service.free.algebra.GooglePlay
 import com.fortysevendeg.ninecards.googleplay.service.free.interpreter._
+import com.fortysevendeg.ninecards.googleplay.service.free.interpreter.cache.{ CachedAppService, CachedItemService}
 import com.redis.RedisClientPool
 import org.http4s.client.blaze.PooledHttp1Client
 import scalaz.concurrent.Task
@@ -28,12 +29,12 @@ object Wiring {
       secret = getOptionalConfigValue("ninecards.googleplay.redis.secret")
     )
     val itemService = new XorTaskOrComposer[AppRequest,String,Item](
-      new CachedItemService( "apiClient_item", apiServices.getItem, redisPool),
-      new CachedItemService( "webScrape_item", webClient.getItem, redisPool)
+      new CachedItemService( apiServices.getItem, redisPool),
+      new CachedItemService( webClient.getItem, redisPool)
     )
     val appService = new XorTaskOrComposer[AppRequest,InfoError,FullCard](
-      new CachedAppService( "apiClient_app", apiServices.getCard, redisPool),
-      new CachedAppService( "webScrape_app", webClient.getCard, redisPool)
+      new CachedAppService( apiServices.getCard, redisPool),
+      new CachedAppService( webClient.getCard, redisPool)
     )
     new TaskInterpreter(itemService, appService, apiServices.recommendByCategory, apiServices.recommendByAppList)
   }

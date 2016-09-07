@@ -1,17 +1,17 @@
-package com.fortysevendeg.cache.redis
+package com.fortysevendeg.ninecards.googleplay.service.free.interpreter.cache
 
 import org.specs2.mutable.Specification
 import org.specs2.ScalaCheck
-import org.scalacheck.Shapeless._
-import org.scalacheck.Prop._
-import io.circe.generic.auto._
-
 import redis.embedded.RedisServer
 
-case class Inner(i: Int, b: Boolean)
-case class Outer(s: String, ti: Inner)
-
 class JsonRedisCacheIntegration extends Specification with ScalaCheck {
+
+  import io.circe.generic.auto._
+  import org.scalacheck.Shapeless._
+  import org.scalacheck.Prop._
+
+  case class Inner(i: Int, b: Boolean)
+  case class Outer(s: String, ti: Inner)
 
   "Caching" should {
     "only forward requests to the backend once" >> prop { testOuterSet: Set[Outer] =>
