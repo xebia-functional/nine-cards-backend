@@ -95,15 +95,20 @@ object Converters {
       category    = info.categories.headOption getOrElse ""
     )
 
-  def toCategorizeAppsResponse(info: AppsInfo): CategorizeAppsResponse = {
+  def toGetAppsInfoResponse(info: AppsInfo): GetAppsInfoResponse = {
     val (appsWithoutCategories, apps) = info.apps.partition(app ⇒ app.categories.isEmpty)
 
-    CategorizeAppsResponse(
+    GetAppsInfoResponse(
       errors = info.missing ++ appsWithoutCategories.map(_.packageName),
       items  = apps map { app ⇒
-      CategorizedApp(
+      AppGooglePlayInfo(
         packageName = app.packageName,
-        category    = app.categories.head
+        title       = app.title,
+        free        = app.free,
+        icon        = app.icon,
+        stars       = app.stars,
+        downloads   = app.downloads,
+        categories  = app.categories
       )
     }
     )

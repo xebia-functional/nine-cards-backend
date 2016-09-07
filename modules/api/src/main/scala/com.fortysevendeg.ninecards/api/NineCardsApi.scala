@@ -13,6 +13,7 @@ import com.fortysevendeg.ninecards.api.utils.SprayMarshallers._
 import com.fortysevendeg.ninecards.api.utils.SprayMatchers._
 import com.fortysevendeg.ninecards.processes.NineCardsServices._
 import com.fortysevendeg.ninecards.processes._
+import com.fortysevendeg.ninecards.processes.messages.ApplicationMessages.GetAppsInfoResponse
 import com.fortysevendeg.ninecards.services.free.domain.Category
 import com.fortysevendeg.ninecards.services.free.domain.rankings._
 import spray.http.StatusCodes.NotFound
@@ -78,12 +79,21 @@ class NineCardsRoutes(
       path("categorize") {
         post {
           nineCardsDirectives.googlePlayInfo { googlePlayContext ⇒
-            entity(as[ApiCategorizeAppsRequest]) { request ⇒
-              complete(categorizeApps(request, googlePlayContext, userContext))
+            entity(as[ApiGetAppsInfoRequest]) { request ⇒
+              complete(getAppsInfo(request, googlePlayContext, userContext)(toApiCategorizeAppsResponse))
             }
           }
         }
-      }
+      } ~
+        path("details") {
+          post {
+            nineCardsDirectives.googlePlayInfo { googlePlayContext ⇒
+              entity(as[ApiGetAppsInfoRequest]) { request ⇒
+                complete(getAppsInfo(request, googlePlayContext, userContext)(toApiDetailAppsResponse))
+              }
+            }
+          }
+        }
     }
 
   private[this] lazy val installationsRoute: Route =
@@ -276,14 +286,14 @@ class NineCardsRoutes(
       )
       .map(toApiSharedCollectionList)
 
-  private[this] def categorizeApps(
-    request: ApiCategorizeAppsRequest,
+  private[this] def getAppsInfo[T](
+    request: ApiGetAppsInfoRequest,
     googlePlayContext: GooglePlayContext,
     userContext: UserContext
-  ): NineCardsServed[ApiCategorizeAppsResponse] =
+  )(converter: GetAppsInfoResponse ⇒ T): NineCardsServed[T] =
     applicationProcesses
-      .categorizeApps(request.items, toAuthParams(googlePlayContext, userContext))
-      .map(toApiCategorizeAppsResponse)
+      .getAppsInfo(request.items, toAuthParams(googlePlayContext, userContext))
+      .map(converter)
 
   private[this] object rankings {
 

@@ -2,9 +2,17 @@ package com.fortysevendeg.ninecards.processes.messages
 
 object ApplicationMessages {
 
-  case class CategorizeAppsResponse(errors: List[String], items: List[CategorizedApp])
+  case class GetAppsInfoResponse(errors: List[String], items: List[AppGooglePlayInfo])
 
-  case class CategorizedApp(packageName: String, category: String)
+  case class AppGooglePlayInfo(
+    packageName: String,
+    title: String,
+    free: Boolean,
+    icon: String,
+    stars: Double,
+    downloads: String,
+    categories: List[String]
+  )
 
   case class AuthParams(
     androidId: String,
