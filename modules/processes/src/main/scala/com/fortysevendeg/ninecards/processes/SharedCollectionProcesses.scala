@@ -11,9 +11,9 @@ import com.fortysevendeg.ninecards.processes.utils.MonadInstances._
 import com.fortysevendeg.ninecards.services.common.ConnectionIOOps._
 import com.fortysevendeg.ninecards.services.free.algebra.DBResult.DBOps
 import com.fortysevendeg.ninecards.services.free.algebra.{ Firebase, GooglePlay }
-import com.fortysevendeg.ninecards.services.free.domain.Firebase.{ FirebaseError, NotificationResponse, UpdatedCollectionNotificationInfo }
+import com.fortysevendeg.ninecards.services.free.domain.Firebase._
 import com.fortysevendeg.ninecards.services.free.domain.GooglePlay.AppsInfo
-import com.fortysevendeg.ninecards.services.free.domain.{ SharedCollectionSubscription, SharedCollection ⇒ SharedCollectionServices }
+import com.fortysevendeg.ninecards.services.free.domain.{ Installation, SharedCollectionSubscription, SharedCollection ⇒ SharedCollectionServices }
 import com.fortysevendeg.ninecards.services.persistence._
 import doobie.imports._
 
@@ -126,19 +126,28 @@ class SharedCollectionProcesses[F[_]](
     import cats.std.list._
     import cats.syntax.traverse._
 
+    def toUpdateCollectionNotificationInfoList(installations: List[Installation]) =
+      installations.flatMap(_.deviceToken).grouped(1000).toList
+
+    def sendNotificationsByDeviceTokenGroup(
+      publicIdentifier: String,
+      packagesName: List[String]
+    )(
+      deviceTokens: List[String]
+    ) =
+      firebaseNotificationsServices.sendUpdatedCollectionNotification(
+        UpdatedCollectionNotificationInfo(deviceTokens, publicIdentifier, packagesName)
+      )
+
     if (packagesName.isEmpty)
       Free.pure(List.empty[FirebaseError Xor NotificationResponse])
     else
       userPersistence.getSubscribedInstallationByCollection(publicIdentifier).liftF flatMap {
         installations ⇒
-          val deviceTokenGroups = installations.flatMap(_.deviceToken).grouped(1000).toList
-
-          deviceTokenGroups.traverse[Free[F, ?], FirebaseError Xor NotificationResponse] {
-            deviceTokenList: List[String] ⇒
-              firebaseNotificationsServices.sendUpdatedCollectionNotification(
-                UpdatedCollectionNotificationInfo(deviceTokenList, publicIdentifier, packagesName)
-              )
-          }
+          toUpdateCollectionNotificationInfoList(installations)
+            .traverse[Free[F, ?], FirebaseError Xor NotificationResponse] {
+              sendNotificationsByDeviceTokenGroup(publicIdentifier, packagesName)
+            }
       }
   }
 
