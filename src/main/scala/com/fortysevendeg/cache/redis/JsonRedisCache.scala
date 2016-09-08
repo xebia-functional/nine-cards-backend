@@ -1,10 +1,11 @@
-package com.fortysevendeg.cache.redis
+package com.fortysevendeg.ninecards.googleplay.service.free.interpreter.cache
 
 import cats.Monad
 import cats.syntax.all._
 import com.redis._
 import io.circe._
 import io.circe.parser._
+import scala.annotation.tailrec
 
 class JsonRedisCache(host: String, port: Int) {
 
@@ -31,37 +32,52 @@ abstract class RedisCachedMonadicFunction[A,B, M[_]](
   implicit monad: Monad[M]
 ) extends (A => M[B]) {
 
-  protected[this] type CacheKey
-  protected[this] type CacheVal
+  protected[this] type Key
+  protected[this] type Val
 
-  protected[this] def extractKey(input: A) : CacheKey
-  protected[this] def extractValue(input: A, result: B): CacheVal
-  protected[this] def rebuildValue(input: A, value: CacheVal): B
+  protected[this] implicit val encodeKey: Encoder[Key]
+  protected[this] implicit val encodeVal: Encoder[Val]
+  protected[this] implicit val decodeVal: Decoder[Val]
+  protected[this] def extractKeys(input: A) : List[Key]
+  protected[this] def extractEntry(input: A, result: B): (Key, Val)
+  protected[this] def rebuildValue(input: A, value: Val): B
 
-  protected[this] implicit val encodeKey: Encoder[CacheKey]
-  protected[this] implicit val encodeVal: Encoder[CacheVal]
-  protected[this] implicit val decodeVal: Decoder[CacheVal]
+  def apply(input: A) : M[B] = clientPool.withClient(applyClient(input, _))
 
   private[this] def applyClient(input: A, client: RedisClient) : M[B] = {
-    val encodedKey = encodeKey( extractKey(input) ).noSpaces
-    val tryLoad: Option[B] =
-      for { // Option Monad
-        rawVal <- client.get(encodedKey)
-        decodedVal <- decode[CacheVal](rawVal).toOption
-      } yield rebuildValue(input, decodedVal)
 
+    def getC(key: Key) =
+      client.get( encodeKey(key).noSpaces )
+    def setC(key: Key, value: Val) =
+      client.set( encodeKey(key).noSpaces, encodeVal(value).noSpaces )
+
+    def tryKey( key: Key) : Option[Val] = {
+      for { // Option Monad
+        rawVal <- getC(key)
+        decodedVal <- decode[Val](rawVal).toOption
+      } yield decodedVal
+    }
+
+    @tailrec
+    def loopTryKeys( keys: List[Key]): Option[Val] = keys match {
+      case Nil => None
+      case key :: rkeys => tryKey(key) match {
+        case oval@ Some(_) => oval
+        case None => loopTryKeys(rkeys)
+      }
+    }
+
+    val tryLoad: Option[Val] = loopTryKeys( extractKeys(input) )
     tryLoad match {
-      case Some(result) =>
-        monad.pure(result)
+      case Some(cached) =>
+        monad.pure( rebuildValue(input, cached) )
       case None =>
         for { // The M Monad M
           result <- process(input)
-          cachedValue = extractValue(input, result)
-          _ = client.set(encodedKey, encodeVal(cachedValue).noSpaces)
+          (nkey,nval) = extractEntry(input, result)
+          _ = setC( nkey, nval)
         } yield result
     }
   }
-
-  def apply(input: A) : M[B] = clientPool.withClient(applyClient(input, _))
 
 }
