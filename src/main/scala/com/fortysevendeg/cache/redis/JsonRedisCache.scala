@@ -6,6 +6,7 @@ import com.redis._
 import io.circe._
 import io.circe.parser._
 import scala.annotation.tailrec
+import com.redis.serialization.Parse
 
 class JsonRedisCache(host: String, port: Int) {
 
@@ -64,13 +65,13 @@ abstract class RedisCachedMonadicFunction[A,B, M[_]](
 class CacheWrapper[Key, Val](client: RedisClient)
   (implicit ek: Encoder[Key], ev: Encoder[Val], dv: Decoder[Val]) {
 
-  def get(key: Key): Option[Val] =
-    for { // Option Monad
-      rawVal <- client.get( ek(key).noSpaces )
-      decodedVal <- decode[Val](rawVal).toOption
-    } yield decodedVal
+  implicit private[this] val parseValue: Parse[Option[Val]] =
+    Parse( bv => decode[Val]( Parse.Implicits.parseString( bv) ).toOption )
 
-  def put( entry: (Key, Val) ) =
+  def get(key: Key): Option[Val] =
+    client.get[Option[Val]]( ek(key).noSpaces ).flatten
+
+  def put( entry: (Key, Val) ): Unit =
     client.set( ek(entry._1).noSpaces, ev(entry._2).noSpaces )
 
   def findFirst(keys: List[Key]) : Option[Val] = {
