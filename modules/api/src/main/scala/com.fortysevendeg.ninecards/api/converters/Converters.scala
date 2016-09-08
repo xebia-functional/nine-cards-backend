@@ -68,7 +68,8 @@ object Converters {
       icon             = info.collection.icon,
       community        = info.collection.community,
       packages         = info.collection.packages,
-      appsInfo         = info.appsInfo
+      appsInfo         = info.appsInfo,
+      subscriptions    = info.collection.subscriptionsCount
     )
 
   def toApiSharedCollectionList(response: GetCollectionsResponse): ApiSharedCollectionList =

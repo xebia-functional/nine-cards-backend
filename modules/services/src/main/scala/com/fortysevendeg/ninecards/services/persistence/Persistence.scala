@@ -9,8 +9,14 @@ class Persistence[K: Composite](val supportsSelectForUpdate: Boolean = true) {
   def generateQuery(sql: String): Query0[K] =
     Query[HNil, K](sql).toQuery0(HNil)
 
-  def generateQuery[A: Composite](sql: String, values: A): Query0[K] =
-    Query[A, K](sql).toQuery0(values)
+  class GenerateQuery[L] {
+    def apply[A: Composite](sql: String, values: A)(implicit L: Composite[L]): Query0[L] =
+      Query[A, L](sql).toQuery0(values)
+  }
+
+  def generateQuery = new GenerateQuery[K]
+
+  def generateQueryFor[L] = new GenerateQuery[L]
 
   def generateUpdateWithGeneratedKeys[A: Composite](sql: String, values: A): Update0 =
     Update[A](sql).toUpdate0(values)
@@ -20,8 +26,14 @@ class Persistence[K: Composite](val supportsSelectForUpdate: Boolean = true) {
   def fetchList(sql: String): ConnectionIO[List[K]] =
     Query[HNil, K](sql).toQuery0(HNil).to[List]
 
-  def fetchList[A: Composite](sql: String, values: A): ConnectionIO[List[K]] =
-    Query[A, K](sql).to[List](values)
+  class FetchList[L] {
+    def apply[A: Composite](sql: String, values: A)(implicit K: Composite[L]): ConnectionIO[List[L]] =
+      Query[A, L](sql).to[List](values)
+  }
+
+  def fetchList = new FetchList[K]
+
+  def fetchListAs[L] = new FetchList[L]
 
   def fetchOption[A: Composite](sql: String, values: A): ConnectionIO[Option[K]] =
     Query[A, K](sql).option(values)

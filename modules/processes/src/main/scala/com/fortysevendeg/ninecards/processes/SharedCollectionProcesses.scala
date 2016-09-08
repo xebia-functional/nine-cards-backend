@@ -13,7 +13,12 @@ import com.fortysevendeg.ninecards.services.free.algebra.DBResult.DBOps
 import com.fortysevendeg.ninecards.services.free.algebra.{ Firebase, GooglePlay }
 import com.fortysevendeg.ninecards.services.free.domain.Firebase._
 import com.fortysevendeg.ninecards.services.free.domain.GooglePlay.AppsInfo
-import com.fortysevendeg.ninecards.services.free.domain.{ Installation, SharedCollectionSubscription, SharedCollection ⇒ SharedCollectionServices }
+import com.fortysevendeg.ninecards.services.free.domain.{
+  BaseSharedCollection,
+  Installation,
+  SharedCollectionSubscription,
+  SharedCollection ⇒ SharedCollectionServices
+}
 import com.fortysevendeg.ninecards.services.persistence._
 import doobie.imports._
 
@@ -208,8 +213,8 @@ class SharedCollectionProcesses[F[_]](
     }
   }.rightXorT[Throwable]
 
-  private def getCollections(
-    sharedCollections: ConnectionIO[List[SharedCollectionServices]],
+  private def getCollections[T <: BaseSharedCollection](
+    sharedCollections: ConnectionIO[List[T]],
     authParams: AuthParams
   ) = {
 
@@ -245,11 +250,10 @@ class SharedCollectionProcesses[F[_]](
     } yield fillGooglePlayInfoForPackages(collections, appsInfo)
   }
 
-  private[this] def getCollectionPackages(collection: SharedCollectionServices): ConnectionIO[SharedCollection] =
-    collectionPersistence.getPackagesByCollection(collection.id) map { packages ⇒
+  private[this] def getCollectionPackages(collection: BaseSharedCollection): ConnectionIO[SharedCollection] =
+    collectionPersistence.getPackagesByCollection(collection.sharedCollectionId) map { packages ⇒
       toSharedCollection(collection, packages map (_.packageName))
     }
-
 }
 
 object SharedCollectionProcesses {

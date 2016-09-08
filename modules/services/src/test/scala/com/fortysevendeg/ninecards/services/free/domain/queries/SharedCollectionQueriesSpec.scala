@@ -4,6 +4,7 @@ import java.sql.Timestamp
 import java.time.LocalDateTime
 
 import com.fortysevendeg.ninecards.services.free.domain.SharedCollection.Queries._
+import com.fortysevendeg.ninecards.services.free.domain.SharedCollectionWithAggregatedInfo
 import com.fortysevendeg.ninecards.services.persistence.DomainDatabaseContext
 import com.fortysevendeg.ninecards.services.persistence.SharedCollectionPersistenceServices.SharedCollectionData
 import doobie.contrib.specs2.analysisspec.AnalysisSpec
@@ -48,10 +49,11 @@ class SharedCollectionQueriesSpec
   )
   check(getCollectionByPublicIdentifierQuery)
 
-  val getCollectionsByUserQuery = collectionPersistence.generateQuery(
-    sql    = getByUser,
-    values = userId
-  )
+  val getCollectionsByUserQuery =
+    collectionPersistence.generateQueryFor[SharedCollectionWithAggregatedInfo](
+      sql    = getByUser,
+      values = userId
+    )
   check(getCollectionsByUserQuery)
 
   val getLatestCollectionsByCategoryQuery = collectionPersistence.generateQuery(

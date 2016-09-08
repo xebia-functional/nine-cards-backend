@@ -7,7 +7,7 @@ import com.fortysevendeg.ninecards.processes.ProcessesExceptions.SharedCollectio
 import com.fortysevendeg.ninecards.processes.messages.ApplicationMessages.AuthParams
 import com.fortysevendeg.ninecards.processes.messages.SharedCollectionMessages._
 import com.fortysevendeg.ninecards.services.free.domain.Firebase.{ NotificationIndividualResult, NotificationResponse }
-import com.fortysevendeg.ninecards.services.free.domain.{ Category, Installation, PackageName, SharedCollectionPackage, SharedCollectionSubscription, SharedCollection ⇒ SharedCollectionServices }
+import com.fortysevendeg.ninecards.services.free.domain.{ Category, Installation, PackageName, SharedCollectionPackage, SharedCollectionSubscription, SharedCollectionWithAggregatedInfo, SharedCollection ⇒ SharedCollectionServices }
 import com.fortysevendeg.ninecards.services.free.domain.GooglePlay.{ AppsInfo, AppInfo ⇒ AppInfoServices }
 import com.fortysevendeg.ninecards.services.persistence.SharedCollectionPersistenceServices.{ SharedCollectionData ⇒ SharedCollectionDataServices }
 import org.joda.time.{ DateTime, DateTimeZone }
@@ -67,6 +67,8 @@ object TestData {
   val stars = 5.0d
 
   val subscriberId = 42L
+
+  val subscriptionsCount = 5L
 
   val success = 1
 
@@ -135,6 +137,11 @@ object TestData {
       category         = category,
       icon             = icon,
       community        = community
+    )
+
+    val collectionWithSubscriptions = SharedCollectionWithAggregatedInfo(
+      sharedCollectionData = collection,
+      subscriptionsCount   = subscriptionsCount
     )
 
     val nonExistentSharedCollection: Option[SharedCollectionServices] = None
@@ -212,12 +219,31 @@ object TestData {
       packages         = packagesName
     )
 
+    val sharedCollectionWithSubscriptions = SharedCollection(
+      publicIdentifier   = publicIdentifier,
+      publishedOn        = new DateTime(publishedOnTimestamp.getTime),
+      author             = author,
+      name               = name,
+      installations      = installations,
+      views              = views,
+      category           = category,
+      icon               = icon,
+      community          = community,
+      packages           = packagesName,
+      subscriptionsCount = Option(subscriptionsCount)
+    )
+
     val sharedCollectionUpdateInfo = SharedCollectionUpdateInfo(
       title = name
     )
 
     val sharedCollectionWithAppsInfo = SharedCollectionWithAppsInfo(
       collection = sharedCollection,
+      appsInfo   = appInfoList
+    )
+
+    val sharedCollectionWithAppsInfoAndSubscriptions = SharedCollectionWithAppsInfo(
+      collection = sharedCollectionWithSubscriptions,
       appsInfo   = appInfoList
     )
 
