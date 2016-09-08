@@ -25,7 +25,7 @@ class CachedAppService(
 
   override protected[this] def extractEntry(input: AppRequest, result: Xor[InfoError, FullCard]) : (Key, Val) =
     result match {
-      case Xor.Right(fullCard) => CacheEntry.resolved(input.packageName, fullCard)
+      case Xor.Right(fullCard) => CacheEntry.resolved(fullCard)
       case Xor.Left(infoError) => CacheEntry.pending(input.packageName)
     }
 

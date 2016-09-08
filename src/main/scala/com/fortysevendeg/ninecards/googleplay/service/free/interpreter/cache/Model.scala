@@ -33,8 +33,8 @@ case class CacheVal(card: Option[FullCard])
 
 object CacheEntry {
 
-  def resolved( name: Package, card: FullCard): CacheEntry =
-    ( CacheKey.resolved(name), CacheVal( Some(card) ) )
+  def resolved( card: FullCard): CacheEntry =
+    ( CacheKey.resolved(Package(card.packageName)), CacheVal( Some(card) ) )
 
   def pending( name: Package) : CacheEntry =
     ( CacheKey.pending(name), CacheVal(None) )
