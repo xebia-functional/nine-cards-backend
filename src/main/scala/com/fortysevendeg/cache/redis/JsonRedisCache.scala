@@ -46,38 +46,46 @@ abstract class RedisCachedMonadicFunction[A,B, M[_]](
 
   private[this] def applyClient(input: A, client: RedisClient) : M[B] = {
 
-    def getC(key: Key) =
-      client.get( encodeKey(key).noSpaces )
-    def setC(key: Key, value: Val) =
-      client.set( encodeKey(key).noSpaces, encodeVal(value).noSpaces )
-
-    def tryKey( key: Key) : Option[Val] = {
-      for { // Option Monad
-        rawVal <- getC(key)
-        decodedVal <- decode[Val](rawVal).toOption
-      } yield decodedVal
-    }
-
-    @tailrec
-    def loopTryKeys( keys: List[Key]): Option[Val] = keys match {
-      case Nil => None
-      case key :: rkeys => tryKey(key) match {
-        case oval@ Some(_) => oval
-        case None => loopTryKeys(rkeys)
-      }
-    }
-
-    val tryLoad: Option[Val] = loopTryKeys( extractKeys(input) )
+    val wrap = new CacheWrapper[Key, Val](client)
+    val tryLoad: Option[Val] = wrap.findFirst( extractKeys(input) )
     tryLoad match {
       case Some(cached) =>
         monad.pure( rebuildValue(input, cached) )
       case None =>
         for { // The M Monad M
           result <- process(input)
-          (nkey,nval) = extractEntry(input, result)
-          _ = setC( nkey, nval)
+          _ = wrap.put( extractEntry(input, result) )
         } yield result
     }
+  }
+
+}
+
+class CacheWrapper[Key, Val](client: RedisClient)
+  (implicit ek: Encoder[Key], ev: Encoder[Val], dv: Decoder[Val]) {
+
+  def get(key: Key): Option[Val] =
+    for { // Option Monad
+      rawVal <- client.get( ek(key).noSpaces )
+      decodedVal <- decode[Val](rawVal).toOption
+    } yield decodedVal
+
+  def put( entry: (Key, Val) ) =
+    client.set( ek(entry._1).noSpaces, ev(entry._2).noSpaces )
+
+  def findFirst(keys: List[Key]) : Option[Val] = {
+    loopTryKeys(keys)
+
+    @tailrec
+    def loopTryKeys( keys: List[Key]): Option[Val] = keys match {
+      case Nil => None
+      case key :: rkeys =>
+        get(key) match {
+          case oval@ Some(_) => oval
+          case None => loopTryKeys(rkeys)
+        }
+    }
+    loopTryKeys(keys)
   }
 
 }

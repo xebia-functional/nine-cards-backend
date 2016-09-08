@@ -32,7 +32,6 @@ object CacheKey {
 case class CacheVal(card: Option[FullCard])
 
 object CacheEntry {
-  type CacheEntry = (CacheKey, CacheVal)
 
   def resolved( name: Package, card: FullCard): CacheEntry =
     ( CacheKey.resolved(name), CacheVal( Some(card) ) )

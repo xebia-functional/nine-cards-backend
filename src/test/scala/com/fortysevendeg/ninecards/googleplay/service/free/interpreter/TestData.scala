@@ -50,5 +50,21 @@ object TestData {
 
   }
 
+  object fortyseven {
+    val packageName = "com.fortyseven.deg"
+    val packageObj = Package(packageName)
+
+    val card = FullCard(
+      packageName = packageName,
+      title = "Forty Seven Degrees",
+      free = false,
+      icon = "http://icon",
+      stars = 4.214,
+      downloads = "455 - 2001",
+      screenshots = List(),
+      categories = List( "Consultancy")
+    )
+  }
+
 }
 
