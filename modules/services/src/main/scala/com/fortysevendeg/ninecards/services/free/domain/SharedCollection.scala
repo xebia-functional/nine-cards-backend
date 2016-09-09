@@ -2,6 +2,10 @@ package com.fortysevendeg.ninecards.services.free.domain
 
 import java.sql.Timestamp
 
+sealed abstract class BaseSharedCollection {
+  def sharedCollectionId: Long
+}
+
 case class SharedCollection(
   id: Long,
   publicIdentifier: String,
@@ -14,7 +18,16 @@ case class SharedCollection(
   category: String,
   icon: String,
   community: Boolean
-)
+) extends BaseSharedCollection {
+  override def sharedCollectionId: Long = id
+}
+
+case class SharedCollectionWithAggregatedInfo(
+  sharedCollectionData: SharedCollection,
+  subscriptionsCount: Long
+) extends BaseSharedCollection {
+  override def sharedCollectionId: Long = sharedCollectionData.id
+}
 
 case class SharedCollectionPackage(
   id: Long,
@@ -39,7 +52,13 @@ object SharedCollection {
   object Queries {
     val getById = "select * from sharedcollections where id=?"
     val getByPublicIdentifier = "select * from sharedcollections where publicidentifier=?"
-    val getByUser = "select * from sharedcollections where userId=?"
+    val getByUser =
+      s"""
+        |select C.*, count(S.*) as subscriptionCount
+        |from sharedcollections as C
+        |left join sharedcollectionsubscriptions as S on C.id=S.sharedcollectionid
+        |where C.userid=?
+        |group by C.id""".stripMargin
     val getLatestByCategory = "select * from sharedcollections where category=? order by publishedon desc limit ? offset ?"
     val getTopByCategory = "select * from sharedcollections where category=? order by installations desc limit ? offset ?"
     val insert = s"insert into sharedcollections($insertFields) values($insertWildCards)"

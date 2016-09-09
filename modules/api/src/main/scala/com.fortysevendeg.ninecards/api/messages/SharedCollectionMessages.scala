@@ -33,7 +33,8 @@ object SharedCollectionMessages {
     icon: String,
     community: Boolean,
     packages: List[String],
-    appsInfo: List[AppInfo]
+    appsInfo: List[AppInfo],
+    subscriptions: Option[Long] = None
   )
 
   case class ApiSharedCollectionList(collections: List[ApiSharedCollection])

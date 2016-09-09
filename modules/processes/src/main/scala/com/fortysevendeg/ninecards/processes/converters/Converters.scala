@@ -12,9 +12,11 @@ import com.fortysevendeg.ninecards.services.free.domain.GooglePlay.{
   AuthParams ⇒ AuthParamServices
 }
 import com.fortysevendeg.ninecards.services.free.domain.{
+  BaseSharedCollection,
   Installation ⇒ InstallationServices,
   SharedCollection ⇒ SharedCollectionServices,
   SharedCollectionSubscription ⇒ SharedCollectionSubscriptionServices,
+  SharedCollectionWithAggregatedInfo,
   User ⇒ UserAppServices
 }
 import com.fortysevendeg.ninecards.services.persistence.SharedCollectionPersistenceServices.{
@@ -58,21 +60,30 @@ object Converters {
       community        = data.community
     )
 
+  def toSharedCollection: (BaseSharedCollection, List[String]) ⇒ SharedCollection = {
+    case (collection: SharedCollectionWithAggregatedInfo, packages) ⇒
+      toSharedCollection(collection.sharedCollectionData, packages, Option(collection.subscriptionsCount))
+    case (collection: SharedCollectionServices, packages) ⇒
+      toSharedCollection(collection, packages, None)
+  }
+
   def toSharedCollection(
     collection: SharedCollectionServices,
-    packages: List[String]
-  ): SharedCollection =
+    packages: List[String],
+    subscriptionCount: Option[Long]
+  ) =
     SharedCollection(
-      publicIdentifier = collection.publicIdentifier,
-      publishedOn      = collection.publishedOn,
-      author           = collection.author,
-      name             = collection.name,
-      installations    = collection.installations,
-      views            = collection.views,
-      category         = collection.category,
-      icon             = collection.icon,
-      community        = collection.community,
-      packages         = packages
+      publicIdentifier   = collection.publicIdentifier,
+      publishedOn        = collection.publishedOn,
+      author             = collection.author,
+      name               = collection.name,
+      installations      = collection.installations,
+      views              = collection.views,
+      category           = collection.category,
+      icon               = collection.icon,
+      community          = collection.community,
+      packages           = packages,
+      subscriptionsCount = subscriptionCount
     )
 
   def toSharedCollectionWithAppsInfo(

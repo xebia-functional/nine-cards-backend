@@ -234,12 +234,12 @@ class SharedCollectionPersistenceServicesSpec
 
         val (ownerId, owned) = setupTrans.transactAndRun
 
-        val response: List[SharedCollection] =
+        val response: List[SharedCollectionWithAggregatedInfo] =
           collectionPersistenceServices
             .getCollectionsByUserId(ownerId)
             .transactAndRun
 
-        (response map (_.id)) must containTheSameElementsAs(owned)
+        (response map (_.sharedCollectionData.id)) must containTheSameElementsAs(owned)
       }
     }
   }

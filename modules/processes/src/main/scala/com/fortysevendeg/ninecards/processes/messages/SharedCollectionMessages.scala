@@ -43,7 +43,8 @@ object SharedCollectionMessages {
     category: String,
     icon: String,
     community: Boolean,
-    packages: List[String]
+    packages: List[String],
+    subscriptionsCount: Option[Long] = None
   )
 
   case class SharedCollectionUpdateInfo(

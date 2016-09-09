@@ -11,7 +11,7 @@ import com.fortysevendeg.ninecards.processes.messages.SharedCollectionMessages._
 import com.fortysevendeg.ninecards.processes.utils.DummyNineCardsConfig
 import com.fortysevendeg.ninecards.services.free.algebra.{ Firebase, GooglePlay }
 import com.fortysevendeg.ninecards.services.free.domain.Firebase.FirebaseError
-import com.fortysevendeg.ninecards.services.free.domain.{ SharedCollectionSubscription, SharedCollection ⇒ SharedCollectionServices }
+import com.fortysevendeg.ninecards.services.free.domain.{ SharedCollectionSubscription, SharedCollectionWithAggregatedInfo, SharedCollection ⇒ SharedCollectionServices }
 import com.fortysevendeg.ninecards.services.persistence._
 import doobie.imports._
 import org.mockito.Matchers.{ eq ⇒ mockEq }
@@ -81,7 +81,7 @@ trait SharedCollectionProcessesSpecification
 
     collectionPersistenceServices.getCollectionsByUserId(
       userId = publisherId
-    ) returns List(collection).point[ConnectionIO]
+    ) returns List(collectionWithSubscriptions).point[ConnectionIO]
 
     collectionPersistenceServices.getTopCollectionsByCategory(
       category   = category,
@@ -91,7 +91,7 @@ trait SharedCollectionProcessesSpecification
 
     collectionPersistenceServices.getCollectionsByUserId(
       userId = subscriberId
-    ) returns List[SharedCollectionServices]().point[ConnectionIO]
+    ) returns List[SharedCollectionWithAggregatedInfo]().point[ConnectionIO]
 
     collectionPersistenceServices.updateCollectionInfo(
       id    = collectionId,
@@ -184,7 +184,7 @@ class SharedCollectionProcessesSpec
   "getPublishedCollections" should {
 
     "return a list of Shared collections of the publisher user" in new SharedCollectionSuccessfulScope {
-      val response = GetCollectionsResponse(List(sharedCollectionWithAppsInfo))
+      val response = GetCollectionsResponse(List(sharedCollectionWithAppsInfoAndSubscriptions))
       val collectionsInfo = sharedCollectionProcesses.getPublishedCollections(
         userId     = publisherId,
         authParams = authParams

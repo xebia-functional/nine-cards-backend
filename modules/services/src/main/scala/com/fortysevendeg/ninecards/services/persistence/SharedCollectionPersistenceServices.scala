@@ -30,8 +30,8 @@ class SharedCollectionPersistenceServices(
   def getCollectionByPublicIdentifier(publicIdentifier: String): ConnectionIO[Option[SharedCollection]] =
     collectionPersistence.fetchOption(CollectionQueries.getByPublicIdentifier, publicIdentifier)
 
-  def getCollectionsByUserId(userId: Long): ConnectionIO[List[SharedCollection]] =
-    collectionPersistence.fetchList(CollectionQueries.getByUser, userId)
+  def getCollectionsByUserId(userId: Long): ConnectionIO[List[SharedCollectionWithAggregatedInfo]] =
+    collectionPersistence.fetchListAs(CollectionQueries.getByUser, userId)
 
   def getLatestCollectionsByCategory(
     category: String,
