@@ -2,7 +2,7 @@ package com.fortysevendeg.ninecards.processes
 
 import cats.free.Free
 import com.fortysevendeg.ninecards.processes.NineCardsServices._
-import com.fortysevendeg.ninecards.processes.messages.ApplicationMessages.{ AuthParams, CategorizeAppsResponse, CategorizedApp }
+import com.fortysevendeg.ninecards.processes.messages.ApplicationMessages._
 import com.fortysevendeg.ninecards.services.free.algebra.GooglePlay.Services
 import com.fortysevendeg.ninecards.services.free.domain.GooglePlay.{ AppInfo, AppsInfo, AuthParams ⇒ GooglePlayAuthParams }
 import org.specs2.matcher.Matchers
@@ -58,7 +58,7 @@ trait ApplicationProcessesContext {
   val (missing, found) = packagesName.partition(_.length > 6)
 
   val apps = found map (packageName ⇒ AppInfo(packageName, title, free, icon, stars, downloads, List(category)))
-  val categorizedApps = found map (packageName ⇒ CategorizedApp(packageName, category))
+  val appsGooglePlayInfo = found map (packageName ⇒ AppGooglePlayInfo(packageName, title, free, icon, stars, downloads, List(category)))
 
   val androidId = "12345"
   val localization = "en_GB"
@@ -67,7 +67,7 @@ trait ApplicationProcessesContext {
   val authParams = AuthParams(androidId, Some(localization), token)
   val googlePlayAuthParams = GooglePlayAuthParams(androidId, Some(localization), token)
 
-  val emptyCategorizeAppsResponse = CategorizeAppsResponse(
+  val emptyGetAppsInfoResponse = GetAppsInfoResponse(
     errors = Nil,
     items  = Nil
   )
@@ -80,18 +80,18 @@ class ApplicationProcessesSpec extends ApplicationProcessesSpecification {
   "categorizeApps" should {
     "return an empty response without calling the Google Play service if an empty list of" +
       "packages name is passed" in new BasicScope {
-        val response = applicationProcesses.categorizeApps(Nil, authParams)
+        val response = applicationProcesses.getAppsInfo(Nil, authParams)
 
-        response.foldMap(testInterpreters) must_== emptyCategorizeAppsResponse
+        response.foldMap(testInterpreters) must_== emptyGetAppsInfoResponse
       }
 
     "return a valid response if a non empty list of packages name is passed" in new SuccessfulScope {
-      val response = applicationProcesses.categorizeApps(packagesName, authParams)
+      val response = applicationProcesses.getAppsInfo(packagesName, authParams)
 
-      response.foldMap(testInterpreters) must beLike[CategorizeAppsResponse] {
+      response.foldMap(testInterpreters) must beLike[GetAppsInfoResponse] {
         case r ⇒
           r.errors must_== missing
-          r.items must_== categorizedApps
+          r.items must_== appsGooglePlayInfo
       }
     }
   }

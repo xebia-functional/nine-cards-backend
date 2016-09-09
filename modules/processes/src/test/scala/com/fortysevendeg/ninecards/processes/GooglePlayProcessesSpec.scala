@@ -63,21 +63,21 @@ class GooglePlayProcessesSpec extends GooglePlayProcessesSpecification {
 
   "categorizeApps" should {
     "return empty items and errors lists if an empty list of apps is provided" in new BasicScope {
-      val response = applicationProcesses.categorizeApps(Nil, authParams).foldMap(testInterpreters)
+      val response = applicationProcesses.getAppsInfo(Nil, authParams).foldMap(testInterpreters)
 
       response.errors should beEmpty
       response.items should beEmpty
     }
 
     "return items and errors lists for a non empty list of apps" in new BasicScope {
-      val response = applicationProcesses.categorizeApps(packageNames, authParams).foldMap(testInterpreters)
+      val response = applicationProcesses.getAppsInfo(packageNames, authParams).foldMap(testInterpreters)
 
       response.errors shouldEqual missing
       forall(response.items) { item ⇒
         apps.exists(app ⇒
           app.packageName == item.packageName &&
             app.categories.nonEmpty &&
-            app.categories.head == item.category) should beTrue
+            app.categories == item.categories) should beTrue
       }
     }
   }

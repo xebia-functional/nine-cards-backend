@@ -7,17 +7,17 @@ import com.fortysevendeg.ninecards.services.free.algebra.GooglePlay
 
 class ApplicationProcesses[F[_]](implicit services: GooglePlay.Services[F]) {
 
-  def categorizeApps(
+  def getAppsInfo(
     packagesName: List[String],
     authParams: AuthParams
-  ): Free[F, CategorizeAppsResponse] =
+  ): Free[F, GetAppsInfoResponse] =
     if (packagesName.isEmpty)
-      Free.pure[F, CategorizeAppsResponse](CategorizeAppsResponse(Nil, Nil))
+      Free.pure[F, GetAppsInfoResponse](GetAppsInfoResponse(Nil, Nil))
     else
       services.resolveMany(
         packageNames = packagesName,
         auth         = toAuthParamsServices(authParams)
-      ) map toCategorizeAppsResponse
+      ) map toGetAppsInfoResponse
 }
 
 object ApplicationProcesses {

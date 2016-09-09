@@ -32,13 +32,13 @@ class ConvertersSpec
     }
   }
 
-  "toCategorizeAppsResponse" should {
-    "convert an AppsInfo to a CategorizeAppsResponse object" in {
+  "toGetAppsInfoResponse" should {
+    "convert an AppsInfo to a GetAppsInfoResponse object" in {
       prop { appsInfo: AppsInfo ⇒
 
         val (appsWithoutCategories, _) = appsInfo.apps.partition(app ⇒ app.categories.isEmpty)
 
-        val categorizeAppsResponse = Converters.toCategorizeAppsResponse(appsInfo)
+        val categorizeAppsResponse = Converters.toGetAppsInfoResponse(appsInfo)
 
         categorizeAppsResponse.errors shouldEqual appsInfo.missing ++ appsWithoutCategories.map(_.packageName)
 
@@ -46,7 +46,7 @@ class ConvertersSpec
           appsInfo.apps.exists { app ⇒
             app.packageName == item.packageName &&
               app.categories.nonEmpty &&
-              app.categories.head == item.category
+              app.categories == item.categories
           } should beTrue
         }
       }

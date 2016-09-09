@@ -8,7 +8,7 @@ import com.fortysevendeg.ninecards.api.NineCardsHeaders._
 import com.fortysevendeg.ninecards.api.TestData._
 import com.fortysevendeg.ninecards.processes.NineCardsServices.NineCardsServices
 import com.fortysevendeg.ninecards.processes._
-import com.fortysevendeg.ninecards.processes.messages.ApplicationMessages.CategorizeAppsResponse
+import com.fortysevendeg.ninecards.processes.messages.ApplicationMessages._
 import com.fortysevendeg.ninecards.processes.messages.InstallationsMessages._
 import com.fortysevendeg.ninecards.processes.messages.SharedCollectionMessages._
 import com.fortysevendeg.ninecards.processes.messages.UserMessages._
@@ -103,8 +103,8 @@ trait NineCardsApiSpecification
     sharedCollectionProcesses.updateCollection(any, any, any) returns
       Free.pure(Messages.createOrUpdateCollectionResponse.right)
 
-    applicationProcesses.categorizeApps(any, any) returns
-      Free.pure(Messages.categorizeAppsResponse)
+    applicationProcesses.getAppsInfo(any, any) returns
+      Free.pure(Messages.getAppsInfoResponse)
 
     rankingProcesses.getRanking(any) returns Free.pure(Messages.rankings.getResponse)
 
@@ -144,7 +144,7 @@ trait NineCardsApiSpecification
 
     val updateInstallationTask: Task[UpdateInstallationResponse] = Task.fail(Exceptions.persistenceException)
 
-    val categorizeAppsTask: Task[CategorizeAppsResponse] = Task.fail(Exceptions.http4sException)
+    val getAppsInfoTask: Task[GetAppsInfoResponse] = Task.fail(Exceptions.http4sException)
 
     val createCollectionTask: Task[CreateOrUpdateCollectionResponse] = Task.fail(Exceptions.persistenceException)
 
@@ -176,8 +176,8 @@ trait NineCardsApiSpecification
     sharedCollectionProcesses.getSubscriptionsByUser(any) returns
       getSubscriptionsByUserTask.liftF[NineCardsServices]
 
-    applicationProcesses.categorizeApps(any, any) returns
-      categorizeAppsTask.liftF[NineCardsServices]
+    applicationProcesses.getAppsInfo(any, any) returns
+      getAppsInfoTask.liftF[NineCardsServices]
   }
 
 }
@@ -454,11 +454,25 @@ class NineCardsApiSpec
     successOk(request)
   }
 
-  "POST /googleplay/categorize" should {
+  "POST /applications/categorize" should {
 
     val request = Post(
       uri     = Paths.categorize,
-      content = Messages.apiCategorizeAppsRequest
+      content = Messages.apiGetAppsInfoRequest
+    ) ~> addHeaders(Headers.googlePlayHeaders)
+
+    unauthorizedNoHeaders(request)
+
+    internalServerError(request)
+
+    successOk(request)
+  }
+
+  "POST /applications/details" should {
+
+    val request = Post(
+      uri     = Paths.details,
+      content = Messages.apiGetAppsInfoRequest
     ) ~> addHeaders(Headers.googlePlayHeaders)
 
     unauthorizedNoHeaders(request)

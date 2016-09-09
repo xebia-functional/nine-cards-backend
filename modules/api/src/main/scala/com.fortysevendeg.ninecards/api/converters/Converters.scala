@@ -1,7 +1,7 @@
 package com.fortysevendeg.ninecards.api.converters
 
 import com.fortysevendeg.ninecards.api.NineCardsHeaders.Domain._
-import com.fortysevendeg.ninecards.api.messages.GooglePlayMessages.ApiCategorizeAppsResponse
+import com.fortysevendeg.ninecards.api.messages.GooglePlayMessages.{ ApiCategorizeAppsResponse, ApiDetailAppsResponse, CategorizedApp }
 import com.fortysevendeg.ninecards.api.messages.InstallationsMessages._
 import com.fortysevendeg.ninecards.api.messages.SharedCollectionMessages._
 import com.fortysevendeg.ninecards.api.messages.UserMessages._
@@ -105,8 +105,20 @@ object Converters {
       token        = googlePlayContext.googlePlayToken.value
     )
 
-  def toApiCategorizeAppsResponse(response: CategorizeAppsResponse): ApiCategorizeAppsResponse =
+  def toCategorizedApp(appInfo: AppGooglePlayInfo): CategorizedApp =
+    CategorizedApp(
+      packageName = appInfo.packageName,
+      category    = appInfo.categories.headOption getOrElse ""
+    )
+
+  def toApiCategorizeAppsResponse(response: GetAppsInfoResponse): ApiCategorizeAppsResponse =
     ApiCategorizeAppsResponse(
+      items  = response.items map toCategorizedApp,
+      errors = response.errors
+    )
+
+  def toApiDetailAppsResponse(response: GetAppsInfoResponse): ApiDetailAppsResponse =
+    ApiDetailAppsResponse(
       items  = response.items,
       errors = response.errors
     )

@@ -3,7 +3,7 @@ package com.fortysevendeg.ninecards.api.converters
 import com.fortysevendeg.ninecards.api.NineCardsHeaders.Domain._
 import com.fortysevendeg.ninecards.api.messages.InstallationsMessages._
 import com.fortysevendeg.ninecards.api.messages.UserMessages._
-import com.fortysevendeg.ninecards.processes.messages.ApplicationMessages.CategorizeAppsResponse
+import com.fortysevendeg.ninecards.processes.messages.ApplicationMessages._
 import com.fortysevendeg.ninecards.processes.messages.InstallationsMessages._
 import com.fortysevendeg.ninecards.processes.messages.SharedCollectionMessages._
 import com.fortysevendeg.ninecards.processes.messages.UserMessages._
@@ -72,10 +72,29 @@ class ConvertersSpec
   }
 
   "toApiCategorizeAppsResponse" should {
-    "convert an UpdateInstallationResponse to an ApiUpdateInstallationResponse object" in {
-      prop { (response: CategorizeAppsResponse) ⇒
+    "convert an GetAppsInfoResponse to an ApiCategorizeAppsResponse object" in {
+      prop { (response: GetAppsInfoResponse) ⇒
 
         val apiResponse = Converters.toApiCategorizeAppsResponse(response)
+
+        apiResponse.errors shouldEqual response.errors
+        forall(apiResponse.items) { item ⇒
+          response.items.exists(appInfo ⇒
+            appInfo.packageName == item.packageName &&
+              (
+                (appInfo.categories.nonEmpty && appInfo.categories.contains(item.category)) ||
+                (appInfo.categories.isEmpty && item.category.isEmpty)
+              ))
+        }
+      }
+    }
+  }
+
+  "toApiDetailAppsResponse" should {
+    "convert an GetAppsInfoResponse to an ApiDetailAppsResponse object" in {
+      prop { (response: GetAppsInfoResponse) ⇒
+
+        val apiResponse = Converters.toApiDetailAppsResponse(response)
 
         apiResponse.errors shouldEqual response.errors
         apiResponse.items shouldEqual response.items

@@ -1,12 +1,12 @@
 package com.fortysevendeg.ninecards.api
 
 import com.fortysevendeg.ninecards.api.NineCardsHeaders._
-import com.fortysevendeg.ninecards.api.messages.GooglePlayMessages.ApiCategorizeAppsRequest
+import com.fortysevendeg.ninecards.api.messages.GooglePlayMessages.ApiGetAppsInfoRequest
 import com.fortysevendeg.ninecards.api.messages.InstallationsMessages.ApiUpdateInstallationRequest
 import com.fortysevendeg.ninecards.api.messages.SharedCollectionMessages.{ ApiCreateCollectionRequest, ApiUpdateCollectionRequest }
 import com.fortysevendeg.ninecards.api.messages.UserMessages.ApiLoginRequest
 import com.fortysevendeg.ninecards.processes.ProcessesExceptions.SharedCollectionNotFoundException
-import com.fortysevendeg.ninecards.processes.messages.ApplicationMessages.CategorizeAppsResponse
+import com.fortysevendeg.ninecards.processes.messages.ApplicationMessages.GetAppsInfoResponse
 import com.fortysevendeg.ninecards.processes.messages.InstallationsMessages._
 import com.fortysevendeg.ninecards.processes.messages.SharedCollectionMessages._
 import com.fortysevendeg.ninecards.processes.messages.UserMessages.{ LoginRequest, LoginResponse }
@@ -134,7 +134,7 @@ object TestData {
       appsInfo   = List.empty
     )
 
-    val apiCategorizeAppsRequest = ApiCategorizeAppsRequest(items = List("", "", ""))
+    val apiGetAppsInfoRequest = ApiGetAppsInfoRequest(items = List("", "", ""))
 
     val apiCreateCollectionRequest = ApiCreateCollectionRequest(
       author        = author,
@@ -156,7 +156,7 @@ object TestData {
 
     val apiUpdateInstallationRequest = ApiUpdateInstallationRequest(deviceToken)
 
-    val categorizeAppsResponse = CategorizeAppsResponse(Nil, Nil)
+    val getAppsInfoResponse = GetAppsInfoResponse(Nil, Nil)
 
     val createOrUpdateCollectionResponse = CreateOrUpdateCollectionResponse(
       publicIdentifier = publicIdentifier,
@@ -184,10 +184,9 @@ object TestData {
     val updateInstallationResponse = UpdateInstallationResponse(androidId, deviceToken)
 
     object rankings {
-      import com.fortysevendeg.ninecards.services.free.domain.{ Category, PackageName }
-      import com.fortysevendeg.ninecards.processes.messages.{ rankings ⇒ Proc }
-      import com.fortysevendeg.ninecards.services.free.domain.{ rankings ⇒ Domain }
       import com.fortysevendeg.ninecards.api.messages.{ rankings ⇒ Api }
+      import com.fortysevendeg.ninecards.processes.messages.{ rankings ⇒ Proc }
+      import com.fortysevendeg.ninecards.services.free.domain.{ Category, PackageName, rankings ⇒ Domain }
 
       val ranking = Domain.Ranking(Map(
         Category.SOCIAL → Domain.CategoryRanking(List(PackageName("testApp")))
@@ -217,6 +216,8 @@ object TestData {
     val collections = "/collections"
 
     val collectionById = "/collections/40daf308-fecf-4228-9262-a712d783cf49"
+
+    val details = "/applications/details"
 
     val installations = "/installations"
 

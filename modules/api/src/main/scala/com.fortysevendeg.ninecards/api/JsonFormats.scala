@@ -5,7 +5,7 @@ import com.fortysevendeg.ninecards.api.messages.GooglePlayMessages._
 import com.fortysevendeg.ninecards.api.messages.InstallationsMessages._
 import com.fortysevendeg.ninecards.api.messages.SharedCollectionMessages._
 import com.fortysevendeg.ninecards.api.messages.UserMessages._
-import com.fortysevendeg.ninecards.processes.messages.ApplicationMessages.CategorizedApp
+import com.fortysevendeg.ninecards.processes.messages.ApplicationMessages._
 import com.fortysevendeg.ninecards.processes.messages.SharedCollectionMessages._
 import io.circe.{ Decoder, Encoder, Json }
 import org.joda.time.DateTime
@@ -75,11 +75,15 @@ trait JsonFormats
 
   implicit val apiUpdateCollectionRequestFormat = jsonFormat2(ApiUpdateCollectionRequest)
 
-  implicit val apiCategorizeAppsRequestFormat = jsonFormat1(ApiCategorizeAppsRequest)
+  implicit val apiCategorizeAppsRequestFormat = jsonFormat1(ApiGetAppsInfoRequest)
 
   implicit val categorizedAppFormat = jsonFormat2(CategorizedApp)
 
   implicit val apiCategorizeAppsResponseFormat = jsonFormat2(ApiCategorizeAppsResponse)
+
+  implicit val appGooglePlayInfoFormat = jsonFormat7(AppGooglePlayInfo)
+
+  implicit val apiDetailAppsResponseFormat = jsonFormat2(ApiDetailAppsResponse)
 
   implicit val apiGetSubscriptionsByUserResponseFormat = jsonFormat1(ApiGetSubscriptionsByUser)
 }
