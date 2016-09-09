@@ -2,10 +2,12 @@ package com.fortysevendeg.ninecards.services.free.interpreter
 
 import cats._
 import com.fortysevendeg.ninecards.services.free.algebra.DBResult._
-import com.fortysevendeg.ninecards.services.free.algebra.{ GoogleAnalytics, GoogleApi, GooglePlay }
+import com.fortysevendeg.ninecards.services.free.algebra._
 import com.fortysevendeg.ninecards.services.free.interpreter.analytics.{ Services ⇒ AnalyticsServices }
+import com.fortysevendeg.ninecards.services.free.interpreter.firebase.{ Services ⇒ FirebaseServices }
 import com.fortysevendeg.ninecards.services.free.interpreter.googleapi.{ Services ⇒ GoogleApiServices }
 import com.fortysevendeg.ninecards.services.free.interpreter.googleplay.{ Services ⇒ GooglePlayServices }
+
 import scala.util.{ Failure, Success, Try }
 import scalaz.concurrent.Task
 
@@ -20,15 +22,17 @@ abstract class Interpreters[M[_]](implicit A: ApplicativeError[M, Throwable]) {
     }
   }
 
-  private[this] val googleApiServices: GoogleApiServices = GoogleApiServices.services
   object googleApiInterpreter extends (GoogleApi.Ops ~> M) {
+    private[this] val googleApiServices: GoogleApiServices = GoogleApiServices.services
+
     def apply[A](fa: GoogleApi.Ops[A]) = fa match {
       case GoogleApi.GetTokenInfo(tokenId: String) ⇒ task2M(googleApiServices.getTokenInfo(tokenId))
     }
   }
 
-  private[this] val googlePlayServices: GooglePlayServices = GooglePlayServices.services
   object googlePlayInterpreter extends (GooglePlay.Ops ~> M) {
+    private[this] val googlePlayServices: GooglePlayServices = GooglePlayServices.services
+
     def apply[A](fa: GooglePlay.Ops[A]) = fa match {
       case GooglePlay.ResolveMany(packageNames, auth) ⇒
         task2M(googlePlayServices.resolveMany(packageNames, auth))
@@ -49,6 +53,18 @@ abstract class Interpreters[M[_]](implicit A: ApplicativeError[M, Throwable]) {
       task2M(task)
     }
   }
+
+  object firebaseInterpreter extends (Firebase.Ops ~> M) {
+    private[this] val firebaseServices: FirebaseServices = FirebaseServices.services
+
+    def apply[A](fa: Firebase.Ops[A]) = fa match {
+      case Firebase.SendUpdatedCollectionNotification(info) ⇒
+        task2M {
+          firebaseServices.sendUpdatedCollectionNotification(info)
+        }
+    }
+  }
+
 }
 
 trait IdInstances {

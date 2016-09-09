@@ -88,7 +88,7 @@ class SharedCollectionPersistenceServices(
       values = (title, id)
     )
 
-  def updatePackages(collectionId: Long, packages: List[String]): ConnectionIO[(Int, Int)] =
+  def updatePackages(collectionId: Long, packages: List[String]): ConnectionIO[(List[String], List[String])] =
     for {
       oldPackages ← getPackagesByCollection(collectionId)
       oldPackagesNames = oldPackages map (_.packageName)
@@ -96,7 +96,7 @@ class SharedCollectionPersistenceServices(
       removedPackages = oldPackagesNames diff packages
       addedPackages ← addPackages(collectionId, newPackages)
       deletedPackages ← deletePackages(collectionId, removedPackages)
-    } yield (addedPackages, deletedPackages)
+    } yield (newPackages, removedPackages)
 }
 
 object SharedCollectionPersistenceServices {

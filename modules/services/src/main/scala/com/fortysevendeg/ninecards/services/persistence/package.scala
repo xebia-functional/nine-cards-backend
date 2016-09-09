@@ -16,6 +16,4 @@ package object persistence {
     )
 
   implicit def toConnectionIO[T](t: T): ConnectionIO[T] = t.point[ConnectionIO]
-
-  implicit def toConnectionIOMonad[F[_], T](ft: F[T]): ConnectionIO[F[T]] = ft.point[ConnectionIO]
 }

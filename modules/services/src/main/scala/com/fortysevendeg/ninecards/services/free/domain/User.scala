@@ -36,6 +36,14 @@ object Installation {
   object Queries {
     val getByUserAndAndroidId = "select * from installations where userid=? and androidid=?"
     val getById = "select * from installations where id=?"
+    val getSubscribedByCollection =
+      """
+        |select I.*
+        |from installations as I
+        |inner join users as U on U.id=I.userid
+        |inner join sharedcollectionsubscriptions as S on U.id=S.userid
+        |where S.sharedCollectionPublicId=?
+        |""".stripMargin
     val insert = s"insert into installations($insertFields) values($insertWildCards)"
     val updateDeviceToken = "update installations set devicetoken=? where userid=? and androidid=?"
   }

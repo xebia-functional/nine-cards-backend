@@ -10,12 +10,10 @@ import com.fortysevendeg.ninecards.processes.utils.XorTSyntax._
 import com.fortysevendeg.ninecards.processes.utils.MonadInstances._
 import com.fortysevendeg.ninecards.services.common.ConnectionIOOps._
 import com.fortysevendeg.ninecards.services.free.algebra.DBResult.DBOps
-import com.fortysevendeg.ninecards.services.free.algebra.GooglePlay
+import com.fortysevendeg.ninecards.services.free.algebra.{ Firebase, GooglePlay }
+import com.fortysevendeg.ninecards.services.free.domain.Firebase._
 import com.fortysevendeg.ninecards.services.free.domain.GooglePlay.AppsInfo
-import com.fortysevendeg.ninecards.services.free.domain.{
-  SharedCollection ⇒ SharedCollectionServices,
-  SharedCollectionSubscription
-}
+import com.fortysevendeg.ninecards.services.free.domain.{ Installation, SharedCollectionSubscription, SharedCollection ⇒ SharedCollectionServices }
 import com.fortysevendeg.ninecards.services.persistence._
 import doobie.imports._
 
@@ -26,8 +24,10 @@ class SharedCollectionProcesses[F[_]](
   implicit
   collectionPersistence: SharedCollectionPersistenceServices,
   subscriptionPersistence: SharedCollectionSubscriptionPersistenceServices,
+  userPersistence: UserPersistenceServices,
   transactor: Transactor[Task],
   dbOps: DBOps[F],
+  firebaseNotificationsServices: Firebase.Services[F],
   googlePlayServices: GooglePlay.Services[F]
 ) {
 
@@ -43,24 +43,23 @@ class SharedCollectionProcesses[F[_]](
       publicIdentifier = collection.publicIdentifier,
       packagesStats    = PackagesStats(added = addedPackages)
     )
-  }.liftF[F]
+  }.liftF
 
   def getCollectionByPublicIdentifier(
     publicIdentifier: String,
     authParams: AuthParams
   ): Free[F, XorGetCollectionByPublicId] = {
-    val unresolvedSharedCollectionInfo = for {
+    val unresolvedSharedCollectionInfo: XorT[ConnectionIO, Throwable, SharedCollection] = for {
       sharedCollection ← findCollection(publicIdentifier)
       sharedCollectionInfo ← getCollectionPackages(sharedCollection).rightXorT[Throwable]
     } yield sharedCollectionInfo
 
-    {
-      XorT[Free[F, ?], Throwable, SharedCollection] {
-        unresolvedSharedCollectionInfo.value.liftF
-      } flatMap { collection ⇒
-        getAppsInfoForCollection(collection, authParams)
-      }
-    }.value
+    unresolvedSharedCollectionInfo
+      .value
+      .liftF
+      .toXorT
+      .flatMap { collection ⇒ getAppsInfoForCollection(collection, authParams) }
+      .value
   }
 
   def getLatestCollectionsByCategory(
@@ -111,7 +110,7 @@ class SharedCollectionProcesses[F[_]](
       subscription ← subscriptionPersistence.getSubscriptionByCollectionAndUser(collection.id, userId).rightXorT[Throwable]
       subscriptionInfo ← addSubscription(subscription, collection.id, collection.publicIdentifier).rightXorT[Throwable]
     } yield subscriptionInfo
-  }.value.liftF[F]
+  }.value.liftF
 
   def unsubscribe(publicIdentifier: String, userId: Long): Free[F, Xor[Throwable, UnsubscribeResponse]] = {
     for {
@@ -119,6 +118,38 @@ class SharedCollectionProcesses[F[_]](
       _ ← subscriptionPersistence.removeSubscriptionByCollectionAndUser(collection.id, userId).rightXorT[Throwable]
     } yield UnsubscribeResponse()
   }.value.liftF
+
+  def sendNotifications(
+    publicIdentifier: String,
+    packagesName: List[String]
+  ): Free[F, List[FirebaseError Xor NotificationResponse]] = {
+    import cats.std.list._
+    import cats.syntax.traverse._
+
+    def toUpdateCollectionNotificationInfoList(installations: List[Installation]) =
+      installations.flatMap(_.deviceToken).grouped(1000).toList
+
+    def sendNotificationsByDeviceTokenGroup(
+      publicIdentifier: String,
+      packagesName: List[String]
+    )(
+      deviceTokens: List[String]
+    ) =
+      firebaseNotificationsServices.sendUpdatedCollectionNotification(
+        UpdatedCollectionNotificationInfo(deviceTokens, publicIdentifier, packagesName)
+      )
+
+    if (packagesName.isEmpty)
+      Free.pure(List.empty[FirebaseError Xor NotificationResponse])
+    else
+      userPersistence.getSubscribedInstallationByCollection(publicIdentifier).liftF flatMap {
+        installations ⇒
+          toUpdateCollectionNotificationInfoList(installations)
+            .traverse[Free[F, ?], FirebaseError Xor NotificationResponse] {
+              sendNotificationsByDeviceTokenGroup(publicIdentifier, packagesName)
+            }
+      }
+  }
 
   def updateCollection(
     publicIdentifier: String,
@@ -134,25 +165,37 @@ class SharedCollectionProcesses[F[_]](
     def updatePackages(collectionId: Long, packagesName: Option[List[String]]) =
       packagesName
         .map(p ⇒ collectionPersistence.updatePackages(collectionId, p))
-        .getOrElse((0, 0).point[ConnectionIO])
+        .getOrElse((List.empty[String], List.empty[String]).point[ConnectionIO])
 
-    for {
-      collection ← findCollection(publicIdentifier)
-      _ ← updateCollectionInfo(collection.id, collectionInfo).rightXorT[Throwable]
-      info ← updatePackages(collection.id, packages).rightXorT[Throwable]
-      (added, removed) = info
-    } yield CreateOrUpdateCollectionResponse(
-      collection.publicIdentifier,
-      packagesStats = (PackagesStats.apply _).tupled((added, Option(removed)))
-    )
-  }.value.liftF
+    def updateCollectionAndPackages(
+      publicIdentifier: String,
+      collectionInfo: Option[SharedCollectionUpdateInfo],
+      packages: Option[List[String]]
+    ): Free[F, Throwable Xor (List[String], List[String])] = {
+      for {
+        collection ← findCollection(publicIdentifier)
+        _ ← updateCollectionInfo(collection.id, collectionInfo).rightXorT[Throwable]
+        info ← updatePackages(collection.id, packages).rightXorT[Throwable]
+      } yield info
+    }.value.liftF
 
-  private[this] def findCollection(publicId: String): XorT[ConnectionIO, Throwable, SharedCollectionServices] =
-    XorT[ConnectionIO, Throwable, SharedCollectionServices] {
-      collectionPersistence
-        .getCollectionByPublicIdentifier(publicId)
-        .map(Xor.fromOption(_, sharedCollectionNotFoundException))
-    }
+    {
+      for {
+        updateInfo ← updateCollectionAndPackages(publicIdentifier, collectionInfo, packages).toXorT
+        (addedPackages, removedPackages) = updateInfo
+        _ ← sendNotifications(publicIdentifier, addedPackages).rightXorT[Throwable]
+      } yield CreateOrUpdateCollectionResponse(
+        publicIdentifier,
+        packagesStats = (PackagesStats.apply _).tupled((addedPackages.size, Option(removedPackages.size)))
+      )
+    }.value
+  }
+
+  private[this] def findCollection(publicId: String) =
+    collectionPersistence
+      .getCollectionByPublicIdentifier(publicId)
+      .map(Xor.fromOption(_, sharedCollectionNotFoundException))
+      .toXorT
 
   private def getAppsInfoForCollection(
     collection: SharedCollection,
@@ -197,7 +240,7 @@ class SharedCollectionProcesses[F[_]](
     }
 
     for {
-      collections ← collectionsWithPackages.liftF[F]
+      collections ← collectionsWithPackages.liftF
       appsInfo ← getGooglePlayInfoForPackages(collections, authParams)
     } yield fillGooglePlayInfoForPackages(collections, appsInfo)
   }
@@ -213,8 +256,11 @@ object SharedCollectionProcesses {
 
   implicit def sharedCollectionProcesses[F[_]](
     implicit
-    sharedCollectionPersistenceServices: SharedCollectionPersistenceServices,
+    collectionPersistence: SharedCollectionPersistenceServices,
+    subscriptionPersistence: SharedCollectionSubscriptionPersistenceServices,
+    userPersistence: UserPersistenceServices,
     dbOps: DBOps[F],
+    firebaseNotificationsServices: Firebase.Services[F],
     googlePlayServices: GooglePlay.Services[F]
   ) = new SharedCollectionProcesses
 
