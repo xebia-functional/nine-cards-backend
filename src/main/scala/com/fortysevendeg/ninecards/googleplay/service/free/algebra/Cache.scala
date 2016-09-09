@@ -16,6 +16,8 @@ object cache {
 
   case class MarkError(`package`: Package, date: DateTime) extends Ops[Unit]
 
+  case class ClearInvalid(`package`: Package) extends Ops[Unit]
+
   class Service[F[_]](implicit I: Inject[Ops, F]) {
 
     def getValid( pack: Package) : Free[F, Option[FullCard]] =
@@ -30,6 +32,8 @@ object cache {
     def markError(pack: Package, date: DateTime): Free[F, Unit] =
       Free.inject[Ops, F](MarkError(pack, date) )
 
+    def clearInvalid(pack: Package) : Free[F, Unit] =
+      Free.inject[Ops, F](ClearInvalid(pack) )
   }
 
   object Service {
