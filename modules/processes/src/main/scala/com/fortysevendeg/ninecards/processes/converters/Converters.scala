@@ -9,7 +9,9 @@ import com.fortysevendeg.ninecards.processes.messages.UserMessages.LoginResponse
 import com.fortysevendeg.ninecards.services.free.domain.GooglePlay.{
   AppsInfo,
   AppInfo ⇒ AppInfoServices,
-  AuthParams ⇒ AuthParamServices
+  AuthParams ⇒ AuthParamServices,
+  Recommendation,
+  Recommendations
 }
 import com.fortysevendeg.ninecards.services.free.domain.{
   BaseSharedCollection,
@@ -124,6 +126,22 @@ object Converters {
     }
     )
   }
+
+  def toGooglePlayRecommendation(recommendation: Recommendation): GooglePlayRecommendation =
+    GooglePlayRecommendation(
+      packageName = recommendation.packageName,
+      title       = recommendation.name,
+      free        = recommendation.free,
+      icon        = recommendation.icon,
+      stars       = recommendation.stars,
+      downloads   = recommendation.downloads,
+      screenshots = recommendation.screenshots
+    )
+
+  def toGetRecommendationsResponse(recommendations: Recommendations): GetRecommendationsResponse =
+    GetRecommendationsResponse(
+      items = recommendations.apps map toGooglePlayRecommendation
+    )
 
   def toAuthParamsServices(authParams: AuthParams): AuthParamServices = {
     AuthParamServices(
