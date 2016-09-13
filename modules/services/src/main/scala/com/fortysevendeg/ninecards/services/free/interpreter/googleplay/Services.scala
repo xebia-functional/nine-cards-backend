@@ -59,9 +59,9 @@ class Services(config: Configuration) {
     client.expect[AppsInfo](request)
   }
 
-  def recommendByCategory(category: String, filter: Option[String], auth: AuthParams): Task[Recommendations] = {
+  def recommendByCategory(category: String, filter: String, auth: AuthParams): Task[Recommendations] = {
 
-    val uri = filter.fold(recommendationsBaseUri./(category))(recommendationsBaseUri./(category)./(_))
+    val uri = recommendationsBaseUri./(category)./(filter)
 
     val request = Request(Method.GET, uri = uri, headers = authHeaders(auth))
     client.expect[Recommendations](request)

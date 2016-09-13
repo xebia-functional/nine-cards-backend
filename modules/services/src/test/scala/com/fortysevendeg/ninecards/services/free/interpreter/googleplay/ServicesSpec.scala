@@ -144,15 +144,15 @@ class GooglePlayServicesSpec
 
   "recommendByCategory" should {
     "return a list of recommended apps for the given category" in {
-      val response = services.recommendByCategory("COUNTRY", None, auth.params)
+      val response = services.recommendByCategory("COUNTRY", "ALL", auth.params)
       response.unsafePerformSyncAttempt should be_\/-[Recommendations]
     }
     "return a list of free recommended apps for the given category" in {
-      val response = services.recommendByCategory("COUNTRY", Option("FREE"), auth.params)
+      val response = services.recommendByCategory("COUNTRY", "FREE", auth.params)
       response.unsafePerformSyncAttempt should be_\/-[Recommendations]
     }
     "return a list of paid recommended apps for the given category" in {
-      val response = services.recommendByCategory("COUNTRY", Option("PAID"), auth.params)
+      val response = services.recommendByCategory("COUNTRY", "PAID", auth.params)
       response.unsafePerformSyncAttempt should be_\/-[Recommendations]
     }
   }
@@ -278,7 +278,7 @@ object TestData {
 
   object paths {
     val recommendations = "/googleplay/recommendations"
-    val recommendationsByCountries = "/googleplay/recommendations/COUNTRY"
+    val recommendationsByCountries = "/googleplay/recommendations/COUNTRY/ALL"
     val freeRecommendationsByCountries = "/googleplay/recommendations/COUNTRY/FREE"
     val paidRecommendationsByCountries = "/googleplay/recommendations/COUNTRY/PAID"
     val resolveOne = "/googleplay/cards"
