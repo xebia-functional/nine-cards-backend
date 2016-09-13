@@ -37,9 +37,10 @@ trait DummyNineCardsConfig {
     val protocol = "http"
     val host = "localhost"
     val port = 8081
-    object uri {
-      val resolveOne = "googleplay/cards"
-      val resolveMany = "googleplay/cards"
+    object paths {
+      val recommendations = "/googleplay/recommendations"
+      val resolveOne = "/googleplay/cards"
+      val resolveMany = "/googleplay/cards"
     }
   }
 
@@ -78,9 +79,10 @@ trait DummyNineCardsConfig {
        |  host = "${googleplay.host}"
        |  port = ${googleplay.port}
        |  protocol = "${googleplay.protocol}"
-       |  uri = {
-       |    resolveOne = ${googleplay.uri.resolveOne}
-       |    resolveMany = ${googleplay.uri.resolveMany}
+       |  paths = {
+       |    recommendations = ${googleplay.paths.recommendations}
+       |    resolveOne = ${googleplay.paths.resolveOne}
+       |    resolveMany = ${googleplay.paths.resolveMany}
        |  }
        |}
        |ninecards.backend {

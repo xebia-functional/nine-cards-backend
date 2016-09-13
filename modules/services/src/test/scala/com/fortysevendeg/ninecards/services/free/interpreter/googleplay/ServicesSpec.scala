@@ -59,6 +59,47 @@ trait MockGooglePlayServer extends MockServerService {
         .withBody(resolveManyValidResponse)
     )
 
+  mockServer.when(
+    request
+      .withMethod("GET")
+      .withPath(paths.recommendationsByCountries)
+      .withHeader(headers.token)
+      .withHeader(headers.androidId)
+      .withHeader(headers.locale)
+  ).respond(
+      response
+        .withStatusCode(HttpStatusCode.OK_200.code)
+        .withHeader(jsonHeader)
+        .withBody(recommendationsForAll)
+    )
+
+  mockServer.when(
+    request
+      .withMethod("GET")
+      .withPath(paths.freeRecommendationsByCountries)
+      .withHeader(headers.token)
+      .withHeader(headers.androidId)
+      .withHeader(headers.locale)
+  ).respond(
+      response
+        .withStatusCode(HttpStatusCode.OK_200.code)
+        .withHeader(jsonHeader)
+        .withBody(recommendationsForFree)
+    )
+
+  mockServer.when(
+    request
+      .withMethod("GET")
+      .withPath(paths.paidRecommendationsByCountries)
+      .withHeader(headers.token)
+      .withHeader(headers.androidId)
+      .withHeader(headers.locale)
+  ).respond(
+      response
+        .withStatusCode(HttpStatusCode.OK_200.code)
+        .withHeader(jsonHeader)
+        .withBody(recommendationsForPaid)
+    )
 }
 
 class GooglePlayServicesSpec
@@ -73,11 +114,12 @@ class GooglePlayServicesSpec
   val tokenIdParameterName = "id_token"
 
   implicit val googlePlayConfiguration = Configuration(
-    protocol       = "http",
-    host           = "localhost",
-    port           = Option(mockServerPort),
-    resolveOneUri  = paths.resolveOne,
-    resolveManyUri = paths.resolveMany
+    protocol            = "http",
+    host                = "localhost",
+    port                = Option(mockServerPort),
+    recommendationsPath = paths.recommendations,
+    resolveOnePath      = paths.resolveOne,
+    resolveManyPath     = paths.resolveMany
   )
 
   val services = Services.services
@@ -100,6 +142,21 @@ class GooglePlayServicesSpec
     }
   }
 
+  "recommendByCategory" should {
+    "return a list of recommended apps for the given category" in {
+      val response = services.recommendByCategory("COUNTRY", None, auth.params)
+      response.unsafePerformSyncAttempt should be_\/-[Recommendations]
+    }
+    "return a list of free recommended apps for the given category" in {
+      val response = services.recommendByCategory("COUNTRY", Option("FREE"), auth.params)
+      response.unsafePerformSyncAttempt should be_\/-[Recommendations]
+    }
+    "return a list of paid recommended apps for the given category" in {
+      val response = services.recommendByCategory("COUNTRY", Option("PAID"), auth.params)
+      response.unsafePerformSyncAttempt should be_\/-[Recommendations]
+    }
+  }
+
 }
 
 object TestData {
@@ -108,6 +165,78 @@ object TestData {
     val italy = "earth.europe.italy"
     val prussia = "earth.europe.prussia"
   }
+
+  val recommendationsForAll =
+    s"""
+       |{
+       |  "apps": [
+       |    {
+       |      "packageName" : "${appsNames.italy}",
+       |      "name" : "Italy",
+       |      "free" : true,
+       |      "icon" : "https://lh5.ggpht.com/D5mlVsxok0icv00iCkwirgrncmym6s-mr_M=w300-rw",
+       |      "stars" : 3.66,
+       |      "downloads" : "542412",
+       |      "screenshots" : [
+       |        "https://lh5.ggpht.com/D5mlVsxok0icv00iCkwirgrncmym6s-mr_M=w300-rw",
+       |        "https://lh5.ggpht.com/D5mlVsxok0icv00iCkwirgrncmym7s-mr_M=w300-rw"
+       |      ]
+       |    },
+       |    {
+       |      "packageName" : "${appsNames.prussia}",
+       |      "name" : "Prussia",
+       |      "free" : false,
+       |      "icon" : "https://lh5.ggpht.com/D5mlVsxok0icv00iCkwirgrncmym6s-mr_M=w300-rw",
+       |      "stars" : 3.66,
+       |      "downloads" : "542412",
+       |      "screenshots" : [
+       |        "https://lh5.ggpht.com/D5mlVsxok0icv00iCkwirgrncmym6s-mr_M=w300-rw",
+       |        "https://lh5.ggpht.com/D5mlVsxok0icv00iCkwirgrncmym7s-mr_M=w300-rw"
+       |      ]
+       |    }
+       |  ]
+       |}
+    """.stripMargin
+
+  val recommendationsForFree =
+    s"""
+      |{
+      |  "apps": [
+      |    {
+      |      "packageName" : "${appsNames.italy}",
+      |      "name" : "Italy",
+      |      "free" : true,
+      |      "icon" : "https://lh5.ggpht.com/D5mlVsxok0icv00iCkwirgrncmym6s-mr_M=w300-rw",
+      |      "stars" : 3.66,
+      |      "downloads" : "542412",
+      |      "screenshots" : [
+      |        "https://lh5.ggpht.com/D5mlVsxok0icv00iCkwirgrncmym6s-mr_M=w300-rw",
+      |        "https://lh5.ggpht.com/D5mlVsxok0icv00iCkwirgrncmym7s-mr_M=w300-rw"
+      |      ]
+      |    }
+      |  ]
+      |}
+    """.stripMargin
+
+  val recommendationsForPaid =
+    s"""
+      |{
+      |  "apps": [
+      |    {
+      |      "packageName" : "${appsNames.prussia}",
+      |      "name" : "Prussia",
+      |      "free" : false,
+      |      "icon" : "https://lh5.ggpht.com/D5mlVsxok0icv00iCkwirgrncmym6s-mr_M=w300-rw",
+      |      "stars" : 3.66,
+      |      "downloads" : "542412",
+      |      "screenshots" : [
+      |        "https://lh5.ggpht.com/D5mlVsxok0icv00iCkwirgrncmym6s-mr_M=w300-rw",
+      |        "https://lh5.ggpht.com/D5mlVsxok0icv00iCkwirgrncmym7s-mr_M=w300-rw"
+      |      ]
+      |    }
+      |  ]
+      |}
+    """.stripMargin
 
   val resolvedPackage = s"""
       |{
@@ -148,6 +277,10 @@ object TestData {
   }
 
   object paths {
+    val recommendations = "/googleplay/recommendations"
+    val recommendationsByCountries = "/googleplay/recommendations/COUNTRY"
+    val freeRecommendationsByCountries = "/googleplay/recommendations/COUNTRY/FREE"
+    val paidRecommendationsByCountries = "/googleplay/recommendations/COUNTRY/PAID"
     val resolveOne = "/googleplay/cards"
     val resolveMany = "/googleplay/cards"
   }

@@ -12,8 +12,9 @@ class ConfigurationSpec extends Specification with DummyNineCardsConfig {
       playConfiguration.protocol shouldEqual googleplay.protocol
       playConfiguration.host shouldEqual googleplay.host
       playConfiguration.port shouldEqual Option(googleplay.port)
-      playConfiguration.resolveOneUri shouldEqual googleplay.uri.resolveOne
-      playConfiguration.resolveManyUri shouldEqual googleplay.uri.resolveMany
+      playConfiguration.recommendationsPath shouldEqual googleplay.paths.recommendations
+      playConfiguration.resolveOnePath shouldEqual googleplay.paths.resolveOne
+      playConfiguration.resolveManyPath shouldEqual googleplay.paths.resolveMany
     }
   }
 

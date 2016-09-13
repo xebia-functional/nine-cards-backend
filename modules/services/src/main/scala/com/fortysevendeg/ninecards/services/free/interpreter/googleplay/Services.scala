@@ -3,8 +3,9 @@ package com.fortysevendeg.ninecards.services.free.interpreter.googleplay
 import cats.data.Xor
 import com.fortysevendeg.ninecards.services.free.domain.GooglePlay._
 import org.http4s.Http4s._
-import org.http4s.{ Header, Headers, Method, Request, Uri }
+import org.http4s._
 import org.http4s.Uri.{ Authority, RegName }
+import org.http4s.client.UnexpectedStatus
 
 import scalaz.concurrent.Task
 
@@ -29,11 +30,17 @@ class Services(config: Configuration) {
     )
   }
 
+  private[this] val recommendationsBaseUri = Uri(
+    scheme    = Option(config.protocol.ci),
+    authority = Option(authority),
+    path      = config.recommendationsPath
+  )
+
   def resolveOne(packageName: String, auth: AuthParams): Task[String Xor AppInfo] = {
     val uri = Uri(
       scheme    = Option(config.protocol.ci),
       authority = Option(authority),
-      path      = s"${config.resolveOneUri}/$packageName"
+      path      = s"${config.resolveOnePath}/$packageName"
     )
 
     val request = Request(Method.GET, uri = uri, headers = authHeaders(auth))
@@ -44,12 +51,20 @@ class Services(config: Configuration) {
     val resolveManyUri = Uri(
       scheme    = Option(config.protocol.ci),
       authority = Option(authority),
-      path      = config.resolveManyUri
+      path      = config.resolveManyPath
     )
 
     val request = Request(Method.POST, uri = resolveManyUri, headers = authHeaders(auth))
       .withBody[PackageList](PackageList(packageNames))
     client.expect[AppsInfo](request)
+  }
+
+  def recommendByCategory(category: String, filter: Option[String], auth: AuthParams): Task[Recommendations] = {
+
+    val uri = filter.fold(recommendationsBaseUri./(category))(recommendationsBaseUri./(category)./(_))
+
+    val request = Request(Method.GET, uri = uri, headers = authHeaders(auth))
+    client.expect[Recommendations](request)
   }
 
 }
