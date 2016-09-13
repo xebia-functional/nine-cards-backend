@@ -1,13 +1,14 @@
 package com.fortysevendeg.ninecards.api
 
 import com.fortysevendeg.ninecards.api.NineCardsHeaders._
-import com.fortysevendeg.ninecards.api.messages.GooglePlayMessages.ApiGetAppsInfoRequest
+import com.fortysevendeg.ninecards.api.messages.GooglePlayMessages._
 import com.fortysevendeg.ninecards.api.messages.InstallationsMessages.ApiUpdateInstallationRequest
-import com.fortysevendeg.ninecards.api.messages.SharedCollectionMessages.{ ApiCreateCollectionRequest, ApiUpdateCollectionRequest }
+import com.fortysevendeg.ninecards.api.messages.SharedCollectionMessages._
 import com.fortysevendeg.ninecards.api.messages.UserMessages.ApiLoginRequest
 import com.fortysevendeg.ninecards.processes.ProcessesExceptions.SharedCollectionNotFoundException
 import com.fortysevendeg.ninecards.processes.messages.ApplicationMessages.GetAppsInfoResponse
 import com.fortysevendeg.ninecards.processes.messages.InstallationsMessages._
+import com.fortysevendeg.ninecards.processes.messages.RecommendationsMessages._
 import com.fortysevendeg.ninecards.processes.messages.SharedCollectionMessages._
 import com.fortysevendeg.ninecards.processes.messages.UserMessages.{ LoginRequest, LoginResponse }
 import com.fortysevendeg.ninecards.services.persistence.PersistenceExceptions.PersistenceException
@@ -43,6 +44,8 @@ object TestData {
   val icon = "path-to-icon"
 
   val installations = 1
+
+  val limit = 20
 
   val marketLocalization = "en-us"
 
@@ -136,6 +139,13 @@ object TestData {
 
     val apiGetAppsInfoRequest = ApiGetAppsInfoRequest(items = List("", "", ""))
 
+    val apiGetRecommendationsByCategoryRequest = ApiGetRecommendationsByCategoryRequest(
+      excludePackages = packagesName,
+      limit           = limit
+    )
+
+    val getRecommendationsByCategoryResponse = GetRecommendationsResponse(Nil)
+
     val apiCreateCollectionRequest = ApiCreateCollectionRequest(
       author        = author,
       name          = name,
@@ -226,6 +236,8 @@ object TestData {
     val latestCollections = "/collections/latest/SOCIAL/0/25"
 
     val login = "/login"
+
+    val recommendationsByCategory = "/recommendations/SOCIAL"
 
     val subscriptionByCollectionId = "/collections/subscriptions/40daf308-fecf-4228-9262-a712d783cf49"
 

@@ -1,16 +1,17 @@
 package com.fortysevendeg.ninecards.processes.messages
 
-object ApplicationMessages {
+object RecommendationsMessages {
 
-  case class GetAppsInfoResponse(errors: List[String], items: List[AppGooglePlayInfo])
+  case class GetRecommendationsResponse(items: List[GooglePlayRecommendation])
 
-  case class AppGooglePlayInfo(
+  case class GooglePlayRecommendation(
     packageName: String,
     title: String,
     free: Boolean,
     icon: String,
     stars: Double,
     downloads: String,
-    categories: List[String]
+    screenshots: List[String]
   )
+
 }
