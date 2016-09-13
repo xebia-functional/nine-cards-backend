@@ -1,6 +1,7 @@
 package com.fortysevendeg.ninecards.api.messages
 
-import com.fortysevendeg.ninecards.processes.messages.ApplicationMessages.AppGooglePlayInfo
+import com.fortysevendeg.ninecards.processes.messages.ApplicationMessages._
+import com.fortysevendeg.ninecards.processes.messages.RecommendationsMessages._
 
 object GooglePlayMessages {
 
@@ -11,4 +12,8 @@ object GooglePlayMessages {
   case class ApiCategorizeAppsResponse(errors: List[String], items: List[CategorizedApp])
 
   case class ApiDetailAppsResponse(errors: List[String], items: List[AppGooglePlayInfo])
+
+  case class ApiGetRecommendationsByCategoryRequest(excludePackages: List[String], limit: Int)
+
+  case class ApiGetRecommendationsResponse(items: List[GooglePlayRecommendation])
 }

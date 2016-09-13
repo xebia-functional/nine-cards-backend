@@ -49,7 +49,10 @@ trait NineCardsApiSpecification
     implicit val googleApiProcesses: GoogleApiProcesses[NineCardsServices] = mock[GoogleApiProcesses[NineCardsServices]]
 
     implicit val applicationProcesses: ApplicationProcesses[NineCardsServices] = mock[ApplicationProcesses[NineCardsServices]]
+
     implicit val rankingProcesses: RankingProcesses[NineCardsServices] = mock[RankingProcesses[NineCardsServices]]
+
+    implicit val recommendationsProcesses: RecommendationsProcesses[NineCardsServices] = mock[RecommendationsProcesses[NineCardsServices]]
 
     implicit val sharedCollectionProcesses: SharedCollectionProcesses[NineCardsServices] = mock[SharedCollectionProcesses[NineCardsServices]]
 
@@ -110,6 +113,9 @@ trait NineCardsApiSpecification
 
     rankingProcesses.reloadRanking(any, any) returns
       Free.pure(Messages.rankings.reloadResponse.right)
+
+    recommendationsProcesses.getRecommendationsByCategory(any, any, any, any, any) returns
+      Free.pure(Messages.getRecommendationsByCategoryResponse)
   }
 
   trait UnsuccessfulScope extends BasicScope {
@@ -461,6 +467,8 @@ class NineCardsApiSpec
       content = Messages.apiGetAppsInfoRequest
     ) ~> addHeaders(Headers.googlePlayHeaders)
 
+    authenticatedBadRequestEmptyBody(Post(Paths.categorize))
+
     unauthorizedNoHeaders(request)
 
     internalServerError(request)
@@ -474,6 +482,24 @@ class NineCardsApiSpec
       uri     = Paths.details,
       content = Messages.apiGetAppsInfoRequest
     ) ~> addHeaders(Headers.googlePlayHeaders)
+
+    authenticatedBadRequestEmptyBody(Post(Paths.details))
+
+    unauthorizedNoHeaders(request)
+
+    internalServerError(request)
+
+    successOk(request)
+  }
+
+  "POST /recommendations/category" should {
+
+    val request = Post(
+      uri     = Paths.recommendationsByCategory,
+      content = Messages.apiGetRecommendationsByCategoryRequest
+    ) ~> addHeaders(Headers.googlePlayHeaders)
+
+    authenticatedBadRequestEmptyBody(Post(Paths.recommendationsByCategory))
 
     unauthorizedNoHeaders(request)
 

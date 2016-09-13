@@ -4,7 +4,9 @@ import java.util.UUID
 
 import com.fortysevendeg.ninecards.api.NineCardsHeaders.Domain._
 import com.fortysevendeg.ninecards.api.NineCardsHeaders._
+import com.fortysevendeg.ninecards.api.messages.PathEnumerations.PriceFilter
 import com.fortysevendeg.ninecards.api.messages.UserMessages.ApiLoginRequest
+import com.fortysevendeg.ninecards.api.utils.SprayMatchers.PriceFilterSegment
 import com.fortysevendeg.ninecards.api.utils.TaskDirectives._
 import com.fortysevendeg.ninecards.processes.NineCardsServices._
 import com.fortysevendeg.ninecards.processes._
@@ -28,6 +30,7 @@ class NineCardsDirectives(
   with HeaderDirectives
   with MarshallingDirectives
   with MiscDirectives
+  with PathDirectives
   with SecurityDirectives
   with JsonFormats {
 
@@ -101,6 +104,9 @@ class NineCardsDirectives(
   } yield NewSharedCollectionInfo(currentDateTime, publicIdentifier) :: HNil
 
   def generateSessionToken: Directive1[SessionToken] = provide(SessionToken(UUID.randomUUID.toString))
+
+  val priceFilterPath: Directive[PriceFilter :: HNil] =
+    path(PriceFilterSegment) | (pathEndOrSingleSlash & provide(PriceFilter.ALL: PriceFilter))
 }
 
 object NineCardsDirectives {

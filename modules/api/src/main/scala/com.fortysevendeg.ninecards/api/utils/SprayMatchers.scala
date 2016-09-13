@@ -1,5 +1,6 @@
 package com.fortysevendeg.ninecards.api.utils
 
+import com.fortysevendeg.ninecards.api.messages.PathEnumerations.PriceFilter
 import com.fortysevendeg.ninecards.services.free.domain.Category
 import com.fortysevendeg.ninecards.services.free.domain.rankings.{ Continent, Country }
 import enumeratum.{ Enum, EnumEntry }
@@ -24,6 +25,7 @@ object SprayMatchers {
   val CategorySegment: PathMatcher1[Category] = new EnumSegment[Category]
   val ContinentSegment: PathMatcher1[Continent] = new EnumSegment[Continent]
   val CountrySegment: PathMatcher1[Country] = new EnumSegment[Country]
+  val PriceFilterSegment: PathMatcher1[PriceFilter] = new EnumSegment[PriceFilter]
 
   class TypedSegment[T](implicit gen: Generic.Aux[T, String :: HNil]) extends PathMatcher1[T] {
     def apply(path: Path) = path match {

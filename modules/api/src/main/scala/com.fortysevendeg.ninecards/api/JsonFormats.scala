@@ -6,6 +6,7 @@ import com.fortysevendeg.ninecards.api.messages.InstallationsMessages._
 import com.fortysevendeg.ninecards.api.messages.SharedCollectionMessages._
 import com.fortysevendeg.ninecards.api.messages.UserMessages._
 import com.fortysevendeg.ninecards.processes.messages.ApplicationMessages._
+import com.fortysevendeg.ninecards.processes.messages.RecommendationsMessages._
 import com.fortysevendeg.ninecards.processes.messages.SharedCollectionMessages._
 import io.circe.{ Decoder, Encoder, Json }
 import org.joda.time.DateTime
@@ -86,6 +87,12 @@ trait JsonFormats
   implicit val apiDetailAppsResponseFormat = jsonFormat2(ApiDetailAppsResponse)
 
   implicit val apiGetSubscriptionsByUserResponseFormat = jsonFormat1(ApiGetSubscriptionsByUser)
+
+  implicit val apiGetRecommendationsByCategoryRequestFormat = jsonFormat2(ApiGetRecommendationsByCategoryRequest)
+
+  implicit val googlePlayRecommendationFormat = jsonFormat7(GooglePlayRecommendation)
+
+  implicit val apiGetRecommendationsResponseFormat = jsonFormat1(ApiGetRecommendationsResponse)
 }
 
 object JsonFormats extends JsonFormats

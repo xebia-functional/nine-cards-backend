@@ -3,7 +3,9 @@ package com.fortysevendeg.ninecards.processes.converters
 import java.sql.Timestamp
 
 import com.fortysevendeg.ninecards.processes.messages.ApplicationMessages._
+import com.fortysevendeg.ninecards.processes.messages.GooglePlayAuthMessages._
 import com.fortysevendeg.ninecards.processes.messages.InstallationsMessages._
+import com.fortysevendeg.ninecards.processes.messages.RecommendationsMessages._
 import com.fortysevendeg.ninecards.processes.messages.SharedCollectionMessages._
 import com.fortysevendeg.ninecards.processes.messages.UserMessages.LoginResponse
 import com.fortysevendeg.ninecards.services.free.domain.GooglePlay.{
