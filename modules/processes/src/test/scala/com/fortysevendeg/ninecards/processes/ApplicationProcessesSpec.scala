@@ -77,7 +77,7 @@ trait ApplicationProcessesContext {
 
 class ApplicationProcessesSpec extends ApplicationProcessesSpecification {
 
-  "categorizeApps" should {
+  "getAppsInfo" should {
     "return an empty response without calling the Google Play service if an empty list of" +
       "packages name is passed" in new BasicScope {
         val response = applicationProcesses.getAppsInfo(Nil, authParams)
