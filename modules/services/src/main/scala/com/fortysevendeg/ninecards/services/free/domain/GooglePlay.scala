@@ -25,5 +25,18 @@ object GooglePlay {
     categories: List[String]
   )
 
+  case class Recommendations(
+    apps: List[Recommendation]
+  )
+
+  case class Recommendation(
+    packageName: String,
+    name: String,
+    free: Boolean,
+    icon: String,
+    stars: Double,
+    downloads: String,
+    screenshots: List[String]
+  )
 }
 
