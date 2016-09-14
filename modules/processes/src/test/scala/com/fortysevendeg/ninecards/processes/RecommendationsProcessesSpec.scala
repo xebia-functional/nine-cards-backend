@@ -32,6 +32,11 @@ trait RecommendationsProcessesSpecification
       priceFilter = recommendationFilter,
       auth        = auth.googlePlayAuthParams
     ) returns Free.pure(recommendations)
+
+    googlePlayServices.recommendationsForApps(
+      packagesName = packagesName,
+      auth         = auth.googlePlayAuthParams
+    ) returns Free.pure(recommendations)
   }
 
 }
@@ -112,6 +117,55 @@ class RecommendationsProcessesSpec extends RecommendationsProcessesSpecification
         val response = recommendationsProcesses.getRecommendationsByCategory(
           category,
           recommendationFilter,
+          excludePackages,
+          smallLimit,
+          auth.authParams
+        )
+
+        response.foldMap(testInterpreters) must beLike[GetRecommendationsResponse] {
+          case r ⇒
+            r.items.size must be_==(smallLimit)
+            r.items must_== googlePlayRecommendations.take(smallLimit)
+        }
+      }
+  }
+
+  "getRecommendationsForApps" should {
+
+    "return an empty list of recommendations if no packages are given" in new SuccessfulScope {
+      val response = recommendationsProcesses.getRecommendationsForApps(
+        Nil,
+        excludePackages,
+        limit,
+        auth.authParams
+      )
+
+      response.foldMap(testInterpreters) must beLike[GetRecommendationsResponse] {
+        case r ⇒
+          r.items must beEmpty
+          there was noCallsTo(googlePlayServices)
+      }
+    }
+
+    "return a list of recommendations after excluding the given packages" in new SuccessfulScope {
+      val response = recommendationsProcesses.getRecommendationsForApps(
+        packagesName,
+        excludePackages,
+        limit,
+        auth.authParams
+      )
+
+      response.foldMap(testInterpreters) must beLike[GetRecommendationsResponse] {
+        case r ⇒
+          r.items.size must be_<=(limit)
+          r.items must_== googlePlayRecommendations
+      }
+    }
+
+    "return a list of recommendations after excluding the given packages and applying " +
+      "the limit" in new SuccessfulScope {
+        val response = recommendationsProcesses.getRecommendationsForApps(
+          packagesName,
           excludePackages,
           smallLimit,
           auth.authParams
