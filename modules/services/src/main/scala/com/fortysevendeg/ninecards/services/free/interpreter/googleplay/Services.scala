@@ -67,6 +67,13 @@ class Services(config: Configuration) {
     client.expect[Recommendations](request)
   }
 
+  def recommendationsForApps(packageNames: Seq[String], auth: AuthParams): Task[Recommendations] = {
+
+    val request = Request(Method.POST, uri = recommendationsBaseUri, headers = authHeaders(auth))
+      .withBody[PackageList](PackageList(packageNames))
+
+    client.expect[Recommendations](request)
+  }
 }
 
 object Services {
