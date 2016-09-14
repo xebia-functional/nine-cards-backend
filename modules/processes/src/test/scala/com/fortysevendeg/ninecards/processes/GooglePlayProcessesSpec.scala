@@ -3,7 +3,7 @@ package com.fortysevendeg.ninecards.processes
 import cats.free.Free
 import com.fortysevendeg.ninecards.processes.NineCardsServices.NineCardsServices
 import com.fortysevendeg.ninecards.processes.converters.Converters._
-import com.fortysevendeg.ninecards.processes.messages.ApplicationMessages.AuthParams
+import com.fortysevendeg.ninecards.processes.messages.GooglePlayAuthMessages.AuthParams
 import com.fortysevendeg.ninecards.services.free.algebra.GooglePlay.Services
 import com.fortysevendeg.ninecards.services.free.domain.GooglePlay.{ AppInfo, AppsInfo }
 import org.specs2.matcher.Matchers

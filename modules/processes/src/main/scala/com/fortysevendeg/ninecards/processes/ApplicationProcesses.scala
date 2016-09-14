@@ -3,6 +3,7 @@ package com.fortysevendeg.ninecards.processes
 import cats.free.Free
 import com.fortysevendeg.ninecards.processes.converters.Converters._
 import com.fortysevendeg.ninecards.processes.messages.ApplicationMessages._
+import com.fortysevendeg.ninecards.processes.messages.GooglePlayAuthMessages._
 import com.fortysevendeg.ninecards.services.free.algebra.GooglePlay
 
 class ApplicationProcesses[F[_]](implicit services: GooglePlay.Services[F]) {

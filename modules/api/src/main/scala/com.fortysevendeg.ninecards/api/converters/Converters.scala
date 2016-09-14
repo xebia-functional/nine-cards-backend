@@ -1,12 +1,14 @@
 package com.fortysevendeg.ninecards.api.converters
 
 import com.fortysevendeg.ninecards.api.NineCardsHeaders.Domain._
-import com.fortysevendeg.ninecards.api.messages.GooglePlayMessages.{ ApiCategorizeAppsResponse, ApiDetailAppsResponse, CategorizedApp }
+import com.fortysevendeg.ninecards.api.messages.GooglePlayMessages._
 import com.fortysevendeg.ninecards.api.messages.InstallationsMessages._
 import com.fortysevendeg.ninecards.api.messages.SharedCollectionMessages._
 import com.fortysevendeg.ninecards.api.messages.UserMessages._
 import com.fortysevendeg.ninecards.processes.messages.ApplicationMessages._
+import com.fortysevendeg.ninecards.processes.messages.GooglePlayAuthMessages._
 import com.fortysevendeg.ninecards.processes.messages.InstallationsMessages._
+import com.fortysevendeg.ninecards.processes.messages.RecommendationsMessages._
 import com.fortysevendeg.ninecards.processes.messages.SharedCollectionMessages._
 import com.fortysevendeg.ninecards.processes.messages.UserMessages._
 
@@ -127,5 +129,10 @@ object Converters {
   def toApiGetSubscriptionsByUser(response: GetSubscriptionsByUserResponse): ApiGetSubscriptionsByUser =
     ApiGetSubscriptionsByUser(
       subscriptions = response.subscriptions
+    )
+
+  def toApiGetRecommendationsResponse(response: GetRecommendationsResponse): ApiGetRecommendationsResponse =
+    ApiGetRecommendationsResponse(
+      response.items
     )
 }
