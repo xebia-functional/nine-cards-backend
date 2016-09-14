@@ -15,5 +15,11 @@ object GooglePlayMessages {
 
   case class ApiGetRecommendationsByCategoryRequest(excludePackages: List[String], limit: Int)
 
+  case class ApiGetRecommendationsForAppsRequest(
+    packages: List[String],
+    excludePackages: List[String],
+    limit: Int
+  )
+
   case class ApiGetRecommendationsResponse(items: List[GooglePlayRecommendation])
 }
