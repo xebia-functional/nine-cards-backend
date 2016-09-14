@@ -40,6 +40,8 @@ abstract class Interpreters[M[_]](implicit A: ApplicativeError[M, Throwable]) {
         task2M(googlePlayServices.resolveOne(packageName, auth))
       case GooglePlay.RecommendationsByCategory(category, filter, auth) ⇒
         task2M(googlePlayServices.recommendByCategory(category, filter, auth))
+      case GooglePlay.RecommendationsForApps(packagesName, auth) ⇒
+        task2M(googlePlayServices.recommendationsForApps(packagesName, auth))
     }
   }
 

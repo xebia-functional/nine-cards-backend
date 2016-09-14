@@ -6,7 +6,7 @@ import com.fortysevendeg.ninecards.services.utils.MockServerService
 import org.mockserver.model.HttpRequest._
 import org.mockserver.model.HttpResponse._
 import org.mockserver.model.{ Header, HttpStatusCode }
-import org.specs2.matcher.{ DisjunctionMatchers, Matchers, XorMatchers }
+import org.specs2.matcher.{ DisjunctionMatchers, Matcher, Matchers, XorMatchers }
 import org.specs2.mutable.Specification
 
 trait MockGooglePlayServer extends MockServerService {
@@ -57,6 +57,38 @@ trait MockGooglePlayServer extends MockServerService {
         .withStatusCode(HttpStatusCode.OK_200.code)
         .withHeader(jsonHeader)
         .withBody(resolveManyValidResponse)
+    )
+
+  mockServer.when(
+    request
+      .withMethod("POST")
+      .withPath(paths.recommendations)
+      .withHeader(headers.token)
+      .withHeader(headers.androidId)
+      .withHeader(headers.locale)
+      .withHeader(headers.contentType)
+      .withBody(recommendationsForAppsRequest)
+  ).respond(
+      response
+        .withStatusCode(HttpStatusCode.OK_200.code)
+        .withHeader(jsonHeader)
+        .withBody(recommendationsForApps)
+    )
+
+  mockServer.when(
+    request
+      .withMethod("POST")
+      .withPath(paths.recommendations)
+      .withHeader(headers.token)
+      .withHeader(headers.androidId)
+      .withHeader(headers.locale)
+      .withHeader(headers.contentType)
+      .withBody(recommendationsForAppsEmptyRequest)
+  ).respond(
+      response
+        .withStatusCode(HttpStatusCode.OK_200.code)
+        .withHeader(jsonHeader)
+        .withBody(recommendationsForAppsEmptyResponse)
     )
 
   mockServer.when(
@@ -124,6 +156,10 @@ class GooglePlayServicesSpec
 
   val services = Services.services
 
+  def recommendationIsFreeMatcher(isFree: Boolean): Matcher[Recommendation] = { rec: Recommendation ⇒
+    rec.free must_== isFree
+  }
+
   "resolveOne" should {
 
     "return the App object when a valid package name is provided" in {
@@ -145,18 +181,41 @@ class GooglePlayServicesSpec
   "recommendByCategory" should {
     "return a list of recommended apps for the given category" in {
       val response = services.recommendByCategory("COUNTRY", "ALL", auth.params)
-      response.unsafePerformSyncAttempt should be_\/-[Recommendations]
+      response.unsafePerformSyncAttempt should be_\/-[Recommendations].which { rec ⇒
+        rec.apps must haveSize(2)
+      }
     }
     "return a list of free recommended apps for the given category" in {
       val response = services.recommendByCategory("COUNTRY", "FREE", auth.params)
-      response.unsafePerformSyncAttempt should be_\/-[Recommendations]
+      response.unsafePerformSyncAttempt should be_\/-[Recommendations].which { rec ⇒
+        rec.apps must haveSize(1)
+        rec.apps must contain(recommendationIsFreeMatcher(true)).forall
+      }
     }
     "return a list of paid recommended apps for the given category" in {
       val response = services.recommendByCategory("COUNTRY", "PAID", auth.params)
-      response.unsafePerformSyncAttempt should be_\/-[Recommendations]
+
+      response.unsafePerformSyncAttempt should be_\/-[Recommendations].which { rec ⇒
+        rec.apps must haveSize(1)
+        rec.apps must contain(recommendationIsFreeMatcher(false)).forall
+      }
     }
   }
 
+  "recommendationsForApps" should {
+    "return an empty list of recommended apps if an empty list of packages is given" in {
+      val response = services.recommendationsForApps(Nil, auth.params)
+      response.unsafePerformSyncAttempt should be_\/-[Recommendations].which { rec ⇒
+        rec.apps must beEmpty
+      }
+    }
+    "return a list of recommended apps for the given list of packages" in {
+      val response = services.recommendationsForApps(List(appsNames.italy, appsNames.prussia), auth.params)
+      response.unsafePerformSyncAttempt should be_\/-[Recommendations].which { rec ⇒
+        rec.apps must haveSize(2)
+      }
+    }
+  }
 }
 
 object TestData {
@@ -165,6 +224,45 @@ object TestData {
     val italy = "earth.europe.italy"
     val prussia = "earth.europe.prussia"
   }
+
+  val recommendationsForApps =
+    s"""
+       |{
+       |  "apps": [
+       |    {
+       |      "packageName" : "${appsNames.italy}",
+       |      "name" : "Italy",
+       |      "free" : true,
+       |      "icon" : "https://lh5.ggpht.com/D5mlVsxok0icv00iCkwirgrncmym6s-mr_M=w300-rw",
+       |      "stars" : 3.66,
+       |      "downloads" : "542412",
+       |      "screenshots" : [
+       |        "https://lh5.ggpht.com/D5mlVsxok0icv00iCkwirgrncmym6s-mr_M=w300-rw",
+       |        "https://lh5.ggpht.com/D5mlVsxok0icv00iCkwirgrncmym7s-mr_M=w300-rw"
+       |      ]
+       |    },
+       |    {
+       |      "packageName" : "${appsNames.prussia}",
+       |      "name" : "Prussia",
+       |      "free" : false,
+       |      "icon" : "https://lh5.ggpht.com/D5mlVsxok0icv00iCkwirgrncmym6s-mr_M=w300-rw",
+       |      "stars" : 3.66,
+       |      "downloads" : "542412",
+       |      "screenshots" : [
+       |        "https://lh5.ggpht.com/D5mlVsxok0icv00iCkwirgrncmym6s-mr_M=w300-rw",
+       |        "https://lh5.ggpht.com/D5mlVsxok0icv00iCkwirgrncmym7s-mr_M=w300-rw"
+       |      ]
+       |    }
+       |  ]
+       |}
+    """.stripMargin
+
+  val recommendationsForAppsEmptyResponse =
+    s"""
+       |{
+       |  "apps": []
+       |}
+    """.stripMargin
 
   val recommendationsForAll =
     s"""
@@ -251,6 +349,10 @@ object TestData {
     """.stripMargin
 
   val resolveManyRequest = s"""{"items":["${appsNames.italy}","${appsNames.prussia}"]}"""
+
+  val recommendationsForAppsEmptyRequest = s"""{"items":[]}"""
+
+  val recommendationsForAppsRequest = s"""{"items":["${appsNames.italy}","${appsNames.prussia}"]}"""
 
   val resolveManyValidResponse = s"""
       |{
