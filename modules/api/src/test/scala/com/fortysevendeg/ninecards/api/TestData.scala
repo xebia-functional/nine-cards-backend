@@ -62,6 +62,8 @@ object TestData {
     "earth.europe.spain"
   )
 
+  val excludePackages = packagesName.filter(_.length > 18)
+
   val publicIdentifier = "40daf308-fecf-4228-9262-a712d783cf49"
 
   val removedPackages = None
@@ -140,7 +142,13 @@ object TestData {
     val apiGetAppsInfoRequest = ApiGetAppsInfoRequest(items = List("", "", ""))
 
     val apiGetRecommendationsByCategoryRequest = ApiGetRecommendationsByCategoryRequest(
-      excludePackages = packagesName,
+      excludePackages = excludePackages,
+      limit           = limit
+    )
+
+    val apiGetRecommendationsForAppsRequest = ApiGetRecommendationsForAppsRequest(
+      packages        = packagesName,
+      excludePackages = excludePackages,
       limit           = limit
     )
 
@@ -238,6 +246,8 @@ object TestData {
     val login = "/login"
 
     val recommendationsByCategory = "/recommendations/SOCIAL"
+
+    val recommendationsForApps = "/recommendations"
 
     val subscriptionByCollectionId = "/collections/subscriptions/40daf308-fecf-4228-9262-a712d783cf49"
 

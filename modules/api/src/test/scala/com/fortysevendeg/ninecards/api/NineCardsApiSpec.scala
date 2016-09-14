@@ -116,6 +116,9 @@ trait NineCardsApiSpecification
 
     recommendationsProcesses.getRecommendationsByCategory(any, any, any, any, any) returns
       Free.pure(Messages.getRecommendationsByCategoryResponse)
+
+    recommendationsProcesses.getRecommendationsForApps(any, any, any, any) returns
+      Free.pure(Messages.getRecommendationsByCategoryResponse)
   }
 
   trait UnsuccessfulScope extends BasicScope {
@@ -484,6 +487,22 @@ class NineCardsApiSpec
     ) ~> addHeaders(Headers.googlePlayHeaders)
 
     authenticatedBadRequestEmptyBody(Post(Paths.details))
+
+    unauthorizedNoHeaders(request)
+
+    internalServerError(request)
+
+    successOk(request)
+  }
+
+  "POST /recommendations" should {
+
+    val request = Post(
+      uri     = Paths.recommendationsForApps,
+      content = Messages.apiGetRecommendationsForAppsRequest
+    ) ~> addHeaders(Headers.googlePlayHeaders)
+
+    authenticatedBadRequestEmptyBody(Post(Paths.recommendationsByCategory))
 
     unauthorizedNoHeaders(request)
 
