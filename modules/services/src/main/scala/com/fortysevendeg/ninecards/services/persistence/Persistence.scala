@@ -23,11 +23,11 @@ class Persistence[K: Composite](val supportsSelectForUpdate: Boolean = true) {
 
   def generateUpdate(sql: String): Update0 = Update0(sql, None)
 
-  def fetchList(sql: String): ConnectionIO[List[K]] =
-    Query[HNil, K](sql).toQuery0(HNil).to[List]
-
   class FetchList[L] {
-    def apply[A: Composite](sql: String, values: A)(implicit K: Composite[L]): ConnectionIO[List[L]] =
+    def apply(sql: String)(implicit L: Composite[L]): ConnectionIO[List[L]] =
+      Query[HNil, L](sql).toQuery0(HNil).to[List]
+
+    def apply[A: Composite](sql: String, values: A)(implicit L: Composite[L]): ConnectionIO[List[L]] =
       Query[A, L](sql).to[List](values)
   }
 
