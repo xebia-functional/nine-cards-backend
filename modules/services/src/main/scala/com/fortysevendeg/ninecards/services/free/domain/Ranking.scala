@@ -59,6 +59,10 @@ object rankings {
     ranking: Int
   )
 
+  case class DeviceApp(packageName: String)
+
+  case class RankedApp(packageName: String, category: String, ranking: Option[Int])
+
   object Queries {
 
     val allFields = List("packageName", "category", "ranking")
@@ -88,6 +92,29 @@ object rankings {
 
     def deleteBy(scope: GeoScope): String =
       s"delete from ${tableOf(scope)}"
+
+    def createDeviceAppsTemporaryTableSql(tableName: String) =
+      s"""
+         |CREATE TEMP TABLE $tableName(
+         |  packagename character varying(256) NOT NULL,
+         |  PRIMARY KEY (packagename)
+         |)
+       """.stripMargin
+
+    def dropDeviceAppsTemporaryTableSql(tableName: String) = s"DROP TABLE $tableName"
+
+    def insertDeviceApps(tableName: String) =
+      s"""
+         |INSERT INTO $tableName(packageName)
+         |VALUES (?)
+       """.stripMargin
+
+    def getRankedApps(scope: GeoScope, tableName: String) =
+      s"""
+         |SELECT A.packagename, R.category, R.ranking
+         |FROM ${tableOf(scope)} as R INNER JOIN $tableName as A ON R.packagename=A.packagename
+         |ORDER BY R.category, R.ranking
+       """.stripMargin
   }
 
 }

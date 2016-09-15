@@ -16,6 +16,10 @@ class RankingQueriesSpec
 
   val data: Entry = Entry(PackageName("hammer"), Category.TOOLS, 17)
 
+  val deviceAppData: DeviceApp = DeviceApp("com.package.name")
+
+  val temporaryTableName = "device_apps"
+
   def getBy(scope: GeoScope): Query0[Entry] =
     rankingPersistence.generateQuery(Queries.getBy(scope))
 
@@ -41,5 +45,15 @@ class RankingQueriesSpec
   Country.values foreach { c ⇒ check(insertBy(CountryScope(c))) }
   Continent.values foreach { c ⇒ check(insertBy(ContinentScope(c))) }
   check(insertBy(WorldScope))
+
+  val createDeviceAppsTableQuery = rankingPersistence.generateUpdate(
+    sql = Queries.createDeviceAppsTemporaryTableSql(temporaryTableName)
+  )
+  check(createDeviceAppsTableQuery)
+
+  val dropDeviceAppsTableQuery = rankingPersistence.generateUpdate(
+    sql = Queries.dropDeviceAppsTemporaryTableSql(temporaryTableName)
+  )
+  check(dropDeviceAppsTableQuery)
 
 }
