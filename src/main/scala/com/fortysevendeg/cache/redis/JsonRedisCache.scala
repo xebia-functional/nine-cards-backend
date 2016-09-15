@@ -92,9 +92,9 @@ class CacheWrapper[Key, Val](client: RedisClient)
 
   def matchKeys( pattern: JsonPattern): List[Key] =
     client
-      .keys[String]( JsonPattern.print(pattern) ) // O-L-O-S
-      .getOrElse( List() ) // L-O-S
-      .flatten // L-S
+      .keys[String]( JsonPattern.print(pattern) )
+      .getOrElse( List() )
+      .flatten
       .flatMap( s => decode[Key](s).toOption )
 
   def delete(key: Key) : Unit =
