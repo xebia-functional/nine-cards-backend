@@ -16,7 +16,7 @@ class RankingQueriesSpec
 
   val data: Entry = Entry(PackageName("hammer"), Category.TOOLS, 17)
 
-  val deviceAppData: DeviceApp = DeviceApp("com.package.name")
+  val deviceAppData: UnrankedApp = UnrankedApp("com.package.name")
 
   val temporaryTableName = "device_apps"
 

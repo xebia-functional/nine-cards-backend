@@ -41,12 +41,12 @@ object rankings {
       } yield (ins, del)
     }
 
-    def getRankedDeviceApps(scope: GeoScope, deviceApps: List[DeviceApp]): ConnectionIO[List[RankedApp]] = {
+    def getRankedApps(scope: GeoScope, unrankedApps: Set[UnrankedApp]): ConnectionIO[List[RankedApp]] = {
       val deviceAppTableName = generateTableName
 
       for {
         _ ← persistence.update(Queries.createDeviceAppsTemporaryTableSql(deviceAppTableName))
-        _ ← persistence.updateMany(Queries.insertDeviceApps(deviceAppTableName), deviceApps.distinct)
+        _ ← persistence.updateMany(Queries.insertDeviceApps(deviceAppTableName), unrankedApps)
         rankedApps ← persistence.fetchListAs[RankedApp](Queries.getRankedApps(scope, deviceAppTableName))
         _ ← persistence.update(Queries.dropDeviceAppsTemporaryTableSql(deviceAppTableName))
       } yield rankedApps

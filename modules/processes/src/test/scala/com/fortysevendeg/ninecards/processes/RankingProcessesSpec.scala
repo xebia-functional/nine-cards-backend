@@ -3,19 +3,19 @@ package com.fortysevendeg.ninecards.processes
 import cats.data.Xor
 import cats.free.Free
 import com.fortysevendeg.ninecards.processes.NineCardsServices._
+import com.fortysevendeg.ninecards.processes.messages.rankings.GetRankedDeviceApps.RankedDeviceApp
 import com.fortysevendeg.ninecards.processes.messages.rankings._
 import com.fortysevendeg.ninecards.processes.utils.DummyNineCardsConfig
 import com.fortysevendeg.ninecards.services.free.algebra.GoogleAnalytics
-import com.fortysevendeg.ninecards.services.free.domain.rankings._
-import com.fortysevendeg.ninecards.services.persistence.CustomComposite._
-import com.fortysevendeg.ninecards.services.persistence.{ transactor }
+import com.fortysevendeg.ninecards.services.persistence.transactor
 import com.fortysevendeg.ninecards.services.persistence.rankings.{ Services ⇒ PersistenceServices }
 import doobie.imports._
 import org.mockito.Matchers.{ eq ⇒ mockEq }
-import org.specs2.matcher.{ Matchers, XorMatchers }
+import org.specs2.matcher.{ Matcher, Matchers, XorMatchers }
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
 import org.specs2.specification.Scope
+
 import scalaz.Scalaz._
 
 trait RankingsProcessesSpecification
@@ -36,6 +36,10 @@ trait RankingsProcessesSpecification
 
     implicit val rankingProcesses = new RankingProcesses[NineCardsServices]
 
+    def hasRankingInfo(hasRanking: Boolean): Matcher[RankedDeviceApp] = {
+      app: RankedDeviceApp ⇒
+        app.ranking.isDefined must_== hasRanking
+    }
   }
 
   trait SuccessfulScope extends BasicScope {
@@ -48,6 +52,8 @@ trait RankingsProcessesSpecification
     persistenceServices.getRanking(any) returns ranking.point[ConnectionIO]
 
     persistenceServices.setRanking(scope, ranking) returns (0, 0).point[ConnectionIO]
+
+    persistenceServices.getRankedApps(any, any) returns rankedAppsList.point[ConnectionIO]
   }
 
   trait UnsuccessfulScope extends BasicScope {
@@ -56,6 +62,7 @@ trait RankingsProcessesSpecification
 
     persistenceServices.getRanking(any) returns ranking.point[ConnectionIO]
 
+    persistenceServices.getRankedApps(any, any) returns emptyRankedAppsList.point[ConnectionIO]
   }
 
 }
@@ -75,6 +82,25 @@ class RankingsProcessesSpec extends RankingsProcessesSpecification {
     "give a good answer" in new SuccessfulScope {
       val response = rankingProcesses.reloadRanking(scope, params)
       response.foldMap(testInterpreters) mustEqual Xor.Right(Reload.Response())
+    }
+
+  }
+
+  "getRankedDeviceApps" should {
+    "return an empty response if no device apps are given" in new SuccessfulScope {
+      val response = rankingProcesses.getRankedDeviceApps(scope, emptyDeviceAppsMap)
+
+      response.foldMap(testInterpreters) must beEmpty
+    }
+    "return all the device apps as ranked if there is ranking info for them" in new SuccessfulScope {
+      val response = rankingProcesses.getRankedDeviceApps(scope, deviceAppsMap)
+
+      response.foldMap(testInterpreters).values.flatten must contain(hasRankingInfo(true)).forall
+    }
+    "return all the device apps as unranked if there is no ranking info for them" in new UnsuccessfulScope {
+      val response = rankingProcesses.getRankedDeviceApps(scope, deviceAppsMap)
+
+      response.foldMap(testInterpreters).values.flatten must contain(hasRankingInfo(false)).forall
     }
 
   }

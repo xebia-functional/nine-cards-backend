@@ -96,9 +96,9 @@ class RankingPersistenceServicesSpec
   "getRankedApp" should {
 
     "return an empty list of ranked apps if the table is empty" in {
-      prop { (scope: GeoScope, deviceApps: List[DeviceApp]) ⇒
+      prop { (scope: GeoScope, deviceApps: Set[UnrankedApp]) ⇒
         val rankedApps = rankingPersistenceServices
-          .getRankedDeviceApps(scope, deviceApps)
+          .getRankedApps(scope, deviceApps)
           .transactAndRun
 
         rankedApps must beEmpty
@@ -108,7 +108,7 @@ class RankingPersistenceServicesSpec
     "return an empty list of ranked apps if an empty list of device apps is given" in {
       prop { scope: GeoScope ⇒
         val rankedApps = rankingPersistenceServices
-          .getRankedDeviceApps(scope, Nil)
+          .getRankedApps(scope, Set.empty)
           .transactAndRun
 
         rankedApps must beEmpty
@@ -123,11 +123,11 @@ class RankingPersistenceServicesSpec
 
         val deviceApps = ranking.categories.values
           .flatMap(_.ranking)
-          .collect { case p if p.name.length > 10 ⇒ DeviceApp(p.name) }
-          .toList
+          .collect { case p if p.name.length > 10 ⇒ UnrankedApp(p.name) }
+          .toSet
 
         val rankedApps = rankingPersistenceServices
-          .getRankedDeviceApps(scope, deviceApps)
+          .getRankedApps(scope, deviceApps)
           .transactAndRun
 
         rankedApps must haveSize(be_>=(deviceApps.size))

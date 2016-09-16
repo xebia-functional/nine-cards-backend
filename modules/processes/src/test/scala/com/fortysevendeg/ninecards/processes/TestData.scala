@@ -6,6 +6,7 @@ import java.time.Instant
 import com.fortysevendeg.ninecards.processes.ProcessesExceptions.SharedCollectionNotFoundException
 import com.fortysevendeg.ninecards.processes.messages.GooglePlayAuthMessages.AuthParams
 import com.fortysevendeg.ninecards.processes.messages.SharedCollectionMessages._
+import com.fortysevendeg.ninecards.processes.messages.rankings.GetRankedDeviceApps.DeviceApp
 import com.fortysevendeg.ninecards.services.free.domain.Firebase.{ NotificationIndividualResult, NotificationResponse }
 import com.fortysevendeg.ninecards.services.free.domain.{ Category, Installation, PackageName, SharedCollectionPackage, SharedCollectionSubscription, SharedCollectionWithAggregatedInfo, SharedCollection ⇒ SharedCollectionServices }
 import com.fortysevendeg.ninecards.services.free.domain.GooglePlay.{ AppsInfo, AppInfo ⇒ AppInfoServices }
@@ -294,5 +295,39 @@ object TestData {
     lazy val ranking = Ranking(Map(Category.SOCIAL →
       CategoryRanking(List(PackageName("socialite"), PackageName("socialist")))))
 
+    val emptyDeviceAppsMap = Map.empty[String, List[DeviceApp]]
+
+    val emptyRankedAppsList = List.empty[RankedApp]
+
+    val countriesAMCategory = "CountriesA-M"
+
+    val countriesNZCategory = "CountriesN-Z"
+
+    val countriesAMList = List(
+      "earth.europe.france",
+      "earth.europe.germany",
+      "earth.europe.italy"
+    )
+
+    val countriesNZList = List(
+      "earth.europe.portugal",
+      "earth.europe.spain",
+      "earth.europe.unitedKingdom"
+    )
+
+    val deviceAppsMap = Map(
+      countriesAMCategory → countriesAMList.map(DeviceApp.apply),
+      countriesNZCategory → countriesNZList.map(DeviceApp.apply)
+    )
+
+    def appsWithRanking(apps: List[String], category: String) =
+      apps.zipWithIndex.map {
+        case (packageName: String, rank: Int) ⇒
+          RankedApp(packageName, category, Option(rank))
+      }
+
+    val rankedAppsList =
+      appsWithRanking(countriesAMList, countriesAMCategory) ++
+        appsWithRanking(countriesNZList, countriesNZCategory)
   }
 }
