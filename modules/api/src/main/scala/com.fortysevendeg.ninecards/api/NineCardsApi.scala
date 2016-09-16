@@ -112,7 +112,7 @@ class NineCardsRoutes(
 
   private[this] lazy val recommendationsRoute: Route =
     nineCardsDirectives.authenticateUser { userContext ⇒
-      path(CategorySegment) { category ⇒
+      pathPrefix(CategorySegment) { category ⇒
         nineCardsDirectives.priceFilterPath { priceFilter ⇒
           post {
             entity(as[ApiGetRecommendationsByCategoryRequest]) { request ⇒
