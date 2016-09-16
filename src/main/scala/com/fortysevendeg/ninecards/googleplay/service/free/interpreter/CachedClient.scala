@@ -16,6 +16,7 @@ class CachedAppService(
   override protected[this] type Key = CacheKey
   override protected[this] type Val = CacheVal
 
+  override protected[this] val decodeKey: Decoder[CacheKey] = CirceCoders.cacheKeyD
   override protected[this] val encodeKey: Encoder[CacheKey] = CirceCoders.cacheKeyE
   override protected[this] val decodeVal: Decoder[CacheVal] = CirceCoders.cacheValD
   override protected[this] val encodeVal: Encoder[CacheVal] = CirceCoders.cacheValE
@@ -51,6 +52,7 @@ class CachedItemService(
   override protected[this] type Val = Xor[String, Item]
 
   override protected[this] val encodeKey: Encoder[Key] = deriveEncoder[QueryKey]
+  override protected[this] val decodeKey: Decoder[Key] = deriveDecoder[QueryKey]
   override protected[this] val decodeVal: Decoder[Val] = deriveDecoder[Val]
   override protected[this] val encodeVal: Encoder[Val] = deriveEncoder[Val]
 

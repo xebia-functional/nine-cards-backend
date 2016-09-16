@@ -38,6 +38,7 @@ abstract class RedisCachedMonadicFunction[A,B, M[_]](
 
   protected[this] implicit val encodeKey: Encoder[Key]
   protected[this] implicit val encodeVal: Encoder[Val]
+  protected[this] implicit val decodeKey: Decoder[Key]
   protected[this] implicit val decodeVal: Decoder[Val]
   protected[this] def extractKeys(input: A) : List[Key]
   protected[this] def extractEntry(input: A, result: B): (Key, Val)
@@ -63,7 +64,7 @@ abstract class RedisCachedMonadicFunction[A,B, M[_]](
 }
 
 class CacheWrapper[Key, Val](client: RedisClient)
-  (implicit ek: Encoder[Key], ev: Encoder[Val], dv: Decoder[Val]) {
+  (implicit ek: Encoder[Key], dk: Decoder[Key], ev: Encoder[Val], dv: Decoder[Val]) {
 
   implicit private[this] val parseValue: Parse[Option[Val]] =
     Parse( bv => decode[Val]( Parse.Implicits.parseString( bv) ).toOption )
@@ -87,6 +88,39 @@ class CacheWrapper[Key, Val](client: RedisClient)
         }
     }
     loopTryKeys(keys)
+  }
+
+  def matchKeys( pattern: JsonPattern): List[Key] =
+    client
+      .keys[String]( JsonPattern.print(pattern) )
+      .getOrElse( List() )
+      .flatten
+      .flatMap( s => decode[Key](s).toOption )
+
+  def delete(key: Key) : Unit =
+    client.del( ek(key).noSpaces)
+}
+
+sealed trait JsonPattern
+case object PStar extends JsonPattern
+case object PNull extends JsonPattern
+case class PString(value: String) extends JsonPattern
+case class PObject(fields: List[(PString, JsonPattern)]) extends JsonPattern
+
+object JsonPattern {
+
+  def print(pattern: JsonPattern): String = pattern match {
+    case PStar => """ * """.trim
+    case PNull => """ null """.trim
+    case PString(str) => s""" "$str" """.trim
+    case PObject(fields) =>
+      def printField( field: (PString, JsonPattern)) : String = {
+        val key = print(field._1)
+        val value = print(field._2)
+        s""" ${key}:${value} """.trim
+      }
+      val fs = fields.map(printField).mkString(",")
+      s""" {${fs}} """.trim
   }
 
 }

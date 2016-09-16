@@ -31,6 +31,17 @@ object CacheInterpreter extends (Ops ~> WithClient) {
       wrap.put( CacheEntry.error(pack, date) )
     }
 
+    case ClearInvalid(pack) => { client: RedisClient =>
+      val errorsPattern : JsonPattern = PObject( List(
+        PString( "package") -> PString(pack.value),
+        PString( "keyType") -> PString(KeyType.Error.entryName),
+        PString( "date") -> PStar
+      ))
+      val wrap = new CacheWrapper[CacheKey, CacheVal](client)
+      wrap.matchKeys(errorsPattern).foreach(wrap.delete)
+      wrap.delete(CacheKey.pending(pack))
+    }
+
   }
 
 }
