@@ -96,6 +96,13 @@ class NineCardsRoutes(
               }
             }
           }
+        } ~
+        path("rank") {
+          post {
+            entity(as[ApiRankAppsRequest]) { request ⇒
+              complete(rankApps(request, userContext))
+            }
+          }
         }
     }
 
@@ -352,6 +359,14 @@ class NineCardsRoutes(
         toAuthParams(googlePlayContext, userContext)
       )
       .map(toApiGetRecommendationsResponse)
+
+  //TODO: We have to define a way to select a GeoScope based on a location. In this moment, we'll use the WorldScope
+  private[this] def rankApps(
+    request: ApiRankAppsRequest,
+    userContext: UserContext
+  ): NineCardsServed[ApiRankAppsResponse] =
+    rankingProcesses.getRankedDeviceApps(WorldScope, request.items.mapValues(toDeviceAppList))
+      .map(toApiRankAppsResponse)
 
   private[this] object rankings {
 

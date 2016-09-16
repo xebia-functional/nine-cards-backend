@@ -11,6 +11,7 @@ import com.fortysevendeg.ninecards.processes.messages.InstallationsMessages._
 import com.fortysevendeg.ninecards.processes.messages.RecommendationsMessages._
 import com.fortysevendeg.ninecards.processes.messages.SharedCollectionMessages._
 import com.fortysevendeg.ninecards.processes.messages.UserMessages._
+import com.fortysevendeg.ninecards.processes.messages.rankings.GetRankedDeviceApps._
 
 object Converters {
 
@@ -135,4 +136,9 @@ object Converters {
     ApiGetRecommendationsResponse(
       response.items
     )
+
+  def toApiRankAppsResponse(items: Map[String, List[RankedDeviceApp]]) =
+    ApiRankAppsResponse(items.mapValues(apps ⇒ apps.map(_.packageName)))
+
+  def toDeviceAppList(items: List[String]) = items map DeviceApp.apply
 }
