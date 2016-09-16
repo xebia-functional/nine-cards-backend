@@ -5,6 +5,7 @@ import java.sql.Timestamp
 import com.fortysevendeg.ninecards.processes.messages.ApplicationMessages._
 import com.fortysevendeg.ninecards.processes.messages.GooglePlayAuthMessages._
 import com.fortysevendeg.ninecards.processes.messages.InstallationsMessages._
+import com.fortysevendeg.ninecards.processes.messages.rankings.GetRankedDeviceApps._
 import com.fortysevendeg.ninecards.processes.messages.RecommendationsMessages._
 import com.fortysevendeg.ninecards.processes.messages.SharedCollectionMessages._
 import com.fortysevendeg.ninecards.processes.messages.UserMessages.LoginResponse
@@ -15,6 +16,7 @@ import com.fortysevendeg.ninecards.services.free.domain.GooglePlay.{
   Recommendation,
   Recommendations
 }
+import com.fortysevendeg.ninecards.services.free.domain.rankings.{ RankedApp, UnrankedApp }
 import com.fortysevendeg.ninecards.services.free.domain.{
   BaseSharedCollection,
   Installation ⇒ InstallationServices,
@@ -157,4 +159,8 @@ object Converters {
     GetSubscriptionsByUserResponse(
       subscriptions map (_.sharedCollectionPublicId)
     )
+
+  def toUnrankedApp(app: DeviceApp) = UnrankedApp(app.packageName)
+
+  def toRankedDeviceApp(app: RankedApp) = RankedDeviceApp(app.packageName, app.category, app.ranking)
 }

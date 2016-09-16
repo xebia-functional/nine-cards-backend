@@ -1,14 +1,13 @@
 package com.fortysevendeg.ninecards.processes
 
-import cats.data.{ Xor, XorT }
+import cats.data.Xor
+import cats.std.list._
+import cats.std.map._
+import cats.syntax.semigroup._
 import cats.free.Free
-import cats.Monad
-import com.fortysevendeg.ninecards.processes.ProcessesExceptions.SharedCollectionNotFoundException
 import com.fortysevendeg.ninecards.processes.converters.Converters._
+import com.fortysevendeg.ninecards.processes.messages.rankings.GetRankedDeviceApps.{ DeviceApp, RankedDeviceApp }
 import com.fortysevendeg.ninecards.processes.messages.rankings._
-import com.fortysevendeg.ninecards.processes.messages.SharedCollectionMessages._
-import com.fortysevendeg.ninecards.processes.utils.XorTSyntax._
-import com.fortysevendeg.ninecards.processes.utils.MonadInstances._
 import com.fortysevendeg.ninecards.services.common.ConnectionIOOps._
 import com.fortysevendeg.ninecards.services.free.algebra.DBResult.DBOps
 import com.fortysevendeg.ninecards.services.free.algebra.GoogleAnalytics
@@ -16,6 +15,7 @@ import com.fortysevendeg.ninecards.services.free.domain.rankings._
 import com.fortysevendeg.ninecards.services.persistence._
 import com.fortysevendeg.ninecards.services.persistence.rankings.{ Services ⇒ PersistenceServices }
 import doobie.imports._
+
 import scalaz.concurrent.Task
 
 class RankingProcesses[F[_]](
@@ -37,6 +37,34 @@ class RankingProcesses[F[_]](
         case Xor.Right(ranking) ⇒ setAux(scope, ranking)
       }
     } yield res
+
+  def getRankedDeviceApps(
+    scope: GeoScope,
+    deviceApps: Map[String, List[DeviceApp]]
+  ): Free[F, Map[String, List[RankedDeviceApp]]] = {
+
+    def findAppsWithoutRanking(category: String, apps: List[DeviceApp], rankings: List[RankedDeviceApp]) =
+      apps.collect {
+        case app if !rankings.exists(_.packageName == app.packageName) ⇒
+          RankedDeviceApp(app.packageName, category, None)
+
+      }
+
+    if (deviceApps.isEmpty)
+      Free.pure(Map.empty)
+    else
+      (persistence.getRankedApps(scope, deviceApps.values.flatten.toSet map toUnrankedApp) map {
+        rankedApps ⇒
+          val rankedAppsByCategory = rankedApps.map(toRankedDeviceApp).groupBy(_.category)
+
+          val unrankedDeviceApps = deviceApps map {
+            case (category, apps) ⇒
+              (category, findAppsWithoutRanking(category, apps, rankedAppsByCategory.getOrElse(category, Nil)))
+          }
+
+          rankedAppsByCategory.combine(unrankedDeviceApps)
+      }).liftF
+  }
 
   private[this] def setAux(scope: GeoScope, ranking: Ranking): Free[F, Reload.XorResponse] =
     persistence.setRanking(scope, ranking).liftF[F].map(_ ⇒ Xor.Right(Reload.Response()))

@@ -23,4 +23,12 @@ object rankings {
     case class Response(ranking: Ranking)
 
   }
+
+  object GetRankedDeviceApps {
+
+    case class DeviceApp(packageName: String)
+
+    case class RankedDeviceApp(packageName: String, category: String, ranking: Option[Int])
+  }
+
 }

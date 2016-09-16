@@ -59,7 +59,7 @@ object rankings {
     ranking: Int
   )
 
-  case class DeviceApp(packageName: String)
+  case class UnrankedApp(packageName: String)
 
   case class RankedApp(packageName: String, category: String, ranking: Option[Int])
 
