@@ -28,7 +28,7 @@ object rankings {
 
     case class DeviceApp(packageName: String)
 
-    case class RankedDeviceApp(packageName: String, category: String, ranking: Option[Int])
+    case class RankedDeviceApp(packageName: String, ranking: Option[Int])
   }
 
 }

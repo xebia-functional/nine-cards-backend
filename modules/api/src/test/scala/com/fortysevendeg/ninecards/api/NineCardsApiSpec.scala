@@ -119,6 +119,9 @@ trait NineCardsApiSpecification
 
     recommendationsProcesses.getRecommendationsForApps(any, any, any, any) returns
       Free.pure(Messages.getRecommendationsByCategoryResponse)
+
+    rankingProcesses.getRankedDeviceApps(any, any) returns
+      Free.pure(Messages.getRankedAppsResponse)
   }
 
   trait UnsuccessfulScope extends BasicScope {
@@ -502,7 +505,7 @@ class NineCardsApiSpec
       content = Messages.apiGetRecommendationsForAppsRequest
     ) ~> addHeaders(Headers.googlePlayHeaders)
 
-    authenticatedBadRequestEmptyBody(Post(Paths.recommendationsByCategory))
+    authenticatedBadRequestEmptyBody(Post(Paths.recommendationsForApps))
 
     unauthorizedNoHeaders(request)
 
@@ -566,4 +569,20 @@ class NineCardsApiSpec
   }
 
   rankingPaths foreach testRanking
+
+  "POST /applications/rank" should {
+
+    val request = Post(
+      uri     = Paths.rankApps,
+      content = Messages.apiRankAppsRequest
+    )
+
+    authenticatedBadRequestEmptyBody(Post(Paths.rankApps))
+
+    unauthorizedNoHeaders(request)
+
+    internalServerError(request)
+
+    successOk(request)
+  }
 }

@@ -162,5 +162,5 @@ object Converters {
 
   def toUnrankedApp(app: DeviceApp) = UnrankedApp(app.packageName)
 
-  def toRankedDeviceApp(app: RankedApp) = RankedDeviceApp(app.packageName, app.category, app.ranking)
+  def toRankedDeviceApp(app: RankedApp) = RankedDeviceApp(app.packageName, app.ranking)
 }
