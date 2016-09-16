@@ -43,10 +43,10 @@ class RankingProcesses[F[_]](
     deviceApps: Map[String, List[DeviceApp]]
   ): Free[F, Map[String, List[RankedDeviceApp]]] = {
 
-    def findAppsWithoutRanking(category: String, apps: List[DeviceApp], rankings: List[RankedDeviceApp]) =
+    def findAppsWithoutRanking(apps: List[DeviceApp], rankings: List[RankedDeviceApp]) =
       apps.collect {
         case app if !rankings.exists(_.packageName == app.packageName) ⇒
-          RankedDeviceApp(app.packageName, category, None)
+          RankedDeviceApp(app.packageName, None)
 
       }
 
@@ -55,11 +55,11 @@ class RankingProcesses[F[_]](
     else
       (persistence.getRankedApps(scope, deviceApps.values.flatten.toSet map toUnrankedApp) map {
         rankedApps ⇒
-          val rankedAppsByCategory = rankedApps.map(toRankedDeviceApp).groupBy(_.category)
+          val rankedAppsByCategory = rankedApps.groupBy(_.category).mapValues(_.map(toRankedDeviceApp))
 
           val unrankedDeviceApps = deviceApps map {
             case (category, apps) ⇒
-              (category, findAppsWithoutRanking(category, apps, rankedAppsByCategory.getOrElse(category, Nil)))
+              (category, findAppsWithoutRanking(apps, rankedAppsByCategory.getOrElse(category, Nil)))
           }
 
           rankedAppsByCategory.combine(unrankedDeviceApps)
