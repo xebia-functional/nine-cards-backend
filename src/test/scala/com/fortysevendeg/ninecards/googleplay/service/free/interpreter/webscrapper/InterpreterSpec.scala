@@ -21,15 +21,15 @@ class InterpreterSpec extends Specification with Matchers with MockServer with W
     .withMethod("HEAD")
     .withPath(detailsPath)
     .withQueryStringParameter( "hl", "en_US")
-    .withQueryStringParameter( "id", goodPackage.value)
+    .withQueryStringParameter( "id", pack.value)
 
   mockServer
-    when( existsRequest(goodPackage) )
-    respond response.withStatusCode(HttpStatusCode.OK_200.code)
+    .when( existsRequest(goodPackage) )
+    .respond (response.withStatusCode(HttpStatusCode.OK_200.code))
 
   mockServer
-    when existsRequest(badPackage)
-    respond response.withStatusCode(HttpStatusCode.NOT_FOUND_404.code)
+    .when( existsRequest(badPackage) )
+    .respond( response.withStatusCode(HttpStatusCode.NOT_FOUND_404.code) )
 
   implicit val configuration = Configuration(
     protocol    = "http",
@@ -55,7 +55,7 @@ class InterpreterSpec extends Specification with Matchers with MockServer with W
     }
 
     "return false if the server gives a 404 NotFound Status" in {
-      interpreter( ExistsApp(goodPackage) ).run should beFalse
+      interpreter( ExistsApp(badPackage) ).run should beFalse
     }
   }
 
@@ -65,7 +65,7 @@ class InterpreterSpec extends Specification with Matchers with MockServer with W
 object TestData {
 
   val detailsPath = "/store/apps/details"
-  val goodPackage = Package( "goodPack" )
-  val badPackage = Package( "badPack" )
+  val goodPackage = Package("good")
+  val badPackage = Package("bad")
 
 }
