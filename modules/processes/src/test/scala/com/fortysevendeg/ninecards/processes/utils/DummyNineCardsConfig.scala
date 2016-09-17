@@ -14,7 +14,7 @@ trait DummyNineCardsConfig {
   val nineCardsSecretKey = "b91064c433a3d4723a622869273bf0d8"
   val nineCardsSalt = "ca349dde5a53d225eeb17074858465d5"
 
-  val dummyConfigHocon =
+  def dummyConfigHocon(debugMode: Boolean) =
     s"""
        |db {
        |  default {
@@ -24,10 +24,15 @@ trait DummyNineCardsConfig {
        |    password = "$dbDefaultPassword"
        |  }
        |}
+       |ninecards.backend {
+       |  debugMode = $debugMode
+       |}
        |ninecards.secretKey = "$nineCardsSecretKey"
        |ninecards.salt = "$nineCardsSalt"
      """.stripMargin
 
-  implicit val dummyConfig = new NineCardsConfig(Option(dummyConfigHocon))
+  def dummyConfig(debugMode: Boolean) = new NineCardsConfig(Option(dummyConfigHocon(debugMode)))
+
+  implicit val config = dummyConfig(debugMode = false)
 
 }
