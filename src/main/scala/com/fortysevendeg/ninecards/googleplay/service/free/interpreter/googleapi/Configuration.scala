@@ -5,6 +5,7 @@ import com.fortysevendeg.ninecards.config.NineCardsConfig.getConfigValue
 case class Configuration(
   protocol: String,
   host: String,
+  port: Int,
   detailsPath: String,
   listPath: String,
   recommendationsPath: String
@@ -17,6 +18,7 @@ object Configuration {
     Configuration(
       protocol = getApiConf("protocol"),
       host = getApiConf("host"),
+      port = getApiConf("port").toInt,
       detailsPath = getApiConf("paths.details"),
       listPath = getApiConf("paths.list"),
       recommendationsPath = getApiConf("paths.recommendations")

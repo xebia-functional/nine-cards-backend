@@ -36,6 +36,8 @@ object Dependencies {
   private val newRelic = "com.newrelic.agent.java" % "newrelic-agent" % Versions.newRelic
   private val baseDepts = Seq(specs2Core)
 
+  private val mockserver = "org.mock-server" % "mockserver-netty" % Versions.mockserver
+
   def enumeratum(suffix: String) = "com.beachape" %% s"enumeratum$suffix" % Versions.enumeratum
 
   val apiDeps = Seq(libraryDependencies ++= baseDepts ++ Seq(
@@ -53,6 +55,7 @@ object Dependencies {
     jodaTime,
     redisClient,
     embeddedRedis,
+    mockserver,
     newRelic,
     scalaCheckShapeless,
     specs2ScalaCheck,
