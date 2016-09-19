@@ -1,0 +1,11 @@
+package com.fortysevendeg.ninecards.googleplay.domain
+
+package apigoogle {
+
+  sealed trait Failure
+
+  case class PackageNotFound( pack: Package) extends Failure
+  case class WrongAuthParans( auth: GoogleAuthParams) extends Failure
+  case class QuotaExceeded(auth: GoogleAuthParams) extends Failure
+
+}
