@@ -112,17 +112,26 @@ class NineCardsRoutes(
 
   private[this] lazy val recommendationsRoute: Route =
     nineCardsDirectives.authenticateUser { userContext ⇒
-      pathPrefix(CategorySegment) { category ⇒
-        nineCardsDirectives.priceFilterPath { priceFilter ⇒
-          post {
-            entity(as[ApiGetRecommendationsByCategoryRequest]) { request ⇒
-              nineCardsDirectives.googlePlayInfo { googlePlayContext ⇒
-                complete(getRecommendationsByCategory(request, category, priceFilter, googlePlayContext, userContext))
+      pathEndOrSingleSlash {
+        post {
+          entity(as[ApiGetRecommendationsForAppsRequest]) { request ⇒
+            nineCardsDirectives.googlePlayInfo { googlePlayContext ⇒
+              complete(getRecommendationsForApps(request, googlePlayContext, userContext))
+            }
+          }
+        }
+      } ~
+        pathPrefix(CategorySegment) { category ⇒
+          nineCardsDirectives.priceFilterPath { priceFilter ⇒
+            post {
+              entity(as[ApiGetRecommendationsByCategoryRequest]) { request ⇒
+                nineCardsDirectives.googlePlayInfo { googlePlayContext ⇒
+                  complete(getRecommendationsByCategory(request, category, priceFilter, googlePlayContext, userContext))
+                }
               }
             }
           }
         }
-      }
     }
 
   private[this] lazy val sharedCollectionsRoute: Route =
@@ -324,6 +333,20 @@ class NineCardsRoutes(
       .getRecommendationsByCategory(
         category.entryName,
         priceFilter.entryName,
+        request.excludePackages,
+        request.limit,
+        toAuthParams(googlePlayContext, userContext)
+      )
+      .map(toApiGetRecommendationsResponse)
+
+  private[this] def getRecommendationsForApps(
+    request: ApiGetRecommendationsForAppsRequest,
+    googlePlayContext: GooglePlayContext,
+    userContext: UserContext
+  ): NineCardsServed[ApiGetRecommendationsResponse] =
+    recommendationsProcesses
+      .getRecommendationsForApps(
+        request.packages,
         request.excludePackages,
         request.limit,
         toAuthParams(googlePlayContext, userContext)
