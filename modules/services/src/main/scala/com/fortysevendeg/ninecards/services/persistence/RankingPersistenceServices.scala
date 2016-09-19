@@ -1,8 +1,12 @@
 package com.fortysevendeg.ninecards.services.persistence
 
+import java.security.MessageDigest
+import java.util.UUID
+
 import doobie.imports._
-import com.fortysevendeg.ninecards.services.free.domain.{ Category, PackageName }
+import com.fortysevendeg.ninecards.services.free.domain.Category
 import com.fortysevendeg.ninecards.services.free.domain.rankings._
+
 import scalaz.std.iterable._
 
 object rankings {
@@ -10,6 +14,8 @@ object rankings {
   class Services(persistence: Persistence[Entry]) {
 
     import CustomComposite._
+
+    val digest = MessageDigest.getInstance("MD5")
 
     def getRanking(scope: GeoScope): ConnectionIO[Ranking] = {
       def fromEntries(entries: List[Entry]): Ranking = {
@@ -35,6 +41,22 @@ object rankings {
       } yield (ins, del)
     }
 
+    def getRankedApps(scope: GeoScope, unrankedApps: Set[UnrankedApp]): ConnectionIO[List[RankedApp]] = {
+      val deviceAppTableName = generateTableName
+
+      for {
+        _ ← persistence.update(Queries.createDeviceAppsTemporaryTableSql(deviceAppTableName))
+        _ ← persistence.updateMany(Queries.insertDeviceApps(deviceAppTableName), unrankedApps)
+        rankedApps ← persistence.fetchListAs[RankedApp](Queries.getRankedApps(scope, deviceAppTableName))
+        _ ← persistence.update(Queries.dropDeviceAppsTemporaryTableSql(deviceAppTableName))
+      } yield rankedApps
+    }
+
+    private[this] def generateTableName = {
+      val text = UUID.randomUUID().toString
+      val hash = digest.digest(text.getBytes).map("%02x".format(_)).mkString
+      s"device_apps_$hash"
+    }
   }
 
   object Services {

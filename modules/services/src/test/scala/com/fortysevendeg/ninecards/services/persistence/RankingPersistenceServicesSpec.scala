@@ -93,4 +93,45 @@ class RankingPersistenceServicesSpec
     }
   }
 
+  "getRankedApp" should {
+
+    "return an empty list of ranked apps if the table is empty" in {
+      prop { (scope: GeoScope, deviceApps: Set[UnrankedApp]) ⇒
+        val rankedApps = rankingPersistenceServices
+          .getRankedApps(scope, deviceApps)
+          .transactAndRun
+
+        rankedApps must beEmpty
+      }
+    }
+
+    "return an empty list of ranked apps if an empty list of device apps is given" in {
+      prop { scope: GeoScope ⇒
+        val rankedApps = rankingPersistenceServices
+          .getRankedApps(scope, Set.empty)
+          .transactAndRun
+
+        rankedApps must beEmpty
+      }
+    }
+
+    "return a list of ranked apps for the given list of device apps" in {
+      prop { (scope: GeoScope, ranking: Ranking) ⇒
+        rankingPersistenceServices
+          .setRanking(scope, ranking)
+          .transactAndRun
+
+        val deviceApps = ranking.categories.values
+          .flatMap(_.ranking)
+          .collect { case p if p.name.length > 10 ⇒ UnrankedApp(p.name) }
+          .toSet
+
+        val rankedApps = rankingPersistenceServices
+          .getRankedApps(scope, deviceApps)
+          .transactAndRun
+
+        rankedApps must haveSize(be_>=(deviceApps.size))
+      }
+    }
+  }
 }

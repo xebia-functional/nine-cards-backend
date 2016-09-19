@@ -162,4 +162,8 @@ trait NineCardsScalacheckGen {
 
   implicit val abRanking: Arbitrary[Ranking] = Arbitrary(genRanking)
 
+  val genDeviceApp: Gen[UnrankedApp] = genPackage map (p ⇒ UnrankedApp(p.name))
+
+  implicit val abDeviceApp: Arbitrary[UnrankedApp] = Arbitrary(genDeviceApp)
+
 }

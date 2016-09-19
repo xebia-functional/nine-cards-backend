@@ -11,6 +11,7 @@ import com.fortysevendeg.ninecards.processes.messages.InstallationsMessages._
 import com.fortysevendeg.ninecards.processes.messages.RecommendationsMessages._
 import com.fortysevendeg.ninecards.processes.messages.SharedCollectionMessages._
 import com.fortysevendeg.ninecards.processes.messages.UserMessages.{ LoginRequest, LoginResponse }
+import com.fortysevendeg.ninecards.processes.messages.rankings.GetRankedDeviceApps.RankedDeviceApp
 import com.fortysevendeg.ninecards.services.persistence.PersistenceExceptions.PersistenceException
 import org.joda.time.{ DateTime, DateTimeZone }
 import spray.http.HttpHeaders.RawHeader
@@ -61,6 +62,8 @@ object TestData {
     "earth.europe.portugal",
     "earth.europe.spain"
   )
+
+  val deviceApps = Map("countries" → packagesName)
 
   val excludePackages = packagesName.filter(_.length > 18)
 
@@ -151,6 +154,12 @@ object TestData {
       excludePackages = excludePackages,
       limit           = limit
     )
+
+    val apiRankAppsRequest = ApiRankAppsRequest(
+      items = deviceApps
+    )
+
+    val getRankedAppsResponse = Map.empty[String, List[RankedDeviceApp]]
 
     val getRecommendationsByCategoryResponse = GetRecommendationsResponse(Nil)
 
@@ -244,6 +253,8 @@ object TestData {
     val latestCollections = "/collections/latest/SOCIAL/0/25"
 
     val login = "/login"
+
+    val rankApps = "/applications/rank"
 
     val recommendationsByCategory = "/recommendations/SOCIAL"
 
