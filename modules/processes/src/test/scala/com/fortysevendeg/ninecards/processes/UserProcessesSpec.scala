@@ -3,7 +3,8 @@ package com.fortysevendeg.ninecards.processes
 import com.fortysevendeg.ninecards.processes.NineCardsServices._
 import com.fortysevendeg.ninecards.processes.messages.InstallationsMessages._
 import com.fortysevendeg.ninecards.processes.messages.UserMessages.{ LoginRequest, LoginResponse }
-import com.fortysevendeg.ninecards.processes.utils.DummyNineCardsConfig
+import com.fortysevendeg.ninecards.processes.utils.{ DummyNineCardsConfig, HashUtils }
+import com.fortysevendeg.ninecards.services.free.algebra.DBResult.DBOps
 import com.fortysevendeg.ninecards.services.free.domain.{ Installation, User }
 import com.fortysevendeg.ninecards.services.persistence.{ UserPersistenceServices, _ }
 import com.roundeights.hasher.Hasher
@@ -26,10 +27,8 @@ trait UserProcessesSpecification
   with TestInterpreters {
 
   trait BasicScope extends Scope {
-
     implicit val userPersistenceServices: UserPersistenceServices = mock[UserPersistenceServices]
-    implicit val userProcesses = new UserProcesses[NineCardsServices]
-
+    val userProcesses = new UserProcesses[NineCardsServices]
   }
 
   trait UserAndInstallationSuccessfulScope extends BasicScope {
@@ -160,7 +159,24 @@ class UserProcessesSpec
         checkAuthToken.foldMap(testInterpreters) shouldEqual checkAuthTokenResponse
       }
 
-    "return the userId when a wrong auth token is given" in new UserAndInstallationSuccessfulScope {
+    "return the userId for a valid sessionToken and androidId without considering the authToken " +
+      "if the debug Mode is enabled" in new UserAndInstallationSuccessfulScope {
+
+        val debugUserProcesses = UserProcesses.userProcesses[NineCardsServices](
+          userPersistenceServices, dummyConfig(debugMode = true), HashUtils.hashUtils, DBOps.dbOps
+        )
+
+        val checkAuthToken = debugUserProcesses.checkAuthToken(
+          sessionToken = sessionToken,
+          androidId    = androidId,
+          authToken    = "",
+          requestUri   = dummyUrl
+        )
+
+        checkAuthToken.foldMap(testInterpreters) shouldEqual checkAuthTokenResponse
+      }
+
+    "return None when a wrong auth token is given" in new UserAndInstallationSuccessfulScope {
       val checkAuthToken = userProcesses.checkAuthToken(
         sessionToken = sessionToken,
         androidId    = androidId,

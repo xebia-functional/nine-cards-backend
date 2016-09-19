@@ -7,6 +7,9 @@ class NineCardsConfig(hocon: Option[String] = None) {
 
   val config = hocon.fold(ConfigFactory.load)(ConfigFactory.parseString)
 
+  def getSysPropKeyAsBoolean(key: String): Option[Boolean] =
+    sys.props.get(key).map(_.toBoolean)
+
   def getSysPropKeyAsInt(key: String): Option[Int] =
     sys.props.get(key).map(_.toInt)
 
@@ -21,6 +24,12 @@ class NineCardsConfig(hocon: Option[String] = None) {
   def getOptionalString(
     key: String
   ) = sys.props.get(key).fold(config.getOptionalString(key))(Option(_))
+
+  def getBoolean(key: String) = getSysPropKeyAsBoolean(key).getOrElse(config.getBoolean(key))
+
+  def getOptionalBoolean(
+    key: String
+  ) = getSysPropKeyAsBoolean(key).fold(config.getOptionalBoolean(key))(Option(_))
 }
 
 object NineCardsConfig {
@@ -33,6 +42,8 @@ object NineCardsConfig {
       } else {
         None
       }
+
+    def getOptionalBoolean(path: String): Option[Boolean] = getOptionalValue(path)(config.getBoolean)
 
     def getOptionalInt(path: String): Option[Int] = getOptionalValue(path)(config.getInt)
 
