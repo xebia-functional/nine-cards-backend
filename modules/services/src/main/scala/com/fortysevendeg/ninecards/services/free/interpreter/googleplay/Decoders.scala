@@ -16,6 +16,9 @@ object Decoders {
 
   implicit val appsCardsEntityDecoder: EntityDecoder[AppsInfo] =
     jsonOf[AppsInfo](deriveDecoder[AppsInfo])
+
+  implicit val recommendationsEntityDecoder: EntityDecoder[Recommendations] =
+    jsonOf[Recommendations](deriveDecoder[Recommendations])
 }
 
 object Encoders {

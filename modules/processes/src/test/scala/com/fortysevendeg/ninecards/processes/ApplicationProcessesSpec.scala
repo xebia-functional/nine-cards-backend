@@ -3,6 +3,7 @@ package com.fortysevendeg.ninecards.processes
 import cats.free.Free
 import com.fortysevendeg.ninecards.processes.NineCardsServices._
 import com.fortysevendeg.ninecards.processes.messages.ApplicationMessages._
+import com.fortysevendeg.ninecards.processes.messages.GooglePlayAuthMessages._
 import com.fortysevendeg.ninecards.services.free.algebra.GooglePlay.Services
 import com.fortysevendeg.ninecards.services.free.domain.GooglePlay.{ AppInfo, AppsInfo, AuthParams ⇒ GooglePlayAuthParams }
 import org.specs2.matcher.Matchers
@@ -77,7 +78,7 @@ trait ApplicationProcessesContext {
 
 class ApplicationProcessesSpec extends ApplicationProcessesSpecification {
 
-  "categorizeApps" should {
+  "getAppsInfo" should {
     "return an empty response without calling the Google Play service if an empty list of" +
       "packages name is passed" in new BasicScope {
         val response = applicationProcesses.getAppsInfo(Nil, authParams)

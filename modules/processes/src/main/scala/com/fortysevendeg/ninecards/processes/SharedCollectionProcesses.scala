@@ -4,7 +4,7 @@ import cats.data.{ Xor, XorT }
 import cats.free.Free
 import com.fortysevendeg.ninecards.processes.ProcessesExceptions.SharedCollectionNotFoundException
 import com.fortysevendeg.ninecards.processes.converters.Converters._
-import com.fortysevendeg.ninecards.processes.messages.ApplicationMessages.AuthParams
+import com.fortysevendeg.ninecards.processes.messages.GooglePlayAuthMessages.AuthParams
 import com.fortysevendeg.ninecards.processes.messages.SharedCollectionMessages._
 import com.fortysevendeg.ninecards.processes.utils.XorTSyntax._
 import com.fortysevendeg.ninecards.processes.utils.MonadInstances._

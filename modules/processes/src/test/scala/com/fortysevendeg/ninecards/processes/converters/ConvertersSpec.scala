@@ -1,6 +1,6 @@
 package com.fortysevendeg.ninecards.processes.converters
 
-import com.fortysevendeg.ninecards.processes.messages.ApplicationMessages.AuthParams
+import com.fortysevendeg.ninecards.processes.messages.GooglePlayAuthMessages.AuthParams
 import com.fortysevendeg.ninecards.services.free.domain.GooglePlay.AppsInfo
 import com.fortysevendeg.ninecards.services.free.domain._
 import org.scalacheck.Shapeless._

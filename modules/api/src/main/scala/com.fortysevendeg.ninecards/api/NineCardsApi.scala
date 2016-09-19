@@ -7,6 +7,7 @@ import com.fortysevendeg.ninecards.api.NineCardsHeaders.Domain._
 import com.fortysevendeg.ninecards.api.converters.Converters._
 import com.fortysevendeg.ninecards.api.messages.GooglePlayMessages._
 import com.fortysevendeg.ninecards.api.messages.InstallationsMessages._
+import com.fortysevendeg.ninecards.api.messages.PathEnumerations.PriceFilter
 import com.fortysevendeg.ninecards.api.messages.SharedCollectionMessages._
 import com.fortysevendeg.ninecards.api.messages.UserMessages._
 import com.fortysevendeg.ninecards.api.utils.SprayMarshallers._
@@ -43,6 +44,7 @@ class NineCardsRoutes(
   googleApiProcesses: GoogleApiProcesses[NineCardsServices],
   applicationProcesses: ApplicationProcesses[NineCardsServices],
   rankingProcesses: RankingProcesses[NineCardsServices],
+  recommendationsProcesses: RecommendationsProcesses[NineCardsServices],
   sharedCollectionProcesses: SharedCollectionProcesses[NineCardsServices],
   refFactory: ActorRefFactory,
   executionContext: ExecutionContext
@@ -55,6 +57,7 @@ class NineCardsRoutes(
     case "apiDocs" ⇒ swaggerRoute
     case "collections" ⇒ sharedCollectionsRoute
     case "applications" ⇒ applicationRoute
+    case "recommendations" ⇒ recommendationsRoute
     case "installations" ⇒ installationsRoute
     case "login" ⇒ userRoute
     case "rankings" ⇒ rankings.route
@@ -78,8 +81,8 @@ class NineCardsRoutes(
     nineCardsDirectives.authenticateUser { userContext ⇒
       path("categorize") {
         post {
-          nineCardsDirectives.googlePlayInfo { googlePlayContext ⇒
-            entity(as[ApiGetAppsInfoRequest]) { request ⇒
+          entity(as[ApiGetAppsInfoRequest]) { request ⇒
+            nineCardsDirectives.googlePlayInfo { googlePlayContext ⇒
               complete(getAppsInfo(request, googlePlayContext, userContext)(toApiCategorizeAppsResponse))
             }
           }
@@ -87,8 +90,8 @@ class NineCardsRoutes(
       } ~
         path("details") {
           post {
-            nineCardsDirectives.googlePlayInfo { googlePlayContext ⇒
-              entity(as[ApiGetAppsInfoRequest]) { request ⇒
+            entity(as[ApiGetAppsInfoRequest]) { request ⇒
+              nineCardsDirectives.googlePlayInfo { googlePlayContext ⇒
                 complete(getAppsInfo(request, googlePlayContext, userContext)(toApiDetailAppsResponse))
               }
             }
@@ -102,6 +105,21 @@ class NineCardsRoutes(
         put {
           entity(as[ApiUpdateInstallationRequest]) { request ⇒
             complete(updateInstallation(request, userContext))
+          }
+        }
+      }
+    }
+
+  private[this] lazy val recommendationsRoute: Route =
+    nineCardsDirectives.authenticateUser { userContext ⇒
+      pathPrefix(CategorySegment) { category ⇒
+        nineCardsDirectives.priceFilterPath { priceFilter ⇒
+          post {
+            entity(as[ApiGetRecommendationsByCategoryRequest]) { request ⇒
+              nineCardsDirectives.googlePlayInfo { googlePlayContext ⇒
+                complete(getRecommendationsByCategory(request, category, priceFilter, googlePlayContext, userContext))
+              }
+            }
           }
         }
       }
@@ -294,6 +312,23 @@ class NineCardsRoutes(
     applicationProcesses
       .getAppsInfo(request.items, toAuthParams(googlePlayContext, userContext))
       .map(converter)
+
+  private[this] def getRecommendationsByCategory(
+    request: ApiGetRecommendationsByCategoryRequest,
+    category: Category,
+    priceFilter: PriceFilter,
+    googlePlayContext: GooglePlayContext,
+    userContext: UserContext
+  ): NineCardsServed[ApiGetRecommendationsResponse] =
+    recommendationsProcesses
+      .getRecommendationsByCategory(
+        category.entryName,
+        priceFilter.entryName,
+        request.excludePackages,
+        request.limit,
+        toAuthParams(googlePlayContext, userContext)
+      )
+      .map(toApiGetRecommendationsResponse)
 
   private[this] object rankings {
 

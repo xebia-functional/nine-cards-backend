@@ -4,7 +4,7 @@ import java.sql.Timestamp
 import java.time.Instant
 
 import com.fortysevendeg.ninecards.processes.ProcessesExceptions.SharedCollectionNotFoundException
-import com.fortysevendeg.ninecards.processes.messages.ApplicationMessages.AuthParams
+import com.fortysevendeg.ninecards.processes.messages.GooglePlayAuthMessages.AuthParams
 import com.fortysevendeg.ninecards.processes.messages.SharedCollectionMessages._
 import com.fortysevendeg.ninecards.services.free.domain.Firebase.{ NotificationIndividualResult, NotificationResponse }
 import com.fortysevendeg.ninecards.services.free.domain.{ Category, Installation, PackageName, SharedCollectionPackage, SharedCollectionSubscription, SharedCollectionWithAggregatedInfo, SharedCollection ⇒ SharedCollectionServices }
