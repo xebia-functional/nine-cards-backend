@@ -14,6 +14,7 @@ object Dependencies {
   private val specs2Core = specs("core") % "test" exclude("org.scalaz", "*")
   private val specs2MatcherExtra = specs("matcher-extra") % "test"
   private val specs2ScalaCheck = specs("scalacheck") % "test"
+  private val specs2Mockito = specs("mock") % "test"
 
   private val scalaCheckShapeless = "com.github.alexarchambault" %% "scalacheck-shapeless_1.12" % Versions.scalaCheckShapeless % "test"
 
@@ -60,5 +61,6 @@ object Dependencies {
     scalaCheckShapeless,
     specs2ScalaCheck,
     specs2MatcherExtra,
+    specs2Mockito,
     tagSoup))
 }
