@@ -39,8 +39,9 @@ class Interpreter(config: Configuration) extends (Ops ~> WithHttpClient)  {
 
     def handleUnexpected(e: UnexpectedStatus): Failure = e.status match {
       case Status.NotFound ⇒ PackageNotFound(packageName)
-      case Status.Unauthorized ⇒ WrongAuthParans(auth)
+      case Status.Unauthorized ⇒ WrongAuthParams(auth)
       case Status.TooManyRequests => QuotaExceeded(auth)
+      case _ => GoogleApiServerError
     }
 
     def apply(client: Client): Task[Failure Xor FullCard] =
@@ -49,8 +50,7 @@ class Interpreter(config: Configuration) extends (Ops ~> WithHttpClient)  {
         val fullCard = Converters.toFullCard(docV2)
         Xor.Right(fullCard)
       }.handle {
-        case e: UnexpectedStatus ⇒ Xor.Left(handleUnexpected(e) )
-        case e => throw e
+        case e: UnexpectedStatus ⇒ Xor.Left(handleUnexpected(e))
       }
   }
 

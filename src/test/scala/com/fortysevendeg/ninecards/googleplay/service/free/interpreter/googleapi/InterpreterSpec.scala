@@ -77,7 +77,7 @@ class InterpreterSpec extends Specification with Matchers with MockServer with W
       mockServer.when(httpRequest).respond(httpResponse)
 
       val actual = run( GetDetails(fisherPrice.packageObj, auth) )
-      actual must returnValue( Xor.Left( WrongAuthParans( auth) ) )
+      actual must returnValue( Xor.Left( WrongAuthParams(auth) ) )
     }
 
     "give a PackageNotFound Failure if the Api replies with a NotFound status" in {
