@@ -17,8 +17,6 @@ class InterpreterSpec extends Specification with Matchers with MockServer with W
   import TaskMatchers._
   import TestData.fisherPrice
 
-  override val mockServerPort = 9997
-
   val auth = GoogleAuthParams( AndroidId("androidId"), Token("token"), None)
 
   val configuration = Configuration(
@@ -67,7 +65,6 @@ class InterpreterSpec extends Specification with Matchers with MockServer with W
       mockServer.when(httpRequest).respond(httpResponse)
 
       val actual = run( GetDetails(fisherPrice.packageObj, auth) )
-      println(actual.run)
       actual must returnValue( Xor.Right( fisherPrice.card) ) 
     }
 

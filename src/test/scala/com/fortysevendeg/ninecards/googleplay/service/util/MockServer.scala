@@ -6,7 +6,7 @@ import org.specs2.specification.{BeforeAfterEach, BeforeAfterAll}
 
 trait MockServer extends BeforeAfterAll with BeforeAfterEach {
 
-  protected[this] def mockServerPort: Int
+  protected[this] final val mockServerPort: Int = 9999
 
   protected[this] lazy val mockServer = {
     ConfigurationProperties.overrideLogLevel("ERROR")
