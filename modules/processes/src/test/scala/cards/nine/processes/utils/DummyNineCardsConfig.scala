@@ -14,6 +14,8 @@ trait DummyNineCardsConfig {
   val nineCardsSecretKey = "b91064c433a3d4723a622869273bf0d8"
   val nineCardsSalt = "ca349dde5a53d225eeb17074858465d5"
 
+  val dbHikariMaximumPoolSize = 1
+
   def dummyConfigHocon(debugMode: Boolean) =
     s"""
        |db {
@@ -22,6 +24,9 @@ trait DummyNineCardsConfig {
        |    url = "$dbDefaultUrl"
        |    user = "$dbDefaultUser"
        |    password = "$dbDefaultPassword"
+       |  }
+       |  hikari {
+       |    maximumPoolSize = $dbHikariMaximumPoolSize
        |  }
        |}
        |ninecards.backend {
