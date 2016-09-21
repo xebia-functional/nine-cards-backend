@@ -29,6 +29,14 @@ object NineCardsGenEntities {
   case class AndroidId(value: String) extends AnyVal
 
   case class PublicIdentifier(value: String) extends AnyVal
+
+  case class IsoCode2(value: String) extends AnyVal
+
+  case class IsoCode3(value: String) extends AnyVal
+
+  case class WrongIsoCode2(value: String) extends AnyVal
+
+  case class WrongIsoCode3(value: String) extends AnyVal
 }
 
 trait NineCardsScalacheckGen {
@@ -40,6 +48,8 @@ trait NineCardsScalacheckGen {
     )
 
   def fixedLengthString(size: Int) = Gen.listOfN(size, Gen.alphaChar).map(_.mkString)
+
+  def fixedLengthNumericString(size: Int) = Gen.listOfN(size, Gen.numChar).map(_.mkString)
 
   val stringGenerator = Arbitrary.arbitrary[String]
 
@@ -90,6 +100,10 @@ trait NineCardsScalacheckGen {
 
   implicit val abEmail: Arbitrary[Email] = Arbitrary(emailGenerator.map(Email.apply))
 
+  implicit val abIsoCode2: Arbitrary[IsoCode2] = Arbitrary(fixedLengthString(2).map(IsoCode2.apply))
+
+  implicit val abIsoCode3: Arbitrary[IsoCode3] = Arbitrary(fixedLengthString(3).map(IsoCode3.apply))
+
   implicit val abPublicIdentifier: Arbitrary[PublicIdentifier] = Arbitrary(Gen.uuid.map(u ⇒ PublicIdentifier(u.toString)))
 
   implicit val abSessionToken: Arbitrary[SessionToken] = Arbitrary(Gen.uuid.map(u ⇒ SessionToken(u.toString)))
@@ -97,6 +111,8 @@ trait NineCardsScalacheckGen {
   implicit val abSharedCollectionData: Arbitrary[SharedCollectionData] = Arbitrary(sharedCollectionDataGenerator)
 
   implicit val abUserData: Arbitrary[UserData] = Arbitrary(userDataGenerator)
+
+  implicit val abWrongIsoCode2: Arbitrary[WrongIsoCode2] = Arbitrary(fixedLengthNumericString(2).map(WrongIsoCode2.apply))
 
   def genEnumeratum[C <: EnumEntry](e: Enum[C]): Gen[C] =
     for (i ← Gen.choose(0, e.values.length - 1)) yield e.values(i)

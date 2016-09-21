@@ -7,9 +7,10 @@ import cards.nine.processes.ProcessesExceptions.SharedCollectionNotFoundExceptio
 import cards.nine.processes.messages.GooglePlayAuthMessages.AuthParams
 import cards.nine.processes.messages.SharedCollectionMessages._
 import cards.nine.processes.messages.rankings.GetRankedDeviceApps.DeviceApp
+import cards.nine.services.free.domain.{ SharedCollection ⇒ SharedCollectionServices, _ }
 import cards.nine.services.free.domain.Firebase.{ NotificationIndividualResult, NotificationResponse }
-import cards.nine.services.free.domain.{ Category, Installation, PackageName, SharedCollectionPackage, SharedCollectionSubscription, SharedCollectionWithAggregatedInfo, SharedCollection ⇒ SharedCollectionServices }
 import cards.nine.services.free.domain.GooglePlay.{ AppsInfo, AppInfo ⇒ AppInfoServices }
+import cards.nine.services.free.domain.rankings.{ Country ⇒ CountryEnum }
 import cards.nine.services.persistence.SharedCollectionPersistenceServices.{ SharedCollectionData ⇒ SharedCollectionDataServices }
 import org.joda.time.{ DateTime, DateTimeZone }
 
@@ -30,6 +31,16 @@ object TestData {
   val collectionId = 1l
 
   val community = true
+
+  val countryId = 1l
+
+  val countryContinent = "America"
+
+  val countryIsoCode2 = "US"
+
+  val countryIsoCode3 = "USA"
+
+  val countryName = "United States"
 
   val deviceToken = "5d56922c-5257-4392-817e-503166cd7afd"
 
@@ -144,6 +155,16 @@ object TestData {
       sharedCollectionData = collection,
       subscriptionsCount   = subscriptionsCount
     )
+
+    val country = Country(
+      id        = countryId,
+      isoCode2  = countryIsoCode2,
+      isoCode3  = Option(countryIsoCode3),
+      name      = countryName,
+      continent = countryContinent
+    )
+
+    val countryNotFound: Option[Country] = None
 
     val nonExistentSharedCollection: Option[SharedCollectionServices] = None
 
@@ -287,7 +308,8 @@ object TestData {
   object rankings {
     import cards.nine.services.free.domain.rankings.{ AuthParams ⇒ AuthRanking, _ }
 
-    lazy val scope = CountryScope(Country.Spain)
+    lazy val scope = CountryScope(CountryEnum.Spain)
+    lazy val location = Option("US")
     lazy val startDate = new DateTime(2016, 1, 1, 0, 0, DateTimeZone.UTC)
     lazy val endDate = new DateTime(2016, 2, 1, 0, 0, DateTimeZone.UTC)
     lazy val params = RankingParams(DateRange(startDate, endDate), 5, AuthRanking("auth_token"))

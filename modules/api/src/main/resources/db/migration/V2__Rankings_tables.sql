@@ -18,7 +18,7 @@ create table if not exists rankings_africa (
   primary key (packageName, category)
 );
 
-create table if not exists rankings_americas (
+create table if not exists rankings_america (
   packageName character varying(256) not null,
   category varchar(30) not null,
   ranking integer not null,
