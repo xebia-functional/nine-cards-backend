@@ -1,51 +1,36 @@
 package cards.nine.services.persistence
 
+import java.sql.Connection
+
+import cards.nine.services.common.NineCardsConfig
 import cards.nine.services.free.domain
 import cards.nine.services.free.domain._
+import cards.nine.services.utils.DummyNineCardsConfig
+import doobie.free.{ drivermanager ⇒ FD }
 import doobie.imports._
 import org.flywaydb.core.Flyway
 
-import scala.util.Random
 import scalaz.{ \/, Foldable }
 import scalaz.concurrent.Task
+import scalaz.syntax.apply._
 
-trait DomainDatabaseContext {
+trait BasicDatabaseContext extends DummyNineCardsConfig {
 
-  import CustomComposite._
+  class CustomTransactor[B](
+    implicit
+    beforeActions: ConnectionIO[B],
+    config: NineCardsConfig
+  ) extends Transactor[Task] {
+    val driver = config.getString("db.default.driver")
+    def url = config.getString("db.default.url")
+    val user = config.getString("db.default.user")
+    val pass = config.getString("db.default.password")
 
-  val deviceToken: Option[String] = Option("d9f48907-0374-4b3a-89ec-433bd64de2e5")
-  val emptyDeviceToken: Option[String] = None
+    val connect: Task[Connection] =
+      Task.delay(Class.forName(driver)) *> FD.getConnection(url, user, pass).trans[Task]
 
-  val testDriver = "org.h2.Driver"
-  val testUrl = s"jdbc:h2:mem:test-${Random.nextFloat()};DB_CLOSE_DELAY=-1;MODE=PostgreSQL"
-  val testUsername = "sa"
-  val testPassword = ""
-
-  val transactor: Transactor[Task] = DriverManagerTransactor[Task](testDriver, testUrl, testUsername, testPassword)
-
-  implicit class Transacting[A](operation: ConnectionIO[A]) {
-    def transactAndRun: A = operation.transact(transactor).unsafePerformSync
-    def transactAndAttempt: \/[Throwable, A] = operation.transact(transactor).unsafePerformSyncAttempt
+    override val before = super.before <* beforeActions
   }
-
-  implicit val userPersistence = new Persistence[User](supportsSelectForUpdate = false)
-  implicit val installationPersistence = new Persistence[Installation](supportsSelectForUpdate = false)
-  implicit val collectionPersistence = new Persistence[SharedCollection](supportsSelectForUpdate = false)
-  implicit val collectionPackagePersistence = new Persistence[SharedCollectionPackage](supportsSelectForUpdate = false)
-  implicit val collectionSubscriptionPersistence = new Persistence[SharedCollectionSubscription](supportsSelectForUpdate = false)
-  implicit val rankingPersistence: Persistence[domain.rankings.Entry] =
-    new Persistence[domain.rankings.Entry](supportsSelectForUpdate = false)
-  val userPersistenceServices = new UserPersistenceServices
-  val collectionPersistenceServices = new SharedCollectionPersistenceServices
-  val scSubscriptionPersistenceServices = new SharedCollectionSubscriptionPersistenceServices
-  val rankingPersistenceServices = new rankings.Services(rankingPersistence)
-
-  val flywaydb = new Flyway
-  flywaydb.setDataSource(testUrl, testUsername, testPassword)
-  flywaydb.migrate()
-
-  def insertItemWithoutGeneratedKeys[A: Composite](sql: String, values: A): ConnectionIO[Int] =
-    Update[A](sql).toUpdate0(values).run
 
   def insertItem[A: Composite](sql: String, values: A): ConnectionIO[Long] =
     Update[A](sql).toUpdate0(values).withUniqueGeneratedKeys[Long]("id")
@@ -53,5 +38,69 @@ trait DomainDatabaseContext {
   def insertItems[F[_]: Foldable, A: Composite](sql: String, values: F[A]): ConnectionIO[Int] =
     Update[A](sql).updateMany(values)
 
+  def insertItemWithoutGeneratedKeys[A: Composite](sql: String, values: A): ConnectionIO[Int] =
+    Update[A](sql).toUpdate0(values).run
+
   def deleteItems(sql: String): ConnectionIO[Int] = Update0(sql, None).run
+
+  implicit class Transacting[A](operation: ConnectionIO[A])(implicit transactor: Transactor[Task]) {
+    def transactAndRun: A = operation.transact(transactor).unsafePerformSync
+    def transactAndAttempt: \/[Throwable, A] = operation.transact(transactor).unsafePerformSyncAttempt
+  }
+}
+
+trait PersistenceDatabaseContext extends BasicDatabaseContext {
+  def createTable: ConnectionIO[Int] =
+    sql"""
+          CREATE TABLE IF NOT EXISTS persistence (
+          id   BIGINT AUTO_INCREMENT,
+          name VARCHAR NOT NULL,
+          active BOOL NOT NULL)""".update.run
+
+  implicit val before: ConnectionIO[Int] = createTable
+
+  implicit val transactor: Transactor[Task] = new CustomTransactor
+}
+
+trait DomainDatabaseContext extends BasicDatabaseContext {
+
+  import CustomComposite._
+
+  val deviceToken: Option[String] = Option("d9f48907-0374-4b3a-89ec-433bd64de2e5")
+  val emptyDeviceToken: Option[String] = None
+
+  implicit val transactor: Transactor[Task] =
+    DriverManagerTransactor[Task](
+      driver = dummyConfig.getString("db.domain.driver"),
+      url    = dummyConfig.getString("db.domain.url"),
+      user   = dummyConfig.getString("db.domain.user"),
+      pass   = dummyConfig.getString("db.domain.password")
+    )
+
+  val flywaydb = new Flyway
+
+  flywaydb.setDataSource(
+    dummyConfig.getString("db.domain.url"),
+    dummyConfig.getString("db.domain.user"),
+    dummyConfig.getString("db.domain.password")
+  )
+
+  flywaydb.migrate()
+
+  implicit val userPersistence = new Persistence[User](supportsSelectForUpdate = false)
+  implicit val installationPersistence =
+    new Persistence[Installation](supportsSelectForUpdate = false)
+  implicit val collectionPersistence =
+    new Persistence[SharedCollection](supportsSelectForUpdate = false)
+  implicit val collectionPackagePersistence =
+    new Persistence[SharedCollectionPackage](supportsSelectForUpdate = false)
+  implicit val collectionSubscriptionPersistence =
+    new Persistence[SharedCollectionSubscription](supportsSelectForUpdate = false)
+  implicit val rankingPersistence: Persistence[domain.rankings.Entry] =
+    new Persistence[domain.rankings.Entry](supportsSelectForUpdate = false)
+
+  val userPersistenceServices = UserPersistenceServices.persistenceServices
+  val collectionPersistenceServices = SharedCollectionPersistenceServices.persistenceServices
+  val scSubscriptionPersistenceServices = SharedCollectionSubscriptionPersistenceServices.persistenceServices
+  val rankingPersistenceServices = new rankings.Services(rankingPersistence)
 }

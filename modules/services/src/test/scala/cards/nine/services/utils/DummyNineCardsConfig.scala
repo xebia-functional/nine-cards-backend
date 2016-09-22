@@ -9,9 +9,18 @@ trait DummyNineCardsConfig {
   object db {
     object default {
       val driver = "org.h2.Driver"
+      val url = "jdbc:h2:mem:"
+      val user = "sa"
+      val password = ""
+    }
+    object domain {
+      val driver = "org.h2.Driver"
       val url = s"jdbc:h2:mem:test-${Random.nextFloat()};DB_CLOSE_DELAY=-1"
       val user = "sa"
       val password = ""
+    }
+    object hikari {
+      val maximumPoolSize = 1
     }
   }
 
@@ -64,6 +73,15 @@ trait DummyNineCardsConfig {
        |    url = "${db.default.url}"
        |    user = "${db.default.user}"
        |    password = "${db.default.password}"
+       |  }
+       |  domain {
+       |    driver = "${db.domain.driver}"
+       |    url = "${db.domain.url}"
+       |    user = "${db.domain.user}"
+       |    password = "${db.domain.password}"
+       |  }
+       |  hikari {
+       |    maximumPoolSize = ${db.hikari.maximumPoolSize}
        |  }
        |}
        |googleapi {
