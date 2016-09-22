@@ -2,8 +2,11 @@ package com.fortysevendeg.ninecards.googleplay.processes
 
 import cats.data.Xor
 import cats.free.Free
-import com.fortysevendeg.ninecards.googleplay.domain._
+import cats.std.list._
+import cats.syntax.traverse._
+import com.fortysevendeg.ninecards.googleplay.domain.{Package, GoogleAuthParams, FullCard}
 import com.fortysevendeg.ninecards.googleplay.domain.apigoogle.{Failure => ApiFailure}
+import com.fortysevendeg.ninecards.googleplay.domain.webscrapper._
 import com.fortysevendeg.ninecards.googleplay.service.free.algebra.{apigoogle, cache, webscrapper}
 import org.joda.time.DateTime
 
@@ -29,6 +32,13 @@ class CardsProcess[F[_]](
             _ <- cacheService.markPending(pack)
           } yield Unit
       }
+
+    def storeAsError( pack: Package, date: DateTime): Free[F, Unit] =
+      for {
+        _ <- cacheService.unmarkPending(pack)
+        _ <- cacheService.markError(pack, date)
+      } yield Unit
+
   }
 
   def getCard( pack: Package, auth: GoogleAuthParams, date: DateTime): Free[F,getcard.Response] = {
@@ -63,6 +73,42 @@ class CardsProcess[F[_]](
     }
   }
 
+  def resolvePendingPackage(pack: Package, date: DateTime): Free[F, ResolvePending.PackageStatus] = {
+    import ResolvePending._
+
+    webScrapper.getDetails(pack) flatMap {
+      case Xor.Right(card) =>
+        for (_ <- InCache.storeAsResolved(card)) yield Resolved
+      case Xor.Left( PageParseFailed(_) ) =>
+        for (_ <- InCache.storeAsError(pack, date) ) yield Unknown
+      case Xor.Left( PackageNotFound(_) ) =>
+        for (_ <- InCache.storeAsError(pack, date) ) yield Unknown
+      case Xor.Left( WebPageServerError ) =>
+        Free.pure(Pending)
+    }
+  }
+
+  def searchAndResolvePending( numApps: Int, date: DateTime) : Free[F, Unit] = {
+    import ResolvePending._
+
+    def splitStatus( stati: List[(Package, PackageStatus)]): Response = {
+      val solved  = stati collect { case (pack,Resolved) => pack }
+      val unknown = stati collect { case (pack,Unknown) => pack }
+      val pending = stati collect { case (pack,Pending) => pack }
+      Response(solved, unknown, pending)
+    }
+
+    type FF[A] = Free[F,A]
+
+    for /*Free[F] */ {
+      list <- cacheService.listPending(numApps)
+      stati <- list.traverse[FF,(Package, PackageStatus) ]{ pack =>
+        for (status <- resolvePendingPackage(pack, date)) yield (pack, status)
+      }
+    } yield splitStatus(stati)
+
+  }
+
 }
 
 object CardsProcess {
@@ -75,15 +121,3 @@ object CardsProcess {
 }
 
 
-package getcard {
-
-  sealed trait FailedResponse
-  case class WrongAuthParams( authParams: GoogleAuthParams) extends FailedResponse
-  case class PendingResolution( packageName: Package) extends FailedResponse
-  case class UnknownPackage( packageName: Package) extends FailedResponse
-
-}
-
-package object getcard {
-  type Response = FailedResponse Xor FullCard
-}

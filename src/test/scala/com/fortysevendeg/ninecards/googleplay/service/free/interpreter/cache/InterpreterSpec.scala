@@ -141,6 +141,16 @@ class InterpreterSpec extends Specification with ScalaCheck with BeforeAll with 
       }
   }
 
+  "unmarkPending" should {
+    "remove a previously pending package" >>
+      prop { pack: Package =>
+        flush
+        putEntry( CacheEntry.pending(pack) )
+        eval( MarkPending(pack) )
+        redisClient.get( CacheKey.pending(pack) ) must beNone
+      }
+  }
+
   "markError" should {
     "add a package as error" >>
       prop { pack: Package =>
@@ -205,6 +215,19 @@ class InterpreterSpec extends Specification with ScalaCheck with BeforeAll with 
         putEntry( CacheEntry.error( pack, date) )
         eval( ClearInvalid(other))
         redisClient.keys( allByPackage(pack) ) must beSome.which( ! _.isEmpty)
+      }
+  }
+
+  "List Pending" should {
+
+    "get all the pending elements for a package" >>
+      prop { (packs: List[Package], numx: Int) =>
+        flush
+        val num = Math.abs(numx >> 1)
+        packs.map(CacheEntry.pending).foreach(putEntry)
+        val list = eval(ListPending(num))
+        list must contain( (p:Package) => packs must contain(p) ).forall
+        list must have size( Math.min(num, packs.size) )
       }
   }
 

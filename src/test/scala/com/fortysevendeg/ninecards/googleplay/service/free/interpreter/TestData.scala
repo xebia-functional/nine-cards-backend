@@ -18,9 +18,6 @@ object TestData {
     val packageName = "air.fisherprice.com.shapesAndColors"
     val packageObj = Package(packageName)
 
-    lazy val protobufFile = getClass.getClassLoader.getResource(packageName)
-    lazy val htmlFile     = getClass.getClassLoader.getResource(packageName + ".html")
-
     val card = FullCard(
       packageName = packageName,
       title = "Shapes & Colors Music Show",

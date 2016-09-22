@@ -1,17 +1,22 @@
-package  com.fortysevendeg.ninecards.googleplay.service.free.interpreter.webscrapper
+package com.fortysevendeg.ninecards.googleplay.service.free.interpreter.webscrapper
 
 import cats.~>
-import com.fortysevendeg.ninecards.googleplay.domain.Package
+import cats.data.Xor
+import com.fortysevendeg.ninecards.googleplay.domain.{FullCard, Package}
+import com.fortysevendeg.ninecards.googleplay.domain.webscrapper._
 import com.fortysevendeg.ninecards.googleplay.service.free.algebra.webscrapper._
+import com.fortysevendeg.ninecards.googleplay.service.free.interpreter.GooglePlayPageParser
 import org.http4s.Http4s._
-import org.http4s.client.Client
-import org.http4s.{Method, Request, Uri}
+import org.http4s.client.{Client, UnexpectedStatus}
+import org.http4s.{Method, Request, Status, Uri}
 import scalaz.concurrent.Task
+import scodec.bits.ByteVector
 
-class Interpreter(config: Configuration, httpClient: Client) extends (Ops ~> Task){
+class Interpreter(config: Configuration) extends (Ops ~> WithClient){
 
-  def apply[A]( ops: Ops[A]) : Task[A] = ops match {
-    case ExistsApp(pack) => existsApp(pack)
+  override def apply[A]( ops: Ops[A]) : WithClient[A] = ops match {
+    case ExistsApp(pack) => new ExistsAppWP(pack)
+    case GetDetails(pack) => new GetDetailsWP(pack)
   }
 
   private[this] val baseUri = Uri(
@@ -24,9 +29,32 @@ class Interpreter(config: Configuration, httpClient: Client) extends (Ops ~> Tas
     .withQueryParam( "id", pack.value)
     .withQueryParam( "hl", "en_US")
 
-  private[this] def existsApp(pack: Package): Task[Boolean] = {
-    val request = new Request(method = Method.HEAD, uri = detailsUriOf(pack) )
-    httpClient.fetch(request)(resp => Task.now(resp.status.isSuccess ) )
+  private[this] class ExistsAppWP(pack: Package) extends WithClient[Boolean] {
+    override def apply(client: Client) : Task[Boolean] = {
+      val request = new Request(method = Method.HEAD, uri = detailsUriOf(pack) )
+      client.fetch(request)(resp => Task.now(resp.status.isSuccess))
+    }
+  }
+
+  private[this] class GetDetailsWP(pack: Package) extends WithClient[Failure Xor FullCard] {
+
+    def handleUnexpected(e: UnexpectedStatus): Failure = e.status match {
+      case Status.NotFound ⇒ PackageNotFound(pack)
+      case _ => WebPageServerError
+    }
+
+    override def apply(client: Client): Task[Failure Xor FullCard] = {
+      val httpRequest = new Request(method = Method.GET, uri = detailsUriOf(pack) )
+
+      client.expect[ByteVector](httpRequest).map { bv =>
+        GooglePlayPageParser.parseCard(bv) match {
+          case Some(card) => Xor.Right(card)
+          case None => Xor.Left( PageParseFailed(pack))
+        }
+      }.handle {
+        case e: UnexpectedStatus ⇒ Xor.Left(handleUnexpected(e))
+      }
+    }
   }
 
 }
