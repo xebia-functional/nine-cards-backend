@@ -32,9 +32,7 @@ object TestData {
 
   val community = true
 
-  val countryId = 1l
-
-  val countryContinent = "America"
+  val countryContinent = "Americas"
 
   val countryIsoCode2 = "US"
 
@@ -157,7 +155,6 @@ object TestData {
     )
 
     val country = Country(
-      id        = countryId,
       isoCode2  = countryIsoCode2,
       isoCode3  = Option(countryIsoCode3),
       name      = countryName,

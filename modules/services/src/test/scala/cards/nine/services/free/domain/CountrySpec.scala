@@ -4,11 +4,11 @@ import org.specs2.mutable.Specification
 
 class CountrySpec extends Specification {
 
-  val antarctica = Country(1, "AQ", Option("ATA"), "Antarctica", "Antarctica")
+  val antarctica = Country("AQ", Option("ATA"), "Antarctica", "Antarctica")
 
-  val italy = Country(2, "IT", Option("ITA"), "Italy", "Europe")
+  val italy = Country("IT", Option("ITA"), "Italy", "Europe")
 
-  val unitedStates = Country(3, "US", Option("USA"), "United States", "America")
+  val unitedStates = Country("US", Option("USA"), "United States", "Americas")
 
   "toGeoScope" should {
     "return a CountryScope value if there is an EnumEntry for the country" in {

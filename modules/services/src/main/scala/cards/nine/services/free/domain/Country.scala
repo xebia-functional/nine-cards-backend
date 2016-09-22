@@ -4,7 +4,6 @@ import cards.nine.services.free.domain.rankings.{ GeoScopeStringOps, WorldScope 
 import enumeratum.Enum
 
 case class Country(
-  id: Long,
   isoCode2: String,
   isoCode3: Option[String],
   name: String,

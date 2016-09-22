@@ -21,7 +21,7 @@ object rankings {
 
   sealed trait Continent extends EnumEntry
   object Continent extends Enum[Continent] {
-    case object America extends Continent
+    case object Americas extends Continent
     case object Africa extends Continent
     case object Asia extends Continent
     case object Europe extends Continent

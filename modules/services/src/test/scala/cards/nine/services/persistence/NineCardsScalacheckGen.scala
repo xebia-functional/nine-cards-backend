@@ -30,13 +30,7 @@ object NineCardsGenEntities {
 
   case class PublicIdentifier(value: String) extends AnyVal
 
-  case class IsoCode2(value: String) extends AnyVal
-
-  case class IsoCode3(value: String) extends AnyVal
-
   case class WrongIsoCode2(value: String) extends AnyVal
-
-  case class WrongIsoCode3(value: String) extends AnyVal
 }
 
 trait NineCardsScalacheckGen {
@@ -99,10 +93,6 @@ trait NineCardsScalacheckGen {
   implicit val abDeviceToken: Arbitrary[DeviceToken] = Arbitrary(Gen.uuid.map(u ⇒ DeviceToken(u.toString)))
 
   implicit val abEmail: Arbitrary[Email] = Arbitrary(emailGenerator.map(Email.apply))
-
-  implicit val abIsoCode2: Arbitrary[IsoCode2] = Arbitrary(fixedLengthString(2).map(IsoCode2.apply))
-
-  implicit val abIsoCode3: Arbitrary[IsoCode3] = Arbitrary(fixedLengthString(3).map(IsoCode3.apply))
 
   implicit val abPublicIdentifier: Arbitrary[PublicIdentifier] = Arbitrary(Gen.uuid.map(u ⇒ PublicIdentifier(u.toString)))
 

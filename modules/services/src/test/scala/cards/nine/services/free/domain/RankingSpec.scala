@@ -11,8 +11,8 @@ class RankingSpec extends Specification {
     }
 
     "return a ContinentScope value if there is a EnumEntry for the given continent" in {
-      "America".toOptionalContinent must beSome[ContinentScope].which { scope ⇒
-        scope.continent must_== Continent.America
+      "Americas".toOptionalContinent must beSome[ContinentScope].which { scope ⇒
+        scope.continent must_== Continent.Americas
       }
     }
   }
