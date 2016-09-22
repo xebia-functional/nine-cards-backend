@@ -10,7 +10,6 @@ import cards.nine.services.common.NineCardsConfig
 import cards.nine.services.free.algebra.DBResult.DBOps
 import cards.nine.services.free.domain._
 import cards.nine.services.persistence.{ UserPersistenceServices, _ }
-import doobie.contrib.hikari.hikaritransactor.HikariTransactor
 import doobie.imports._
 
 import scalaz.Scalaz._
@@ -21,7 +20,7 @@ class UserProcesses[F[_]](
   userPersistenceServices: UserPersistenceServices,
   config: NineCardsConfig,
   hashUtils: HashUtils,
-  transactor: Task[HikariTransactor[Task]],
+  transactor: Transactor[Task],
   dbOps: DBOps[F]
 ) {
 

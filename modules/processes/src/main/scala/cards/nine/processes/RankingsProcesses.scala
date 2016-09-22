@@ -14,7 +14,7 @@ import cards.nine.services.free.algebra.GoogleAnalytics
 import cards.nine.services.free.domain.rankings._
 import cards.nine.services.persistence._
 import cards.nine.services.persistence.rankings.{ Services ⇒ PersistenceServices }
-import doobie.contrib.hikari.hikaritransactor.HikariTransactor
+import doobie.imports._
 
 import scalaz.concurrent.Task
 
@@ -22,7 +22,7 @@ class RankingProcesses[F[_]](
   implicit
   analytics: GoogleAnalytics.Services[F],
   persistence: PersistenceServices,
-  transactor: Task[HikariTransactor[Task]],
+  transactor: Transactor[Task],
   dbOps: DBOps[F]
 ) {
 
