@@ -62,7 +62,7 @@ object UserPersistenceServices {
     sessionToken: String
   )
 
-  implicit def persistenceServices(
+  implicit def userPersistenceServices(
     implicit
     userPersistence: Persistence[User],
     installationPersistence: Persistence[Installation]
