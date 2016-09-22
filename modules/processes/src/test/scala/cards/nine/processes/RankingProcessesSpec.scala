@@ -1,14 +1,13 @@
 package cards.nine.processes
 
-import cats.data.Xor
-import cats.free.Free
 import cards.nine.processes.NineCardsServices._
 import cards.nine.processes.messages.rankings.GetRankedDeviceApps.RankedDeviceApp
 import cards.nine.processes.messages.rankings._
-import cards.nine.processes.utils.DummyNineCardsConfig
+import cards.nine.processes.utils.DatabaseContext._
 import cards.nine.services.free.algebra.GoogleAnalytics
-import cards.nine.services.persistence.transactor
 import cards.nine.services.persistence.rankings.{ Services ⇒ PersistenceServices }
+import cats.data.Xor
+import cats.free.Free
 import doobie.imports._
 import org.mockito.Matchers.{ eq ⇒ mockEq }
 import org.specs2.matcher.{ Matcher, Matchers, XorMatchers }
@@ -22,7 +21,6 @@ trait RankingsProcessesSpecification
   extends Specification
   with Matchers
   with Mockito
-  with DummyNineCardsConfig
   with XorMatchers
   with TestInterpreters {
 
@@ -34,7 +32,7 @@ trait RankingsProcessesSpecification
       mock[GoogleAnalytics.Services[NineCardsServices]]
     implicit val persistenceServices = mock[PersistenceServices]
 
-    implicit val rankingProcesses = new RankingProcesses[NineCardsServices]
+    val rankingProcesses = RankingProcesses.processes[NineCardsServices]
 
     def hasRankingInfo(hasRanking: Boolean): Matcher[RankedDeviceApp] = {
       app: RankedDeviceApp ⇒

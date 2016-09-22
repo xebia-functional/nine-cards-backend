@@ -82,6 +82,7 @@ object RankingProcesses {
     implicit
     analytics: GoogleAnalytics.Services[F],
     persistence: PersistenceServices,
+    transactor: Task[HikariTransactor[Task]],
     dbOps: DBOps[F]
   ) = new RankingProcesses
 

@@ -113,11 +113,12 @@ class UserProcesses[F[_]](
 
 object UserProcesses {
 
-  implicit def userProcesses[F[_]](
+  implicit def processes[F[_]](
     implicit
     userPersistenceServices: UserPersistenceServices,
     config: NineCardsConfig,
     hashUtils: HashUtils,
+    transactor: Task[HikariTransactor[Task]],
     dbOps: DBOps[F]
   ) = new UserProcesses
 

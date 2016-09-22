@@ -15,6 +15,7 @@ trait DummyNineCardsConfig {
   val nineCardsSalt = "ca349dde5a53d225eeb17074858465d5"
 
   val dbHikariMaximumPoolSize = 1
+  val dbHikariMaxLifetime = 1
 
   def dummyConfigHocon(debugMode: Boolean) =
     s"""
@@ -27,6 +28,7 @@ trait DummyNineCardsConfig {
        |  }
        |  hikari {
        |    maximumPoolSize = $dbHikariMaximumPoolSize
+       |    maxLifetime = $dbHikariMaxLifetime
        |  }
        |}
        |ninecards.backend {

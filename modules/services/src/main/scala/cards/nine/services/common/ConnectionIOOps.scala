@@ -4,7 +4,7 @@ import cats.data.{ Xor, XorT }
 import cards.nine.services.free.algebra.DBResult.DBOps
 import cards.nine.services.persistence.PersistenceExceptions.PersistenceException
 import doobie.contrib.hikari.hikaritransactor.HikariTransactor
-import doobie.imports.ConnectionIO
+import doobie.imports._
 
 import scalaz.concurrent.Task
 import scalaz.{ -\/, \/- }
@@ -17,7 +17,7 @@ object ConnectionIOOps {
 
   implicit class ConnectionIOOps[A](c: ConnectionIO[A]) {
     def liftF[F[_]](implicit dbOps: DBOps[F], transactor: Task[HikariTransactor[Task]]): cats.free.Free[F, A] =
-      transactor.flatMap(_.trans(c)).unsafePerformSyncAttempt match {
+      transactor.flatMap(xa ⇒ xa.trans(c).ensuring(xa.shutdown)).unsafePerformSyncAttempt match {
         case \/-(value) ⇒ dbOps.success(value)
         case -\/(e) ⇒
           dbOps.failure(

@@ -259,11 +259,12 @@ class SharedCollectionProcesses[F[_]](
 
 object SharedCollectionProcesses {
 
-  implicit def sharedCollectionProcesses[F[_]](
+  implicit def processes[F[_]](
     implicit
     collectionPersistence: SharedCollectionPersistenceServices,
     subscriptionPersistence: SharedCollectionSubscriptionPersistenceServices,
     userPersistence: UserPersistenceServices,
+    transactor: Task[HikariTransactor[Task]],
     dbOps: DBOps[F],
     firebaseNotificationsServices: Firebase.Services[F],
     googlePlayServices: GooglePlay.Services[F]
