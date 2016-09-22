@@ -18,6 +18,8 @@ object cache {
 
   case class ClearInvalid(`package`: Package) extends Ops[Unit]
 
+  case class IsPending( `package`: Package) extends Ops[Boolean]
+
   class Service[F[_]](implicit I: Inject[Ops, F]) {
 
     def getValid( pack: Package) : Free[F, Option[FullCard]] =
@@ -34,6 +36,10 @@ object cache {
 
     def clearInvalid(pack: Package) : Free[F, Unit] =
       Free.inject[Ops, F](ClearInvalid(pack) )
+
+    def isPending(pack: Package) : Free[F, Boolean] =
+      Free.inject[Ops, F](IsPending(pack))
+
   }
 
   object Service {

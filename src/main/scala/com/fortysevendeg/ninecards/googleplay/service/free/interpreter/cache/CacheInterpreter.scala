@@ -42,6 +42,11 @@ object CacheInterpreter extends (Ops ~> WithClient) {
       wrap.delete(CacheKey.pending(pack))
     }
 
+    case IsPending(pack) => { client: RedisClient =>
+      val wrap = new CacheWrapper[CacheKey, CacheVal](client)
+      wrap.get(CacheKey.pending(pack)).isDefined
+    }
+
   }
 
 }
