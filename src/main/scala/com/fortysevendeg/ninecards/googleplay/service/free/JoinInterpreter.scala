@@ -10,8 +10,8 @@ object JoinInterpreter {
     cacheInt: cache.Ops ~> F,
     webScrapperInt: webscrapper.Ops ~> F
   ): (JoinServices ~> F) = {
-    val int_x: (JoinServices_x ~> F) = cacheInt or webScrapperInt
-    googleApiInt or int_x
+    val int1: (JoinServices1 ~> F) = cacheInt or webScrapperInt
+    googleApiInt or int1
   }
 
 }

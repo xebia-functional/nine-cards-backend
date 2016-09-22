@@ -5,8 +5,8 @@ import com.fortysevendeg.ninecards.googleplay.service.free.algebra.{apigoogle, c
 
 package object free {
 
-  type JoinServices_x[A] = Coproduct[cache.Ops, webscrapper.Ops, A]
-  type JoinServices[A] = Coproduct[apigoogle.Ops, JoinServices_x, A]
+  type JoinServices1[A] = Coproduct[cache.Ops, webscrapper.Ops, A]
+  type JoinServices[A] = Coproduct[apigoogle.Ops, JoinServices1, A]
 
 }
 
