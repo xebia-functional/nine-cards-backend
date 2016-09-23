@@ -3,10 +3,11 @@ package cards.nine.processes
 import cards.nine.processes.NineCardsServices._
 import cards.nine.processes.messages.InstallationsMessages._
 import cards.nine.processes.messages.UserMessages.{ LoginRequest, LoginResponse }
+import cards.nine.processes.utils.DatabaseContext._
 import cards.nine.processes.utils.{ DummyNineCardsConfig, HashUtils }
 import cards.nine.services.free.algebra.DBResult.DBOps
 import cards.nine.services.free.domain.{ Installation, User }
-import cards.nine.services.persistence.{ UserPersistenceServices, _ }
+import cards.nine.services.persistence.UserPersistenceServices
 import com.roundeights.hasher.Hasher
 import doobie.imports._
 import org.mockito.Matchers.{ eq ⇒ mockEq }
@@ -28,7 +29,8 @@ trait UserProcessesSpecification
 
   trait BasicScope extends Scope {
     implicit val userPersistenceServices: UserPersistenceServices = mock[UserPersistenceServices]
-    val userProcesses = new UserProcesses[NineCardsServices]
+
+    val userProcesses = UserProcesses.processes[NineCardsServices]
   }
 
   trait UserAndInstallationSuccessfulScope extends BasicScope {
@@ -162,8 +164,12 @@ class UserProcessesSpec
     "return the userId for a valid sessionToken and androidId without considering the authToken " +
       "if the debug Mode is enabled" in new UserAndInstallationSuccessfulScope {
 
-        val debugUserProcesses = UserProcesses.userProcesses[NineCardsServices](
-          userPersistenceServices, dummyConfig(debugMode = true), HashUtils.hashUtils, DBOps.dbOps
+        val debugUserProcesses = UserProcesses.processes[NineCardsServices](
+          userPersistenceServices = userPersistenceServices,
+          config                  = dummyConfig(debugMode = true),
+          hashUtils               = HashUtils.hashUtils,
+          transactor              = transactor,
+          dbOps                   = DBOps.dbOps
         )
 
         val checkAuthToken = debugUserProcesses.checkAuthToken(

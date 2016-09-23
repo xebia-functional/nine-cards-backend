@@ -1,24 +1,14 @@
 package cards.nine.services.persistence
 
-import cards.nine.services.utils.DummyNineCardsConfig
 import doobie.imports._
 import org.scalacheck.{ Arbitrary, Gen }
 import org.specs2._
 import org.specs2.matcher.DisjunctionMatchers
 import org.specs2.mutable.Specification
-import org.specs2.specification.BeforeEach
 
 import scalaz.std.iterable._
-import scalaz.\/
 
-trait DatabaseContext extends DummyNineCardsConfig {
-
-  private[this] val trx = transactor
-
-  implicit class Transacting[A](operation: ConnectionIO[A]) {
-    def transactAndRun(): A = operation.transact(trx).unsafePerformSync
-    def transactAndAttempt(): \/[Throwable, A] = operation.transact(trx).unsafePerformSyncAttempt
-  }
+trait DatabaseContext extends PersistenceDatabaseContext {
 
   case class PersistenceItem(id: Long, name: String, active: Boolean)
 
@@ -33,44 +23,27 @@ trait DatabaseContext extends DummyNineCardsConfig {
   val updateByIdSql = "UPDATE persistence SET name=?,active=? WHERE id=?"
   val updateByStatusSql = "UPDATE persistence SET active=? WHERE active=?"
 
-  def createTable: ConnectionIO[Int] =
-    sql"""
-          CREATE TABLE persistence (
-          id   BIGINT AUTO_INCREMENT,
-          name VARCHAR NOT NULL,
-          active BOOL NOT NULL)""".update.run
-
-  def dropTable: ConnectionIO[Int] = sql"""DROP TABLE IF EXISTS persistence""".update.run
-
-  def insertItem(
-    name: String,
-    active: Boolean
-  ): ConnectionIO[Long] =
-    sql"INSERT INTO persistence (name, active) VALUES ($name,$active)".update.withUniqueGeneratedKeys[Long]("id")
-
-  def insertItems(
-    values: List[(String, Boolean)]
-  ): ConnectionIO[Int] =
-    Update[(String, Boolean)]("INSERT INTO persistence (name, active) VALUES (?,?)").updateMany(values)
-
   def fetchAll: ConnectionIO[List[(String, Boolean, Long)]] =
     sql"SELECT name,active,id FROM persistence".query[(String, Boolean, Long)].list
 
-  def fetchItemById(
-    id: Long
-  ): ConnectionIO[PersistenceItem] =
+  def fetchItemById(id: Long): ConnectionIO[PersistenceItem] =
     sql"SELECT id,name,active FROM persistence WHERE id=$id".query[PersistenceItem].unique
 
-  def fetchItemByStatus(
-    active: Boolean
-  ): ConnectionIO[List[PersistenceItem]] =
-    sql"SELECT id,name,active FROM persistence WHERE active=$active".query[PersistenceItem].list
+  object WithData {
 
-  def fetchItemByStatuses(
-    active: Boolean
-  ): ConnectionIO[List[PersistenceItem]] = {
-    val inactive = !active
-    sql"SELECT id,name,active FROM persistence WHERE active=$active OR active=$inactive".query[PersistenceItem].list
+    def apply[A: Composite, B](data: List[A])(f: ⇒ ConnectionIO[B]) = {
+      for {
+        _ ← insertItems(insertSql, data)
+        result ← f
+      } yield result
+    }
+
+    def apply[A: Composite, B](data: A)(f: Long ⇒ ConnectionIO[B]) = {
+      for {
+        id ← insertItem(insertSql, data)
+        result ← f(id)
+      } yield result
+    }
   }
 
   val persistence = new Persistence[PersistenceItem]
@@ -100,19 +73,9 @@ trait DatabaseContext extends DummyNineCardsConfig {
 
 class PersistenceSpec
   extends Specification
-  with BeforeEach
   with DatabaseContext
   with DisjunctionMatchers
   with ScalaCheck {
-
-  sequential
-
-  override def before = {
-    for {
-      _ ← dropTable
-      _ ← createTable
-    } yield ()
-  }.transactAndRun
 
   "fetchList (SQL without parameters)" should {
     "return an empty list if the table is empty" in {
@@ -127,9 +90,10 @@ class PersistenceSpec
     "return a list of PersistenceItem if there are some elements in the table " +
       "that meet the criteria" in {
         prop { (data: List[(String, Boolean)]) ⇒
-          insertItems(data).transactAndRun
 
-          val list = persistence.fetchList(sql = fetchAllSql).transactAndRun
+          val list = WithData(data) {
+            persistence.fetchList(sql = fetchAllSql)
+          }.transactAndRun
 
           list must not be empty
         }
@@ -139,9 +103,10 @@ class PersistenceSpec
       "that meet the criteria" in {
         prop { (names: List[String]) ⇒
           val namesWithStatus = names map ((_, false))
-          insertItems(namesWithStatus).transactAndRun
 
-          val list = persistence.fetchList(sql = fetchAllActiveSql).transactAndRun
+          val list = WithData(namesWithStatus) {
+            persistence.fetchList(sql = fetchAllActiveSql)
+          }.transactAndRun
 
           list must beEmpty
         }
@@ -162,12 +127,10 @@ class PersistenceSpec
     "return a list of PersistenceItem if there are some elements in the table that meet the criteria" in {
       prop { (names: List[String]) ⇒
         val namesWithStatus = names map ((_, true))
-        insertItems(namesWithStatus).transactAndRun
 
-        val list = persistence.fetchList(
-          sql    = fetchByStatusSql,
-          values = true
-        ).transactAndRun
+        val list = WithData(namesWithStatus) {
+          persistence.fetchList(sql = fetchByStatusSql, values = true)
+        }.transactAndRun
 
         list must not be empty
         list.forall(item ⇒ item.active) must beTrue
@@ -176,12 +139,10 @@ class PersistenceSpec
     "return an empty list if there aren't any elements in the table that meet the criteria" in {
       prop { (names: List[String]) ⇒
         val namesWithStatus = names map ((_, true))
-        insertItems(namesWithStatus).transactAndRun
 
-        val list = persistence.fetchList(
-          sql    = fetchByStatusSql,
-          values = false
-        ).transactAndRun
+        val list = WithData(namesWithStatus) {
+          persistence.fetchList(sql = fetchByStatusSql, values = false)
+        }.transactAndRun
 
         list must beEmpty
       }
@@ -202,16 +163,16 @@ class PersistenceSpec
     "return a PersistenceItem if there is an element in the table that meets the criteria" in {
       prop { (data: (String, Boolean)) ⇒
         val (name, active) = data
-        val id = insertItem(name = name, active = active).transactAndRun
 
-        val persistenceItem = persistence.fetchOption(
-          sql    = fetchByIdAndStatusSql,
-          values = (id, active)
-        ).transactAndRun
+        val persistenceItem = WithData(data) { id ⇒
+          persistence.fetchOption(
+            sql    = fetchByIdAndStatusSql,
+            values = (id, active)
+          )
+        }.transactAndRun
 
         persistenceItem must beSome[PersistenceItem].which {
           item ⇒
-            item.id mustEqual id
             item.name mustEqual name
             item.active mustEqual active
         }
@@ -220,11 +181,13 @@ class PersistenceSpec
     "return None if there isn't any element in the table that meets the criteria" in {
       prop { (data: (String, Boolean)) ⇒
         val (name, active) = data
-        val id = insertItem(name = name, active = active).transactAndRun
-        val persistenceItem = persistence.fetchOption(
-          sql    = fetchByIdAndStatusSql,
-          values = (id, !active)
-        ).transactAndRun
+
+        val persistenceItem = WithData(data) { id ⇒
+          persistence.fetchOption(
+            sql    = fetchByIdAndStatusSql,
+            values = (id, !active)
+          )
+        }.transactAndRun
 
         persistenceItem must beEmpty
       }
@@ -232,12 +195,13 @@ class PersistenceSpec
     "throw an exception if there are more than one element in the table that meet the criteria" in {
       prop { (names: List[String]) ⇒
         val namesWithStatus = names map ((_, true))
-        insertItems(namesWithStatus).transactAndRun
 
-        persistence.fetchOption(
-          sql    = fetchByStatusSql,
-          values = true
-        ).transactAndRun must throwA[Throwable]
+        WithData(namesWithStatus) {
+          persistence.fetchOption(
+            sql    = fetchByStatusSql,
+            values = true
+          )
+        }.transactAndAttempt must be_-\/[Throwable]
       }
     }
   }
@@ -254,36 +218,39 @@ class PersistenceSpec
     "return a PersistenceItem if there is an element in the table with the given id" in {
       prop { (data: (String, Boolean)) ⇒
         val (name, active) = data
-        val id = insertItem(name = name, active = active).transactAndRun
-        val item = persistence.fetchUnique(
-          sql    = fetchByIdSql,
-          values = id
-        ).transactAndRun
 
-        item.id mustEqual id
+        val item = WithData(data) { id ⇒
+          persistence.fetchUnique(
+            sql    = fetchByIdSql,
+            values = id
+          )
+        }.transactAndRun
+
         item.name mustEqual name
       }
     }
     "throw an exception if there isn't any element in the table that meet the criteria" in {
       prop { (data: (String, Boolean)) ⇒
         val (name, active) = data
-        val id = insertItem(name = name, active = active).transactAndRun
 
-        persistence.fetchUnique(
-          sql    = fetchByIdAndStatusSql,
-          values = (id, !active)
-        ).transactAndAttempt must be_-\/[Throwable]
+        WithData(data) { id ⇒
+          persistence.fetchUnique(
+            sql    = fetchByIdAndStatusSql,
+            values = (id, !active)
+          )
+        }.transactAndAttempt must be_-\/[Throwable]
       }
     }
     "throw an exception if there are more than one element in the table that meet the criteria" in {
       prop { (names: List[String]) ⇒
         val namesWithStatus = names map ((_, true))
-        insertItems(namesWithStatus).transactAndRun
 
-        persistence.fetchUnique(
-          sql    = fetchByStatusSql,
-          values = true
-        ).transactAndRun must throwA[Throwable]
+        WithData(namesWithStatus) {
+          persistence.fetchUnique(
+            sql    = fetchByStatusSql,
+            values = true
+          )
+        }.transactAndAttempt must be_-\/[Throwable]
       }
     }
   }
@@ -292,34 +259,29 @@ class PersistenceSpec
     "return the number of affected rows equals to 0 after updating items in the table " +
       "if the table is empty" in {
         prop { (i: Int) ⇒
-          persistence.update(sql = updateAllSql).transactAndAttempt must be_\/-[Int].which {
-            affectedRows ⇒
-              affectedRows mustEqual 0
-          }
+          persistence.update(
+            sql = updateAllSql
+          ).transactAndRun must_== 0
         }
       }
     "return the number of affected rows after updating items in the table " +
       "if there are some elements that meet the criteria" in {
         prop { (names: List[String]) ⇒
           val namesWithStatus = names map ((_, true))
-          insertItems(namesWithStatus).transactAndRun
 
-          persistence.update(updateAllActiveSql).transactAndAttempt must be_\/-[Int].which {
-            affectedRows ⇒
-              affectedRows must be greaterThan 0
-          }
+          WithData(namesWithStatus) {
+            persistence.update(updateAllActiveSql)
+          }.transactAndRun must be_>(0)
         }
       }
     "return the number of affected rows equals to 0 after updating items in the table " +
       "if there aren't any elements that meet the criteria" in {
         prop { (names: List[String]) ⇒
           val namesWithStatus = names map ((_, false))
-          insertItems(namesWithStatus).transactAndRun
 
-          persistence.update(updateAllActiveSql).transactAndAttempt must be_\/-[Int].which {
-            affectedRows ⇒
-              affectedRows mustEqual 0
-          }
+          WithData(namesWithStatus) {
+            persistence.update(updateAllActiveSql)
+          }.transactAndRun must_== 0
         }
       }
   }
@@ -331,61 +293,52 @@ class PersistenceSpec
           persistence.update(
             sql    = updateByStatusSql,
             values = (!active, active)
-          ).transactAndAttempt must be_\/-[Int].which {
-            affectedRows ⇒
-              affectedRows mustEqual 0
-          }
+          ).transactAndRun must_== 0
         }
       }
     "return the number of affected rows equals to 1 after updating a single item in the table " in {
       prop { (data: (String, Boolean)) ⇒
         val (name, active) = data
-        val id = insertItem(name = name, active = active).transactAndRun
 
-        persistence.update(
-          sql    = updateByIdSql,
-          values = (name, !active, id)
-        ).transactAndAttempt must be_\/-[Int].which {
-          affectedRows ⇒
-            affectedRows mustEqual 1
-        }
+        val (affectedRows, item) = WithData(data) { id ⇒
 
-        fetchItemById(id).transactAndAttempt must be_\/-[PersistenceItem].which {
-          item ⇒
-            item.id mustEqual id
-            item.name mustEqual name
-            item.active mustEqual !active
-        }
+          for {
+            affectedRows ← persistence.update(updateByIdSql, (name, !active, id))
+            item ← fetchItemById(id)
+          } yield (affectedRows, item)
+
+        }.transactAndRun
+
+        affectedRows must_== 1
+
+        item.name mustEqual name
+        item.active mustEqual !active
       }
     }
     "return the number of affected rows after updating items in the table " +
       "if there are some elements that meet the criteria" in {
         prop { (names: List[String]) ⇒
           val namesWithStatus = names map ((_, true))
-          insertItems(namesWithStatus).transactAndRun
 
-          persistence.update(
-            sql    = updateByStatusSql,
-            values = (false, true)
-          ).transactAndAttempt must be_\/-[Int].which {
-            affectedRows ⇒
-              affectedRows must be greaterThan 0
-          }
+          WithData(namesWithStatus) {
+            persistence.update(
+              sql    = updateByStatusSql,
+              values = (false, true)
+            )
+          }.transactAndRun must be_>(0)
         }
       }
     "return the number of affected rows equals to 0 after updating items in the table " +
       "if there aren't any elements that meet the criteria" in {
         prop { (names: List[String]) ⇒
           val namesWithStatus = names map ((_, false))
-          insertItems(namesWithStatus).transactAndRun
 
-          persistence.update(
-            sql    = updateByStatusSql,
-            values = (false, true)
-          ).transactAndAttempt must be_\/-[Int].which {
-            affectedRows ⇒
-              affectedRows mustEqual 0
-          }
+          WithData(namesWithStatus) {
+            persistence.update(
+              sql    = updateByStatusSql,
+              values = (false, true)
+            )
+          }.transactAndRun must_== 0
         }
       }
     "return the number of affected rows equals to 1 after inserting a new item in the table" in {
@@ -394,10 +347,7 @@ class PersistenceSpec
         persistence.update(
           sql    = insertSql,
           values = (name, active)
-        ).transactAndAttempt must be_\/-[Int].which {
-          affectedRows ⇒
-            affectedRows mustEqual 1
-        }
+        ).transactAndRun must_== 1
       }
     }
   }
@@ -407,19 +357,19 @@ class PersistenceSpec
       prop { (data: (String, Boolean)) ⇒
         val (name, active) = data
 
-        persistence.updateWithGeneratedKeys[Long](
-          sql    = insertSql,
-          fields = List("id"),
-          values = data
-        ).transactAndAttempt must be_\/-[Long].which {
-            id ⇒
-              fetchItemById(id).transactAndAttempt must be_\/-[PersistenceItem].which {
-                item ⇒
-                  item.id mustEqual id
-                  item.name mustEqual name
-                  item.active mustEqual active
-              }
-          }
+        val (id, item) = (for {
+          id ← persistence.updateWithGeneratedKeys[Long](
+            sql    = insertSql,
+            fields = List("id"),
+            values = data
+          )
+          item ← fetchItemById(id)
+        } yield (id, item)).transactAndRun
+
+        item.id mustEqual id
+        item.name mustEqual name
+        item.active mustEqual active
+
       }
     }
   }
@@ -431,10 +381,7 @@ class PersistenceSpec
         persistence.updateMany(
           sql    = insertSql,
           values = data
-        ).transactAndAttempt must be_\/-[Int].which {
-          affectedRows ⇒
-            affectedRows mustEqual data.size
-        }
+        ).transactAndRun must_== data.size
       }
     }
 
@@ -444,31 +391,25 @@ class PersistenceSpec
           persistence.updateMany(
             sql    = updateByIdSql,
             values = data
-          ).transactAndAttempt must be_\/-[Int].which {
-            affectedRows ⇒
-              affectedRows mustEqual 0
-          }
+          ).transactAndRun must_== 0
         }
       }
     "return the number of affected rows after updating a batch of items in the table " +
       "if the items exist" in {
         prop { (data: List[(String, Boolean)]) ⇒
-          val fetchData = {
-            for {
-              _ ← insertItems(data)
-              result ← fetchAll
-            } yield result
-          }.transactAndRun map {
-            case (name, active, id) ⇒ (name, !active, id)
-          }
 
-          persistence.updateMany(
-            sql    = updateByIdSql,
-            values = fetchData
-          ).transactAndAttempt must be_\/-[Int].which {
-            affectedRows ⇒
-              affectedRows mustEqual fetchData.size
-          }
+          val affectedRows = WithData(data) {
+            for {
+              result ← fetchAll
+              updateData = result map { case (name, active, id) ⇒ (name, !active, id) }
+              affectedRows ← persistence.updateMany(
+                sql    = updateByIdSql,
+                values = updateData
+              )
+            } yield affectedRows
+          }.transactAndRun
+
+          affectedRows must_== data.size
         }
       }
   }

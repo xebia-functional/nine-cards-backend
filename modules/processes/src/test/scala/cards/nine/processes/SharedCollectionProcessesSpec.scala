@@ -8,10 +8,10 @@ import cards.nine.processes.TestData.Messages._
 import cards.nine.processes.TestData.Values._
 import cards.nine.processes.TestData._
 import cards.nine.processes.messages.SharedCollectionMessages._
-import cards.nine.processes.utils.DummyNineCardsConfig
+import cards.nine.processes.utils.DatabaseContext._
 import cards.nine.services.free.algebra.{ Firebase, GooglePlay }
 import cards.nine.services.free.domain.Firebase.FirebaseError
-import cards.nine.services.free.domain.{ SharedCollectionSubscription, SharedCollectionWithAggregatedInfo, SharedCollection ⇒ SharedCollectionServices }
+import cards.nine.services.free.domain.{ SharedCollection ⇒ SharedCollectionServices, _ }
 import cards.nine.services.persistence._
 import doobie.imports._
 import org.mockito.Matchers.{ eq ⇒ mockEq }
@@ -27,7 +27,6 @@ trait SharedCollectionProcessesSpecification
   extends Specification
   with Matchers
   with Mockito
-  with DummyNineCardsConfig
   with XorMatchers
   with TestInterpreters {
 
@@ -38,7 +37,8 @@ trait SharedCollectionProcessesSpecification
     implicit val userPersistenceServices = mock[UserPersistenceServices]
     implicit val firebaseServices = mock[Firebase.Services[NineCardsServices]]
     implicit val googlePlayServices = mock[GooglePlay.Services[NineCardsServices]]
-    implicit val sharedCollectionProcesses = new SharedCollectionProcesses[NineCardsServices]
+
+    implicit val sharedCollectionProcesses = SharedCollectionProcesses.processes[NineCardsServices]
 
     def mockGetSubscription(res: Option[SharedCollectionSubscription]) = {
       subscriptionPersistenceServices
