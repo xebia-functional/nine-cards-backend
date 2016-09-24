@@ -1,11 +1,12 @@
 package com.fortysevendeg.ninecards.googleplay.service.free.interpreter
 
 import com.redis.RedisClient
+import scalaz.concurrent.Task
 
 package object cache {
 
   type CacheEntry = (CacheKey, CacheVal)
 
-  type WithClient[+A] = RedisClient => A 
+  type WithRedisClient[+A] = RedisClient => Task[A]
 
 }

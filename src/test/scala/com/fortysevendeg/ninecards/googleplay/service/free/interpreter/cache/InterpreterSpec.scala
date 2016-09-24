@@ -1,7 +1,6 @@
 package com.fortysevendeg.ninecards.googleplay.service.free.interpreter.cache
 
 import com.fortysevendeg.ninecards.googleplay.domain.{Package, FullCard}
-import com.fortysevendeg.ninecards.googleplay.service.free.interpreter.TestData.fortyseven
 import com.fortysevendeg.ninecards.googleplay.service.free.algebra.cache._
 import com.fortysevendeg.ninecards.googleplay.util.{ScalaCheck => CustomArbitrary}
 import com.redis.RedisClient
@@ -27,7 +26,7 @@ class InterpreterSpec extends Specification with ScalaCheck with BeforeAll with 
 
     val interpreter = CacheInterpreter
 
-    def eval[A]( op: Ops[A]) = interpreter(op)(redisClient)
+    def eval[A]( op: Ops[A]) = interpreter(op)(redisClient).run
 
     def keyPattern( p: String, t: String, d: String) =
       s"""{"package":"$p","keyType":"$t","date":$d}""".trim
@@ -67,9 +66,9 @@ class InterpreterSpec extends Specification with ScalaCheck with BeforeAll with 
 
     "return None if the cache only contains Error or Pending entries for the package" >>
       prop { pack: Package =>
-        putEntry( CacheEntry.error( pack, DateTime.now ) )
-        putEntry( CacheEntry.error( pack, DateTime.now ) )
-        eval (GetValid( fortyseven.packageObj )) must beNone
+        putEntry( CacheEntry.pending( pack) )
+        putEntry( CacheEntry.error( pack, date ) )
+        eval (GetValid( pack )) must beNone
       }
 
     "return Some(e) if the cache contains a Resolved entry" >>
@@ -186,7 +185,7 @@ class InterpreterSpec extends Specification with ScalaCheck with BeforeAll with 
     "remove existing error entries" >>
       prop { pack: Package  => 
         flush
-        putEntry( CacheEntry.error( pack, DateTime.now ) )
+        putEntry( CacheEntry.error( pack, date ) )
         eval( ClearInvalid(pack) )
         redisClient.keys( allByPackage(pack) ) must beSome.which( _.isEmpty)
       }
@@ -221,17 +220,17 @@ class InterpreterSpec extends Specification with ScalaCheck with BeforeAll with 
   "List Pending" should {
     import org.scalacheck.{Arbitrary, Gen}
 
-    case class TestData( allPending: List[Package], num: Int )
+    case class ListPendingTest( allPending: List[Package], num: Int )
 
-    val listPendingGen: Gen[TestData] = for /*Gen*/ {
+    val listPendingGen: Gen[ListPendingTest] = for /*Gen*/ {
       allPending <- Gen.listOf( CustomArbitrary.arbPackage.arbitrary)
       num <- Gen.Choose.chooseInt.choose(0, allPending.length)
-    } yield TestData(allPending, num)
+    } yield ListPendingTest(allPending, num)
 
-    implicit val listPendingArb: Arbitrary[TestData] = Arbitrary(listPendingGen)
+    implicit val listPendingArb: Arbitrary[ListPendingTest] = Arbitrary(listPendingGen)
 
     "get all the pending elements for a package" >>
-      prop { testData: TestData  =>
+      prop { testData: ListPendingTest  =>
         import testData._
         flush
         allPending.map(CacheEntry.pending).foreach(putEntry)
