@@ -2,17 +2,21 @@ package com.fortysevendeg.ninecards.googleplay.service.free.interpreter.googleap
 
 import cats.data.Xor
 import com.fortysevendeg.ninecards.googleplay.domain._
+import com.fortysevendeg.ninecards.googleplay.processes.Wiring
 import com.fortysevendeg.ninecards.googleplay.TestConfig._
 import com.fortysevendeg.ninecards.googleplay.service.free.interpreter.TestData._
-import com.fortysevendeg.ninecards.googleplay.util.WithHttp1Client
 import org.specs2.matcher.TaskMatchers
 import org.specs2.mutable.Specification
+import org.specs2.specification.AfterAll
 
-class GoogleApiClientIntegration extends Specification with WithHttp1Client {
+class GoogleApiClientIntegration extends Specification with AfterAll {
 
   import TaskMatchers._
 
-  private val apiServices = new ApiServices( new ApiClient(googleApiConf, pooledClient) )
+  val wiring = new Wiring()
+  private val apiServices = wiring.apiServices
+
+  override def afterAll: Unit = wiring.shutdown
 
   sequential
 

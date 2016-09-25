@@ -6,6 +6,7 @@ import cats.data.Xor
 import cats.free.Free
 import com.fortysevendeg.extracats._
 import com.fortysevendeg.ninecards.googleplay.domain._
+import com.fortysevendeg.ninecards.googleplay.processes.Wiring
 import com.fortysevendeg.ninecards.googleplay.service.free.algebra.GooglePlay
 import io.circe.generic.auto._
 import scalaz.concurrent.Task
@@ -18,7 +19,7 @@ class NineCardsGooglePlayActor extends Actor with HttpService {
 
   private val apiRoute: Route = {
 
-    val interpreter: GooglePlay.Ops ~> Task = Wiring.interpreter()
+    val interpreter: GooglePlay.Ops ~> Task = new Wiring().interpreter
     implicit val trmFactory: TRMFactory[ GooglePlay.FreeOps ] =
       NineCardsMarshallers.contraNaturalTransformFreeTRMFactory[GooglePlay.Ops, Task](
         interpreter, taskMonad, NineCardsMarshallers.TaskMarshallerFactory)
