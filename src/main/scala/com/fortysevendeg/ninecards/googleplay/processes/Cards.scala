@@ -75,14 +75,15 @@ class CardsProcess[F[_]](
 
   def resolvePendingPackage(pack: Package, date: DateTime): Free[F, ResolvePending.PackageStatus] = {
     import ResolvePending._
+    import InCache._
 
     webScrapper.getDetails(pack) flatMap {
       case Xor.Right(card) =>
-        for (_ <- InCache.storeAsResolved(card)) yield Resolved
+        for (_ <- storeAsResolved(card)) yield Resolved
       case Xor.Left( PageParseFailed(_) ) =>
-        for (_ <- InCache.storeAsError(pack, date) ) yield Unknown
+        for (_ <- storeAsPending(pack) ) yield Pending
       case Xor.Left( PackageNotFound(_) ) =>
-        for (_ <- InCache.storeAsError(pack, date) ) yield Unknown
+        for (_ <- storeAsError(pack, date) ) yield Unknown
       case Xor.Left( WebPageServerError ) =>
         Free.pure(Pending)
     }
@@ -91,10 +92,10 @@ class CardsProcess[F[_]](
   def searchAndResolvePending( numApps: Int, date: DateTime) : Free[F, Unit] = {
     import ResolvePending._
 
-    def splitStatus( stati: List[(Package, PackageStatus)]): Response = {
-      val solved  = stati collect { case (pack,Resolved) => pack }
-      val unknown = stati collect { case (pack,Unknown) => pack }
-      val pending = stati collect { case (pack,Pending) => pack }
+    def splitStatus( status: List[(Package, PackageStatus)]): Response = {
+      val solved  = status collect { case (pack,Resolved) => pack }
+      val unknown = status collect { case (pack,Unknown) => pack }
+      val pending = status collect { case (pack,Pending) => pack }
       Response(solved, unknown, pending)
     }
 
@@ -102,10 +103,10 @@ class CardsProcess[F[_]](
 
     for /*Free[F] */ {
       list <- cacheService.listPending(numApps)
-      stati <- list.traverse[FF,(Package, PackageStatus) ]{ pack =>
+      status <- list.traverse[FF,(Package, PackageStatus) ]{ pack =>
         for (status <- resolvePendingPackage(pack, date)) yield (pack, status)
       }
-    } yield splitStatus(stati)
+    } yield splitStatus(status)
 
   }
 
