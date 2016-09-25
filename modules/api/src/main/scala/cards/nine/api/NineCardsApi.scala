@@ -15,7 +15,6 @@ import cards.nine.api.utils.SprayMatchers._
 import cards.nine.processes.NineCardsServices._
 import cards.nine.processes._
 import cards.nine.processes.messages.ApplicationMessages.GetAppsInfoResponse
-import cards.nine.processes.utils.DatabaseTransactor._
 import cards.nine.services.free.domain.Category
 import cards.nine.services.free.domain.rankings._
 import spray.http.StatusCodes.NotFound
@@ -32,8 +31,6 @@ class NineCardsApiActor
   override val actorRefFactory = context
 
   implicit val executionContext: ExecutionContext = actorRefFactory.dispatcher
-
-  import cards.nine.services.persistence.CustomComposite.rankingEntry
 
   def receive = runRoute(new NineCardsRoutes().nineCardsRoutes)
 

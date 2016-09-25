@@ -1,16 +1,17 @@
-package cards.nine.services.persistence
+package cards.nine.services.free.interpreter.user
 
 import cards.nine.services.free.domain.{ Installation, SharedCollection, SharedCollectionSubscription, User }
+import cards.nine.services.free.interpreter.collection.Services.SharedCollectionData
+import cards.nine.services.free.interpreter.user.Services.UserData
 import cards.nine.services.persistence.NineCardsGenEntities._
-import cards.nine.services.persistence.SharedCollectionPersistenceServices.SharedCollectionData
-import cards.nine.services.persistence.UserPersistenceServices.UserData
+import cards.nine.services.persistence.{ DomainDatabaseContext, NineCardsScalacheckGen }
 import org.specs2.ScalaCheck
 import org.specs2.matcher.DisjunctionMatchers
 import org.specs2.mutable.Specification
 import org.specs2.specification.BeforeEach
 import shapeless.syntax.std.product._
 
-class UserPersistenceServicesSpec
+class ServicesSpec
   extends Specification
   with BeforeEach
   with ScalaCheck
@@ -153,18 +154,21 @@ class UserPersistenceServicesSpec
           values = (email.value, sessionToken.value, apiKey.value)
         ).transactAndRun
 
-        val id = userPersistenceServices.createInstallation[Long](
+        userPersistenceServices.createInstallation[Long](
           userId      = userId,
           deviceToken = None,
           androidId   = androidId.value
         ).transactAndRun
 
-        val storeInstallation = userPersistenceServices.getInstallationById(
-          id = id
+        val storeInstallation = userPersistenceServices.getInstallationByUserAndAndroidId(
+          userId    = userId,
+          androidId = androidId.value
         ).transactAndRun
 
-        storeInstallation should beSome[Installation].which {
-          install ⇒ install shouldEqual Installation(id = id, userId = userId, deviceToken = None, androidId = androidId.value)
+        storeInstallation should beSome[Installation].which { install ⇒
+          install.userId must_== userId
+          install.deviceToken must_== None
+          install.androidId must_== androidId.value
         }
       }
     }
@@ -257,4 +261,5 @@ class UserPersistenceServicesSpec
       }
     }
   }
+
 }

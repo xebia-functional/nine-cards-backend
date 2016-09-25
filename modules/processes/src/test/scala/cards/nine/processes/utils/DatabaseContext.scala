@@ -1,10 +1,33 @@
 package cards.nine.processes.utils
 
-import doobie.contrib.hikari.hikaritransactor.HikariTransactor
+import cards.nine.services.persistence.DatabaseTransactor
+import cats.Id
+import doobie.imports.Transactor
+import doobie.util.capture.Capture
 
-import scalaz.concurrent.Task
+import scalaz.{ Catchable, Monad, \/ }
 
-object DatabaseContext extends DummyNineCardsConfig {
+trait CatsIdInstances {
 
-  implicit val transactor: Task[HikariTransactor[Task]] = new DatabaseTransactor(config).transactor
+  implicit val idMonad = new Monad[Id] {
+    override def bind[A, B](fa: Id[A])(f: (A) ⇒ Id[B]): Id[B] = f(fa)
+
+    override def point[A](a: ⇒ A): Id[A] = a
+  }
+
+  implicit val idCatchable = new Catchable[Id] {
+
+    override def attempt[A](f: Id[A]): Id[\/[Throwable, A]] = \/.fromTryCatchNonFatal(f)
+
+    override def fail[A](err: Throwable): Id[A] = throw err
+  }
+
+  implicit val idCapture = new Capture[Id] {
+    override def apply[A](a: ⇒ A): Id[A] = a
+  }
+}
+
+object DatabaseContext extends DummyNineCardsConfig with CatsIdInstances {
+
+  implicit val transactor: Transactor[Id] = new DatabaseTransactor(config).transactor
 }

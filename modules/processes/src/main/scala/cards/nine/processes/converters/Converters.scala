@@ -25,9 +25,10 @@ import cards.nine.services.free.domain.{
   SharedCollectionWithAggregatedInfo,
   User ⇒ UserAppServices
 }
-import cards.nine.services.persistence.SharedCollectionPersistenceServices.{
+import cards.nine.services.free.interpreter.collection.Services.{
   SharedCollectionData ⇒ SharedCollectionDataServices
 }
+
 import org.joda.time.DateTime
 
 object Converters {

@@ -9,6 +9,7 @@ import cards.nine.processes.TestData.Values._
 import cards.nine.processes.TestData._
 import cards.nine.processes.messages.SharedCollectionMessages._
 import cards.nine.processes.utils.DatabaseContext._
+import cards.nine.services.free.algebra
 import cards.nine.services.free.algebra.{ Firebase, GooglePlay }
 import cards.nine.services.free.domain.Firebase.FirebaseError
 import cards.nine.services.free.domain.{ SharedCollection ⇒ SharedCollectionServices, _ }
@@ -32,99 +33,96 @@ trait SharedCollectionProcessesSpecification
 
   trait BasicScope extends Scope {
 
-    implicit val collectionPersistenceServices = mock[SharedCollectionPersistenceServices]
-    implicit val subscriptionPersistenceServices = mock[SharedCollectionSubscriptionPersistenceServices]
-    implicit val userPersistenceServices = mock[UserPersistenceServices]
+    implicit val collectionServices = mock[algebra.SharedCollection.Services[NineCardsServices]]
+    implicit val subscriptionServices = mock[algebra.Subscription.Services[NineCardsServices]]
+    implicit val userServices = mock[algebra.User.Services[NineCardsServices]]
     implicit val firebaseServices = mock[Firebase.Services[NineCardsServices]]
     implicit val googlePlayServices = mock[GooglePlay.Services[NineCardsServices]]
 
     implicit val sharedCollectionProcesses = SharedCollectionProcesses.processes[NineCardsServices]
 
     def mockGetSubscription(res: Option[SharedCollectionSubscription]) = {
-      subscriptionPersistenceServices
-        .getSubscriptionByCollectionAndUser(any, any) returns
-        res.point[ConnectionIO]
+      subscriptionServices
+        .getByCollectionAndUser(any, any) returns
+        Free.pure(res)
     }
 
     def mockRemoveSubscription(res: Int) = {
-      subscriptionPersistenceServices
-        .removeSubscriptionByCollectionAndUser(any, any) returns
-        res.point[ConnectionIO]
+      subscriptionServices
+        .removeByCollectionAndUser(any, any) returns
+        Free.pure(res)
     }
 
   }
 
   trait SharedCollectionSuccessfulScope extends BasicScope {
 
-    collectionPersistenceServices.addCollection[SharedCollectionServices](
-      data = mockEq(sharedCollectionDataServices)
-    )(any) returns collection.point[ConnectionIO]
+    collectionServices.add(collection = mockEq(sharedCollectionDataServices)) returns
+      Free.pure(collection)
 
-    collectionPersistenceServices.addPackages(
-      collectionId = collectionId,
-      packagesName = packagesName
-    ) returns addedPackagesCount.point[ConnectionIO]
+    collectionServices.addPackages(
+      collection = collectionId,
+      packages   = packagesName
+    ) returns Free.pure(addedPackagesCount)
 
-    collectionPersistenceServices.getCollectionByPublicIdentifier(
-      publicIdentifier = publicIdentifier
-    ) returns Option(collection).point[ConnectionIO]
+    collectionServices.getByPublicId(
+      publicId = publicIdentifier
+    ) returns Free.pure(Option(collection))
 
-    collectionPersistenceServices.getPackagesByCollection(
-      collectionId = collectionId
-    ) returns packages.point[ConnectionIO]
+    collectionServices.getPackagesByCollection(
+      collection = collectionId
+    ) returns Free.pure(packages)
 
-    collectionPersistenceServices.getLatestCollectionsByCategory(
+    collectionServices.getLatestByCategory(
       category   = category,
       pageNumber = pageNumber,
       pageSize   = pageSize
-    ) returns List(collection).point[ConnectionIO]
+    ) returns Free.pure(List(collection))
 
-    collectionPersistenceServices.getCollectionsByUserId(
-      userId = publisherId
-    ) returns List(collectionWithSubscriptions).point[ConnectionIO]
+    collectionServices.getByUser(
+      user = publisherId
+    ) returns Free.pure(List(collectionWithSubscriptions))
 
-    collectionPersistenceServices.getTopCollectionsByCategory(
+    collectionServices.getTopByCategory(
       category   = category,
       pageNumber = pageNumber,
       pageSize   = pageSize
-    ) returns List(collection).point[ConnectionIO]
+    ) returns Free.pure(List(collection))
 
-    collectionPersistenceServices.getCollectionsByUserId(
-      userId = subscriberId
-    ) returns List[SharedCollectionWithAggregatedInfo]().point[ConnectionIO]
+    collectionServices.getByUser(
+      user = subscriberId
+    ) returns Free.pure(List[SharedCollectionWithAggregatedInfo]())
 
-    collectionPersistenceServices.updateCollectionInfo(
+    collectionServices.update(
       id    = collectionId,
       title = name
-    ) returns updatedCollectionsCount.point[ConnectionIO]
+    ) returns Free.pure(updatedCollectionsCount)
 
-    collectionPersistenceServices.updatePackages(
-      collectionId = collectionId,
-      packages     = updatePackagesName
-    ) returns updatedPackages.point[ConnectionIO]
+    collectionServices.updatePackages(
+      collection = collectionId,
+      packages   = updatePackagesName
+    ) returns Free.pure(updatedPackages)
 
     firebaseServices.sendUpdatedCollectionNotification(any) returns Free.pure(Xor.right(notificationResponse))
 
-    subscriptionPersistenceServices
-      .addSubscription(any, any, any) returns
-      updatedSubscriptionsCount.point[ConnectionIO]
+    subscriptionServices
+      .add(any, any, any) returns
+      Free.pure(updatedSubscriptionsCount)
 
-    subscriptionPersistenceServices
-      .getSubscriptionsByUser(any) returns
-      List(subscription).point[ConnectionIO]
+    subscriptionServices
+      .getByUser(any) returns
+      Free.pure(List(subscription))
 
     googlePlayServices.resolveMany(any, any) returns Free.pure(appsInfo)
 
-    userPersistenceServices
-      .getSubscribedInstallationByCollection(any) returns
-      List(installation).point[ConnectionIO]
+    userServices.getSubscribedInstallationByCollection(any) returns
+      Free.pure(List(installation))
   }
 
   trait SharedCollectionUnsuccessfulScope extends BasicScope {
 
-    collectionPersistenceServices.getCollectionByPublicIdentifier(
-      publicIdentifier = publicIdentifier
-    ) returns nonExistentSharedCollection.point[ConnectionIO]
+    collectionServices.getByPublicId(publicId = publicIdentifier) returns
+      Free.pure(nonExistentSharedCollection)
   }
 
 }
@@ -208,7 +206,7 @@ class SharedCollectionProcessesSpec
     "return a list of public identifiers of collections which the user is subscribed to" in new SharedCollectionSuccessfulScope {
       val response = GetSubscriptionsByUserResponse(List(publicIdentifier))
       val subscriptions = sharedCollectionProcesses.getSubscriptionsByUser(
-        userId = subscriberId
+        user = subscriberId
       )
       subscriptions.foldMap(testInterpreters) mustEqual response
     }

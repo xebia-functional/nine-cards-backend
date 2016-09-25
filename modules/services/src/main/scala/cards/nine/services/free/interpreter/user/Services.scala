@@ -1,60 +1,61 @@
-package cards.nine.services.persistence
+package cards.nine.services.free.interpreter.user
 
 import cards.nine.services.free.domain.Installation.{ Queries ⇒ InstallationQueries }
 import cards.nine.services.free.domain.User.{ Queries ⇒ UserQueries }
-import cards.nine.services.free.domain._
+import cards.nine.services.free.domain.{ Installation, User }
+import cards.nine.services.persistence.Persistence
 import doobie.imports._
 
-class UserPersistenceServices(
-  implicit
+class Services(
   userPersistence: Persistence[User],
   installationPersistence: Persistence[Installation]
 ) {
 
-  type CIO[K] = ConnectionIO[K]
-
-  def addUser[K: Composite](email: String, apiKey: String, sessionToken: String): CIO[K] =
+  def addUser[K: Composite](email: String, apiKey: String, sessionToken: String): ConnectionIO[K] =
     userPersistence.updateWithGeneratedKeys[K](
       sql    = UserQueries.insert,
       fields = User.allFields,
       values = (email, sessionToken, apiKey)
     )
 
-  def getUserByEmail(email: String): CIO[Option[User]] =
+  def getUserByEmail(email: String): ConnectionIO[Option[User]] =
     userPersistence.fetchOption(UserQueries.getByEmail, email)
 
-  def getUserBySessionToken(sessionToken: String): CIO[Option[User]] =
+  def getUserBySessionToken(sessionToken: String): ConnectionIO[Option[User]] =
     userPersistence.fetchOption(UserQueries.getBySessionToken, sessionToken)
 
-  def createInstallation[K: Composite](userId: Long, deviceToken: Option[String], androidId: String): CIO[K] =
+  def createInstallation[K: Composite](
+    userId: Long,
+    deviceToken: Option[String],
+    androidId: String
+  ): ConnectionIO[K] =
     userPersistence.updateWithGeneratedKeys[K](
       sql    = InstallationQueries.insert,
       fields = Installation.allFields,
       values = (userId, deviceToken, androidId)
     )
 
-  def getInstallationByUserAndAndroidId(userId: Long, androidId: String): CIO[Option[Installation]] =
+  def getInstallationByUserAndAndroidId(
+    userId: Long,
+    androidId: String
+  ): ConnectionIO[Option[Installation]] =
     installationPersistence.fetchOption(
       sql    = InstallationQueries.getByUserAndAndroidId,
       values = (userId, androidId)
     )
 
-  def getInstallationById(id: Long): CIO[Option[Installation]] =
-    installationPersistence.fetchOption(InstallationQueries.getById, id)
-
-  def getSubscribedInstallationByCollection(publicIdentifier: String): CIO[List[Installation]] =
+  def getSubscribedInstallationByCollection(publicIdentifier: String): ConnectionIO[List[Installation]] =
     installationPersistence.fetchList(InstallationQueries.getSubscribedByCollection, publicIdentifier)
 
-  def updateInstallation[K: Composite](userId: Long, deviceToken: Option[String], androidId: String): CIO[K] =
+  def updateInstallation[K: Composite](userId: Long, deviceToken: Option[String], androidId: String): ConnectionIO[K] =
     userPersistence.updateWithGeneratedKeys[K](
       sql    = InstallationQueries.updateDeviceToken,
       fields = Installation.allFields,
       values = (deviceToken, userId, androidId)
     )
-
 }
 
-object UserPersistenceServices {
+object Services {
 
   case class UserData(
     email: String,
@@ -62,9 +63,10 @@ object UserPersistenceServices {
     sessionToken: String
   )
 
-  implicit def persistenceServices(
+  def services(
     implicit
     userPersistence: Persistence[User],
     installationPersistence: Persistence[Installation]
-  ) = new UserPersistenceServices
+  ) =
+    new Services(userPersistence, installationPersistence)
 }

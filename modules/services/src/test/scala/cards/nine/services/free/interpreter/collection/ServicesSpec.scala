@@ -1,20 +1,21 @@
-package cards.nine.services.persistence
+package cards.nine.services.free.interpreter.collection
 
-import cards.nine.services.free.domain._
-import cards.nine.services.persistence.SharedCollectionPersistenceServices.SharedCollectionData
-import cards.nine.services.persistence.UserPersistenceServices.UserData
-import doobie.imports.ConnectionIO
+import cards.nine.services.free.domain.{ SharedCollection, SharedCollectionPackage, SharedCollectionWithAggregatedInfo, User }
+import cards.nine.services.free.interpreter.collection.Services.SharedCollectionData
+import cards.nine.services.free.interpreter.user.Services.UserData
+import cards.nine.services.persistence.{ DomainDatabaseContext, NineCardsScalacheckGen }
+import doobie.imports._
 import org.specs2.ScalaCheck
 import org.specs2.matcher.DisjunctionMatchers
 import org.specs2.mutable.Specification
 import org.specs2.specification.BeforeEach
+import shapeless.syntax.std.product._
+
 import scala.annotation.tailrec
 import scala.collection.immutable.List
 
-import scalaz.syntax.traverse.ToTraverseOps // F[A] => TraverseOps[F, A]
-import scalaz.std.list.listInstance // Traverse[List]
-
-import shapeless.syntax.std.product._
+import scalaz.syntax.traverse.ToTraverseOps
+import scalaz.std.list._
 
 trait SharedCollectionPersistenceServicesContext extends DomainDatabaseContext {
 
@@ -77,8 +78,7 @@ trait SharedCollectionPersistenceServicesContext extends DomainDatabaseContext {
   }
 
 }
-
-class SharedCollectionPersistenceServicesSpec
+class ServicesSpec
   extends Specification
   with BeforeEach
   with ScalaCheck
@@ -98,12 +98,12 @@ class SharedCollectionPersistenceServicesSpec
       prop { (userData: UserData, collectionData: SharedCollectionData) ⇒
         val id = (for {
           u ← createUser(userData)
-          c ← collectionPersistenceServices.addCollection[Long](
+          c ← collectionPersistenceServices.add[Long](
             collectionData.copy(userId = Option(u))
           )
         } yield c).transactAndRun
 
-        val storedCollection = collectionPersistenceServices.getCollectionById(
+        val storedCollection = collectionPersistenceServices.getById(
           id = id
         ).transactAndRun
 
@@ -115,11 +115,11 @@ class SharedCollectionPersistenceServicesSpec
 
     "create a new shared collection without a defined user id" in {
       prop { (collectionData: SharedCollectionData) ⇒
-        val id: Long = collectionPersistenceServices.addCollection[Long](
+        val id: Long = collectionPersistenceServices.add[Long](
           collectionData.copy(userId = None)
         ).transactAndRun
 
-        val storedCollection = collectionPersistenceServices.getCollectionById(
+        val storedCollection = collectionPersistenceServices.getById(
           id = id
         ).transactAndRun
 
@@ -130,10 +130,10 @@ class SharedCollectionPersistenceServicesSpec
     }
   }
 
-  "getCollectionById" should {
+  "getById" should {
     "return None if the table is empty" in {
       prop { (id: Long) ⇒
-        val collection = collectionPersistenceServices.getCollectionById(
+        val collection = collectionPersistenceServices.getById(
           id = id
         ).transactAndRun
 
@@ -147,7 +147,7 @@ class SharedCollectionPersistenceServicesSpec
           c ← insertItem(SharedCollection.Queries.insert, collectionData.copy(userId = Option(u)).toTuple)
         } yield c).transactAndRun
 
-        val storedCollection = collectionPersistenceServices.getCollectionById(
+        val storedCollection = collectionPersistenceServices.getById(
           id = id
         ).transactAndRun
 
@@ -163,7 +163,7 @@ class SharedCollectionPersistenceServicesSpec
           c ← insertItem(SharedCollection.Queries.insert, collectionData.copy(userId = Option(u)).toTuple)
         } yield c).transactAndRun
 
-        val storedCollection = collectionPersistenceServices.getCollectionById(
+        val storedCollection = collectionPersistenceServices.getById(
           id = id + 1000000
         ).transactAndRun
 
@@ -172,11 +172,11 @@ class SharedCollectionPersistenceServicesSpec
     }
   }
 
-  "getCollectionByPublicIdentifier" should {
+  "getByPublicIdentifier" should {
     "return None if the table is empty" in {
       prop { (publicIdentifier: String) ⇒
 
-        val collection = collectionPersistenceServices.getCollectionByPublicIdentifier(
+        val collection = collectionPersistenceServices.getByPublicIdentifier(
           publicIdentifier = publicIdentifier
         ).transactAndRun
 
@@ -190,7 +190,7 @@ class SharedCollectionPersistenceServicesSpec
           c ← insertItem(SharedCollection.Queries.insert, collectionData.copy(userId = Option(u)).toTuple)
         } yield c).transactAndRun
 
-        val storedCollection = collectionPersistenceServices.getCollectionByPublicIdentifier(
+        val storedCollection = collectionPersistenceServices.getByPublicIdentifier(
           publicIdentifier = collectionData.publicIdentifier
         ).transactAndRun
 
@@ -208,7 +208,7 @@ class SharedCollectionPersistenceServicesSpec
           c ← insertItem(SharedCollection.Queries.insert, collectionData.copy(userId = Option(u)).toTuple)
         } yield c).transactAndRun
 
-        val collection = collectionPersistenceServices.getCollectionByPublicIdentifier(
+        val collection = collectionPersistenceServices.getByPublicIdentifier(
           publicIdentifier = collectionData.publicIdentifier.reverse
         ).transactAndRun
 
@@ -217,7 +217,7 @@ class SharedCollectionPersistenceServicesSpec
     }
   }
 
-  "getCollectionsByUserId" should {
+  "getByUserId" should {
 
     "return the List of Collections created by the User" in {
 
@@ -236,7 +236,7 @@ class SharedCollectionPersistenceServicesSpec
 
         val response: List[SharedCollectionWithAggregatedInfo] =
           collectionPersistenceServices
-            .getCollectionsByUserId(ownerId)
+            .getByUser(ownerId)
             .transactAndRun
 
         (response map (_.sharedCollectionData.id)) must containTheSameElementsAs(owned)
@@ -244,14 +244,14 @@ class SharedCollectionPersistenceServicesSpec
     }
   }
 
-  "getLatestCollectionsByCategory" should {
+  "getLatestByCategory" should {
 
     "return an empty list of collections if the tabls is empty" in {
       prop { category: String ⇒
 
         val response: List[SharedCollection] =
           collectionPersistenceServices
-            .getLatestCollectionsByCategory(category, pageNumber, pageSize)
+            .getLatestByCategory(category, pageNumber, pageSize)
             .transactAndRun
 
         response must beEmpty
@@ -274,7 +274,7 @@ class SharedCollectionPersistenceServicesSpec
 
         val response: List[SharedCollection] =
           collectionPersistenceServices
-            .getLatestCollectionsByCategory(communicationCategory, pageNumber, pageSize)
+            .getLatestByCategory(communicationCategory, pageNumber, pageSize)
             .transactAndRun
 
         response must beEmpty
@@ -303,7 +303,7 @@ class SharedCollectionPersistenceServicesSpec
         setupTrans.transactAndRun
 
         val response = for {
-          response ← collectionPersistenceServices.getLatestCollectionsByCategory(
+          response ← collectionPersistenceServices.getLatestByCategory(
             category   = socialCategory,
             pageNumber = pageNumber,
             pageSize   = pageSize
@@ -321,14 +321,14 @@ class SharedCollectionPersistenceServicesSpec
     }
   }
 
-  "getTopCollectionsByCategory" should {
+  "getTopByCategory" should {
 
     "return an empty list of collections if the tabls is empty" in {
       prop { i: Int ⇒
 
         val response: List[SharedCollection] =
           collectionPersistenceServices
-            .getLatestCollectionsByCategory(socialCategory, pageNumber, pageSize)
+            .getLatestByCategory(socialCategory, pageNumber, pageSize)
             .transactAndRun
 
         response must beEmpty
@@ -347,7 +347,7 @@ class SharedCollectionPersistenceServicesSpec
 
         val response: List[SharedCollection] =
           collectionPersistenceServices
-            .getTopCollectionsByCategory(communicationCategory, pageNumber, pageSize)
+            .getTopByCategory(communicationCategory, pageNumber, pageSize)
             .transactAndRun
 
         response must beEmpty
@@ -376,7 +376,7 @@ class SharedCollectionPersistenceServicesSpec
         setupTrans.transactAndRun
 
         val response = for {
-          response ← collectionPersistenceServices.getTopCollectionsByCategory(
+          response ← collectionPersistenceServices.getTopByCategory(
             category   = socialCategory,
             pageNumber = pageNumber,
             pageSize   = pageSize
@@ -502,7 +502,7 @@ class SharedCollectionPersistenceServicesSpec
           _ ← collectionPersistenceServices.updateCollectionInfo(c, newTitle)
         } yield c).transactAndRun
 
-        val storedCollection = collectionPersistenceServices.getCollectionById(
+        val storedCollection = collectionPersistenceServices.getById(
           id = id
         ).transactAndRun
 

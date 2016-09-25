@@ -5,16 +5,14 @@ import java.time.Instant
 
 import cats.Monad
 import cats.syntax.traverse._
-import cats.std.list
+import cats.instances.list._
 import cards.nine.services.free.domain.rankings._
 import cards.nine.services.free.domain.{ Category, PackageName }
+import cards.nine.services.free.interpreter.collection.Services.SharedCollectionData
+import cards.nine.services.free.interpreter.user.Services.UserData
 import cards.nine.services.persistence.NineCardsGenEntities._
-import cards.nine.services.persistence.SharedCollectionPersistenceServices._
-import cards.nine.services.persistence.UserPersistenceServices.UserData
-import doobie.imports.ConnectionIO
 import enumeratum.{ Enum, EnumEntry }
 import org.scalacheck.{ Arbitrary, Gen }
-import scalaz.std.list.listInstance
 
 object NineCardsGenEntities {
 
@@ -129,6 +127,11 @@ trait NineCardsScalacheckGen {
   private[this] val genMonad: Monad[Gen] = new Monad[Gen] {
     def pure[A](a: A): Gen[A] = Gen.const(a)
     def flatMap[A, B](fa: Gen[A])(f: A ⇒ Gen[B]): Gen[B] = fa flatMap f
+    override def tailRecM[A, B](a: A)(f: (A) ⇒ Gen[Either[A, B]]): Gen[B] =
+      flatMap(f(a)) {
+        case Right(b) ⇒ pure(b)
+        case Left(nextA) ⇒ tailRecM(nextA)(f)
+      }
   }
 
   private[this] def listOfDistinctN[A](min: Int, max: Int, gen: Gen[A]): Gen[List[A]] =
@@ -149,7 +152,7 @@ trait NineCardsScalacheckGen {
 
     for /*Gen */ {
       cats ← listOfDistinctN(0, 10, genEnumeratum[Category](Category))
-      entries ← list.listInstance.traverse(cats)(genCatEntries)(genMonad)
+      entries ← cats.traverse(genCatEntries)(genMonad)
     } yield entries.flatten
   }
 
@@ -161,7 +164,7 @@ trait NineCardsScalacheckGen {
   val genRanking: Gen[Ranking] =
     for {
       cats ← listOfDistinctN(0, 10, genEnumeratum[Category](Category))
-      pairs ← list.listInstance.traverse(cats)({ cat ⇒
+      pairs ← cats.traverse({ cat ⇒
         for (r ← genCatRanking(10)) yield (cat, r)
       })(genMonad)
     } yield Ranking(pairs.toMap)

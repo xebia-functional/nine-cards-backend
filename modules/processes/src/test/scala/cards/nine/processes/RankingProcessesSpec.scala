@@ -6,9 +6,10 @@ import cards.nine.processes.TestData.rankings._
 import cards.nine.processes.messages.rankings.GetRankedDeviceApps.RankedDeviceApp
 import cards.nine.processes.messages.rankings._
 import cards.nine.processes.utils.DatabaseContext._
-import cards.nine.services.free.algebra.GoogleAnalytics
-import cards.nine.services.persistence.CountryPersistenceServices
-import cards.nine.services.persistence.rankings.{ Services ⇒ PersistenceServices }
+import cards.nine.services.free.algebra.{ Country, GoogleAnalytics, Ranking }
+import cards.nine.services.free.domain.rankings.UpdateRankingSummary
+import cards.nine.services.free.interpreter.country.{ Services ⇒ CountryServices }
+import cards.nine.services.free.interpreter.ranking.{ Services ⇒ RankingServices }
 import cats.data.Xor
 import cats.free.Free
 import doobie.imports._
@@ -31,8 +32,10 @@ trait RankingsProcessesSpecification
 
     implicit val analyticsServices: GoogleAnalytics.Services[NineCardsServices] =
       mock[GoogleAnalytics.Services[NineCardsServices]]
-    implicit val persistenceServices = mock[PersistenceServices]
-    implicit val countryPersistenceServices = mock[CountryPersistenceServices]
+    implicit val countryServices: Country.Services[NineCardsServices] =
+      mock[Country.Services[NineCardsServices]]
+    implicit val rankingServices: Ranking.Services[NineCardsServices] =
+      mock[Ranking.Services[NineCardsServices]]
 
     val rankingProcesses = RankingProcesses.processes[NineCardsServices]
 
@@ -49,24 +52,24 @@ trait RankingsProcessesSpecification
       params = mockEq(params)
     ) returns Free.pure(Xor.right(ranking))
 
-    countryPersistenceServices.getCountryByIsoCode2("US") returns Option(country).point[ConnectionIO]
+    countryServices.getCountryByIsoCode2("US") returns Free.pure(Option(country))
 
-    persistenceServices.getRanking(any) returns ranking.point[ConnectionIO]
+    rankingServices.getRanking(any) returns Free.pure(ranking)
 
-    persistenceServices.setRanking(scope, ranking) returns (0, 0).point[ConnectionIO]
+    rankingServices.updateRanking(scope, ranking) returns Free.pure(UpdateRankingSummary(0, 0))
 
-    persistenceServices.getRankedApps(any, any) returns rankedAppsList.point[ConnectionIO]
+    rankingServices.getRankingForApps(any, any) returns Free.pure(rankedAppsList)
   }
 
   trait UnsuccessfulScope extends BasicScope {
 
     analyticsServices.getRanking(any, any) returns Free.pure(Xor.left(TestData.rankings.error))
 
-    countryPersistenceServices.getCountryByIsoCode2("US") returns countryNotFound.point[ConnectionIO]
+    countryServices.getCountryByIsoCode2("US") returns Free.pure(countryNotFound)
 
-    persistenceServices.getRanking(any) returns ranking.point[ConnectionIO]
+    rankingServices.getRanking(any) returns Free.pure(ranking)
 
-    persistenceServices.getRankedApps(any, any) returns emptyRankedAppsList.point[ConnectionIO]
+    rankingServices.getRankingForApps(any, any) returns Free.pure(emptyRankedAppsList)
   }
 
 }

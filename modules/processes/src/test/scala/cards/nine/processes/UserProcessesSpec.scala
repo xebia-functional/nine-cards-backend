@@ -5,19 +5,16 @@ import cards.nine.processes.messages.InstallationsMessages._
 import cards.nine.processes.messages.UserMessages.{ LoginRequest, LoginResponse }
 import cards.nine.processes.utils.DatabaseContext._
 import cards.nine.processes.utils.{ DummyNineCardsConfig, HashUtils }
-import cards.nine.services.free.algebra.DBResult.DBOps
+import cards.nine.services.free.algebra
 import cards.nine.services.free.domain.{ Installation, User }
-import cards.nine.services.persistence.UserPersistenceServices
+import cats.free.Free
 import com.roundeights.hasher.Hasher
-import doobie.imports._
 import org.mockito.Matchers.{ eq ⇒ mockEq }
 import org.specs2.ScalaCheck
 import org.specs2.matcher.Matchers
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
 import org.specs2.specification.Scope
-
-import scalaz.Scalaz._
 
 trait UserProcessesSpecification
   extends Specification
@@ -28,44 +25,53 @@ trait UserProcessesSpecification
   with TestInterpreters {
 
   trait BasicScope extends Scope {
-    implicit val userPersistenceServices: UserPersistenceServices = mock[UserPersistenceServices]
+    implicit val userServices = mock[algebra.User.Services[NineCardsServices]]
 
     val userProcesses = UserProcesses.processes[NineCardsServices]
   }
 
   trait UserAndInstallationSuccessfulScope extends BasicScope {
 
-    userPersistenceServices.getUserByEmail(mockEq(email)) returns Option(user).point[ConnectionIO]
+    userServices.getByEmail(mockEq(email)) returns Free.pure(Option(user))
 
-    userPersistenceServices.getInstallationByUserAndAndroidId(mockEq(userId), mockEq(androidId)) returns Option(installation).point[ConnectionIO]
+    userServices.getInstallationByUserAndAndroidId(mockEq(userId), mockEq(androidId)) returns
+      Free.pure(Option(installation))
 
-    userPersistenceServices.updateInstallation[Installation](mockEq(userId), mockEq(Option(deviceToken)), mockEq(androidId))(any) returns installation.point[ConnectionIO]
+    userServices.updateInstallation(mockEq(userId), mockEq(Option(deviceToken)), mockEq(androidId)) returns
+      Free.pure(installation)
 
-    userPersistenceServices.getUserBySessionToken(mockEq(sessionToken)) returns Option(user).point[ConnectionIO]
+    userServices.getBySessionToken(mockEq(sessionToken)) returns
+      Free.pure(Option(user))
 
-    userPersistenceServices.getInstallationByUserAndAndroidId(mockEq(userId), mockEq(androidId)) returns Option(installation).point[ConnectionIO]
+    userServices.getInstallationByUserAndAndroidId(mockEq(userId), mockEq(androidId)) returns
+      Free.pure(Option(installation))
   }
 
   trait UserSuccessfulAndInstallationFailingScope extends BasicScope {
 
-    userPersistenceServices.getUserByEmail(mockEq(email)) returns Option(user).point[ConnectionIO]
+    userServices.getByEmail(mockEq(email)) returns Free.pure(Option(user))
 
-    userPersistenceServices.getInstallationByUserAndAndroidId(mockEq(userId), mockEq(androidId)) returns nonExistingInstallation.point[ConnectionIO]
+    userServices.getInstallationByUserAndAndroidId(mockEq(userId), mockEq(androidId)) returns
+      Free.pure(nonExistingInstallation)
 
-    userPersistenceServices.createInstallation[Installation](mockEq(userId), mockEq(None), mockEq(androidId))(any) returns installation.point[ConnectionIO]
+    userServices.addInstallation(mockEq(userId), mockEq(None), mockEq(androidId)) returns
+      Free.pure(installation)
 
-    userPersistenceServices.getUserBySessionToken(mockEq(sessionToken)) returns Option(user).point[ConnectionIO]
+    userServices.getBySessionToken(mockEq(sessionToken)) returns
+      Free.pure(Option(user))
   }
 
   trait UserAndInstallationFailingScope extends BasicScope {
 
-    userPersistenceServices.getUserByEmail(email) returns nonExistingUser.point[ConnectionIO]
+    userServices.getByEmail(email) returns Free.pure(nonExistingUser)
 
-    userPersistenceServices.addUser[User](mockEq(email), any[String], any[String])(any) returns user.point[ConnectionIO]
+    userServices.add(mockEq(email), any[String], any[String]) returns Free.pure(user)
 
-    userPersistenceServices.createInstallation[Installation](mockEq(userId), mockEq(None), mockEq(androidId))(any) returns installation.point[ConnectionIO]
+    userServices.addInstallation(mockEq(userId), mockEq(None), mockEq(androidId)) returns
+      Free.pure(installation)
 
-    userPersistenceServices.getUserBySessionToken(mockEq(sessionToken)) returns nonExistingUser.point[ConnectionIO]
+    userServices.getBySessionToken(mockEq(sessionToken)) returns
+      Free.pure(nonExistingUser)
   }
 
 }
@@ -165,11 +171,9 @@ class UserProcessesSpec
       "if the debug Mode is enabled" in new UserAndInstallationSuccessfulScope {
 
         val debugUserProcesses = UserProcesses.processes[NineCardsServices](
-          userPersistenceServices = userPersistenceServices,
-          config                  = dummyConfig(debugMode = true),
-          hashUtils               = HashUtils.hashUtils,
-          transactor              = transactor,
-          dbOps                   = DBOps.dbOps
+          userServices = userServices,
+          config       = dummyConfig(debugMode = true),
+          hashUtils    = HashUtils.hashUtils
         )
 
         val checkAuthToken = debugUserProcesses.checkAuthToken(
