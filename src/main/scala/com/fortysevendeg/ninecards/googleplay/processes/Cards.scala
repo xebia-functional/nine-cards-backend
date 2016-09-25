@@ -99,11 +99,9 @@ class CardsProcess[F[_]](
       Response(solved, unknown, pending)
     }
 
-    type FF[A] = Free[F,A]
-
     for /*Free[F] */ {
       list <- cacheService.listPending(numApps)
-      status <- list.traverse[FF,(Package, PackageStatus) ]{ pack =>
+      status <- list.traverse[Free[F,?],(Package, PackageStatus) ]{ pack =>
         for (status <- resolvePendingPackage(pack, date)) yield (pack, status)
       }
     } yield splitStatus(status)

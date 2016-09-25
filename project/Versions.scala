@@ -31,4 +31,5 @@ object Versions {
   val specs2 = "3.6.6" // this is the last version depending on scalaz 7.1.4. Http4s needs Scalaz 7.1
   val scalaCheckShapeless = "0.3.2-SNAPSHOT"
 
+  val kindProjector = "0.9.0"
 }

@@ -109,7 +109,7 @@ object NineCardsMarshallers {
     gMonad: Monad[G],
     factory: TRMFactory[G]
       /* currified types and partial application, it would be `Free[F]` */
-  ) extends TRMFactory[ ({type L[A] = Free[F, A]})#L ] {
+  ) extends TRMFactory[ Free[F, ?] ] {
 
     override implicit def makeTRM[A](implicit ma: TRM[A]) : TRM[Free[F,A]] = {
       def fa2ga(fa: Free[F,A]): G[A] = fa.foldMap(interpreter)
@@ -120,7 +120,7 @@ object NineCardsMarshallers {
 
   implicit def contraNaturalTransformFreeTRMFactory[ F[_], G[_] ](
     implicit interpreter: F ~> G, gMonad: Monad[G], factory: TRMFactory[G]
-  ) : TRMFactory[ ({type L[A] = Free[F, A]})#L ] =
+  ) : TRMFactory[ Free[F, ?] ] =
     new ContraNaturalTransformFreeTRMFactory[F,G]()(interpreter, gMonad, factory)
 
 

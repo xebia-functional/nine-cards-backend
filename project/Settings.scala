@@ -12,6 +12,7 @@ trait Settings {
   this: Build =>
 
   lazy val projectSettings: Seq[Def.Setting[_]] = Seq(
+    addCompilerPlugin("org.spire-math" %% "kind-projector" % Versions.kindProjector ),
     name := "9cards-backend-google-play",
     scalaVersion := Versions.scala,
     organization := "com.fortysevendeg",
