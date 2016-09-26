@@ -18,9 +18,6 @@ case class ApiServices(apiClient: ApiClient, appService: AppRequest => Task[Info
       )
     }
 
-  def getCard(request: AppRequest): Task[InfoError Xor FullCard] =
-    getCard(request.packageName, request.authParams)
-
   def recommendByCategory( request: RecommendationsByCategory ) : Task[InfoError Xor FullCardList] = {
     import request._
 
@@ -41,27 +38,19 @@ case class ApiServices(apiClient: ApiClient, appService: AppRequest => Task[Info
 
   def recommendByAppList( request: RecommendationsByAppList) : Task[FullCardList] = {
     import request._
+    val recommendedPackages: Task[List[String]] = for /* Task */ {
+      xors <- packageList.items.traverse { pack =>
+        apiClient.recommendations(Package(pack), auth)
+      }
+      ids = Converters.listResponseListToPackages( splitXors(xors)._2)
+    } yield ids
 
-    val recommendedPackages: Task[List[String]] = {
-      for /* Task */ {
-        xors <- packageList.items.traverse { pack =>
-          apiClient.recommendations(Package(pack), auth)
-        }
-        ids = Converters.listResponseListToPackages( splitXors(xors)._2)
-      } yield ids
-    }
-
-    for /* Task */ {
-      ids <- recommendedPackages
-      appRecList <- getCards(ids, auth)
-    } yield appRecList
+    recommendedPackages.flatMap( getCards(_, auth) )
   }
 
   private[this] def getCards(ids: List[String], auth: GoogleAuthParams ) : Task[FullCardList] =
-    ids.traverse(id => getCard(Package(id), auth))
+    ids
+      .traverse(id => appService( AppRequest(Package(id), auth)))
       .map( Converters.toFullCardListXors)
-
-  private[this] def getCard(pack: Package, auth: GoogleAuthParams): Task[Xor[InfoError, FullCard]] =
-    appService( AppRequest(pack, auth) )
 
 }

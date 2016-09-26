@@ -15,6 +15,7 @@ class GoogleApiClientIntegration extends Specification with AfterAll {
 
   val wiring = new Wiring()
   private val apiServices = wiring.apiServices
+  private val appCardService = wiring.appCardService
 
   override def afterAll: Unit = wiring.shutdown
 
@@ -54,7 +55,7 @@ class GoogleApiClientIntegration extends Specification with AfterAll {
           stars = 3.145
         )
         val appRequest = AppRequest(fisherPrice.packageObj, authParams )
-        val response = apiServices.getCard(appRequest)
+        val response = appCardService(appRequest)
         val fields = response.map( _.map(eraseDetails))
         // The number of downloads can be different from the Google API.
         fields must returnValue( Xor.Right( eraseDetails(fisherPrice.card)))
@@ -62,7 +63,7 @@ class GoogleApiClientIntegration extends Specification with AfterAll {
 
       "result in an error state for packages that do not exist" in {
         val appRequest = AppRequest(nonexisting.packageObj, authParams)
-        apiServices.getCard(appRequest) must returnValue(Xor.left(nonexisting.infoError))
+        appCardService(appRequest) must returnValue(Xor.left(nonexisting.infoError))
       }
     }
 
