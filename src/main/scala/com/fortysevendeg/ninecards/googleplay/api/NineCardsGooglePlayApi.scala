@@ -34,7 +34,7 @@ class NineCardsGooglePlayActor extends Actor with HttpService {
 class NineCardsGooglePlayApi[Ops[_]] (
   implicit
   googlePlayService: GooglePlay.Service[Ops],
-  marshallerFactory: TRMFactory[({type L[A] = Free[Ops, A]})#L ]
+  marshallerFactory: TRMFactory[Free[Ops, ?]]
 ){
   import CustomDirectives._
   import CustomMatchers._

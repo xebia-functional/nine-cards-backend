@@ -26,6 +26,11 @@ object CacheInterpreter extends (Ops ~> WithClient) {
       wrap.put( CacheEntry.pending( pack) )
     }
 
+    case UnmarkPending(pack) => {client: RedisClient =>
+      val wrap = new CacheWrapper[CacheKey, CacheVal](client)
+      wrap.delete( CacheKey.pending(pack) )
+    }
+
     case MarkError(pack, date) => { client: RedisClient =>
       val wrap = new CacheWrapper[CacheKey, CacheVal](client)
       wrap.put( CacheEntry.error(pack, date) )
@@ -45,6 +50,17 @@ object CacheInterpreter extends (Ops ~> WithClient) {
     case IsPending(pack) => { client: RedisClient =>
       val wrap = new CacheWrapper[CacheKey, CacheVal](client)
       wrap.get(CacheKey.pending(pack)).isDefined
+    }
+
+    case ListPending(num) => { client: RedisClient =>
+      val wrap = new CacheWrapper[CacheKey, CacheVal](client)
+      val pendingPattern : JsonPattern = PObject( List(
+        PString( "package") -> PStar,
+        PString( "keyType") -> PString(KeyType.Pending.entryName),
+        PString( "date") -> PNull
+      ))
+      wrap.matchKeys(pendingPattern)
+        .take(num).map( _.`package`)
     }
 
   }

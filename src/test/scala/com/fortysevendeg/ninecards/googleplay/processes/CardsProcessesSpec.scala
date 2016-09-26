@@ -3,7 +3,7 @@ package com.fortysevendeg.ninecards.googleplay.processes
 import cats.data.Xor
 import cats.{~>, Id}
 import com.fortysevendeg.ninecards.googleplay.domain._
-import com.fortysevendeg.ninecards.googleplay.domain.apigoogle._
+import com.fortysevendeg.ninecards.googleplay.domain.{apigoogle => ApiDom, webscrapper => WebDom}
 import com.fortysevendeg.ninecards.googleplay.service.free.algebra.{apigoogle => ApiAlg, cache => CacheAlg, webscrapper => WebAlg}
 import com.fortysevendeg.ninecards.googleplay.service.free.interpreter.{googleapi => ApiInt, cache => CacheInt, webscrapper => WebInt}
 import com.fortysevendeg.ninecards.googleplay.service.free.{JoinServices, JoinInterpreter}
@@ -100,7 +100,7 @@ class CardsProcessesSpec
         def setup( pack: Package, card: FullCard, auth: GoogleAuthParams) = {
           clear() 
           cacheIntServer.getValid(pack) returns None
-          apiGoogleIntServer.getDetails(pack, auth) returns Xor.Left( PackageNotFound(pack) )
+          apiGoogleIntServer.getDetails(pack, auth) returns Xor.Left( ApiDom.PackageNotFound(pack) )
           webScrapperIntServer.existsApp(pack) returns true
           cacheIntServer.markPending(pack) returns Unit
         }
@@ -128,7 +128,7 @@ class CardsProcessesSpec
         def setup( pack: Package, card: FullCard, auth: GoogleAuthParams) = {
           clear() 
           cacheIntServer.getValid(pack) returns None
-          apiGoogleIntServer.getDetails(pack, auth) returns Xor.Left( PackageNotFound(pack) )
+          apiGoogleIntServer.getDetails(pack, auth) returns Xor.Left( ApiDom.PackageNotFound(pack) )
           webScrapperIntServer.existsApp(pack) returns false
           cacheIntServer.markError(pack, testDate) returns Unit
         }
@@ -151,6 +151,72 @@ class CardsProcessesSpec
     }
   }
 
+  "resolvePendingPackage" should {
+
+    def runResolvePending(pack: Package, date: DateTime): ResolvePending.PackageStatus =
+      processes.resolvePendingPackage(pack, date).foldMap(interpreter)
+
+    "when the WebScrapper gives back a full card" >> {
+
+      def setup(pack: Package, card: FullCard) = {
+        clear()
+        webScrapperIntServer.getDetails(pack) returns Xor.Right(card)
+        cacheIntServer.putResolved(card) returns Unit
+      }
+
+      "report the package as Resolved and store it in the cache" >>
+        prop { card: FullCard =>
+          val pack = Package(card.packageName)
+          setup(pack, card)
+          runResolvePending(pack, testDate) must_=== ResolvePending.Resolved
+        }
+
+      "store the result of the web scrape in the cache" >>
+        prop { card: FullCard =>
+          val pack = Package(card.packageName)
+          setup(pack, card)
+          runResolvePending(pack, testDate)
+          there was one(cacheIntServer).putResolved(card)
+        }
+
+    }
+
+    "when the WebScrapper can no longer find the package" >> {
+
+      def setup(pack: Package, date: DateTime) = {
+        clear()
+        webScrapperIntServer.getDetails(pack) returns Xor.Left(WebDom.PackageNotFound(pack))
+        cacheIntServer.markError(pack, testDate) returns Unit
+      }
+
+      "it reports the package as Unknown" >> prop { pack: Package =>
+        setup(pack, testDate)
+        runResolvePending(pack, testDate) must_=== ResolvePending.Unknown
+      }
+
+      "it stores the package as an error" >> prop { pack: Package =>
+        setup(pack, testDate)
+        runResolvePending(pack, testDate)
+        there was one(cacheIntServer).markError(pack, testDate)
+      }
+
+    }
+
+    "when the WebScrapper has another kind of error" >> {
+
+      def setup(pack: Package) = {
+        clear()
+        webScrapperIntServer.getDetails(pack) returns Xor.Left(WebDom.WebPageServerError)
+        cacheIntServer.markPending(pack) returns Unit
+      }
+
+      "it reports the package as (still) pending" >> prop { pack: Package =>
+        setup(pack)
+        runResolvePending(pack, testDate) must_=== ResolvePending.Pending
+      }
+
+    }
+
+  }
+
 }
-
-
