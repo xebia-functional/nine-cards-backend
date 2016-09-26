@@ -1,15 +1,17 @@
 package cards.nine.services.free.interpreter.user
 
+import cards.nine.services.free.algebra.User._
 import cards.nine.services.free.domain.Installation.{ Queries ⇒ InstallationQueries }
 import cards.nine.services.free.domain.User.{ Queries ⇒ UserQueries }
 import cards.nine.services.free.domain.{ Installation, User }
 import cards.nine.services.persistence.Persistence
+import cats.~>
 import doobie.imports._
 
 class Services(
   userPersistence: Persistence[User],
   installationPersistence: Persistence[Installation]
-) {
+) extends (Ops ~> ConnectionIO) {
 
   def addUser[K: Composite](email: String, apiKey: String, sessionToken: String): ConnectionIO[K] =
     userPersistence.updateWithGeneratedKeys[K](
@@ -53,6 +55,23 @@ class Services(
       fields = Installation.allFields,
       values = (deviceToken, userId, androidId)
     )
+
+  def apply[A](fa: Ops[A]): ConnectionIO[A] = fa match {
+    case Add(email, apiKey, sessionToken) ⇒
+      addUser[User](email, apiKey, sessionToken)
+    case AddInstallation(user, deviceToken, androidId) ⇒
+      createInstallation[Installation](user, deviceToken, androidId)
+    case GetByEmail(email) ⇒
+      getUserByEmail(email)
+    case GetBySessionToken(sessionToken) ⇒
+      getUserBySessionToken(sessionToken)
+    case GetInstallationByUserAndAndroidId(user, androidId) ⇒
+      getInstallationByUserAndAndroidId(user, androidId)
+    case GetSubscribedInstallationByCollection(collectionPublicId) ⇒
+      getSubscribedInstallationByCollection(collectionPublicId)
+    case UpdateInstallation(user, deviceToken, androidId) ⇒
+      updateInstallation[Installation](user, deviceToken, androidId)
+  }
 }
 
 object Services {

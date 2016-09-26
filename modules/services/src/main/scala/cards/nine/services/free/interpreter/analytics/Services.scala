@@ -1,18 +1,20 @@
 package cards.nine.services.free.interpreter.analytics
 
-import cats.data.Xor
+import cards.nine.services.free.algebra.GoogleAnalytics._
 import cards.nine.services.free.domain.rankings._
+import cats.data.Xor
+import cats.~>
 import org.http4s.Http4s._
-import org.http4s.{ EntityDecoder, EntityEncoder, Header, Headers, Method, Request, Query, Uri }
 import org.http4s.Uri.{ Authority, RegName }
-import org.http4s.circe.{ jsonOf, jsonEncoderOf }
+import org.http4s._
+import org.http4s.circe.{ jsonEncoderOf, jsonOf }
+
 import scalaz.concurrent.Task
 
-class Services(config: Configuration) {
+class Services(config: Configuration) extends (Ops ~> Task) {
 
-  import model.{ RequestBody, ResponseBody }
   import Encoders._
-  import Decoders._
+  import model.{ RequestBody, ResponseBody }
 
   private[this] val client = org.http4s.client.blaze.PooledHttp1Client()
 
@@ -41,6 +43,9 @@ class Services(config: Configuration) {
       .map(_.map(Converters.parseRanking(_, params.rankingLength, scope)))
   }
 
+  def apply[A](fa: Ops[A]): Task[A] = fa match {
+    case GetRanking(geoScope, params) ⇒ getRanking(geoScope, params)
+  }
 }
 
 object Services {

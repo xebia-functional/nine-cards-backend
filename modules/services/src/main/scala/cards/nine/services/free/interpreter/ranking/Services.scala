@@ -3,15 +3,17 @@ package cards.nine.services.free.interpreter.ranking
 import java.security.MessageDigest
 import java.util.UUID
 
+import cards.nine.services.free.algebra.Ranking._
 import cards.nine.services.free.domain.Category
 import cards.nine.services.free.domain.rankings._
 import cards.nine.services.persistence.{ CustomComposite, Persistence }
+import cats.~>
 import doobie.imports._
 
 import scalaz.std.list._
 import scalaz.std.set._
 
-class Services(persistence: Persistence[Entry]) {
+class Services(persistence: Persistence[Entry]) extends (Ops ~> ConnectionIO) {
 
   import CustomComposite._
 
@@ -56,6 +58,15 @@ class Services(persistence: Persistence[Entry]) {
     val text = UUID.randomUUID().toString
     val hash = digest.digest(text.getBytes).map("%02x".format(_)).mkString
     s"device_apps_$hash"
+  }
+
+  def apply[A](fa: Ops[A]): ConnectionIO[A] = fa match {
+    case GetRankingForApps(scope, apps) ⇒
+      getRankingForApps(scope, apps)
+    case GetRanking(scope) ⇒
+      getRanking(scope)
+    case UpdateRanking(scope, ranking) ⇒
+      updateRanking(scope, ranking)
   }
 }
 

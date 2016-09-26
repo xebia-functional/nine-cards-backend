@@ -1,11 +1,13 @@
 package cards.nine.services.free.interpreter.subscription
 
+import cards.nine.services.free.algebra.Subscription._
 import cards.nine.services.free.domain.SharedCollectionSubscription
 import cards.nine.services.free.domain.SharedCollectionSubscription.Queries
 import cards.nine.services.persistence.Persistence
+import cats.~>
 import doobie.imports._
 
-class Services(persistence: Persistence[SharedCollectionSubscription]) {
+class Services(persistence: Persistence[SharedCollectionSubscription]) extends (Ops ~> ConnectionIO) {
 
   def add(collectionId: Long, userId: Long, collectionPublicId: String): ConnectionIO[Int] =
     persistence.update(
@@ -36,6 +38,19 @@ class Services(persistence: Persistence[SharedCollectionSubscription]) {
       sql    = Queries.deleteByCollectionAndUser,
       values = (collectionId, userId)
     )
+
+  def apply[A](fa: Ops[A]): ConnectionIO[A] = fa match {
+    case Add(collection, user, collectionPublicId) ⇒
+      add(collection, user, collectionPublicId)
+    case GetByCollection(collection) ⇒
+      getByCollection(collection)
+    case GetByCollectionAndUser(collection, user) ⇒
+      getByCollectionAndUser(collection, user)
+    case GetByUser(user) ⇒
+      getByUser(user)
+    case RemoveByCollectionAndUser(collection, user) ⇒
+      removeByCollectionAndUser(collection, user)
+  }
 }
 
 object Services {

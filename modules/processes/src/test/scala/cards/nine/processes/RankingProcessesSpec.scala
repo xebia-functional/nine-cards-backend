@@ -5,21 +5,15 @@ import cards.nine.processes.TestData.Values._
 import cards.nine.processes.TestData.rankings._
 import cards.nine.processes.messages.rankings.GetRankedDeviceApps.RankedDeviceApp
 import cards.nine.processes.messages.rankings._
-import cards.nine.processes.utils.DatabaseContext._
 import cards.nine.services.free.algebra.{ Country, GoogleAnalytics, Ranking }
 import cards.nine.services.free.domain.rankings.UpdateRankingSummary
-import cards.nine.services.free.interpreter.country.{ Services ⇒ CountryServices }
-import cards.nine.services.free.interpreter.ranking.{ Services ⇒ RankingServices }
 import cats.data.Xor
 import cats.free.Free
-import doobie.imports._
 import org.mockito.Matchers.{ eq ⇒ mockEq }
 import org.specs2.matcher.{ Matcher, Matchers, XorMatchers }
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
 import org.specs2.specification.Scope
-
-import scalaz.Scalaz._
 
 trait RankingsProcessesSpecification
   extends Specification

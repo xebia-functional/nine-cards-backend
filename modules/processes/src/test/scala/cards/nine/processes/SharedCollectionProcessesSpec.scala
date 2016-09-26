@@ -8,21 +8,15 @@ import cards.nine.processes.TestData.Messages._
 import cards.nine.processes.TestData.Values._
 import cards.nine.processes.TestData._
 import cards.nine.processes.messages.SharedCollectionMessages._
-import cards.nine.processes.utils.DatabaseContext._
 import cards.nine.services.free.algebra
 import cards.nine.services.free.algebra.{ Firebase, GooglePlay }
-import cards.nine.services.free.domain.Firebase.FirebaseError
-import cards.nine.services.free.domain.{ SharedCollection ⇒ SharedCollectionServices, _ }
-import cards.nine.services.persistence._
-import doobie.imports._
+import cards.nine.services.free.domain._
 import org.mockito.Matchers.{ eq ⇒ mockEq }
 import org.specs2.ScalaCheck
 import org.specs2.matcher.{ Matchers, XorMatchers }
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
 import org.specs2.specification.Scope
-
-import scalaz.Scalaz._
 
 trait SharedCollectionProcessesSpecification
   extends Specification

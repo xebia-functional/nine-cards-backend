@@ -2,13 +2,14 @@ package cards.nine.services.free.interpreter.collection
 
 import java.sql.Timestamp
 
+import cards.nine.services.free.algebra.SharedCollection._
 import cards.nine.services.free.domain.SharedCollection.{ Queries ⇒ CollectionQueries }
 import cards.nine.services.free.domain.SharedCollectionPackage.{ Queries ⇒ PackageQueries }
 import cards.nine.services.free.domain._
 import cards.nine.services.free.interpreter.collection.Services.SharedCollectionData
 import cards.nine.services.persistence.Persistence
-import cats.data.OptionT
-import doobie.imports._
+import cats.~>
+import doobie.imports.{ Composite, ConnectionIO }
 import shapeless.syntax.std.product._
 
 import scalaz.std.iterable._
@@ -16,7 +17,8 @@ import scalaz.std.iterable._
 class Services(
   collectionPersistence: Persistence[SharedCollection],
   packagePersistence: Persistence[SharedCollectionPackage]
-) {
+) extends (Ops ~> ConnectionIO) {
+
   def add[K: Composite](data: SharedCollectionData): ConnectionIO[K] =
     collectionPersistence.updateWithGeneratedKeys[K](
       sql    = CollectionQueries.insert,
@@ -97,6 +99,29 @@ class Services(
       addedPackages ← addPackages(collection, newPackages)
       deletedPackages ← deletePackages(collection, removedPackages)
     } yield (newPackages, removedPackages)
+
+  def apply[A](fa: Ops[A]): ConnectionIO[A] = fa match {
+    case Add(collection) ⇒
+      add[SharedCollection](collection)
+    case AddPackages(collection, packages) ⇒
+      addPackages(collection, packages)
+    case GetById(id) ⇒
+      getById(id)
+    case GetByPublicId(publicId) ⇒
+      getByPublicIdentifier(publicId)
+    case GetByUser(user) ⇒
+      getByUser(user)
+    case GetLatestByCategory(category, pageNumber, pageSize) ⇒
+      getLatestByCategory(category, pageNumber, pageSize)
+    case GetPackagesByCollection(collection) ⇒
+      getPackagesByCollection(collection)
+    case GetTopByCategory(category, pageNumber, pageSize) ⇒
+      getTopByCategory(category, pageNumber, pageSize)
+    case Update(id, title) ⇒
+      updateCollectionInfo(id, title)
+    case UpdatePackages(collection, packages) ⇒
+      updatePackages(collection, packages)
+  }
 }
 
 object Services {
