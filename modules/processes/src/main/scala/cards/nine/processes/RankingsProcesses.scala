@@ -1,10 +1,5 @@
 package cards.nine.processes
 
-import cats.data.Xor
-import cats.std.list._
-import cats.std.map._
-import cats.syntax.semigroup._
-import cats.free.Free
 import cards.nine.processes.converters.Converters._
 import cards.nine.processes.messages.rankings.GetRankedDeviceApps.{ DeviceApp, RankedDeviceApp }
 import cards.nine.processes.messages.rankings._
@@ -14,14 +9,22 @@ import cards.nine.services.free.algebra.GoogleAnalytics
 import cards.nine.services.free.domain.rankings._
 import cards.nine.services.persistence._
 import cards.nine.services.persistence.rankings.{ Services ⇒ PersistenceServices }
+import cats.data.Xor
+import cats.free.Free
+import cats.std.list._
+import cats.std.map._
+import cats.syntax.semigroup._
 import doobie.contrib.hikari.hikaritransactor.HikariTransactor
+import doobie.imports.ConnectionIO
 
 import scalaz.concurrent.Task
+import scalaz.syntax.applicative._
 
 class RankingProcesses[F[_]](
   implicit
   analytics: GoogleAnalytics.Services[F],
   persistence: PersistenceServices,
+  countryPersistence: CountryPersistenceServices,
   transactor: Task[HikariTransactor[Task]],
   dbOps: DBOps[F]
 ) {
@@ -39,7 +42,7 @@ class RankingProcesses[F[_]](
     } yield res
 
   def getRankedDeviceApps(
-    scope: GeoScope,
+    location: Option[String],
     deviceApps: Map[String, List[DeviceApp]]
   ): Free[F, Map[String, List[RankedDeviceApp]]] = {
 
@@ -50,20 +53,27 @@ class RankingProcesses[F[_]](
 
       }
 
+    def geoScopeFromLocation(isoCode: String): ConnectionIO[GeoScope] =
+      countryPersistence.getCountryByIsoCode2(isoCode.toUpperCase) map {
+        case Some(country) ⇒ country.toGeoScope
+        case _ ⇒ WorldScope
+      }
+
+    val worldScope: GeoScope = WorldScope
+
     if (deviceApps.isEmpty)
       Free.pure(Map.empty)
-    else
-      (persistence.getRankedApps(scope, deviceApps.values.flatten.toSet map toUnrankedApp) map {
-        rankedApps ⇒
-          val rankedAppsByCategory = rankedApps.groupBy(_.category).mapValues(_.map(toRankedDeviceApp))
-
-          val unrankedDeviceApps = deviceApps map {
-            case (category, apps) ⇒
-              (category, findAppsWithoutRanking(apps, rankedAppsByCategory.getOrElse(category, Nil)))
-          }
-
-          rankedAppsByCategory.combine(unrankedDeviceApps)
-      }).liftF
+    else {
+      for {
+        geoScope ← location.fold(worldScope.point[ConnectionIO])(geoScopeFromLocation)
+        rankedApps ← persistence.getRankedApps(geoScope, deviceApps.values.flatten.toSet map toUnrankedApp)
+        rankedAppsByCategory = rankedApps.groupBy(_.category).mapValues(_.map(toRankedDeviceApp))
+        unrankedDeviceApps = deviceApps map {
+          case (category, apps) ⇒
+            (category, findAppsWithoutRanking(apps, rankedAppsByCategory.getOrElse(category, Nil)))
+        }
+      } yield rankedAppsByCategory.combine(unrankedDeviceApps)
+    }.liftF
   }
 
   private[this] def setAux(scope: GeoScope, ranking: Ranking): Free[F, Reload.XorResponse] =
@@ -82,6 +92,7 @@ object RankingProcesses {
     implicit
     analytics: GoogleAnalytics.Services[F],
     persistence: PersistenceServices,
+    countryPersistence: CountryPersistenceServices,
     transactor: Task[HikariTransactor[Task]],
     dbOps: DBOps[F]
   ) = new RankingProcesses

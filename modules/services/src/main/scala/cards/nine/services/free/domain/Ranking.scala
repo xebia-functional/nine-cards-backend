@@ -44,6 +44,14 @@ object rankings {
   case class ContinentScope(continent: Continent) extends GeoScope
   case object WorldScope extends GeoScope
 
+  implicit class GeoScopeStringOps(s: String) {
+    def toOptionalContinent(implicit enum: Enum[Continent]): Option[ContinentScope] =
+      enum.withNameOption(s.replace(" ", "_")) map ContinentScope
+
+    def toOptionalCountry(implicit enum: Enum[Country]): Option[CountryScope] =
+      enum.withNameOption(s) map CountryScope
+  }
+
   case class Ranking(categories: Map[Category, CategoryRanking]) extends AnyVal
 
   /*A CategoryRanking contains a list of application's package names */

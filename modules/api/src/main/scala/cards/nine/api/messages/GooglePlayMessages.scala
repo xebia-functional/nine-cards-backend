@@ -23,7 +23,7 @@ object GooglePlayMessages {
 
   case class ApiGetRecommendationsResponse(items: List[GooglePlayRecommendation])
 
-  case class ApiRankAppsRequest(items: Map[String, List[String]])
+  case class ApiRankAppsRequest(location: Option[String], items: Map[String, List[String]])
 
   case class ApiRankAppsResponse(items: Map[String, List[String]])
 }

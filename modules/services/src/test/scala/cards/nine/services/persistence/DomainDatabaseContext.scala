@@ -9,8 +9,9 @@ import cards.nine.services.utils.DummyNineCardsConfig
 import doobie.free.{ drivermanager ⇒ FD }
 import doobie.imports._
 import org.flywaydb.core.Flyway
+import shapeless.HNil
 
-import scalaz.{ \/, Foldable }
+import scalaz.{ Foldable, \/ }
 import scalaz.concurrent.Task
 import scalaz.syntax.apply._
 
@@ -42,6 +43,9 @@ trait BasicDatabaseContext extends DummyNineCardsConfig {
     Update[A](sql).toUpdate0(values).run
 
   def deleteItems(sql: String): ConnectionIO[Int] = Update0(sql, None).run
+
+  def getItems[A: Composite](sql: String): ConnectionIO[List[A]] =
+    Query[HNil, A](sql, None).toQuery0(HNil).to[List]
 
   implicit class Transacting[A](operation: ConnectionIO[A])(implicit transactor: Transactor[Task]) {
     def transactAndRun: A = operation.transact(transactor).unsafePerformSync
@@ -96,11 +100,14 @@ trait DomainDatabaseContext extends BasicDatabaseContext {
     new Persistence[SharedCollectionPackage](supportsSelectForUpdate = false)
   implicit val collectionSubscriptionPersistence =
     new Persistence[SharedCollectionSubscription](supportsSelectForUpdate = false)
+  implicit val countryPersistence =
+    new Persistence[Country](supportsSelectForUpdate = false)
   implicit val rankingPersistence: Persistence[domain.rankings.Entry] =
     new Persistence[domain.rankings.Entry](supportsSelectForUpdate = false)
 
   val userPersistenceServices = UserPersistenceServices.persistenceServices
   val collectionPersistenceServices = SharedCollectionPersistenceServices.persistenceServices
+  val countryPersistenceServices = CountryPersistenceServices.persistenceServices
   val scSubscriptionPersistenceServices = SharedCollectionSubscriptionPersistenceServices.persistenceServices
   val rankingPersistenceServices = new rankings.Services(rankingPersistence)
 }

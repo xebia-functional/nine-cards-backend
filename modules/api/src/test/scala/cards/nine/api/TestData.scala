@@ -48,6 +48,8 @@ object TestData {
 
   val limit = 20
 
+  val location = Option("US")
+
   val marketLocalization = "en-us"
 
   val name = "The best social media apps"
@@ -156,7 +158,8 @@ object TestData {
     )
 
     val apiRankAppsRequest = ApiRankAppsRequest(
-      items = deviceApps
+      location = location,
+      items    = deviceApps
     )
 
     val getRankedAppsResponse = Map.empty[String, List[RankedDeviceApp]]

@@ -366,7 +366,7 @@ class NineCardsRoutes(
     request: ApiRankAppsRequest,
     userContext: UserContext
   ): NineCardsServed[ApiRankAppsResponse] =
-    rankingProcesses.getRankedDeviceApps(WorldScope, request.items.mapValues(toDeviceAppList))
+    rankingProcesses.getRankedDeviceApps(request.location, request.items.mapValues(toDeviceAppList))
       .map(toApiRankAppsResponse)
 
   private[this] object rankings {
