@@ -89,7 +89,7 @@ class CardsProcess[F[_]](
     }
   }
 
-  def searchAndResolvePending( numApps: Int, date: DateTime) : Free[F, Unit] = {
+  def searchAndResolvePending( numApps: Int, date: DateTime) : Free[F, ResolvePending.Response] = {
     import ResolvePending._
 
     def splitStatus( status: List[(Package, PackageStatus)]): Response = {
