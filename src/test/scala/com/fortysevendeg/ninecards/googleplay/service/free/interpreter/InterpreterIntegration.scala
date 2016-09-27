@@ -1,8 +1,10 @@
 package com.fortysevendeg.ninecards.googleplay.service.free.interpreter
 
+import cats.~>
 import cats.data.Xor
 import com.fortysevendeg.extracats.XorTaskOrComposer
 import com.fortysevendeg.ninecards.googleplay.domain._
+import com.fortysevendeg.ninecards.googleplay.processes.Wiring
 import com.fortysevendeg.ninecards.googleplay.service.free.algebra.GooglePlay._
 import com.fortysevendeg.ninecards.googleplay.TestConfig._
 import com.fortysevendeg.ninecards.googleplay.util.WithHttp1Client
@@ -16,8 +18,6 @@ class InterpretersIntegration extends Specification with WithHttp1Client {
 
   import TaskMatchers._
 
-  private val apiService = new googleapi.ApiServices(
-    new googleapi.ApiClient( googleApiConf, pooledClient))
   private val webClient = new Http4sGooglePlayWebScraper(webEndpoint, pooledClient)
 
   sequential
@@ -66,16 +66,13 @@ class TaskInterpreterIntegration extends Specification with TaskMatchers with Wi
 
   sequential
 
-  private val apiService = new googleapi.ApiServices(
-    new googleapi.ApiClient( googleApiConf, pooledClient))
   val webClient = new Http4sGooglePlayWebScraper(webEndpoint, pooledClient)
 
-  // Most of this should be moved to a wiring module, with the cache.
-  val interpreter = {
-    val itemService = new XorTaskOrComposer[AppRequest,String,Item](apiService.getItem, webClient.getItem)
-    val cardService = new XorTaskOrComposer[AppRequest,InfoError, FullCard](apiService.getCard, webClient.getCard)
-    new TaskInterpreter(itemService, cardService, apiService.recommendByCategory, apiService.recommendByAppList )
-  }
+  val wiring = new Wiring()
+
+  val interpreter: (Ops ~> Task) = wiring.interpreter
+
+  override def afterAll = wiring.shutdown
 
   def categoryOption(item: Item): Option[String] =
     item.docV2.details.appDetails.appCategory.headOption

@@ -2,15 +2,14 @@ package com.fortysevendeg.ninecards.googleplay.api
 
 import cats.syntax.xor._
 import com.fortysevendeg.extracats._
-import com.fortysevendeg.ninecards.config.NineCardsConfig.getConfigValue
 import com.fortysevendeg.ninecards.googleplay.TestConfig._
 import com.fortysevendeg.ninecards.googleplay.domain._
 import com.fortysevendeg.ninecards.googleplay.service.free.algebra.GooglePlay
-import com.fortysevendeg.ninecards.googleplay.service.free.interpreter._
-import com.fortysevendeg.ninecards.googleplay.util.WithHttp1Client
+import com.fortysevendeg.ninecards.googleplay.processes.Wiring
 import io.circe.generic.auto._
 import io.circe.parser._
 import org.specs2.mutable.Specification
+import org.specs2.specification.AfterAll
 import scala.concurrent.duration._
 import scalaz.concurrent.Task
 import spray.http.HttpHeaders.RawHeader
@@ -19,7 +18,7 @@ import spray.http.StatusCodes._
 import spray.routing.HttpService
 import spray.testkit.Specs2RouteTest
 
-class ApiIntegration extends Specification with Specs2RouteTest with WithHttp1Client with HttpService {
+class ApiIntegration extends Specification with Specs2RouteTest with HttpService with AfterAll {
 
   def actorRefFactory = system // connect the DSL to the test ActorSystem
 
@@ -41,16 +40,11 @@ class ApiIntegration extends Specification with Specs2RouteTest with WithHttp1Cl
     RawHeader(Headers.localization, localization.value)
   )
 
-  val googleApiConf: googleapi.Configuration = googleapi.Configuration.load()
+  private[this] val wiring = new Wiring()
 
-  implicit val i = {
-    val apiService = new googleapi.ApiServices( new googleapi.ApiClient( googleApiConf , pooledClient) )
+  implicit val i = wiring.interpreter
 
-    val webClient = new Http4sGooglePlayWebScraper( getConfigValue("ninecards.googleplay.web.endpoint") , pooledClient)
-    val itemService = new XorTaskOrComposer[AppRequest,String,Item](apiService.getItem, webClient.getItem)
-    val cardService = new XorTaskOrComposer[AppRequest,InfoError, FullCard](apiService.getCard, webClient.getCard)
-    new TaskInterpreter(itemService, cardService, apiService.recommendByCategory, apiService.recommendByAppList)
-  }
+  override def afterAll = wiring.shutdown
 
   val route = {
     val trmFactory: TRMFactory[ GooglePlay.FreeOps ] =
@@ -75,7 +69,7 @@ class ApiIntegration extends Specification with Specs2RouteTest with WithHttp1Cl
     }
   }
 
-  s"${endpoints.item}," should {
+  endpoints.item should {
 
     failUnauthorized( Get(s"/googleplay/package/${validPackages.head}") )
 

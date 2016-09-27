@@ -1,5 +1,7 @@
 package com.fortysevendeg.ninecards.googleplay.service.free.interpreter.googleapi
 
+import cats.data.Xor
+import com.fortysevendeg.extracats.splitXors
 import com.fortysevendeg.ninecards.googleplay.domain.{DocV2 => DomainDocV2, _}
 import com.fortysevendeg.ninecards.googleplay.service.free.interpreter.googleapi.proto.GooglePlay.{ListResponse, DocV2}
 import scala.collection.JavaConversions._
@@ -97,6 +99,11 @@ object Converters {
       // If a DocV2 corresponds to no app, it is a DefaultInstance and as such has an empty docId
     } yield wr.toFullCard
     FullCardList(List(), apps)
+  }
+
+  def toFullCardListXors( xors: List[InfoError Xor FullCard]): FullCardList = {
+    val (errs, apps) = splitXors(xors)
+    FullCardList( errs.map(_.message) , apps)
   }
 
 }

@@ -2,17 +2,22 @@ package com.fortysevendeg.ninecards.googleplay.service.free.interpreter.googleap
 
 import cats.data.Xor
 import com.fortysevendeg.ninecards.googleplay.domain._
+import com.fortysevendeg.ninecards.googleplay.processes.Wiring
 import com.fortysevendeg.ninecards.googleplay.TestConfig._
 import com.fortysevendeg.ninecards.googleplay.service.free.interpreter.TestData._
-import com.fortysevendeg.ninecards.googleplay.util.WithHttp1Client
 import org.specs2.matcher.TaskMatchers
 import org.specs2.mutable.Specification
+import org.specs2.specification.AfterAll
 
-class GoogleApiClientIntegration extends Specification with WithHttp1Client {
+class GoogleApiClientIntegration extends Specification with AfterAll {
 
   import TaskMatchers._
 
-  private val apiServices = new ApiServices( new ApiClient(googleApiConf, pooledClient) )
+  val wiring = new Wiring()
+  private val apiServices = wiring.apiServices
+  private val appCardService = wiring.appCardService
+
+  override def afterAll: Unit = wiring.shutdown
 
   sequential
 
@@ -50,7 +55,7 @@ class GoogleApiClientIntegration extends Specification with WithHttp1Client {
           stars = 3.145
         )
         val appRequest = AppRequest(fisherPrice.packageObj, authParams )
-        val response = apiServices.getCard(appRequest)
+        val response = appCardService(appRequest)
         val fields = response.map( _.map(eraseDetails))
         // The number of downloads can be different from the Google API.
         fields must returnValue( Xor.Right( eraseDetails(fisherPrice.card)))
@@ -58,7 +63,7 @@ class GoogleApiClientIntegration extends Specification with WithHttp1Client {
 
       "result in an error state for packages that do not exist" in {
         val appRequest = AppRequest(nonexisting.packageObj, authParams)
-        apiServices.getCard(appRequest) must returnValue(Xor.left(nonexisting.infoError))
+        appCardService(appRequest) must returnValue(Xor.left(nonexisting.infoError))
       }
     }
 

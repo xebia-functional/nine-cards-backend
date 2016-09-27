@@ -11,7 +11,7 @@ import org.http4s.client.Client
 import scalaz.concurrent.Task
 import scodec.bits.ByteVector
 
-class ApiClient(config: Configuration, client: Client ) {
+case class ApiClient(config: Configuration, client: Client ) {
 
   private[this] val baseUri = Uri(
     scheme = Option(config.protocol.ci),
