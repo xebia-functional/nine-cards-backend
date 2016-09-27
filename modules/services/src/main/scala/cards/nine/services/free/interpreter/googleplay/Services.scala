@@ -1,15 +1,16 @@
 package cards.nine.services.free.interpreter.googleplay
 
+import cards.nine.services.free.algebra.GooglePlay._
 import cats.data.Xor
 import cards.nine.services.free.domain.GooglePlay._
+import cats.~>
 import org.http4s.Http4s._
 import org.http4s._
 import org.http4s.Uri.{ Authority, RegName }
-import org.http4s.client.UnexpectedStatus
 
 import scalaz.concurrent.Task
 
-class Services(config: Configuration) {
+class Services(config: Configuration) extends (Ops ~> Task) {
 
   import Encoders._
   import Decoders._
@@ -73,6 +74,17 @@ class Services(config: Configuration) {
       .withBody[PackageList](PackageList(packageNames))
 
     client.expect[Recommendations](request)
+  }
+
+  def apply[A](fa: Ops[A]): Task[A] = fa match {
+    case ResolveMany(packageNames, auth) ⇒
+      resolveMany(packageNames, auth)
+    case Resolve(packageName, auth) ⇒
+      resolveOne(packageName, auth)
+    case RecommendationsByCategory(category, filter, auth) ⇒
+      recommendByCategory(category, filter, auth)
+    case RecommendationsForApps(packagesName, auth) ⇒
+      recommendationsForApps(packagesName, auth)
   }
 }
 

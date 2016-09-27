@@ -5,7 +5,7 @@ import cards.nine.processes.NineCardsServices._
 import cards.nine.processes.messages.GooglePlayAuthMessages._
 import cards.nine.processes.messages.RecommendationsMessages._
 import cards.nine.services.free.algebra.GooglePlay.Services
-import cards.nine.services.free.domain.GooglePlay.{ Recommendation, Recommendations, AuthParams ⇒ GooglePlayAuthParams }
+import cards.nine.services.free.domain.GooglePlay.{ AuthParams ⇒ GooglePlayAuthParams, _ }
 import org.specs2.matcher.Matchers
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification

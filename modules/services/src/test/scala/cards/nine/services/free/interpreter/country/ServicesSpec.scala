@@ -1,19 +1,18 @@
-package cards.nine.services.persistence
+package cards.nine.services.free.interpreter.country
 
 import cards.nine.services.free.domain.Country
-import cards.nine.services.free.domain.Country._
-import cards.nine.services.persistence.NineCardsGenEntities._
+import cards.nine.services.free.domain.Country.Queries
+import cards.nine.services.persistence.NineCardsGenEntities.WrongIsoCode2
+import cards.nine.services.persistence.{ DomainDatabaseContext, NineCardsScalacheckGen }
 import org.specs2.ScalaCheck
-import org.specs2.matcher.DisjunctionMatchers
 import org.specs2.mutable.Specification
 import org.specs2.specification.BeforeEach
 
-class CountryPersistenceServicesSpec
+class ServicesSpec
   extends Specification
   with BeforeEach
   with ScalaCheck
   with DomainDatabaseContext
-  with DisjunctionMatchers
   with NineCardsScalacheckGen {
 
   sequential

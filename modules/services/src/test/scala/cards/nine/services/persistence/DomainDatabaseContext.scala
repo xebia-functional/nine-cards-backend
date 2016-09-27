@@ -5,6 +5,11 @@ import java.sql.Connection
 import cards.nine.services.common.NineCardsConfig
 import cards.nine.services.free.domain
 import cards.nine.services.free.domain._
+import cards.nine.services.free.interpreter.collection.{ Services ⇒ CollectionServices }
+import cards.nine.services.free.interpreter.country.{ Services ⇒ CountryServices }
+import cards.nine.services.free.interpreter.ranking.{ Services ⇒ RankingServices }
+import cards.nine.services.free.interpreter.subscription.{ Services ⇒ SubscriptionServices }
+import cards.nine.services.free.interpreter.user.{ Services ⇒ UserServices }
 import cards.nine.services.utils.DummyNineCardsConfig
 import doobie.free.{ drivermanager ⇒ FD }
 import doobie.imports._
@@ -105,9 +110,10 @@ trait DomainDatabaseContext extends BasicDatabaseContext {
   implicit val rankingPersistence: Persistence[domain.rankings.Entry] =
     new Persistence[domain.rankings.Entry](supportsSelectForUpdate = false)
 
-  val userPersistenceServices = UserPersistenceServices.persistenceServices
-  val collectionPersistenceServices = SharedCollectionPersistenceServices.persistenceServices
-  val countryPersistenceServices = CountryPersistenceServices.persistenceServices
-  val scSubscriptionPersistenceServices = SharedCollectionSubscriptionPersistenceServices.persistenceServices
-  val rankingPersistenceServices = new rankings.Services(rankingPersistence)
+  val collectionPersistenceServices = CollectionServices.services
+  val countryPersistenceServices = CountryServices.services
+  val rankingPersistenceServices = RankingServices.services
+  val subscriptionPersistenceServices = SubscriptionServices.services
+  val userPersistenceServices = UserServices.services
 }
+

@@ -54,6 +54,8 @@ object rankings {
 
   case class Ranking(categories: Map[Category, CategoryRanking]) extends AnyVal
 
+  case class UpdateRankingSummary(created: Int, deleted: Int)
+
   /*A CategoryRanking contains a list of application's package names */
   case class CategoryRanking(ranking: List[PackageName]) extends AnyVal
 

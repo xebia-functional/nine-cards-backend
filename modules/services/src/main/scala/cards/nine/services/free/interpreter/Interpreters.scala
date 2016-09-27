@@ -1,104 +1,52 @@
 package cards.nine.services.free.interpreter
 
 import cats._
-import cards.nine.services.free.algebra.DBResult._
 import cards.nine.services.free.algebra._
 import cards.nine.services.free.interpreter.analytics.{ Services ⇒ AnalyticsServices }
+import cards.nine.services.free.interpreter.collection.{ Services ⇒ CollectionServices }
+import cards.nine.services.free.interpreter.country.{ Services ⇒ CountryServices }
 import cards.nine.services.free.interpreter.firebase.{ Services ⇒ FirebaseServices }
 import cards.nine.services.free.interpreter.googleapi.{ Services ⇒ GoogleApiServices }
 import cards.nine.services.free.interpreter.googleplay.{ Services ⇒ GooglePlayServices }
+import cards.nine.services.free.interpreter.ranking.{ Services ⇒ RankingServices }
+import cards.nine.services.free.interpreter.subscription.{ Services ⇒ SubscriptionServices }
+import cards.nine.services.free.interpreter.user.{ Services ⇒ UserServices }
+import cards.nine.services.persistence.CustomComposite._
+import cards.nine.services.persistence.DatabaseTransactor._
+import doobie.imports._
 
-import scala.util.{ Failure, Success, Try }
 import scalaz.concurrent.Task
 
-abstract class Interpreters[M[_]](implicit A: ApplicativeError[M, Throwable]) {
+abstract class Interpreters[M[_]](implicit A: ApplicativeError[M, Throwable], T: Transactor[M]) {
 
   val task2M: (Task ~> M)
 
-  def dBResultInterpreter: (DBResult ~> M) = new (DBResult ~> M) {
-    def apply[A](fa: DBResult[A]) = fa match {
-      case DBSuccess(value) ⇒ A.pureEval(Eval.later(value))
-      case DBFailure(e) ⇒ A.raiseError(e)
-    }
+  val connectionIO2M = new (ConnectionIO ~> M) {
+    def apply[A](fa: ConnectionIO[A]): M[A] = fa.transact(T)
   }
 
-  object googleApiInterpreter extends (GoogleApi.Ops ~> M) {
-    private[this] val googleApiServices: GoogleApiServices = GoogleApiServices.services
+  lazy val analyticsInterpreter: (GoogleAnalytics.Ops ~> M) = AnalyticsServices.services.andThen(task2M)
 
-    def apply[A](fa: GoogleApi.Ops[A]) = fa match {
-      case GoogleApi.GetTokenInfo(tokenId: String) ⇒ task2M(googleApiServices.getTokenInfo(tokenId))
-    }
-  }
+  val collectionInterpreter: (SharedCollection.Ops ~> M) = CollectionServices.services.andThen(connectionIO2M)
 
-  object googlePlayInterpreter extends (GooglePlay.Ops ~> M) {
-    private[this] val googlePlayServices: GooglePlayServices = GooglePlayServices.services
+  val countryInterpreter: (Country.Ops ~> M) = CountryServices.services.andThen(connectionIO2M)
 
-    def apply[A](fa: GooglePlay.Ops[A]) = fa match {
-      case GooglePlay.ResolveMany(packageNames, auth) ⇒
-        task2M(googlePlayServices.resolveMany(packageNames, auth))
-      case GooglePlay.Resolve(packageName, auth) ⇒
-        task2M(googlePlayServices.resolveOne(packageName, auth))
-      case GooglePlay.RecommendationsByCategory(category, filter, auth) ⇒
-        task2M(googlePlayServices.recommendByCategory(category, filter, auth))
-      case GooglePlay.RecommendationsForApps(packagesName, auth) ⇒
-        task2M(googlePlayServices.recommendationsForApps(packagesName, auth))
-    }
-  }
+  lazy val firebaseInterpreter: (Firebase.Ops ~> M) = FirebaseServices.services.andThen(task2M)
 
-  object analyticsInterpreter extends (GoogleAnalytics.Ops ~> M) {
-    private[this] val services: AnalyticsServices = AnalyticsServices.services
+  lazy val googleApiInterpreter: (GoogleApi.Ops ~> M) = GoogleApiServices.services.andThen(task2M)
 
-    import GoogleAnalytics._
+  lazy val googlePlayInterpreter: (GooglePlay.Ops ~> M) = GooglePlayServices.services.andThen(task2M)
 
-    def apply[A](fa: Ops[A]): M[A] = {
-      val task: Task[A] = fa match {
-        case GetRanking(geoScope, params) ⇒ services.getRanking(geoScope, params)
-      }
-      task2M(task)
-    }
-  }
+  val rankingInterpreter: (Ranking.Ops ~> M) = RankingServices.services.andThen(connectionIO2M)
 
-  object firebaseInterpreter extends (Firebase.Ops ~> M) {
-    private[this] val firebaseServices: FirebaseServices = FirebaseServices.services
+  val subscriptionInterpreter: (Subscription.Ops ~> M) = SubscriptionServices.services.andThen(connectionIO2M)
 
-    def apply[A](fa: Firebase.Ops[A]) = fa match {
-      case Firebase.SendUpdatedCollectionNotification(info) ⇒
-        task2M {
-          firebaseServices.sendUpdatedCollectionNotification(info)
-        }
-    }
-  }
-
-}
-
-trait IdInstances {
-  implicit def idApplicativeError(
-    implicit
-    I: Applicative[cats.Id]
-  ): ApplicativeError[cats.Id, Throwable] =
-    new ApplicativeError[Id, Throwable] {
-
-      override def pure[A](x: A): Id[A] = I.pure(x)
-
-      override def ap[A, B](ff: Id[A ⇒ B])(fa: Id[A]): Id[B] = I.ap(ff)(fa)
-
-      override def map[A, B](fa: Id[A])(f: Id[A ⇒ B]): Id[B] = I.map(fa)(f)
-
-      override def product[A, B](fa: Id[A], fb: Id[B]): Id[(A, B)] = I.product(fa, fb)
-
-      override def raiseError[A](e: Throwable): Id[A] = throw e
-
-      override def handleErrorWith[A](fa: Id[A])(f: Throwable ⇒ Id[A]): Id[A] =
-        Try(fa) match {
-          case Success(v) ⇒ v
-          case Failure(e) ⇒ f(e)
-        }
-    }
+  val userInterpreter: (User.Ops ~> M) = UserServices.services.andThen(connectionIO2M)
 }
 
 trait TaskInstances {
-  implicit val taskMonad: Monad[Task] with ApplicativeError[Task, Throwable] =
-    new Monad[Task] with ApplicativeError[Task, Throwable] {
+  implicit val taskMonad: Monad[Task] with ApplicativeError[Task, Throwable] with RecursiveTailRecM[Task] =
+    new Monad[Task] with ApplicativeError[Task, Throwable] with RecursiveTailRecM[Task] {
 
       def pure[A](x: A): Task[A] = Task.delay(x)
 
@@ -108,31 +56,25 @@ trait TaskInstances {
       override def flatMap[A, B](fa: Task[A])(f: A ⇒ Task[B]): Task[B] =
         fa flatMap f
 
-      override def pureEval[A](x: Eval[A]): Task[A] =
-        Task.fork(Task.delay(x.value))
-
       override def raiseError[A](e: Throwable): Task[A] =
         Task.fail(e)
 
       override def handleErrorWith[A](fa: Task[A])(f: Throwable ⇒ Task[A]): Task[A] =
         fa.handleWith({ case x ⇒ f(x) })
+
+      override def tailRecM[A, B](a: A)(f: (A) ⇒ Task[Either[A, B]]): Task[B] =
+        flatMap(f(a)) {
+          case Right(b) ⇒ pure(b)
+          case Left(nextA) ⇒ tailRecM(nextA)(f)
+        }
     }
 }
 
-object Interpreters extends IdInstances with TaskInstances {
+object Interpreters extends TaskInstances {
 
   val taskInterpreters = new Interpreters[Task] {
     override val task2M: (Task ~> Task) = new (Task ~> Task) {
       override def apply[A](fa: Task[A]): Task[A] = fa
-    }
-  }
-
-  val idInterpreters = new Interpreters[Id] {
-    override val task2M: (Task ~> Id) = new (Task ~> Id) {
-      override def apply[A](fa: Task[A]): Id[A] = fa.unsafePerformSyncAttempt.fold(
-        error ⇒ idApplicativeError.raiseError(error),
-        value ⇒ idApplicativeError.pure(value)
-      )
     }
   }
 }

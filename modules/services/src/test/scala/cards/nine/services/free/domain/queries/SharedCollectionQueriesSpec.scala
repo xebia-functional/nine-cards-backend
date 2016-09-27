@@ -5,8 +5,8 @@ import java.time.LocalDateTime
 
 import cards.nine.services.free.domain.SharedCollection.Queries._
 import cards.nine.services.free.domain.SharedCollectionWithAggregatedInfo
+import cards.nine.services.free.interpreter.collection.Services.SharedCollectionData
 import cards.nine.services.persistence.DomainDatabaseContext
-import cards.nine.services.persistence.SharedCollectionPersistenceServices.SharedCollectionData
 import doobie.contrib.specs2.analysisspec.AnalysisSpec
 import org.specs2.mutable.Specification
 import shapeless.syntax.std.product._

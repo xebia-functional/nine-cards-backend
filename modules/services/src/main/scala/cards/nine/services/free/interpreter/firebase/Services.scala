@@ -1,9 +1,11 @@
 package cards.nine.services.free.interpreter.firebase
 
-import cats.data.Xor
+import cards.nine.services.free.algebra.Firebase._
 import cards.nine.services.free.domain.Firebase._
 import cards.nine.services.free.interpreter.firebase.Decoders._
 import cards.nine.services.free.interpreter.firebase.Encoders._
+import cats.data.Xor
+import cats.~>
 import org.http4s.Http4s._
 import org.http4s.Uri.{ Authority, RegName }
 import org.http4s._
@@ -11,7 +13,7 @@ import org.http4s.client.UnexpectedStatus
 
 import scalaz.concurrent.Task
 
-class Services(config: Configuration) {
+class Services(config: Configuration) extends (Ops ~> Task) {
 
   private[this] val client = org.http4s.client.blaze.PooledHttp1Client()
 
@@ -55,6 +57,10 @@ class Services(config: Configuration) {
           case Status.Unauthorized ⇒ Xor.left(FirebaseUnauthorized)
         }
       }
+  }
+
+  def apply[A](fa: Ops[A]): Task[A] = fa match {
+    case SendUpdatedCollectionNotification(info) ⇒ sendUpdatedCollectionNotification(info)
   }
 }
 

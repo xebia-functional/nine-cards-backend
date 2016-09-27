@@ -11,7 +11,7 @@ import cards.nine.services.free.domain.{ SharedCollection ⇒ SharedCollectionSe
 import cards.nine.services.free.domain.Firebase.{ NotificationIndividualResult, NotificationResponse }
 import cards.nine.services.free.domain.GooglePlay.{ AppsInfo, AppInfo ⇒ AppInfoServices }
 import cards.nine.services.free.domain.rankings.{ Country ⇒ CountryEnum }
-import cards.nine.services.persistence.SharedCollectionPersistenceServices.{ SharedCollectionData ⇒ SharedCollectionDataServices }
+import cards.nine.services.free.interpreter.collection.Services.{ SharedCollectionData ⇒ SharedCollectionDataServices }
 import org.joda.time.{ DateTime, DateTimeZone }
 
 object TestData {

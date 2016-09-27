@@ -1,15 +1,16 @@
-package cards.nine.services.persistence
+package cards.nine.services.free.interpreter.subscription
 
-import cards.nine.services.free.domain._
-import cards.nine.services.persistence.SharedCollectionPersistenceServices.SharedCollectionData
-import cards.nine.services.persistence.UserPersistenceServices.UserData
+import cards.nine.services.free.domain.{ SharedCollection, SharedCollectionSubscription, User }
+import cards.nine.services.free.interpreter.collection.Services.SharedCollectionData
+import cards.nine.services.free.interpreter.user.Services.UserData
+import cards.nine.services.persistence.{ DomainDatabaseContext, NineCardsScalacheckGen }
 import org.specs2.ScalaCheck
 import org.specs2.matcher.DisjunctionMatchers
 import org.specs2.mutable.Specification
 import org.specs2.specification.BeforeEach
 import shapeless.syntax.std.product._
 
-class SharedCollectionSubscriptionPersistenceServicesSpec
+class ServicesSpec
   extends Specification
   with BeforeEach
   with ScalaCheck
@@ -43,14 +44,14 @@ class SharedCollectionSubscriptionPersistenceServicesSpec
           c ← insertItem(SharedCollection.Queries.insert, collectionData.copy(userId = Option(u)).toTuple)
         } yield (u, c)).transactAndRun
 
-        scSubscriptionPersistenceServices.addSubscription(
+        subscriptionPersistenceServices.add(
           collectionId       = collectionId,
           userId             = userId,
           collectionPublicId = collectionData.publicIdentifier
         ).transactAndRun
 
         val storedSubscription =
-          scSubscriptionPersistenceServices.getSubscriptionByCollectionAndUser(
+          subscriptionPersistenceServices.getByCollectionAndUser(
             collectionId = collectionId,
             userId       = userId
           ).transactAndRun
@@ -67,7 +68,7 @@ class SharedCollectionSubscriptionPersistenceServicesSpec
     "return an empty list if the table is empty" in {
       prop { (collectionId: Long) ⇒
         val subscriptions =
-          scSubscriptionPersistenceServices.getSubscriptionsByCollection(
+          subscriptionPersistenceServices.getByCollection(
             collectionId = collectionId
           ).transactAndRun
 
@@ -79,7 +80,7 @@ class SharedCollectionSubscriptionPersistenceServicesSpec
         val (_, collectionId) = generateSubscription(userData, collectionData)
 
         val storedSubscriptions =
-          scSubscriptionPersistenceServices.getSubscriptionsByCollection(
+          subscriptionPersistenceServices.getByCollection(
             collectionId = collectionId
           ).transactAndRun
 
@@ -92,7 +93,7 @@ class SharedCollectionSubscriptionPersistenceServicesSpec
       prop { (userData: UserData, collectionData: SharedCollectionData) ⇒
         val (_, collectionId) = generateSubscription(userData, collectionData)
 
-        val subscriptions = scSubscriptionPersistenceServices.getSubscriptionsByCollection(
+        val subscriptions = subscriptionPersistenceServices.getByCollection(
           collectionId = collectionId + 1000000
         ).transactAndRun
 
@@ -104,7 +105,7 @@ class SharedCollectionSubscriptionPersistenceServicesSpec
   "getSubscriptionByCollectionAndUser" should {
     "return None if the table is empty" in {
       prop { (userId: Long, collectionId: Long) ⇒
-        val subscription = scSubscriptionPersistenceServices.getSubscriptionByCollectionAndUser(
+        val subscription = subscriptionPersistenceServices.getByCollectionAndUser(
           collectionId = collectionId,
           userId       = userId
         ).transactAndRun
@@ -116,7 +117,7 @@ class SharedCollectionSubscriptionPersistenceServicesSpec
       prop { (userData: UserData, collectionData: SharedCollectionData) ⇒
         val (userId, collectionId) = generateSubscription(userData, collectionData)
 
-        val subscription = scSubscriptionPersistenceServices.getSubscriptionByCollectionAndUser(
+        val subscription = subscriptionPersistenceServices.getByCollectionAndUser(
           collectionId = collectionId,
           userId       = userId
         ).transactAndRun
@@ -131,7 +132,7 @@ class SharedCollectionSubscriptionPersistenceServicesSpec
       prop { (userData: UserData, collectionData: SharedCollectionData) ⇒
         val (userId, collectionId) = generateSubscription(userData, collectionData)
 
-        val subscription = scSubscriptionPersistenceServices.getSubscriptionByCollectionAndUser(
+        val subscription = subscriptionPersistenceServices.getByCollectionAndUser(
           collectionId = collectionId + 1000000,
           userId       = userId + 1000000
         ).transactAndRun
@@ -144,7 +145,7 @@ class SharedCollectionSubscriptionPersistenceServicesSpec
   "getSubscriptionByUser" should {
     "return an empty list if the table is empty" in {
       prop { (userId: Long) ⇒
-        val subscriptions = scSubscriptionPersistenceServices.getSubscriptionsByUser(
+        val subscriptions = subscriptionPersistenceServices.getByUser(
           userId = userId
         ).transactAndRun
 
@@ -155,7 +156,7 @@ class SharedCollectionSubscriptionPersistenceServicesSpec
       prop { (userData: UserData, collectionData: SharedCollectionData) ⇒
         val (userId, _) = generateSubscription(userData, collectionData)
 
-        val storedSubscriptions = scSubscriptionPersistenceServices.getSubscriptionsByUser(
+        val storedSubscriptions = subscriptionPersistenceServices.getByUser(
           userId = userId
         ).transactAndRun
 
@@ -168,7 +169,7 @@ class SharedCollectionSubscriptionPersistenceServicesSpec
       prop { (userData: UserData, collectionData: SharedCollectionData) ⇒
         val (userId, _) = generateSubscription(userData, collectionData)
 
-        val subscriptions = scSubscriptionPersistenceServices.getSubscriptionsByUser(
+        val subscriptions = subscriptionPersistenceServices.getByUser(
           userId = userId + 1000000
         ).transactAndRun
 
@@ -180,7 +181,7 @@ class SharedCollectionSubscriptionPersistenceServicesSpec
   "removeSubscriptionByCollectionAndUser" should {
     "return 0 there isn't any subscription for the given user and collection in the database" in {
       prop { (userId: Long, collectionId: Long) ⇒
-        val deleted = scSubscriptionPersistenceServices.removeSubscriptionByCollectionAndUser(
+        val deleted = subscriptionPersistenceServices.removeByCollectionAndUser(
           collectionId = collectionId,
           userId       = userId
         ).transactAndRun
@@ -192,7 +193,7 @@ class SharedCollectionSubscriptionPersistenceServicesSpec
       prop { (userData: UserData, collectionData: SharedCollectionData) ⇒
         val (userId, collectionId) = generateSubscription(userData, collectionData)
 
-        val deleted = scSubscriptionPersistenceServices.removeSubscriptionByCollectionAndUser(
+        val deleted = subscriptionPersistenceServices.removeByCollectionAndUser(
           collectionId = collectionId,
           userId       = userId
         ).transactAndRun
@@ -201,4 +202,5 @@ class SharedCollectionSubscriptionPersistenceServicesSpec
       }
     }
   }
+
 }

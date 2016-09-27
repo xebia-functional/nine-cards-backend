@@ -1,16 +1,16 @@
-package cards.nine.services.persistence
+package cards.nine.services.free.interpreter.ranking
 
-import cards.nine.services.free.domain.{ Category, PackageName }
-import cards.nine.services.free.domain.rankings._
-import cards.nine.services.persistence.NineCardsGenEntities._
-import doobie.imports.ConnectionIO
+import cards.nine.services.free.domain.Category
+import cards.nine.services.free.domain.rankings.{ CategoryRanking, Entry, GeoScope, Queries, Ranking, UnrankedApp }
+import cards.nine.services.persistence.{ CustomComposite, DomainDatabaseContext, NineCardsScalacheckGen }
 import org.specs2.ScalaCheck
 import org.specs2.matcher.DisjunctionMatchers
 import org.specs2.mutable.Specification
 import org.specs2.specification.BeforeEach
-import scalaz.std.list.listInstance
 
-class RankingPersistenceServicesSpec
+import scalaz.std.list._
+
+class ServicesSpec
   extends Specification
   with BeforeEach
   with ScalaCheck
@@ -66,12 +66,12 @@ class RankingPersistenceServicesSpec
 
   }
 
-  "setRanking" should {
+  "updateRanking" should {
 
     "set an empty ranking to an empty table" in {
       prop { (scope: GeoScope) ⇒
         val pp = rankingPersistenceServices
-          .setRanking(scope, Ranking(Map.empty))
+          .updateRanking(scope, Ranking(Map.empty))
           .transactAndRun
 
         val storeRanking = rankingPersistenceServices.getRanking(scope).transactAndRun
@@ -83,7 +83,7 @@ class RankingPersistenceServicesSpec
     "set a non-empty ranking to a table" in {
       prop { (scope: GeoScope, ranking: Ranking) ⇒
         val pp = rankingPersistenceServices
-          .setRanking(scope, ranking)
+          .updateRanking(scope, ranking)
           .transactAndRun
 
         val storeRanking = rankingPersistenceServices.getRanking(scope).transactAndRun
@@ -93,12 +93,12 @@ class RankingPersistenceServicesSpec
     }
   }
 
-  "getRankedApp" should {
+  "getRankingForApps" should {
 
     "return an empty list of ranked apps if the table is empty" in {
       prop { (scope: GeoScope, deviceApps: Set[UnrankedApp]) ⇒
         val rankedApps = rankingPersistenceServices
-          .getRankedApps(scope, deviceApps)
+          .getRankingForApps(scope, deviceApps)
           .transactAndRun
 
         rankedApps must beEmpty
@@ -108,7 +108,7 @@ class RankingPersistenceServicesSpec
     "return an empty list of ranked apps if an empty list of device apps is given" in {
       prop { scope: GeoScope ⇒
         val rankedApps = rankingPersistenceServices
-          .getRankedApps(scope, Set.empty)
+          .getRankingForApps(scope, Set.empty)
           .transactAndRun
 
         rankedApps must beEmpty
@@ -118,7 +118,7 @@ class RankingPersistenceServicesSpec
     "return a list of ranked apps for the given list of device apps" in {
       prop { (scope: GeoScope, ranking: Ranking) ⇒
         rankingPersistenceServices
-          .setRanking(scope, ranking)
+          .updateRanking(scope, ranking)
           .transactAndRun
 
         val deviceApps = ranking.categories.values
@@ -127,7 +127,7 @@ class RankingPersistenceServicesSpec
           .toSet
 
         val rankedApps = rankingPersistenceServices
-          .getRankedApps(scope, deviceApps)
+          .getRankingForApps(scope, deviceApps)
           .transactAndRun
 
         rankedApps must haveSize(be_>=(deviceApps.size))
