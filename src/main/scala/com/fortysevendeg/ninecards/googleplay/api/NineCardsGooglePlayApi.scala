@@ -9,6 +9,7 @@ import com.fortysevendeg.ninecards.googleplay.domain._
 import com.fortysevendeg.ninecards.googleplay.processes.Wiring
 import com.fortysevendeg.ninecards.googleplay.service.free.algebra.GooglePlay
 import io.circe.generic.auto._
+import io.circe.spray.JsonSupport
 import scalaz.concurrent.Task
 import spray.routing.{Directives, HttpService, Route}
 import NineCardsMarshallers.TRMFactory
@@ -49,7 +50,7 @@ class NineCardsGooglePlayApi[Ops[_]] (
         cardsRoute ~
         packageRoute ~
         packagesRoute ~
-        recommendationsRoute
+        recommendation.route
       }
     }
 
@@ -93,26 +94,6 @@ class NineCardsGooglePlayApi[Ops[_]] (
       }
     }
 
-  private[this] lazy val recommendationsRoute: Route =
-    pathPrefix("recommendations") {
-      requestHeaders { authParams =>
-        pathEndOrSingleSlash {
-          post {
-            entity(as[PackageList])  { packageList =>
-              complete ( recommendByAppList(authParams, packageList) )
-            }
-          }
-        } ~
-        pathPrefix(CategorySegment) { category =>
-          priceFilterPath { filter =>
-            get {
-              complete ( recommendByCategory(authParams, category, filter) )
-            }
-          }
-        }
-      }
-    }
-
   private[this] def getCard(
     authParams: GoogleAuthParams, packageName: String
   ): Free[Ops, Xor[InfoError, ApiCard]] =
@@ -127,18 +108,51 @@ class NineCardsGooglePlayApi[Ops[_]] (
       .getCardList( authParams, packageList)
       .map(Converters.toApiCardList)
 
-  private[this] def recommendByCategory(
-    authParams: GoogleAuthParams, category: Category, filter: PriceFilter
-  ): Free[Ops, Xor[InfoError, ApiRecommendationList]] =
-    googlePlayService
-      .recommendationsByCategory(authParams, category, filter)
-      .map(_.map(Converters.toApiRecommendationList))
+  object recommendation {
 
-  private[this] def recommendByAppList(
-    authParams: GoogleAuthParams, packages: PackageList
-  ) : Free[Ops, ApiRecommendationList] =
-    googlePlayService
-      .recommendationsByAppList(authParams, packages)
-      .map( Converters.toApiRecommendationList)
+    import CirceCoders._
+    import JsonSupport._
+
+    lazy val route: Route =
+      pathPrefix("recommendations") {
+        requestHeaders { authParams =>
+          pathEndOrSingleSlash {
+            post {
+              entity(as[ApiRecommendByAppsRequest])  { request =>
+                complete( recommendByAppList(authParams, request) )
+              }
+            }
+          } ~
+          pathPrefix(CategorySegment) { category =>
+            priceFilterPath { filter =>
+              (post & entity(as[ApiRecommendByCategoryRequest]) ) { request =>
+                complete ( recommendByCategory(authParams, category, filter, request) )
+              }
+            }
+          }
+        }
+      }
+
+    private[this] def recommendByCategory(
+      authParams: GoogleAuthParams,
+      category: Category,
+      filter: PriceFilter,
+      apiRequest: ApiRecommendByCategoryRequest
+    ): Free[Ops, Xor[InfoError, ApiRecommendationList]] = {
+      val request = Converters.toRecommendByCategoryRequest(category, filter, apiRequest)
+      googlePlayService
+        .recommendationsByCategory(authParams, request)
+        .map(_.map(Converters.toApiRecommendationList))
+    }
+
+    private[this] def recommendByAppList(
+      authParams: GoogleAuthParams, apiRequest: ApiRecommendByAppsRequest
+    ) : Free[Ops, ApiRecommendationList] = {
+      val request = Converters.toRecommendByAppsRequest(apiRequest)
+      googlePlayService
+        .recommendationsByAppList(authParams, request)
+        .map( Converters.toApiRecommendationList)
+    }
+  }
 
 }

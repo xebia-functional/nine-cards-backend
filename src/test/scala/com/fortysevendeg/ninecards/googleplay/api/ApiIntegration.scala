@@ -6,7 +6,6 @@ import com.fortysevendeg.ninecards.googleplay.TestConfig._
 import com.fortysevendeg.ninecards.googleplay.domain._
 import com.fortysevendeg.ninecards.googleplay.service.free.algebra.GooglePlay
 import com.fortysevendeg.ninecards.googleplay.processes.Wiring
-import io.circe.generic.auto._
 import io.circe.parser._
 import org.specs2.mutable.Specification
 import org.specs2.specification.AfterAll
@@ -40,6 +39,8 @@ class ApiIntegration extends Specification with Specs2RouteTest with HttpService
     RawHeader(Headers.localization, localization.value)
   )
 
+  import CirceCoders._
+
   private[this] val wiring = new Wiring()
 
   implicit val i = wiring.interpreter
@@ -65,6 +66,14 @@ class ApiIntegration extends Specification with Specs2RouteTest with HttpService
     "Fail with a 401 Unauthorized if the needed headers are not given" in {
       req ~> route ~> check {
         status must_=== Unauthorized
+      }
+    }
+  }
+
+  def failMethodNotAllowed(req: HttpRequest) = {
+    "Fail with a 405 MethodNotAllowed if the wrong HTTP method is used" in {
+      req ~> route ~> check {
+        status must_=== MethodNotAllowed
       }
     }
   }
@@ -156,7 +165,10 @@ class ApiIntegration extends Specification with Specs2RouteTest with HttpService
 
   endpoints.recommendCategory should {
 
-    val request = Get("/googleplay/recommendations/SOCIAL/FREE")
+    val apiRequest = ApiRecommendByCategoryRequest( excludedApps = List(), maxTotal = 10)
+    val uri = "/googleplay/recommendations/SOCIAL/FREE"
+
+    val request = Post("/googleplay/recommendations/SOCIAL/FREE", apiRequest)
 
     failUnauthorized(request)
 
@@ -169,7 +181,15 @@ class ApiIntegration extends Specification with Specs2RouteTest with HttpService
   }
 
   endpoints.recommendAppList should {
-    val request = Post("/googleplay/recommendations", PackageList(allPackages))
+
+    val apiRequest =  ApiRecommendByAppsRequest(
+      searchByApps = allPackages.map(Package.apply),
+      numPerApp = 3, 
+      excludedApps = List(), 
+      maxTotal = 10
+    )
+
+    val request = Post("/googleplay/recommendations", apiRequest)
 
     failUnauthorized(request)
 

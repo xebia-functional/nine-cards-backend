@@ -1,6 +1,6 @@
 package com.fortysevendeg.ninecards.googleplay.service.free.interpreter.googleapi
 
-import com.fortysevendeg.ninecards.googleplay.domain.{FullCard, FullCardList, Item}
+import com.fortysevendeg.ninecards.googleplay.domain.{FullCard, FullCardList, Item, Package}
 import com.fortysevendeg.ninecards.googleplay.service.free.interpreter.TestData.{ fisherPrice, minecraft }
 import java.nio.file.{ Files, Paths}
 import org.specs2.mutable.Specification
@@ -58,8 +58,8 @@ class ConvertersSpec extends Specification with Specs2RouteTest {
     val listRes: ListResponse = getListResponse( readProtobufFile(fileName))
 
     "read the list of ids of the recommended apps" in {
-      val ids: List[String] = listResponseToPackages(listRes)
-      ids must_=== List(
+      val ids: List[Package] = listResponseToPackages(listRes)
+      val expected = List(
         "com.facebook.katana",
         "com.instagram.android",
         "com.pinterest",
@@ -74,12 +74,14 @@ class ConvertersSpec extends Specification with Specs2RouteTest {
         "com.okcupid.okcupid",
         "com.myyearbook.m",
         "com.jaumo"
-      )
+      ).map(Package.apply)
+
+      ids must containTheSameElementsAs(expected)
     }
 
     "build incomplete cards of it" in {
       val apps: FullCardList = toFullCardList(listRes)
-      apps.cards.map(_.packageName) must_=== listResponseToPackages(listRes)
+      apps.cards.map( c => Package(c.packageName) ) must_=== listResponseToPackages(listRes)
     }
 
   }
@@ -88,23 +90,25 @@ class ConvertersSpec extends Specification with Specs2RouteTest {
 
     val files = List( "com.facebook.katana", "com.instagram.android", "com.pinterest")
     def listResponseOf(file: String) = getListResponse(readProtobufFile(s"recommend/$file" ))
-    def packagesOf( file: String) = listResponseToPackages( listResponseOf( file))
+    def packagesOf( file: String) = listResponseToPackages( listResponseOf( file)).map(_.value)
 
     "read the list of ids of the recommended apps" in {
-      packagesOf( files(0) ) must_===( List( "com.instagram.android", "com.facebook.orca", "com.whatsapp") )
-      packagesOf( files(1) ) must_===( List( "com.facebook.katana", "com.whatsapp", "com.facebook.orca") )
-      packagesOf( files(2) ) must_===( List( "com.tumblr", "com.weheartit", "com.instagram.android") )
+
+      packagesOf( files(0) ) must containTheSameElementsAs(
+        List( "com.instagram.android", "com.facebook.orca", "com.whatsapp") )
+      packagesOf( files(1) ) must containTheSameElementsAs(
+        List( "com.facebook.katana", "com.whatsapp", "com.facebook.orca") )
+      packagesOf( files(2) ) must containTheSameElementsAs(
+        List( "com.tumblr", "com.weheartit", "com.instagram.android") )
     }
 
     "extract a union list of recommended apps without repetitions" in {
-      val ids: List[String] = listResponseListToPackages(files map listResponseOf)
-      ids must_===( List(
-        "com.tumblr", "com.weheartit", "com.whatsapp",
+      val ids: List[Package] = listResponseListToPackages(files map listResponseOf)
+      ids.map(_.value) must containTheSameElementsAs(
+        List( "com.tumblr", "com.weheartit", "com.whatsapp",
         "com.instagram.android", "com.facebook.katana", "com.facebook.orca"
       ))
     }
   }
-
-
 
 }

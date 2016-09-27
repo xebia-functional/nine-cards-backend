@@ -51,6 +51,7 @@ object Dependencies {
     circe("core"),
     circe("generic"),
     circe("parser"),
+    circe("spray"),
     enumeratum(""),
     enumeratum("-circe"),
     jodaTime,

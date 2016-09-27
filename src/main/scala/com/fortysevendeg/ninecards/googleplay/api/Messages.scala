@@ -1,5 +1,7 @@
 package com.fortysevendeg.ninecards.googleplay.api
 
+import com.fortysevendeg.ninecards.googleplay.domain.Package
+
 case class ApiCard(
   packageName: String,
   title: String,
@@ -27,3 +29,14 @@ case class ApiRecommendation (
 
 case class ApiRecommendationList(apps: List[ApiRecommendation])
 
+case class ApiRecommendByAppsRequest(
+  searchByApps: List[Package],
+  numPerApp: Int,
+  excludedApps: List[Package],
+  maxTotal: Int
+)
+
+case class ApiRecommendByCategoryRequest(
+  excludedApps: List[Package],
+  maxTotal: Int
+)

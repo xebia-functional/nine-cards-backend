@@ -40,10 +40,10 @@ class TaskInterpreter(
         (errors, apps) = splitXors[InfoError, FullCard](xors)
       } yield FullCardList(errors.map(_.message), apps)
 
-    case message @ GooglePlay.RecommendationsByCategory(_,_,_) =>
+    case message @ GooglePlay.RecommendationsByCategory(_,_) =>
       recommendByCategory( message)
 
-    case message @ GooglePlay.RecommendationsByAppList(_,_) =>
+    case message @ GooglePlay.RecommendationsByAppList(_, _) =>
       recommendByAppList( message )
   }
 
