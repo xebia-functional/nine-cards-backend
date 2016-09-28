@@ -54,14 +54,15 @@ object GooglePlayPageParser {
 
     /*We exclude from the URL the portions after the equals symbol, which are parameters
      to choose smaller icons */
-    val ImageUrlRegex = "//([^=]+)=??.*".r
+    val ImageUrlRegex = "[^/]*//([^=]+)=??.*".r
 
     def getImages(kind: String): Seq[String] =
       for /*Seq*/ {
         n <- doc \\ "img"
         if n.isProperty(kind)
-        url = n.getAttribute("src") match {
-          case ImageUrlRegex(uri) => uri
+        url <- n.getAttribute("src") match {
+          case ImageUrlRegex(uri) => Seq(uri)
+          case _ => Seq()
         }
       } yield s"http://$url"
 
@@ -74,10 +75,11 @@ object GooglePlayPageParser {
       for /*Seq*/ {
         n <- doc \\ "a"
         if n.isClass("document-subtitle category")
-        c:String = n.getAttribute("href") match {
-          case CategoryHrefRegex(cat) => cat
+        cat <- n.getAttribute("href") match {
+          case CategoryHrefRegex(cat) => Seq(cat)
+          case _ => Seq()
         }
-      } yield c
+      } yield cat
 
     def isFree(): Seq[Boolean] =
       for /*Seq*/  {

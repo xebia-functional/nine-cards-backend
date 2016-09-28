@@ -67,7 +67,7 @@ class InterpreterSpec extends Specification with Matchers with MockServer with W
       .withQueryStringParameter( "hl", "en_US")
       .withQueryStringParameter( "id", fisherPrice.packageName)
 
-    def runOperation = interpreter( GetDetails(fisherPrice.packageObj) )(pooledClient).run
+    def runOperation(pack: Package) = interpreter( GetDetails(pack) )(pooledClient).run
 
     "return the card if the server gives a 200 OK Status" in {
       val httpResponse = {
@@ -77,13 +77,32 @@ class InterpreterSpec extends Specification with Matchers with MockServer with W
           .withBody(byteVector)
       }
       mockServer.when(httpRequest).respond(httpResponse)
-      runOperation must_=== Xor.Right(fisherPrice.card)
+      runOperation(fisherPrice.packageObj)  must_=== Xor.Right(fisherPrice.card)
     }
 
     "return a PackageNotFound(_) failure if server gives 404 NotFound status" in {
       val httpResponse = HttpResponse.response.withStatusCode( NOT_FOUND_404.code)
       mockServer.when(httpRequest).respond(httpResponse)
-      runOperation must_=== Xor.Left( PackageNotFound( fisherPrice.packageObj) )
+      runOperation(fisherPrice.packageObj) must_=== Xor.Left( PackageNotFound( fisherPrice.packageObj) )
+    }
+
+    "For the SkyMap play store web app" in {
+      val httpRequest = HttpRequest.request
+        .withMethod("GET")
+        .withPath(detailsPath)
+        .withQueryStringParameter( "hl", "en_US")
+        .withQueryStringParameter( "id", skymap.packageName)
+
+      val httpResponse = {
+        val byteVector = Files.readAllBytes(Paths.get(skymap.htmlFile.getFile))
+        HttpResponse.response
+          .withStatusCode(OK_200.code)
+          .withBody(byteVector)
+      }
+      mockServer.when(httpRequest).respond(httpResponse)
+
+      val result = runOperation(skymap.packageObj)
+      result must_=== Xor.Right(skymap.card)
     }
 
   }
@@ -116,7 +135,34 @@ object TestData {
     )
 
     val protobufFile = getClass.getClassLoader.getResource(fisherPrice.packageName)
-    val htmlFile     = getClass.getClassLoader.getResource(packageName + ".html")
+    val htmlFile = getClass.getClassLoader.getResource(packageName + ".html")
+  }
+
+  object skymap {
+    val packageName = "com.google.android.stardroid"
+    val packageObj = Package(packageName)
+
+    val card = FullCard(
+      packageName = packageName,
+      title = "Sky Map",
+      free = true,
+      icon = "http://lh4.ggpht.com/4VGiZutofCjs_wEC3BOuFPXysyF-ClYDTa40F3qK-GhKcISkWFFpRiBFmD8HPDTrElQ",
+      stars = 4.491560935974121,
+      downloads = "50.000.000 - 100.000.000",
+      screenshots = List(
+        "http://lh4.ggpht.com/Ag5QSMMtWqxi3UTFW7y239mT0khsMvBNPVqkdwuadr6Ar2vMV9vZFyzoHvGNOTNYWA0",
+        "http://lh6.ggpht.com/veDf0tA3YTKBbavlTbITigF04iZ3lEKcNrZKwZJktCL8fn-cGLCW9Ifk-g8ICduZgw",
+        "http://lh3.ggpht.com/_9FKlrlbRz4phkAIDqtsLAnl5Yi3WmLhh6Tv8KCuy2x5FWiMBlm-qfTqXvgET2F5x7E",
+        "http://lh4.ggpht.com/PagtRs82S_uWgzGApzfQBg5iJmspg6H1ByPPq2qtctMufz2Nar4hxaj4aCh7-N4ahKk",
+        "http://lh5.ggpht.com/ChobWjgx7U1l3tFoQr09IXlIXr-i7DtFy7Pmek1evqXOFOaZPhJ3SnW8EEvT_WlK-HA",
+        "http://lh4.ggpht.com/yfX-_XD-YzNz1sKbA7vUgN_yEBXHpCzf8rHSxKDlUNbF-EID8hDfHvtmlYpczlF4UoM",
+        "http://lh3.googleusercontent.com/E01joGlVkodgK91jqwi6oXlH9ChsE8Z93nihL8g5N1kXOYyE-CFRhZ8gyTJRxGM6rFEI",
+        "http://lh3.googleusercontent.com/S0mWOIoo9OnxNlP7_sgQuhp4m-tq-sA-4zxgJ7uQPmPpiI3rmZIqqkMU0ml-DWGidUA"
+      ),
+      categories = List("BOOKS_AND_REFERENCE")
+    )
+
+    val htmlFile = getClass.getClassLoader.getResource(packageName + ".html")
   }
 
 }
