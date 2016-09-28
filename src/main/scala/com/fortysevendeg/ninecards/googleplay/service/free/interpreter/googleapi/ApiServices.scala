@@ -5,7 +5,6 @@ import cats.std.list._
 import cats.syntax.traverse._
 import com.fortysevendeg.extracats.{taskMonad, splitXors}
 import com.fortysevendeg.ninecards.googleplay.domain._
-import com.fortysevendeg.ninecards.googleplay.service.free.algebra.GooglePlay._
 import scalaz.concurrent.Task
 
 case class ApiServices(apiClient: ApiClient, appService: AppRequest => Task[InfoError Xor FullCard] ) {
@@ -18,13 +17,12 @@ case class ApiServices(apiClient: ApiClient, appService: AppRequest => Task[Info
       )
     }
 
-  def recommendByCategory( message: RecommendationsByCategory ) : Task[InfoError Xor FullCardList] = {
-    import message._
+  def recommendByCategory(request: RecommendByCategoryRequest, auth: GoogleAuthParams)
+      : Task[InfoError Xor FullCardList] = {
     import request._
-
     lazy val infoError = InfoError( s"Recommendations for category $category that are $priceFilter")
 
-    apiClient.list( request.category, request.priceFilter, auth) flatMap {
+    apiClient.list( category, priceFilter, auth) flatMap {
       case Xor.Left(_) => Task.now(Xor.Left(infoError))
 
       case Xor.Right(listResponse) =>
@@ -35,8 +33,8 @@ case class ApiServices(apiClient: ApiClient, appService: AppRequest => Task[Info
 
   }
 
-  def recommendByAppList( message: RecommendationsByAppList) : Task[FullCardList] = {
-    import message.request._
+  def recommendByAppList(request: RecommendByAppsRequest, auth: GoogleAuthParams) : Task[FullCardList] = {
+    import request._
 
     def joinLists(xors: List[InfoError Xor List[Package]]): List[Package] = {
       val lists = splitXors(xors)._2
@@ -45,13 +43,13 @@ case class ApiServices(apiClient: ApiClient, appService: AppRequest => Task[Info
 
     val recommendedPackages: Task[List[Package]] =
       searchByApps
-        .traverse( recommendByApp(message.auth, numPerApp, _) )
+        .traverse( recommendByApp(auth, numPerApp, _) )
         .map( joinLists)
 
     for /*Task*/ {
       ids <- recommendedPackages
       filteredIds = ids.diff(excludedApps).take(maxTotal)
-      cards <- getCards( filteredIds, message.auth)
+      cards <- getCards( filteredIds, auth)
     } yield cards
   }
 
