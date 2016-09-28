@@ -1,7 +1,5 @@
 package com.fortysevendeg.ninecards.googleplay.service.free.interpreter.cache
 
-import cats.Monad
-import cats.syntax.all._
 import com.redis._
 import io.circe._
 import io.circe.parser._
@@ -25,42 +23,6 @@ class JsonRedisCache(host: String, port: Int) {
       }
     }
   }
-}
-
-abstract class RedisCachedMonadicFunction[A,B, M[_]](
-  process: A => M[B],
-  clientPool: RedisClientPool)(
-  implicit monad: Monad[M]
-) extends (A => M[B]) {
-
-  protected[this] type Key
-  protected[this] type Val
-
-  protected[this] implicit val encodeKey: Encoder[Key]
-  protected[this] implicit val encodeVal: Encoder[Val]
-  protected[this] implicit val decodeKey: Decoder[Key]
-  protected[this] implicit val decodeVal: Decoder[Val]
-  protected[this] def extractKeys(input: A) : List[Key]
-  protected[this] def extractEntry(input: A, result: B): (Key, Val)
-  protected[this] def rebuildValue(input: A, value: Val): B
-
-  def apply(input: A) : M[B] = clientPool.withClient(applyClient(input, _))
-
-  private[this] def applyClient(input: A, client: RedisClient) : M[B] = {
-
-    val wrap = new CacheWrapper[Key, Val](client)
-    val tryLoad: Option[Val] = wrap.findFirst( extractKeys(input) )
-    tryLoad match {
-      case Some(cached) =>
-        monad.pure( rebuildValue(input, cached) )
-      case None =>
-        for { // The M Monad M
-          result <- process(input)
-          _ = wrap.put( extractEntry(input, result) )
-        } yield result
-    }
-  }
-
 }
 
 class CacheWrapper[Key, Val](client: RedisClient)
