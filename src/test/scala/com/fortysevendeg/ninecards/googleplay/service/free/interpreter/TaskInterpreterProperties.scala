@@ -46,7 +46,7 @@ object TaskInterpreterProperties extends Properties("Task interpreter") {
     val interpreter = itemTaskInterpreter(f, exceptionalRequest)
     val request = Resolve(auth, pkg)
     val response = interpreter(request)
-    response.run ?= Some(i)
+    response.unsafePerformSync ?= Some(i)
   }
 
   property("Requesting multiple packages should call the API for the given packages and no others") = forAll { (ps: List[Package], auth: GoogleAuthParams, i: Item) =>
@@ -66,7 +66,7 @@ object TaskInterpreterProperties extends Properties("Task interpreter") {
 
     val response = interpreter(request)
 
-    val packageDetails = response.run
+    val packageDetails = response.unsafePerformSync
 
     (s"Should have not errored for any request: ${packageDetails.errors}" |: (packageDetails.errors ?= Nil)) &&
     (s"Should have successfully returned for each given package: ${packageDetails.items.length}" |: (packageDetails.items.length ?= ps.length))
@@ -85,7 +85,7 @@ object TaskInterpreterProperties extends Properties("Task interpreter") {
 
     val response = interpreter(request)
 
-    response.run ?= Some(i)
+    response.unsafePerformSync ?= Some(i)
   }
 
   property("Unsuccessful API calls when working with bulk packages will fall back to the web request") = forAllNoShrink { (rawApiPackages: List[Package], apiItem: Item, rawWebPackages: List[Package], webItem: Item, auth: GoogleAuthParams) =>
@@ -112,7 +112,7 @@ object TaskInterpreterProperties extends Properties("Task interpreter") {
 
       val response = interpreter(request)
 
-      val PackageDetails(errors, items) = response.run
+      val PackageDetails(errors, items) = response.unsafePerformSync
 
       val groupedItems = items.groupBy(identity).map{case (k, v) => (k, v.length)}
       val expectedGrouping = Map(apiItem -> apiPackages.length, webItem -> webPackages.length).filter{case (_, v) => v != 0}
@@ -129,7 +129,7 @@ object TaskInterpreterProperties extends Properties("Task interpreter") {
 
       val interpreter = itemTaskInterpreter(failingRequest, failingRequest)
 
-      interpreter(request).run ?= None
+      interpreter(request).unsafePerformSync ?= None
     }
 
   property("Unsuccessful API and web requests when working with bulk packages results in collected errors in the response") =
@@ -143,7 +143,7 @@ object TaskInterpreterProperties extends Properties("Task interpreter") {
 
       val response = interpreter(request)
 
-      val PackageDetails(errors, items) = response.run
+      val PackageDetails(errors, items) = response.unsafePerformSync
 
       (items ?= Nil) &&
       (errors ?= packageNames)
@@ -163,6 +163,6 @@ object TaskInterpreterProperties extends Properties("Task interpreter") {
 
       val response = interpreter(request)
 
-      response.run ?= webResponse.toOption
+      response.unsafePerformSync ?= webResponse.toOption
     }
 }

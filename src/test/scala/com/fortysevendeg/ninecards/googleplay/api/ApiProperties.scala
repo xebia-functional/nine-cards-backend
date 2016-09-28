@@ -89,7 +89,8 @@ object ApiProperties
 
   def makeRoute(interpreter: MockInterpreter = MockInterpreter() ): Route = {
     val marshallerFactory: TRMFactory[FreeOps] =
-      contraNaturalTransformFreeTRMFactory[Ops, Id](interpreter, Id, IdMarshallerFactory)
+      contraNaturalTransformFreeTRMFactory[Ops, Id](
+        interpreter, cats.catsInstancesForId, IdMarshallerFactory)
     val api = new NineCardsGooglePlayApi[Ops]()(Service.service, marshallerFactory)
     sealRoute(api.googlePlayApiRoute )
   }

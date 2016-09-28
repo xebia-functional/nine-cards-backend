@@ -44,7 +44,7 @@ class InterpreterSpec extends Specification with Matchers with MockServer with W
       .withQueryStringParameter( "hl", "en_US")
       .withQueryStringParameter( "id", thePackage.value)
 
-    def runOperation = run( ExistsApp(thePackage)).run
+    def runOperation = run( ExistsApp(thePackage)).unsafePerformSync
 
     "return true if the server gives a 200 OK Status" in {
       val httpResponse = HttpResponse.response.withStatusCode(OK_200.code)
@@ -67,7 +67,7 @@ class InterpreterSpec extends Specification with Matchers with MockServer with W
       .withQueryStringParameter( "hl", "en_US")
       .withQueryStringParameter( "id", fisherPrice.packageName)
 
-    def runOperation(pack: Package) = interpreter( GetDetails(pack) )(pooledClient).run
+    def runOperation(pack: Package) = interpreter( GetDetails(pack) )(pooledClient).unsafePerformSync
 
     "return the card if the server gives a 200 OK Status" in {
       val httpResponse = {
