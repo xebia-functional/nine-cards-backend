@@ -1,7 +1,7 @@
 package cards.nine.processes
 
-import cats.free.Free
 import cards.nine.services.free.algebra.GoogleApi
+import cats.free.Free
 
 class GoogleApiProcesses[F[_]](implicit googleAPIServices: GoogleApi.Services[F]) {
 

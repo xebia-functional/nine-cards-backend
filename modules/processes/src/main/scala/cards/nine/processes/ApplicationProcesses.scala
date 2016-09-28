@@ -1,11 +1,11 @@
 package cards.nine.processes
 
-import cats.free.Free
 import cards.nine.processes.converters.Converters._
 import cards.nine.processes.messages.ApplicationMessages._
 import cards.nine.processes.messages.GooglePlayAuthMessages._
 import cards.nine.services.common.FreeUtils._
 import cards.nine.services.free.algebra.GooglePlay
+import cats.free.Free
 
 class ApplicationProcesses[F[_]](implicit services: GooglePlay.Services[F]) {
 

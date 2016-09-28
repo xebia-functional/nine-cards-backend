@@ -1,10 +1,10 @@
 package cards.nine.processes
 
-import cats.data.Coproduct
-import cats.{ ApplicativeError, Monad, RecursiveTailRecM, ~> }
 import cards.nine.services.free.algebra._
 import cards.nine.services.free.interpreter.Interpreters
 import cards.nine.services.free.interpreter.Interpreters._
+import cats.data.Coproduct
+import cats.{ ApplicativeError, Monad, RecursiveTailRecM, ~> }
 
 import scalaz.concurrent.Task
 
