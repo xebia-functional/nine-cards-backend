@@ -1,4 +1,4 @@
-package cards.nine.googleplay.service.free.interpreter
+package cards.nine.googleplay.processes
 
 import cats.~>
 import cats.data.Xor
@@ -12,7 +12,6 @@ import org.specs2.matcher.TaskMatchers
 import org.specs2.mutable.Specification
 import scala.concurrent.duration._
 import scalaz.concurrent.Task
-import TestData._
 
 class TaskInterpreterIntegration extends Specification with TaskMatchers with WithHttp1Client {
 

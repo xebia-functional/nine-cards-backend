@@ -1,8 +1,6 @@
-package cards.nine.googleplay.service.free.interpreter
+package cards.nine.googleplay.processes
 
-import cards.nine.googleplay.extracats.XorTaskOrComposer
 import cards.nine.googleplay.domain._
-import cards.nine.googleplay.service.free.algebra.GooglePlay._
 import org.scalacheck._
 import org.scalacheck.Prop._
 import scalaz.concurrent.Task
@@ -11,6 +9,7 @@ import cats.syntax.xor._
 
 object TaskInterpreterProperties extends Properties("Task interpreter") {
 
+  import GooglePlay._
   import cards.nine.googleplay.util.ScalaCheck._
 
   object exceptionalRequest extends (AppRequest => Task[Xor[String,Item]]) {

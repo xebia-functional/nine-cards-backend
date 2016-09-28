@@ -1,11 +1,11 @@
 package cards.nine.googleplay.api
 
 import cats.syntax.xor._
+import cats.free.Free
 import cards.nine.googleplay.config.TestConfig._
 import cards.nine.googleplay.domain._
 import cards.nine.googleplay.extracats._
-import cards.nine.googleplay.processes.Wiring
-import cards.nine.googleplay.service.free.algebra.GooglePlay
+import cards.nine.googleplay.processes.{GooglePlay, Wiring}
 import io.circe.parser._
 import org.specs2.mutable.Specification
 import org.specs2.specification.AfterAll
@@ -48,7 +48,7 @@ class ApiIntegration extends Specification with Specs2RouteTest with HttpService
   override def afterAll = wiring.shutdown
 
   val route = {
-    val trmFactory: TRMFactory[ GooglePlay.FreeOps ] =
+    val trmFactory: TRMFactory[ Free[GooglePlay.Ops, ?] ] =
       NineCardsMarshallers.contraNaturalTransformFreeTRMFactory[GooglePlay.Ops, Task](
         i, taskMonad, NineCardsMarshallers.TaskMarshallerFactory)
 

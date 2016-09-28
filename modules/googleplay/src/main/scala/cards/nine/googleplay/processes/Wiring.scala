@@ -2,8 +2,6 @@ package cards.nine.googleplay.processes
 
 import cards.nine.googleplay.config.NineCardsConfig._
 import cards.nine.googleplay.domain.{AppRequest, Item}
-import cards.nine.googleplay.extracats.XorTaskOrComposer
-import cards.nine.googleplay.service.free.algebra.GooglePlay
 import cards.nine.googleplay.service.free.interpreter._
 import cards.nine.googleplay.service.free.interpreter.webscrapper.Http4sGooglePlayWebScraper
 import cats.data.Xor

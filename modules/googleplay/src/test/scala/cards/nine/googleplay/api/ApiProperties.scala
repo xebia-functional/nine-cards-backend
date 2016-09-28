@@ -2,10 +2,11 @@ package cards.nine.googleplay.api
 
 import cats.{ Id, ~>  }
 import cats.data.Xor
+import cats.free.Free
 import cats.syntax.option._
 import cards.nine.googleplay.extracats.splitXors
 import cards.nine.googleplay.domain._
-import cards.nine.googleplay.service.free.algebra.GooglePlay._
+import cards.nine.googleplay.processes.GooglePlay._
 import io.circe.parser._
 import org.scalacheck.Prop._
 import org.scalacheck._
@@ -89,7 +90,7 @@ object ApiProperties
   import AuthHeadersRejectionHandler._
 
   def makeRoute(interpreter: MockInterpreter = MockInterpreter() ): Route = {
-    val marshallerFactory: TRMFactory[FreeOps] =
+    val marshallerFactory: TRMFactory[Free[Ops,?]] =
       contraNaturalTransformFreeTRMFactory[Ops, Id](
         interpreter, cats.catsInstancesForId, IdMarshallerFactory)
     val api = new NineCardsGooglePlayApi[Ops]()(Service.service, marshallerFactory)

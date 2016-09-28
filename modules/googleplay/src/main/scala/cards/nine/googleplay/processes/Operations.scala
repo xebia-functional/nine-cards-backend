@@ -1,4 +1,4 @@
-package cards.nine.googleplay.service.free.algebra
+package cards.nine.googleplay.processes
 
 import cats.data.Xor
 import cats.free.{Free, Inject}
@@ -7,7 +7,7 @@ import cards.nine.googleplay.domain._
 object GooglePlay {
 
   sealed trait Ops[A]
-  // todo remember this will probably not stay as option
+  // todo remember this wil l probably not stay as option
   case class Resolve(auth: GoogleAuthParams, pkg: Package) extends Ops[Option[Item]]
   case class ResolveMany(auth: GoogleAuthParams, packageList: PackageList) extends Ops[PackageDetails]
 
@@ -49,7 +49,5 @@ object GooglePlay {
   object Service {
     implicit def service[F[_]](implicit I: Inject[Ops, F]): Service[F] = new Service[F]
   }
-
-  type FreeOps[A] = Free[Ops, A]
 
 }

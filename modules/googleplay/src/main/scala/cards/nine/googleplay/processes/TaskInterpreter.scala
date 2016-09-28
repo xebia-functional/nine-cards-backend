@@ -1,4 +1,4 @@
-package cards.nine.googleplay.service.free.interpreter
+package cards.nine.googleplay.processes
 
 import cats.data.Xor
 import cats.instances.list._
@@ -6,7 +6,6 @@ import cats.syntax.traverse._
 import cats.~>
 import cards.nine.googleplay.extracats._
 import cards.nine.googleplay.domain._
-import cards.nine.googleplay.service.free.algebra.GooglePlay
 import scalaz.concurrent.Task
 
 class TaskInterpreter(
