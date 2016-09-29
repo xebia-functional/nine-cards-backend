@@ -2,7 +2,7 @@ package com.fortysevendeg.ninecards.googleplay.api
 
 import cats.free.Free
 import cats.data.Xor
-import cats.{ ~>, Id, Monad}
+import cats.{ ~>, Id, Monad, RecursiveTailRecM}
 import com.fortysevendeg.ninecards.googleplay.domain._
 import io.circe.Encoder
 import io.circe.parser._
@@ -78,7 +78,7 @@ object NineCardsMarshallers {
 
   class TaskMarshaller[A](m: TRM[A]) extends TRM[Task[A]] {
     override def apply( task: Task[A], ctx: ToResponseMarshallingContext) =
-      task.runAsync {
+      task.unsafePerformAsync {
         _.fold(
           left => ctx.handleError(left),
           right => m(right, ctx))
@@ -102,7 +102,7 @@ object NineCardsMarshallers {
   class ContraNaturalTransformFreeTRMFactory[ F[_], G[_] ](
     implicit
       interpreter: F ~> G,
-    gMonad: Monad[G],
+    gMonad: Monad[G] with RecursiveTailRecM[G],
     factory: TRMFactory[G]
       /* currified types and partial application, it would be `Free[F]` */
   ) extends TRMFactory[ Free[F, ?] ] {
@@ -115,7 +115,9 @@ object NineCardsMarshallers {
   }
 
   implicit def contraNaturalTransformFreeTRMFactory[ F[_], G[_] ](
-    implicit interpreter: F ~> G, gMonad: Monad[G], factory: TRMFactory[G]
+    implicit interpreter: F ~> G,
+    gMonad: Monad[G] with RecursiveTailRecM[G],
+    factory: TRMFactory[G]
   ) : TRMFactory[ Free[F, ?] ] =
     new ContraNaturalTransformFreeTRMFactory[F,G]()(interpreter, gMonad, factory)
 

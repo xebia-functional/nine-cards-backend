@@ -128,7 +128,7 @@ class TaskInterpreterIntegration extends Specification with TaskMatchers with Wi
         .apply(Resolve(authParams, fisherPrice.packageObj))
         .map( _.flatMap(categoryOption))
 
-      retrievedCategory.runFor(10.seconds) must_=== Some("EDUCATION")
+      retrievedCategory.unsafePerformSyncFor(10.seconds) must_=== Some("EDUCATION")
     }
   }
 }

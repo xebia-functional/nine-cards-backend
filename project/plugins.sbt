@@ -1,6 +1,8 @@
 resolvers += Resolver.url("scoverage-bintray", url("https://dl.bintray.com/sksamuel/sbt-plugins/"))(Resolver.ivyStylePatterns)
 resolvers += "Typesafe Repository" at "https://repo.typesafe.com/typesafe/releases/"
 resolvers += Resolver.sonatypeRepo("releases")
+resolvers += Resolver.sonatypeRepo("snapshots")
+resolvers += "Scalaz Bintray Repo" at "http://dl.bintray.com/scalaz/releases"
 
 addSbtPlugin("io.spray" % "sbt-revolver" % "0.8.0")
 addSbtPlugin("org.scoverage" % "sbt-scoverage" % "1.3.3")

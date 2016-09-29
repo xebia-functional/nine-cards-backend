@@ -1,7 +1,7 @@
 package com.fortysevendeg.ninecards.googleplay.service.free.interpreter.googleapi
 
 import cats.data.Xor
-import cats.std.list._
+import cats.instances.list._
 import cats.syntax.traverse._
 import com.fortysevendeg.extracats.{taskMonad, splitXors}
 import com.fortysevendeg.ninecards.googleplay.domain._

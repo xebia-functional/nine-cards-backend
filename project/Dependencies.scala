@@ -16,7 +16,7 @@ object Dependencies {
   private val specs2ScalaCheck = specs("scalacheck") % "test"
   private val specs2Mockito = specs("mock") % "test"
 
-  private val scalaCheckShapeless = "com.github.alexarchambault" %% "scalacheck-shapeless_1.12" % Versions.scalaCheckShapeless % "test"
+  private val scalaCheckShapeless = "com.github.alexarchambault" %% "scalacheck-shapeless_1.13" % Versions.scalacheckShapeless % "test"
 
   private def circe(name: String) = "io.circe" %% s"circe-${name}" % Versions.circe
 
@@ -26,9 +26,10 @@ object Dependencies {
 
   private val embeddedRedis = "com.orange.redis-embedded" % "embedded-redis" % Versions.embeddedRedis % "test"
 
-  private val http4sClient = "org.http4s" %% "http4s-blaze-client" % Versions.http4sClient
+  private val http4sClient = "org.http4s" %% "http4s-blaze-client" % Versions.http4s
 
   private val jodaTime = "joda-time" % "joda-time" % Versions.jodaTime
+  private val jodaConvert = "org.joda" % "joda-convert" % Versions.jodaConvert
 
   private val redisClient = "net.debasishg" %% "redisclient" % Versions.redisClient
 
@@ -55,6 +56,7 @@ object Dependencies {
     enumeratum(""),
     enumeratum("-circe"),
     jodaTime,
+    jodaConvert,
     redisClient,
     embeddedRedis,
     mockserver,
