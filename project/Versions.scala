@@ -15,15 +15,15 @@ object Versions {
   val jodaConvert = "1.8.1"
   val jodaTime = "2.9.4"
   val kindProjector = "0.7.1"
-  val mockserver = "3.10.4"
   val newRelic = "3.29.0"
   val scala = "2.11.8"
-  val scalacheckShapeless = "1.1.0-RC3"
   val scalaz = "7.2.4"
   val spray = "1.3.3"
   val sprayJson = "1.3.2"
   val typesafeConfig = "1.3.0"
 
   // Testing libs
+  val mockserver = "3.10.4"
   val specs2 = "3.8.4"
+  val scalacheckShapeless = "1.1.0-RC3"
 }

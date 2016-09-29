@@ -1,8 +1,9 @@
-import com.typesafe.sbt.packager.archetypes.JavaAppPackaging
-import org.flywaydb.sbt.FlywayPlugin
 import sbt._
 
-object NineCardsBuild extends Build with Settings with Dependencies {
+object NineCardsBuild extends Build with ApiSettings {
+  import Dependencies._
+  import com.typesafe.sbt.packager.archetypes.JavaAppPackaging
+  import org.flywaydb.sbt.FlywayPlugin
 
   lazy val root = project.in(file("."))
     .disablePlugins(FlywayPlugin)

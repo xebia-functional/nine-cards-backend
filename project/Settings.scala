@@ -1,47 +1,9 @@
-import CustomSettings._
-import org.flywaydb.sbt.FlywayPlugin._
-import org.flywaydb.sbt.FlywayPlugin.autoImport._
-import sbt.Keys._
-import sbt._
-import sbtassembly.AssemblyPlugin._
-import sbtassembly.AssemblyPlugin.autoImport._
-import sbtassembly.MergeStrategy._
-import spray.revolver.RevolverPlugin
-import com.typesafe.sbt.SbtNativePackager._
-import com.typesafe.sbt.packager.archetypes.JavaAppPackaging.autoImport._
 
 trait Settings {
-  this: Build =>
 
-  lazy val scalariformSettings = {
-    import com.typesafe.sbt.SbtScalariform
-    import com.typesafe.sbt.SbtScalariform.ScalariformKeys
-
-    import scalariform.formatter.preferences._
-
-    SbtScalariform.scalariformSettings ++ Seq(
-      SbtScalariform.ScalariformKeys.preferences := ScalariformKeys.preferences.value
-        .setPreference(SpacesWithinPatternBinders, true)
-        .setPreference(SpaceBeforeColon, false)
-        .setPreference(SpaceInsideParentheses, false)
-        .setPreference(SpaceInsideBrackets, false)
-        .setPreference(SpacesAroundMultiImports, true)
-        .setPreference(PreserveSpaceBeforeArguments, false)
-        .setPreference(CompactStringConcatenation, false)
-        //.setPreference(NewlineAtEndOfFile, false)
-        .setPreference(DanglingCloseParenthesis, Force)
-        .setPreference(CompactControlReadability, false)
-        .setPreference(AlignParameters, false)
-        .setPreference(AlignArguments, true)
-        .setPreference(AlignSingleLineCaseStatements, false)
-        .setPreference(DoubleIndentClassDeclaration, false)
-        //.setPreference(DoubleIndentMethodDeclaration, true)
-        .setPreference(IndentLocalDefs, false)
-        .setPreference(MultilineScaladocCommentsStartOnFirstLine, false)
-        .setPreference(PlaceScaladocAsterisksBeneathSecondAsterisk, true)
-        .setPreference(RewriteArrowSymbols, true)
-    )
-  }
+  import CustomSettings._
+  import sbt.Keys._
+  import sbt._
 
   lazy val projectSettings: Seq[Def.Setting[_]] = Seq(
     addCompilerPlugin("org.spire-math" %% "kind-projector" % Versions.kindProjector),
@@ -68,49 +30,7 @@ trait Settings {
       "RoundEights" at "http://maven.spikemark.net/roundeights"
     ),
     doc in Compile <<= target.map(_ / "none")
-  ) ++ scalariformSettings
-
-  lazy val apiSettings = projectSettings ++
-    Seq(
-      name := "9cards-backend",
-      databaseConfig := databaseConfigDef.value,
-      apiResourcesFolder := apiResourcesFolderDef.value,
-      run <<= run in Runtime dependsOn flywayMigrate
-    ) ++
-    RevolverPlugin.settings ++
-    nineCardsFlywaySettings ++
-    nineCardsAssemblySettings
-
-  lazy val nineCardsFlywaySettings = flywayBaseSettings(Runtime) ++ Seq(
-    flywayDriver := databaseConfig.value.driver,
-    flywayUrl := databaseConfig.value.url,
-    flywayUser := databaseConfig.value.user,
-    flywayPassword := databaseConfig.value.password,
-    flywayLocations := Seq("filesystem:" + apiResourcesFolder.value.getPath + "/db/migration")
-  )
-
-  lazy val nineCardsAssemblySettings = assemblySettings ++ Seq(
-    assemblyJarName in assembly := s"9cards-${Versions.buildVersion}.jar",
-    assembleArtifact in assemblyPackageScala := true,
-    Keys.test in assembly := {},
-    assemblyMergeStrategy in assembly := {
-      case "application.conf" => concat
-      case "reference.conf" => concat
-      case entry =>
-        val oldStrategy = (assemblyMergeStrategy in assembly).value
-        val mergeStrategy = oldStrategy(entry)
-        mergeStrategy == deduplicate match {
-          case true => first
-          case _ => mergeStrategy
-        }
-    },
-    publishArtifact in(Test, packageBin) := false,
-    mappings in Universal <<= (mappings in Universal, assembly in Compile) map { (mappings, fatJar) =>
-      val filtered = mappings filter { case (file, fileName) => !fileName.endsWith(".jar") }
-      filtered :+ (fatJar -> ("lib/" + fatJar.getName))
-    },
-    scriptClasspath := Seq((assemblyJarName in assembly).value)
-  )
+  ) ++ Scalariform9C.settings
 
   lazy val processesSettings = projectSettings ++ Seq(
     apiResourcesFolder := apiResourcesFolderDef.value,
