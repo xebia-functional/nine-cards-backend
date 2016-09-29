@@ -7,9 +7,8 @@ import org.specs2.mutable.Specification
 import org.xml.sax.InputSource
 import scala.xml.Node
 import scala.xml.parsing.NoBindingFactoryAdapter
-import spray.testkit.Specs2RouteTest
 
-class ConvertersSpec extends Specification with Specs2RouteTest {
+class ConvertersSpec extends Specification {
 
   import TestData._
 
@@ -19,6 +18,8 @@ class ConvertersSpec extends Specification with Specs2RouteTest {
     val adapter = new NoBindingFactoryAdapter
     adapter.loadXML(new InputSource(new FileInputStream(resource.getFile)), parser)
   }
+
+  def failTest(s: String) = throw new RuntimeException(s)
 
   "Parsing the HTML for the play store" should {
     "result in an Item to send to the client" in {

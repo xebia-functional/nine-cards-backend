@@ -1,4 +1,3 @@
-*~
 /.idea/
 /project/boot/
 /project/plugins/project
@@ -9,3 +8,4 @@ test-output/
 *.iml
 .classpath_nb
 .DS_Store
+*~

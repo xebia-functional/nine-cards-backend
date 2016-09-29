@@ -5,9 +5,8 @@ import cards.nine.googleplay.service.free.interpreter.TestData.{ fisherPrice, mi
 import java.nio.file.{ Files, Paths}
 import org.specs2.mutable.Specification
 import scodec.bits.ByteVector
-import spray.testkit.Specs2RouteTest
 
-class ConvertersSpec extends Specification with Specs2RouteTest {
+class ConvertersSpec extends Specification {
 
   import Converters._
   import proto.GooglePlay.{ResponseWrapper, DocV2, ListResponse}
