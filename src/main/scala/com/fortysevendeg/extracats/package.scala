@@ -32,10 +32,7 @@ package object extracats {
         fa.handleWith({ case x ⇒ f(x) })
 
       override def tailRecM[A, B](a: A)(f: (A) ⇒ Task[Either[A, B]]): Task[B] =
-        flatMap(f(a)) {
-          case Right(b) ⇒ pure(b)
-          case Left(nextA) ⇒ tailRecM(nextA)(f)
-        }
+        defaultTailRecM(a)(f)
     }
 
   class XorTaskOrComposer[A,E,B](

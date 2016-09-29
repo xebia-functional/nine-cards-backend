@@ -10,7 +10,7 @@ object Versions {
   val akka = "2.4.8"
   val cats = "0.7.2"
   val circe = "0.5.2"
-  val enumeratum = "1.4.9"
+  val enumeratum = "1.4.13"
   val http4s = "0.14.1a"
   val jodaConvert = "1.8.1"
   val jodaTime = "2.9.4"
