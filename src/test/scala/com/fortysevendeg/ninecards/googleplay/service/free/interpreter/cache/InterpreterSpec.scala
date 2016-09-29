@@ -26,7 +26,7 @@ class InterpreterSpec extends Specification with ScalaCheck with BeforeAll with 
 
     val interpreter = CacheInterpreter
 
-    def eval[A]( op: Ops[A]) = interpreter(op)(redisClient).run
+    def eval[A]( op: Ops[A]) = interpreter(op)(redisClient).unsafePerformSync
 
     def keyPattern( p: String, t: String, d: String) =
       s"""{"package":"$p","keyType":"$t","date":$d}""".trim

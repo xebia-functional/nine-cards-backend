@@ -2,7 +2,7 @@ package com.fortysevendeg.ninecards.googleplay.processes
 
 import cats.data.Xor
 import cats.free.Free
-import cats.std.list._
+import cats.instances.list._
 import cats.syntax.traverse._
 import com.fortysevendeg.ninecards.googleplay.domain.{Package, GoogleAuthParams, FullCard}
 import com.fortysevendeg.ninecards.googleplay.domain.apigoogle.{Failure => ApiFailure}

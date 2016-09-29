@@ -1,7 +1,7 @@
 package com.fortysevendeg.ninecards.googleplay.service.free.interpreter
 
 import cats.data.Xor
-import cats.std.list._
+import cats.instances.list._
 import cats.syntax.traverse._
 import cats.~>
 import com.fortysevendeg.extracats._
