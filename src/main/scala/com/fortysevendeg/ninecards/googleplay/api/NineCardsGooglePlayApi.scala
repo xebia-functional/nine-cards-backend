@@ -2,9 +2,11 @@ package com.fortysevendeg.ninecards.googleplay.api
 
 import akka.actor.Actor
 import cats.~>
+import cats.data.Xor
 import cats.free.Free
 import com.fortysevendeg.extracats._
 import com.fortysevendeg.ninecards.googleplay.domain._
+import com.fortysevendeg.ninecards.googleplay.processes.Wiring
 import com.fortysevendeg.ninecards.googleplay.service.free.algebra.GooglePlay
 import io.circe.generic.auto._
 import scalaz.concurrent.Task
@@ -17,7 +19,7 @@ class NineCardsGooglePlayActor extends Actor with HttpService {
 
   private val apiRoute: Route = {
 
-    val interpreter: GooglePlay.Ops ~> Task = Wiring.interpreter()
+    val interpreter: GooglePlay.Ops ~> Task = new Wiring().interpreter
     implicit val trmFactory: TRMFactory[ GooglePlay.FreeOps ] =
       NineCardsMarshallers.contraNaturalTransformFreeTRMFactory[GooglePlay.Ops, Task](
         interpreter, taskMonad, NineCardsMarshallers.TaskMarshallerFactory)
@@ -33,7 +35,7 @@ class NineCardsGooglePlayActor extends Actor with HttpService {
 class NineCardsGooglePlayApi[Ops[_]] (
   implicit
   googlePlayService: GooglePlay.Service[Ops],
-  marshallerFactory: TRMFactory[({type L[A] = Free[Ops, A]})#L ]
+  marshallerFactory: TRMFactory[Free[Ops, ?]]
 ){
   import CustomDirectives._
   import CustomMatchers._
@@ -79,13 +81,13 @@ class NineCardsGooglePlayApi[Ops[_]] (
         pathEndOrSingleSlash {
           post {
             entity(as[PackageList]) { packageList =>
-              complete ( googlePlayService.getCardList( authParams, packageList) )
+              complete ( getCardList( authParams, packageList) )
             }
           }
         } ~
         pathPrefix(Segment) { packageName =>
           get {
-            complete ( googlePlayService.getCard( authParams, Package(packageName)) )
+            complete( getCard(authParams, packageName) )
           }
         }
       }
@@ -97,18 +99,46 @@ class NineCardsGooglePlayApi[Ops[_]] (
         pathEndOrSingleSlash {
           post {
             entity(as[PackageList])  { packageList =>
-              complete( googlePlayService.recommendationsByAppList(authParams, packageList))
+              complete ( recommendByAppList(authParams, packageList) )
             }
           }
         } ~
         pathPrefix(CategorySegment) { category =>
           priceFilterPath { filter =>
             get {
-              complete ( googlePlayService.recommendationsByCategory(authParams, category, filter) )
+              complete ( recommendByCategory(authParams, category, filter) )
             }
           }
         }
       }
     }
+
+  private[this] def getCard(
+    authParams: GoogleAuthParams, packageName: String
+  ): Free[Ops, Xor[InfoError, ApiCard]] =
+    googlePlayService
+      .getCard( authParams, Package(packageName))
+      .map(_.map(Converters.toApiCard))
+
+  private[this] def getCardList(
+    authParams: GoogleAuthParams, packageList: PackageList
+  ): Free[Ops, ApiCardList] =
+    googlePlayService
+      .getCardList( authParams, packageList)
+      .map(Converters.toApiCardList)
+
+  private[this] def recommendByCategory(
+    authParams: GoogleAuthParams, category: Category, filter: PriceFilter
+  ): Free[Ops, Xor[InfoError, ApiRecommendationList]] =
+    googlePlayService
+      .recommendationsByCategory(authParams, category, filter)
+      .map(_.map(Converters.toApiRecommendationList))
+
+  private[this] def recommendByAppList(
+    authParams: GoogleAuthParams, packages: PackageList
+  ) : Free[Ops, ApiRecommendationList] =
+    googlePlayService
+      .recommendationsByAppList(authParams, packages)
+      .map( Converters.toApiRecommendationList)
 
 }

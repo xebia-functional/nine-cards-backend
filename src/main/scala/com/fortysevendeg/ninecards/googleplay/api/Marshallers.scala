@@ -30,8 +30,8 @@ object NineCardsMarshallers {
   implicit val itemMarshaller: ToResponseMarshaller[Item] =
     circeJsonMarshaller(implicitly[Encoder[Item]])
 
-  implicit val appCardMarshaller: ToResponseMarshaller[AppCard] =
-    circeJsonMarshaller(implicitly[Encoder[AppCard]])
+  implicit val apiCardMarshaller: ToResponseMarshaller[ApiCard] =
+    circeJsonMarshaller(implicitly[Encoder[ApiCard]])
 
   // Domain-specific marshalling and unmarshalling
   implicit object packageListUnmarshaller extends Unmarshaller[PackageList] {
@@ -66,8 +66,8 @@ object NineCardsMarshallers {
     }
   }
 
-  implicit val appRecommendationListMarshaller: ToResponseMarshaller[AppRecommendationList] =
-    circeJsonMarshaller(implicitly[Encoder[AppRecommendationList]])
+  implicit val apiRecommendationListMarshaller: ToResponseMarshaller[ApiRecommendationList] =
+    circeJsonMarshaller(implicitly[Encoder[ApiRecommendationList]])
 
   /**
     *  A to response marshaller capable of completing Scalaz concurrent tasks
@@ -109,7 +109,7 @@ object NineCardsMarshallers {
     gMonad: Monad[G],
     factory: TRMFactory[G]
       /* currified types and partial application, it would be `Free[F]` */
-  ) extends TRMFactory[ ({type L[A] = Free[F, A]})#L ] {
+  ) extends TRMFactory[ Free[F, ?] ] {
 
     override implicit def makeTRM[A](implicit ma: TRM[A]) : TRM[Free[F,A]] = {
       def fa2ga(fa: Free[F,A]): G[A] = fa.foldMap(interpreter)
@@ -120,7 +120,7 @@ object NineCardsMarshallers {
 
   implicit def contraNaturalTransformFreeTRMFactory[ F[_], G[_] ](
     implicit interpreter: F ~> G, gMonad: Monad[G], factory: TRMFactory[G]
-  ) : TRMFactory[ ({type L[A] = Free[F, A]})#L ] =
+  ) : TRMFactory[ Free[F, ?] ] =
     new ContraNaturalTransformFreeTRMFactory[F,G]()(interpreter, gMonad, factory)
 
 

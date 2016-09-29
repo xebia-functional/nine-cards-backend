@@ -34,22 +34,8 @@ object AggregateRating {
 case class Image(imageType: Long, imageUrl: String) // todo check which fields are necessary here
 case class Offer(offerType: Long) // todo check which fields are necessary here
 
-case class AppCard(
-  packageName: String,
-  title: String,
-  free: Boolean,
-  icon: String,
-  stars: Double,
-  downloads: String,
-  categories: List[String]
-)
-
 case class InfoError( message: String ) extends AnyVal
 
-case class AppCardList(
-  missing: List[String],
-  apps: List[AppCard]
-)
 
 sealed trait PriceFilter extends EnumEntry
 object PriceFilter extends Enum[PriceFilter] {
@@ -60,14 +46,18 @@ object PriceFilter extends Enum[PriceFilter] {
   val values = super.findValues
 }
 
-case class AppRecommendation (
+case class FullCard(
   packageName: String,
-  name: String,
+  title: String,
+  categories: List[String],
+  downloads: String,
   free: Boolean,
   icon: String,
-  stars: Double,
-  downloads: String,
-  screenshots: List[String]
+  screenshots: List[String],
+  stars: Double
 )
 
-case class AppRecommendationList(apps: List[AppRecommendation])
+case class FullCardList(
+  missing: List[String],
+  cards: List[FullCard]
+)

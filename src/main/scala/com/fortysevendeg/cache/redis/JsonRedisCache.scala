@@ -1,10 +1,12 @@
-package com.fortysevendeg.cache.redis
+package com.fortysevendeg.ninecards.googleplay.service.free.interpreter.cache
 
 import cats.Monad
 import cats.syntax.all._
 import com.redis._
 import io.circe._
 import io.circe.parser._
+import scala.annotation.tailrec
+import com.redis.serialization.Parse
 
 class JsonRedisCache(host: String, port: Int) {
 
@@ -31,37 +33,94 @@ abstract class RedisCachedMonadicFunction[A,B, M[_]](
   implicit monad: Monad[M]
 ) extends (A => M[B]) {
 
-  protected[this] type CacheKey
-  protected[this] type CacheVal
+  protected[this] type Key
+  protected[this] type Val
 
-  protected[this] def extractKey(input: A) : CacheKey
-  protected[this] def extractValue(input: A, result: B): CacheVal
-  protected[this] def rebuildValue(input: A, value: CacheVal): B
+  protected[this] implicit val encodeKey: Encoder[Key]
+  protected[this] implicit val encodeVal: Encoder[Val]
+  protected[this] implicit val decodeKey: Decoder[Key]
+  protected[this] implicit val decodeVal: Decoder[Val]
+  protected[this] def extractKeys(input: A) : List[Key]
+  protected[this] def extractEntry(input: A, result: B): (Key, Val)
+  protected[this] def rebuildValue(input: A, value: Val): B
 
-  protected[this] implicit val encodeKey: Encoder[CacheKey]
-  protected[this] implicit val encodeVal: Encoder[CacheVal]
-  protected[this] implicit val decodeVal: Decoder[CacheVal]
+  def apply(input: A) : M[B] = clientPool.withClient(applyClient(input, _))
 
   private[this] def applyClient(input: A, client: RedisClient) : M[B] = {
-    val encodedKey = encodeKey( extractKey(input) ).noSpaces
-    val tryLoad: Option[B] =
-      for { // Option Monad
-        rawVal <- client.get(encodedKey)
-        decodedVal <- decode[CacheVal](rawVal).toOption
-      } yield rebuildValue(input, decodedVal)
 
+    val wrap = new CacheWrapper[Key, Val](client)
+    val tryLoad: Option[Val] = wrap.findFirst( extractKeys(input) )
     tryLoad match {
-      case Some(result) =>
-        monad.pure(result)
+      case Some(cached) =>
+        monad.pure( rebuildValue(input, cached) )
       case None =>
         for { // The M Monad M
           result <- process(input)
-          cachedValue = extractValue(input, result)
-          _ = client.set(encodedKey, encodeVal(cachedValue).noSpaces)
+          _ = wrap.put( extractEntry(input, result) )
         } yield result
     }
   }
 
-  def apply(input: A) : M[B] = clientPool.withClient(applyClient(input, _))
+}
+
+class CacheWrapper[Key, Val](client: RedisClient)
+  (implicit ek: Encoder[Key], dk: Decoder[Key], ev: Encoder[Val], dv: Decoder[Val]) {
+
+  implicit private[this] val parseValue: Parse[Option[Val]] =
+    Parse( bv => decode[Val]( Parse.Implicits.parseString( bv) ).toOption )
+
+  def get(key: Key): Option[Val] =
+    client.get[Option[Val]]( ek(key).noSpaces ).flatten
+
+  def put( entry: (Key, Val) ): Unit =
+    client.set( ek(entry._1).noSpaces, ev(entry._2).noSpaces )
+
+  def findFirst(keys: List[Key]) : Option[Val] = {
+    loopTryKeys(keys)
+
+    @tailrec
+    def loopTryKeys( keys: List[Key]): Option[Val] = keys match {
+      case Nil => None
+      case key :: rkeys =>
+        get(key) match {
+          case oval@ Some(_) => oval
+          case None => loopTryKeys(rkeys)
+        }
+    }
+    loopTryKeys(keys)
+  }
+
+  def matchKeys( pattern: JsonPattern): List[Key] =
+    client
+      .keys[String]( JsonPattern.print(pattern) )
+      .getOrElse( List() )
+      .flatten
+      .flatMap( s => decode[Key](s).toOption )
+
+  def delete(key: Key) : Unit =
+    client.del( ek(key).noSpaces)
+}
+
+sealed trait JsonPattern
+case object PStar extends JsonPattern
+case object PNull extends JsonPattern
+case class PString(value: String) extends JsonPattern
+case class PObject(fields: List[(PString, JsonPattern)]) extends JsonPattern
+
+object JsonPattern {
+
+  def print(pattern: JsonPattern): String = pattern match {
+    case PStar => """ * """.trim
+    case PNull => """ null """.trim
+    case PString(str) => s""" "$str" """.trim
+    case PObject(fields) =>
+      def printField( field: (PString, JsonPattern)) : String = {
+        val key = print(field._1)
+        val value = print(field._2)
+        s""" ${key}:${value} """.trim
+      }
+      val fs = fields.map(printField).mkString(",")
+      s""" {${fs}} """.trim
+  }
 
 }

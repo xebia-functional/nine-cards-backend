@@ -14,6 +14,7 @@ object Dependencies {
   private val specs2Core = specs("core") % "test" exclude("org.scalaz", "*")
   private val specs2MatcherExtra = specs("matcher-extra") % "test"
   private val specs2ScalaCheck = specs("scalacheck") % "test"
+  private val specs2Mockito = specs("mock") % "test"
 
   private val scalaCheckShapeless = "com.github.alexarchambault" %% "scalacheck-shapeless_1.12" % Versions.scalaCheckShapeless % "test"
 
@@ -27,12 +28,16 @@ object Dependencies {
 
   private val http4sClient = "org.http4s" %% "http4s-blaze-client" % Versions.http4sClient
 
+  private val jodaTime = "joda-time" % "joda-time" % Versions.jodaTime
+
   private val redisClient = "net.debasishg" %% "redisclient" % Versions.redisClient
 
   private val tagSoup = "org.ccil.cowan.tagsoup" % "tagsoup" % Versions.tagSoup
 
   private val newRelic = "com.newrelic.agent.java" % "newrelic-agent" % Versions.newRelic
   private val baseDepts = Seq(specs2Core)
+
+  private val mockserver = "org.mock-server" % "mockserver-netty" % Versions.mockserver
 
   def enumeratum(suffix: String) = "com.beachape" %% s"enumeratum$suffix" % Versions.enumeratum
 
@@ -47,11 +52,15 @@ object Dependencies {
     circe("generic"),
     circe("parser"),
     enumeratum(""),
+    enumeratum("-circe"),
+    jodaTime,
     redisClient,
     embeddedRedis,
+    mockserver,
     newRelic,
     scalaCheckShapeless,
     specs2ScalaCheck,
     specs2MatcherExtra,
+    specs2Mockito,
     tagSoup))
 }
