@@ -135,7 +135,7 @@ object Converters {
   def toGooglePlayRecommendation(recommendation: Recommendation): GooglePlayRecommendation =
     GooglePlayRecommendation(
       packageName = recommendation.packageName,
-      title       = recommendation.name,
+      title       = recommendation.title,
       free        = recommendation.free,
       icon        = recommendation.icon,
       stars       = recommendation.stars,

@@ -118,7 +118,7 @@ trait NineCardsApiSpecification
     recommendationsProcesses.getRecommendationsByCategory(any, any, any, any, any) returns
       Free.pure(Messages.getRecommendationsByCategoryResponse)
 
-    recommendationsProcesses.getRecommendationsForApps(any, any, any, any) returns
+    recommendationsProcesses.getRecommendationsForApps(any, any, any, any, any) returns
       Free.pure(Messages.getRecommendationsByCategoryResponse)
 
     rankingProcesses.getRankedDeviceApps(any, any) returns

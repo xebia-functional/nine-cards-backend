@@ -28,14 +28,19 @@ trait RecommendationsProcessesSpecification
   trait SuccessfulScope extends BasicScope {
 
     googlePlayServices.recommendByCategory(
-      category    = category,
-      priceFilter = recommendationFilter,
-      auth        = auth.googlePlayAuthParams
+      category         = category,
+      priceFilter      = recommendationFilter,
+      excludesPackages = excludePackages,
+      limit            = limit,
+      auth             = auth.googlePlayAuthParams
     ) returns Free.pure(recommendations)
 
     googlePlayServices.recommendationsForApps(
-      packagesName = packagesName,
-      auth         = auth.googlePlayAuthParams
+      packagesName     = packagesName,
+      excludesPackages = excludePackages,
+      limitPerApp      = limitPerApp,
+      limit            = limit,
+      auth             = auth.googlePlayAuthParams
     ) returns Free.pure(recommendations)
   }
 
@@ -61,7 +66,7 @@ trait RecommendationsProcessesContext {
     "earth.europe.spain"
   )
 
-  val (excludePackages, recommendedPackages) = packagesName.partition(_.length > 20)
+  val excludePackages = packagesName.filter(_.length > 20)
 
   val title = "Title of the app"
 
@@ -78,12 +83,14 @@ trait RecommendationsProcessesContext {
   val recommendedApps = packagesName map (packageName ⇒
     Recommendation(packageName, title, free, icon, stars, downloads, screenshots))
 
-  val googlePlayRecommendations = recommendedPackages map (packageName ⇒
+  val googlePlayRecommendations = packagesName map (packageName ⇒
     GooglePlayRecommendation(packageName, title, free, icon, stars, downloads, screenshots))
 
   val category = "SOCIAL"
 
   val limit = 20
+
+  val limitPerApp = 100
 
   val smallLimit = 1
 
@@ -96,7 +103,7 @@ class RecommendationsProcessesSpec extends RecommendationsProcessesSpecification
 
   "getRecommendationsByCategory" should {
 
-    "return a list of recommendations after excluding the given packages" in new SuccessfulScope {
+    "return a list of recommendations for the given category" in new SuccessfulScope {
       val response = recommendationsProcesses.getRecommendationsByCategory(
         category,
         recommendationFilter,
@@ -107,27 +114,9 @@ class RecommendationsProcessesSpec extends RecommendationsProcessesSpecification
 
       response.foldMap(testInterpreters) must beLike[GetRecommendationsResponse] {
         case r ⇒
-          r.items.size must be_<=(limit)
           r.items must_== googlePlayRecommendations
       }
     }
-
-    "return a list of recommendations after excluding the given packages and applying " +
-      "the limit" in new SuccessfulScope {
-        val response = recommendationsProcesses.getRecommendationsByCategory(
-          category,
-          recommendationFilter,
-          excludePackages,
-          smallLimit,
-          auth.authParams
-        )
-
-        response.foldMap(testInterpreters) must beLike[GetRecommendationsResponse] {
-          case r ⇒
-            r.items.size must be_==(smallLimit)
-            r.items must_== googlePlayRecommendations.take(smallLimit)
-        }
-      }
   }
 
   "getRecommendationsForApps" should {
@@ -136,6 +125,7 @@ class RecommendationsProcessesSpec extends RecommendationsProcessesSpecification
       val response = recommendationsProcesses.getRecommendationsForApps(
         Nil,
         excludePackages,
+        limitPerApp,
         limit,
         auth.authParams
       )
@@ -147,35 +137,19 @@ class RecommendationsProcessesSpec extends RecommendationsProcessesSpecification
       }
     }
 
-    "return a list of recommendations after excluding the given packages" in new SuccessfulScope {
+    "return a list of recommendations for the given packages" in new SuccessfulScope {
       val response = recommendationsProcesses.getRecommendationsForApps(
         packagesName,
         excludePackages,
+        limitPerApp,
         limit,
         auth.authParams
       )
 
       response.foldMap(testInterpreters) must beLike[GetRecommendationsResponse] {
         case r ⇒
-          r.items.size must be_<=(limit)
           r.items must_== googlePlayRecommendations
       }
     }
-
-    "return a list of recommendations after excluding the given packages and applying " +
-      "the limit" in new SuccessfulScope {
-        val response = recommendationsProcesses.getRecommendationsForApps(
-          packagesName,
-          excludePackages,
-          smallLimit,
-          auth.authParams
-        )
-
-        response.foldMap(testInterpreters) must beLike[GetRecommendationsResponse] {
-          case r ⇒
-            r.items.size must be_==(smallLimit)
-            r.items must_== googlePlayRecommendations.take(smallLimit)
-        }
-      }
   }
 }
