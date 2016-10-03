@@ -8,7 +8,7 @@ services:
   - redis-server
 script:
   - sbt ++$$TRAVIS_SCALA_VERSION clean coverage
-  - sbt -Dconfig.file="src/test/resources/test.conf" test
+  - sbt -Dconfig.file="modules/googleplay/src/test/resources/test.conf" test
 addons:
   apt:
     packages:

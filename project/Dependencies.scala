@@ -1,69 +1,54 @@
-import sbt.Keys._
-import sbt._
 
 object Dependencies {
 
-  private def spray(name: String) = "io.spray" %% s"spray-${name}" % Versions.spray
+  import sbt._
 
-  private val sprayHttp = spray("can")
-  private val sprayRouting = spray("routing-shapeless2")
-  private val sprayTestKit = spray("testkit") % "test" exclude("org.specs2", "specs2_2.11")
-
-  private def specs(name: String) = "org.specs2" %% s"specs2-${name}" % Versions.specs2
-
-  private val specs2Core = specs("core") % "test" exclude("org.scalaz", "*")
-  private val specs2MatcherExtra = specs("matcher-extra") % "test"
-  private val specs2ScalaCheck = specs("scalacheck") % "test"
-  private val specs2Mockito = specs("mock") % "test"
-
-  private val scalaCheckShapeless = "com.github.alexarchambault" %% "scalacheck-shapeless_1.13" % Versions.scalacheckShapeless % "test"
-
-  private def circe(name: String) = "io.circe" %% s"circe-${name}" % Versions.circe
+  private def akka(suff: String) = "com.typesafe.akka" %% s"akka${suff}" % Versions.akka
+  private def circe(suff: String) = "io.circe" %% s"circe${suff}" % Versions.circe
+  private def enumeratum(suff: String) = "com.beachape" %% s"enumeratum${suff}" % Versions.enumeratum
+  private def specs2(suff: String) = "org.specs2" %% s"specs2${suff}" % Versions.specs2 % "test"
+  private def spray(suff: String) = "io.spray" %% s"spray${suff}" % Versions.spray
 
   private val akkaActor = "com.typesafe.akka" %% "akka-actor" % Versions.akka
 
   private val cats = "org.typelevel" %% "cats" % Versions.cats
-
   private val embeddedRedis = "com.orange.redis-embedded" % "embedded-redis" % Versions.embeddedRedis % "test"
-
   private val http4sClient = "org.http4s" %% "http4s-blaze-client" % Versions.http4s
-
-  private val jodaTime = "joda-time" % "joda-time" % Versions.jodaTime
   private val jodaConvert = "org.joda" % "joda-convert" % Versions.jodaConvert
-
+  private val jodaTime = "joda-time" % "joda-time" % Versions.jodaTime
+  private val mockserver = "org.mock-server" % "mockserver-netty" % Versions.mockserver
+  private val newRelic = "com.newrelic.agent.java" % "newrelic-agent" % Versions.newRelic
   private val redisClient = "net.debasishg" %% "redisclient" % Versions.redisClient
-
+  private val scalaCheckShapeless = "com.github.alexarchambault" %% "scalacheck-shapeless_1.13" % Versions.scalacheckShapeless % "test"
   private val tagSoup = "org.ccil.cowan.tagsoup" % "tagsoup" % Versions.tagSoup
 
-  private val newRelic = "com.newrelic.agent.java" % "newrelic-agent" % Versions.newRelic
-  private val baseDepts = Seq(specs2Core)
+  private val specs2Core = specs2("-core") exclude("org.scalaz", "*")
+  private val sprayTestKit = spray("-testkit") % "test" exclude("org.specs2", "specs2_2.11")
 
-  private val mockserver = "org.mock-server" % "mockserver-netty" % Versions.mockserver
-
-  def enumeratum(suffix: String) = "com.beachape" %% s"enumeratum$suffix" % Versions.enumeratum
-
-  val apiDeps = Seq(libraryDependencies ++= baseDepts ++ Seq(
+  val googleplayDeps = Seq(sbt.Keys.libraryDependencies ++= Seq(
+    akka("-actor"),
     cats,
-    sprayHttp,
-    sprayRouting,
-    sprayTestKit,
-    akkaActor,
-    http4sClient,
-    circe("core"),
-    circe("generic"),
-    circe("parser"),
-    circe("spray"),
+    circe("-core"),
+    circe("-generic"),
+    circe("-parser"),
+    circe("-spray"),
+    embeddedRedis,
     enumeratum(""),
     enumeratum("-circe"),
-    jodaTime,
+    http4sClient,
     jodaConvert,
-    redisClient,
-    embeddedRedis,
+    jodaTime,
     mockserver,
     newRelic,
+    redisClient,
     scalaCheckShapeless,
-    specs2ScalaCheck,
-    specs2MatcherExtra,
-    specs2Mockito,
-    tagSoup))
+    specs2Core,
+    specs2("-matcher-extra"),
+    specs2("-mock"),
+    specs2("-scalacheck"),
+    spray("-can"),
+    spray("-routing-shapeless2"),
+    sprayTestKit,
+    tagSoup
+  ))
 }

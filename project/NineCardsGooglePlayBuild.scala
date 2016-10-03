@@ -7,7 +7,6 @@ object NineCardsBuild extends Build with Settings {
 
   lazy val googleplay = project.in(file("modules/googleplay"))
     .enablePlugins(JavaAppPackaging)
-    .settings(apiSettings ++ Dependencies.apiDeps)
-
+    .settings(googleplaySettings ++ Dependencies.googleplayDeps)
 
 }
