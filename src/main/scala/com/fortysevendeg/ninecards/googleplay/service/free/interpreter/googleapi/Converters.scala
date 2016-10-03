@@ -8,17 +8,17 @@ import scala.collection.JavaConversions._
 
 object Converters {
 
-  def listResponseToPackages(listResponse: ListResponse) : List[String] = {
+  def listResponseToPackages(listResponse: ListResponse) : List[Package] = {
     for /*List*/ {
       app <- listResponse.getDocList.toList
       doc <- app.getChildList.toList
       docId = doc.getDocid
       if ! docId.isEmpty
-    } yield docId
+    } yield Package(docId)
   }
 
-  def listResponseListToPackages(listResponses: List[ListResponse]) : List[String] =
-    listResponses.flatMap(listResponseToPackages).toSet.toList
+  def listResponseListToPackages(listResponses: List[ListResponse]) : List[Package] =
+    listResponses.flatMap(listResponseToPackages).distinct
 
   sealed abstract class ImageType(val index: Int)
   case object Screenshot extends ImageType(1)

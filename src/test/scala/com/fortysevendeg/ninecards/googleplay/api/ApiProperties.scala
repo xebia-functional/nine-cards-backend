@@ -6,7 +6,6 @@ import cats.syntax.option._
 import com.fortysevendeg.extracats.splitXors
 import com.fortysevendeg.ninecards.googleplay.domain._
 import com.fortysevendeg.ninecards.googleplay.service.free.algebra.GooglePlay._
-import io.circe.generic.auto._
 import io.circe.parser._
 import org.scalacheck.Prop._
 import org.scalacheck._
@@ -30,7 +29,7 @@ class MockInterpreter(
     case ResolveMany(_, pl) => resolveMany(pl)
     case GetCard(_, p) => getCard(p)
     case GetCardList(_, pl) => getCardList(pl)
-    case rec@RecommendationsByCategory(_,_,_) => recommendByCategory(rec)
+    case rec@RecommendationsByCategory(_,_) => recommendByCategory(rec)
     case rec@RecommendationsByAppList(_,_) => recommendByAppList(rec)
   }
 }
@@ -78,6 +77,8 @@ object ApiProperties
     extends Properties("Nine Cards Google Play API")
     with ScalaCheckRouteTest
     with HttpService {
+
+  import CirceCoders._
 
   override implicit def actorRefFactory = system
 

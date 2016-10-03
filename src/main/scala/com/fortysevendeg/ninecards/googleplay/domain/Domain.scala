@@ -61,3 +61,17 @@ case class FullCardList(
   missing: List[String],
   cards: List[FullCard]
 )
+
+case class RecommendByAppsRequest(
+  searchByApps: List[Package],
+  numPerApp: Int,
+  excludedApps: List[Package],
+  maxTotal: Int
+)
+
+case class RecommendByCategoryRequest(
+  category: Category,
+  priceFilter: PriceFilter,
+  excludedApps: List[Package],
+  maxTotal: Int
+)

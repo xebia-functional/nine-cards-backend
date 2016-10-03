@@ -5,7 +5,6 @@ import cats.instances.list._
 import cats.syntax.traverse._
 import com.fortysevendeg.extracats.{taskMonad, splitXors}
 import com.fortysevendeg.ninecards.googleplay.domain._
-import com.fortysevendeg.ninecards.googleplay.service.free.algebra.GooglePlay._
 import scalaz.concurrent.Task
 
 case class ApiServices(apiClient: ApiClient, appService: AppRequest => Task[InfoError Xor FullCard] ) {
@@ -18,39 +17,52 @@ case class ApiServices(apiClient: ApiClient, appService: AppRequest => Task[Info
       )
     }
 
-  def recommendByCategory( request: RecommendationsByCategory ) : Task[InfoError Xor FullCardList] = {
+  def recommendByCategory(request: RecommendByCategoryRequest, auth: GoogleAuthParams)
+      : Task[InfoError Xor FullCardList] = {
     import request._
+    lazy val infoError = InfoError( s"Recommendations for category $category that are $priceFilter")
 
-    lazy val infoError = InfoError( s"Recommendations for category $category that are $filter")
+    apiClient.list( category, priceFilter, auth) flatMap {
+      case Xor.Left(_) => Task.now(Xor.Left(infoError))
 
-    val idsT: Task[InfoError Xor List[String]] =
-      apiClient.list( category, filter, auth).map( _.bimap(
-        _res => infoError,
-        lres => Converters.listResponseToPackages(lres)
-      ))
-
-    idsT flatMap {
-      case left@Xor.Left(_) => Task.now(left)
-      case Xor.Right(ids) => getCards(ids, auth).map(Xor.Right.apply)
+      case Xor.Right(listResponse) =>
+        val ids = Converters.listResponseToPackages(listResponse)
+        val filteredIds = ids.diff(excludedApps).take(maxTotal)
+        getCards(filteredIds, auth).map(Xor.Right.apply)
     }
 
   }
 
-  def recommendByAppList( request: RecommendationsByAppList) : Task[FullCardList] = {
+  def recommendByAppList(request: RecommendByAppsRequest, auth: GoogleAuthParams) : Task[FullCardList] = {
     import request._
-    val recommendedPackages: Task[List[String]] = for /* Task */ {
-      xors <- packageList.items.traverse { pack =>
-        apiClient.recommendations(Package(pack), auth)
-      }
-      ids = Converters.listResponseListToPackages( splitXors(xors)._2)
-    } yield ids
 
-    recommendedPackages.flatMap( getCards(_, auth) )
+    def joinLists(xors: List[InfoError Xor List[Package]]): List[Package] = {
+      val lists = splitXors(xors)._2
+      lists.flatten.distinct.diff(excludedApps).take(maxTotal)
+    }
+
+    val recommendedPackages: Task[List[Package]] =
+      searchByApps
+        .traverse( recommendByApp(auth, numPerApp, _) )
+        .map( joinLists)
+
+    for /*Task*/ {
+      ids <- recommendedPackages
+      filteredIds = ids.diff(excludedApps).take(maxTotal)
+      cards <- getCards( filteredIds, auth)
+    } yield cards
   }
 
-  private[this] def getCards(ids: List[String], auth: GoogleAuthParams ) : Task[FullCardList] =
-    ids
-      .traverse(id => appService( AppRequest(Package(id), auth)))
-      .map( Converters.toFullCardListXors)
+  private[this] def getCards(packs: List[Package], auth: GoogleAuthParams ) : Task[FullCardList] =
+    packs
+      .traverse(pack => appService( AppRequest(pack, auth)))
+      .map( Converters.toFullCardListXors )
+
+  def recommendByApp( auth: GoogleAuthParams, numPerApp: Int, pack: Package)
+      : Task[InfoError Xor List[Package]] =
+    apiClient.recommendations(pack, auth).map(_.bimap(
+      _resp   => InfoError( s"Recommendations for package ${pack.value}"), 
+      listRes => Converters.listResponseToPackages(listRes).take(numPerApp)
+    ))
 
 }

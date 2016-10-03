@@ -1,6 +1,6 @@
 package com.fortysevendeg.ninecards.googleplay.api
 
-import com.fortysevendeg.ninecards.googleplay.domain.{FullCard, FullCardList}
+import com.fortysevendeg.ninecards.googleplay.domain._
 
 object Converters {
 
@@ -35,4 +35,21 @@ object Converters {
   def toApiRecommendationList(fullCards: FullCardList): ApiRecommendationList =
     ApiRecommendationList(fullCards.cards map toApiRecommendation)
 
+  def toRecommendByAppsRequest(api: ApiRecommendByAppsRequest): RecommendByAppsRequest =
+    RecommendByAppsRequest(
+      searchByApps = api.searchByApps,
+      excludedApps = api.excludedApps,
+      numPerApp = api.numPerApp,
+      maxTotal = api.maxTotal)
+
+  def toRecommendByCategoryRequest(
+    category: Category,
+    priceFilter: PriceFilter,
+    api: ApiRecommendByCategoryRequest) : RecommendByCategoryRequest =
+    RecommendByCategoryRequest(
+      category = category,
+      priceFilter = priceFilter,
+      excludedApps = api.excludedApps,
+      maxTotal = api.maxTotal
+    )
 }

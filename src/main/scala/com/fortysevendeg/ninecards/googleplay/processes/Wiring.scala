@@ -45,8 +45,13 @@ class Wiring() {
   }
 
   val interpreter: (GooglePlay.Ops ~> Task) = {
-    new TaskInterpreter( itemService, appCardService,
-      apiServices.recommendByCategory, apiServices.recommendByAppList )
+    val byCategory = { (message: GooglePlay.RecommendationsByCategory) =>
+      apiServices.recommendByCategory(message.request, message.auth)
+    }
+    val byAppList = { (message: GooglePlay.RecommendationsByAppList) =>
+      apiServices.recommendByAppList(message.request, message.auth)
+    }
+    new TaskInterpreter( itemService, appCardService, byCategory, byAppList)
   }
 
   def shutdown : Unit = {

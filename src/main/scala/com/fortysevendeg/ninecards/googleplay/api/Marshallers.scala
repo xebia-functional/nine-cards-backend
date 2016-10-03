@@ -5,7 +5,6 @@ import cats.data.Xor
 import cats.{ ~>, Id, Monad, RecursiveTailRecM}
 import com.fortysevendeg.ninecards.googleplay.domain._
 import io.circe.Encoder
-import io.circe.generic.auto._
 import io.circe.parser._
 import scalaz.concurrent.Task
 import spray.http.{ContentTypes, HttpEntity, HttpResponse, StatusCodes}
@@ -17,6 +16,8 @@ import spray.httpx.unmarshalling.{MalformedContent, Unmarshaller}
   */
 object NineCardsMarshallers {
 
+  import CirceCoders._
+
   /**
     * A marshaller capable of writing any case class to JSON, using the structure of the case class.
     * @param encoder An encoder, which may be automatically derived using Circe's generic derivation
@@ -26,12 +27,6 @@ object NineCardsMarshallers {
     Marshaller.of[A](ContentTypes.`application/json`) {
       case (a, contentType, ctx) => ctx.marshalTo(HttpEntity(ContentTypes.`application/json`, encoder(a).noSpaces))
     }
-
-  implicit val itemMarshaller: ToResponseMarshaller[Item] =
-    circeJsonMarshaller(implicitly[Encoder[Item]])
-
-  implicit val apiCardMarshaller: ToResponseMarshaller[ApiCard] =
-    circeJsonMarshaller(implicitly[Encoder[ApiCard]])
 
   // Domain-specific marshalling and unmarshalling
   implicit object packageListUnmarshaller extends Unmarshaller[PackageList] {
@@ -43,7 +38,8 @@ object NineCardsMarshallers {
     }
   }
 
-  implicit val optionalItemMarshaller: ToResponseMarshaller[Option[Item]] =
+  implicit def optionalItemMarshaller(implicit itemMarshaller: ToResponseMarshaller[Item])
+      : ToResponseMarshaller[Option[Item]] =
     ToResponseMarshaller[Option[Item]] { (o, ctx) =>
       val response = HttpResponse(
         status = StatusCodes.InternalServerError,
