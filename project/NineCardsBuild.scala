@@ -9,6 +9,10 @@ object NineCardsBuild extends Build with ApiSettings {
     .disablePlugins(FlywayPlugin)
     .aggregate(api, processes, services)
 
+  lazy val googleplay = project.in(file("modules/googleplay"))
+    .disablePlugins(FlywayPlugin)
+    .settings(googleplaySettings ++ googleplayDeps)
+
   lazy val services = project.in(file("modules/services"))
     .disablePlugins(FlywayPlugin)
     .settings(serviceSettings ++ servicesDeps)

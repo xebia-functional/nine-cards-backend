@@ -13,7 +13,7 @@ trait Settings {
     organizationHomepage := Some(new URL("http://47deg.com")),
     version := Versions.buildVersion,
     conflictWarning := ConflictWarning.disable,
-    scalacOptions ++= Seq("-deprecation", "-unchecked", "-feature", "-language:higherKinds", "-language:implicitConversions"),
+    scalacOptions ++= Seq("-deprecation", "-unchecked", "-feature", "-language:higherKinds", "-language:implicitConversions", "-Ywarn-unused-import"),
     javaOptions in Test ++= Seq("-XX:MaxPermSize=128m", "-Xms512m", "-Xmx512m"),
     sbt.Keys.fork in Test := false,
     publishMavenStyle := true,
@@ -41,4 +41,17 @@ trait Settings {
     apiResourcesFolder := apiResourcesFolderDef.value,
     unmanagedClasspath in Test += apiResourcesFolder.value
   )
+
+  lazy val googleplaySettings = {
+    val protoBufSettings = {
+      import sbtprotobuf.{ProtobufPlugin => PB}
+      PB.protobufSettings ++ Seq(
+        PB.runProtoc in PB.protobufConfig := { args =>
+          com.github.os72.protocjar.Protoc.runProtoc("-v261" +: args.toArray)
+        }
+      )
+    }
+    projectSettings ++ protoBufSettings
+  }
+
 }
