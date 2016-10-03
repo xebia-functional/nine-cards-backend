@@ -30,15 +30,15 @@ class TaskInterpreterIntegration extends Specification with TaskMatchers with Wi
 
   "Making requests to the Google Play store" should {
 
-    def splitResults(res: PackageDetails) : (List[String],List[String]) = (
+    def splitResults(res: PackageDetails): (List[String], List[String]) = (
       res.errors.sorted,
       res.items.flatMap(categoryOption).sorted
     )
 
     "result in a correctly parsed response for a single package" in {
       val retrievedCategory: Task[Option[String]] = interpreter
-        .apply( Resolve(authParams, fisherPrice.packageObj) )
-        .map( optItem => optItem.flatMap(categoryOption) )
+        .apply(Resolve(authParams, fisherPrice.packageObj))
+        .map(optItem ⇒ optItem.flatMap(categoryOption))
       retrievedCategory must returnValue(Some("EDUCATION"))
     }
 
@@ -52,7 +52,7 @@ class TaskInterpreterIntegration extends Specification with TaskMatchers with Wi
       val packages: List[String] = successfulCategories.map(_._1) ++ invalidPackages
 
       val result = interpreter
-        .apply( ResolveMany(authParams, PackageList(packages)) )
+        .apply(ResolveMany(authParams, PackageList(packages)))
         .map(splitResults)
       result must returnValue((invalidPackages.sorted, successfulCategories.map(_._2).sorted))
     }
@@ -62,22 +62,22 @@ class TaskInterpreterIntegration extends Specification with TaskMatchers with Wi
     "fail over to the web scraping approach" in {
 
       val interpreter = {
-        val badApiRequest: AppRequest => Task[Xor[String,Item]] =
-          ( _ => Task.fail(new RuntimeException("Failed request")) )
-        val itemService: AppRequest => Task[Xor[String,Item]] =
-          new XorTaskOrComposer( badApiRequest, webClient.getItem)
-        val appCardService: AppRequest => Task[Xor[InfoError, FullCard]] =
-          (_ => Task.fail( new RuntimeException("Should not ask for App Card")))
-        val recommendByCategory: RecommendationsByCategory => Task[Xor[InfoError,FullCardList]] =
-          ( _ => Task.fail( new RuntimeException("Should not ask for recommendations")))
-        val recommendByAppList: RecommendationsByAppList => Task[FullCardList] =
-          ( _ => Task.fail( new RuntimeException("Should not ask for recommendations")))
-        new TaskInterpreter( itemService, appCardService, recommendByCategory, recommendByAppList )
+        val badApiRequest: AppRequest ⇒ Task[Xor[String, Item]] =
+          (_ ⇒ Task.fail(new RuntimeException("Failed request")))
+        val itemService: AppRequest ⇒ Task[Xor[String, Item]] =
+          new XorTaskOrComposer(badApiRequest, webClient.getItem)
+        val appCardService: AppRequest ⇒ Task[Xor[InfoError, FullCard]] =
+          (_ ⇒ Task.fail(new RuntimeException("Should not ask for App Card")))
+        val recommendByCategory: RecommendationsByCategory ⇒ Task[Xor[InfoError, FullCardList]] =
+          (_ ⇒ Task.fail(new RuntimeException("Should not ask for recommendations")))
+        val recommendByAppList: RecommendationsByAppList ⇒ Task[FullCardList] =
+          (_ ⇒ Task.fail(new RuntimeException("Should not ask for recommendations")))
+        new TaskInterpreter(itemService, appCardService, recommendByCategory, recommendByAppList)
       }
 
       val retrievedCategory: Task[Option[String]] = interpreter
         .apply(Resolve(authParams, fisherPrice.packageObj))
-        .map( _.flatMap(categoryOption))
+        .map(_.flatMap(categoryOption))
 
       retrievedCategory.unsafePerformSyncFor(10.seconds) must_=== Some("EDUCATION")
     }

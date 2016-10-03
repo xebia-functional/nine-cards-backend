@@ -17,7 +17,7 @@ case class ApiCardList(
   apps: List[ApiCard]
 )
 
-case class ApiRecommendation (
+case class ApiRecommendation(
   packageName: String,
   title: String,
   free: Boolean,

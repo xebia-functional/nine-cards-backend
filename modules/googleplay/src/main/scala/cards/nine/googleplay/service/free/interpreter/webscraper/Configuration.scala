@@ -1,4 +1,4 @@
-package  cards.nine.googleplay.service.free.interpreter.webscrapper
+package cards.nine.googleplay.service.free.interpreter.webscrapper
 
 import cards.nine.googleplay.config.NineCardsConfig.getConfigValue
 
@@ -14,9 +14,9 @@ object Configuration {
   def load: Configuration = {
     def getApiConf(suff: String) = getConfigValue(s"ninecards.googleplay.storeweb.$suff")
     Configuration(
-      protocol = getApiConf("protocol"),
-      host = getApiConf("host"),
-      port = getApiConf("port").toInt,
+      protocol    = getApiConf("protocol"),
+      host        = getApiConf("host"),
+      port        = getApiConf("port").toInt,
       detailsPath = getApiConf("paths.details")
     )
   }

@@ -1,7 +1,7 @@
 package cards.nine.googleplay.service.free.interpreter.cache
 
-import cards.nine.googleplay.domain.{FullCard, Package}
-import enumeratum.{Enum, EnumEntry}
+import cards.nine.googleplay.domain.{ FullCard, Package }
+import enumeratum.{ Enum, EnumEntry }
 import org.joda.time.DateTime
 
 sealed trait KeyType extends EnumEntry
@@ -14,18 +14,18 @@ object KeyType extends Enum[KeyType] {
   val values = super.findValues
 }
 
-case class CacheKey( `package`: Package, keyType: KeyType, date: Option[DateTime] )
+case class CacheKey(`package`: Package, keyType: KeyType, date: Option[DateTime])
 
 object CacheKey {
   import KeyType._
 
-  def resolved( name: Package): CacheKey = CacheKey( name, Resolved, None)
+  def resolved(name: Package): CacheKey = CacheKey(name, Resolved, None)
 
-  def permanent(name: Package): CacheKey = CacheKey( name, Permanent, None)
+  def permanent(name: Package): CacheKey = CacheKey(name, Permanent, None)
 
-  def error( name: Package, date: DateTime): CacheKey = CacheKey(name, Error, Some(date))
+  def error(name: Package, date: DateTime): CacheKey = CacheKey(name, Error, Some(date))
 
-  def pending(name: Package) : CacheKey = CacheKey(name, Pending, None)
+  def pending(name: Package): CacheKey = CacheKey(name, Pending, None)
 
 }
 
@@ -33,15 +33,15 @@ case class CacheVal(card: Option[FullCard])
 
 object CacheEntry {
 
-  def resolved( card: FullCard): CacheEntry =
-    ( CacheKey.resolved(Package(card.packageName)), CacheVal( Some(card) ) )
+  def resolved(card: FullCard): CacheEntry =
+    (CacheKey.resolved(Package(card.packageName)), CacheVal(Some(card)))
 
-  def pending( name: Package) : CacheEntry =
-    ( CacheKey.pending(name), CacheVal(None) )
+  def pending(name: Package): CacheEntry =
+    (CacheKey.pending(name), CacheVal(None))
 
-  def error( name: Package, date: DateTime): CacheEntry =
-    ( CacheKey.error(name, date) , CacheVal(None) )
+  def error(name: Package, date: DateTime): CacheEntry =
+    (CacheKey.error(name, date), CacheVal(None))
 
-  def permanent(name: Package, card: FullCard) : CacheEntry =
-    ( CacheKey.permanent(name), CacheVal(Some( card) ) )
+  def permanent(name: Package, card: FullCard): CacheEntry =
+    (CacheKey.permanent(name), CacheVal(Some(card)))
 }

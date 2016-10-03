@@ -12,7 +12,7 @@ class ConvertersSpec extends Specification {
 
   import TestData._
 
-  def readHtmlFile(fileName:String): Node = {
+  def readHtmlFile(fileName: String): Node = {
     val resource = getClass.getClassLoader.getResource(fileName + ".html")
     val parser = new SAXFactoryImpl().newSAXParser()
     val adapter = new NoBindingFactoryAdapter
@@ -52,8 +52,8 @@ class ConvertersSpec extends Specification {
         .parseCardAux(readHtmlFile(minecraft.packageName))
         .getOrElse(failTest("FullCard should parse correctly"))
 
-      card.free must beEqualTo( minecraft.card.free)
-      card.icon must beEqualTo( minecraft.card.icon)
+      card.free must beEqualTo(minecraft.card.free)
+      card.icon must beEqualTo(minecraft.card.icon)
     }
 
   }

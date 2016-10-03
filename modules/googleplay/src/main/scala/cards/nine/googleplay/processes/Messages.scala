@@ -1,13 +1,13 @@
 package cards.nine.googleplay.processes
 
 import cats.data.Xor
-import cards.nine.googleplay.domain.{Package, FullCard, GoogleAuthParams}
+import cards.nine.googleplay.domain.{ Package, FullCard, GoogleAuthParams }
 
 package object getcard {
   sealed trait FailedResponse
-  case class WrongAuthParams( authParams: GoogleAuthParams) extends FailedResponse
-  case class PendingResolution( packageName: Package) extends FailedResponse
-  case class UnknownPackage( packageName: Package) extends FailedResponse
+  case class WrongAuthParams(authParams: GoogleAuthParams) extends FailedResponse
+  case class PendingResolution(packageName: Package) extends FailedResponse
+  case class UnknownPackage(packageName: Package) extends FailedResponse
   type Response = FailedResponse Xor FullCard
 }
 

@@ -7,6 +7,6 @@ package object cache {
 
   type CacheEntry = (CacheKey, CacheVal)
 
-  type WithRedisClient[+A] = RedisClient => Task[A]
+  type WithRedisClient[+A] = RedisClient ⇒ Task[A]
 
 }

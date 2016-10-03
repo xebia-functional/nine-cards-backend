@@ -2,7 +2,7 @@ package cards.nine.googleplay.service.util
 
 import org.mockserver.configuration.ConfigurationProperties
 import org.mockserver.integration.ClientAndServer._
-import org.specs2.specification.{BeforeAfterEach, BeforeAfterAll}
+import org.specs2.specification.{ BeforeAfterEach, BeforeAfterAll }
 
 trait MockServer extends BeforeAfterAll with BeforeAfterEach {
 

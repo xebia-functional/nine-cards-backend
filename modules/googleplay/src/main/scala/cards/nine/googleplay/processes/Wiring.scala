@@ -1,7 +1,7 @@
 package cards.nine.googleplay.processes
 
 import cards.nine.googleplay.config.NineCardsConfig._
-import cards.nine.googleplay.domain.{AppRequest, Item}
+import cards.nine.googleplay.domain.{ AppRequest, Item }
 import cards.nine.googleplay.service.free.interpreter._
 import cards.nine.googleplay.service.free.interpreter.webscrapper.Http4sGooglePlayWebScraper
 import cats.data.Xor
@@ -15,8 +15,8 @@ class Wiring() {
   val redisClientPool: RedisClientPool = {
     val baseConfig = "ninecards.googleplay.redis"
     new RedisClientPool(
-      host = getConfigValue(s"$baseConfig.host"),
-      port = getConfigNumber(s"$baseConfig.port"),
+      host   = getConfigValue(s"$baseConfig.host"),
+      port   = getConfigNumber(s"$baseConfig.port"),
       secret = getOptionalConfigValue(s"$baseConfig.secret")
     )
   }
@@ -31,29 +31,29 @@ class Wiring() {
     import googleapi._
     val recommendClient = PooledHttp1Client()
     val conf: Configuration = Configuration.load
-    val client = new ApiClient( conf, recommendClient)
+    val client = new ApiClient(conf, recommendClient)
     new ApiServices(client, appCardService)
   }
 
-  val itemService: (AppRequest => Task[String Xor Item]) = {
+  val itemService: (AppRequest ⇒ Task[String Xor Item]) = {
     val webClient = new Http4sGooglePlayWebScraper(
       getConfigValue("ninecards.googleplay.web.endpoint"),
       webHttpClient
     )
-    new XorTaskOrComposer[AppRequest,String,Item](apiServices.getItem, webClient.getItem)
+    new XorTaskOrComposer[AppRequest, String, Item](apiServices.getItem, webClient.getItem)
   }
 
   val interpreter: (GooglePlay.Ops ~> Task) = {
-    val byCategory = { (message: GooglePlay.RecommendationsByCategory) =>
+    val byCategory = { (message: GooglePlay.RecommendationsByCategory) ⇒
       apiServices.recommendByCategory(message.request, message.auth)
     }
-    val byAppList = { (message: GooglePlay.RecommendationsByAppList) =>
+    val byAppList = { (message: GooglePlay.RecommendationsByAppList) ⇒
       apiServices.recommendByAppList(message.request, message.auth)
     }
-    new TaskInterpreter( itemService, appCardService, byCategory, byAppList)
+    new TaskInterpreter(itemService, appCardService, byCategory, byAppList)
   }
 
-  def shutdown : Unit = {
+  def shutdown: Unit = {
     apiHttpClient.shutdownNow
     webHttpClient.shutdownNow
     redisClientPool.close

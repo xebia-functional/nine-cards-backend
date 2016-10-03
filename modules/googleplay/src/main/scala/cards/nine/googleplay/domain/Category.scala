@@ -1,6 +1,6 @@
 package cards.nine.googleplay.domain
 
-import enumeratum.{Enum, EnumEntry}
+import enumeratum.{ Enum, EnumEntry }
 
 sealed trait Category extends EnumEntry
 object Category extends Enum[Category] {

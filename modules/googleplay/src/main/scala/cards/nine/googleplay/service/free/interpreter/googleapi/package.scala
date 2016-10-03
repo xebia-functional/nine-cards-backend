@@ -5,6 +5,6 @@ import scalaz.concurrent.Task
 
 package object googleapi {
 
-  type WithHttpClient[+A] = Client => Task[A]
+  type WithHttpClient[+A] = Client ⇒ Task[A]
 
 }

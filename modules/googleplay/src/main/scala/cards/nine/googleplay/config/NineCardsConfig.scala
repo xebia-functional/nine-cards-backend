@@ -17,8 +17,8 @@ object NineCardsConfig {
     try {
       str.toInt
     } catch {
-      case e: NumberFormatException =>
-        throw new RuntimeException( s"Configuration value $str for key $key is not a well-formatted integer")
+      case e: NumberFormatException ⇒
+        throw new RuntimeException(s"Configuration value $str for key $key is not a well-formatted integer")
     }
   }
 }

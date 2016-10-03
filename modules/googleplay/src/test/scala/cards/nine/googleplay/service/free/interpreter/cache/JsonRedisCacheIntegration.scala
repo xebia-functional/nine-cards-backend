@@ -14,12 +14,12 @@ class JsonRedisCacheIntegration extends Specification with ScalaCheck {
   case class Outer(s: String, ti: Inner)
 
   "Caching" should {
-    "only forward requests to the backend once" >> prop { testOuterSet: Set[Outer] =>
+    "only forward requests to the backend once" >> prop { testOuterSet: Set[Outer] ⇒
       val testOuterList = testOuterSet.toList
 
       val receivedRequests = scala.collection.mutable.ListBuffer.empty[Outer]
 
-      val testFunction: Outer => Inner = { to =>
+      val testFunction: Outer ⇒ Inner = { to ⇒
         receivedRequests += to
         to.ti
       }
@@ -39,8 +39,8 @@ class JsonRedisCacheIntegration extends Specification with ScalaCheck {
       val expected = receivedRequests.map(_.ti).toList
 
       (expected ?= firstPass) &&
-      (firstPass ?= secondPass) &&
-      (receivedRequests.toList ?= testOuterList)
+        (firstPass ?= secondPass) &&
+        (receivedRequests.toList ?= testOuterList)
     }
   }
 }

@@ -4,15 +4,15 @@ import cards.nine.googleplay.domain._
 
 object Converters {
 
-  def toApiCard( fullCard: FullCard) : ApiCard =
+  def toApiCard(fullCard: FullCard): ApiCard =
     ApiCard(
       packageName = fullCard.packageName,
-      title = fullCard.title,
-      free = fullCard.free,
-      icon = fullCard.icon,
-      categories = fullCard.categories,
-      stars = fullCard.stars,
-      downloads  = fullCard.downloads
+      title       = fullCard.title,
+      free        = fullCard.free,
+      icon        = fullCard.icon,
+      categories  = fullCard.categories,
+      stars       = fullCard.stars,
+      downloads   = fullCard.downloads
     )
 
   def toApiCardList(fullCards: FullCardList): ApiCardList =
@@ -21,14 +21,14 @@ object Converters {
       fullCards.cards map toApiCard
     )
 
-  def toApiRecommendation(fullCard: FullCard) : ApiRecommendation =
+  def toApiRecommendation(fullCard: FullCard): ApiRecommendation =
     ApiRecommendation(
       packageName = fullCard.packageName,
-      title = fullCard.title,
-      free = fullCard.free,
-      icon = fullCard.icon,
-      stars = fullCard.stars,
-      downloads  = fullCard.downloads,
+      title       = fullCard.title,
+      free        = fullCard.free,
+      icon        = fullCard.icon,
+      stars       = fullCard.stars,
+      downloads   = fullCard.downloads,
       screenshots = fullCard.screenshots
     )
 
@@ -39,17 +39,19 @@ object Converters {
     RecommendByAppsRequest(
       searchByApps = api.searchByApps,
       excludedApps = api.excludedApps,
-      numPerApp = api.numPerApp,
-      maxTotal = api.maxTotal)
+      numPerApp    = api.numPerApp,
+      maxTotal     = api.maxTotal
+    )
 
   def toRecommendByCategoryRequest(
     category: Category,
     priceFilter: PriceFilter,
-    api: ApiRecommendByCategoryRequest) : RecommendByCategoryRequest =
+    api: ApiRecommendByCategoryRequest
+  ): RecommendByCategoryRequest =
     RecommendByCategoryRequest(
-      category = category,
-      priceFilter = priceFilter,
+      category     = category,
+      priceFilter  = priceFilter,
       excludedApps = api.excludedApps,
-      maxTotal = api.maxTotal
+      maxTotal     = api.maxTotal
     )
 }

@@ -5,6 +5,6 @@ import scalaz.concurrent.Task
 
 package object webscrapper {
 
-  type WithClient[+A] = Client => Task[A]
+  type WithClient[+A] = Client ⇒ Task[A]
 
 }

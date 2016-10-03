@@ -1,22 +1,22 @@
 package cards.nine.googleplay.service.free.interpreter.googleapi
 
-import cards.nine.googleplay.domain.{GoogleAuthParams, Localization}
-import org.http4s.{Header, Headers}
+import cards.nine.googleplay.domain.{ GoogleAuthParams, Localization }
+import org.http4s.{ Header, Headers }
 
 /* Note of development: this set of headers were directly copied from the code of the
  * google-play-crawler, but it is not clear what functions they perform. */
 object headers {
 
-  def fullHeaders(auth: GoogleAuthParams) = Headers( authHeaders(auth) ++ fixedHeaders)
+  def fullHeaders(auth: GoogleAuthParams) = Headers(authHeaders(auth) ++ fixedHeaders)
 
   private[this] def authHeaders(auth: GoogleAuthParams): List[Header] = {
     Header("Authorization", s"GoogleLogin auth=${auth.token.value}") ::
-    Header("X-DFE-Device-Id", auth.androidId.value) :: (
-      auth.localization match {
-        case Some(Localization(locale)) => List( Header("Accept-Language", locale) )
-        case None => List()
-      }
-    )
+      Header("X-DFE-Device-Id", auth.androidId.value) :: (
+        auth.localization match {
+          case Some(Localization(locale)) ⇒ List(Header("Accept-Language", locale))
+          case None ⇒ List()
+        }
+      )
   }
 
   private[this] lazy val fixedHeaders: List[Header] = {
