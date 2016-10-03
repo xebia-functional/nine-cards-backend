@@ -1,12 +1,17 @@
-import com.typesafe.sbt.packager.archetypes.JavaAppPackaging
-import org.flywaydb.sbt.FlywayPlugin
 import sbt._
 
-object NineCardsBuild extends Build with Settings with Dependencies {
+object NineCardsBuild extends Build with ApiSettings {
+  import Dependencies._
+  import com.typesafe.sbt.packager.archetypes.JavaAppPackaging
+  import org.flywaydb.sbt.FlywayPlugin
 
   lazy val root = project.in(file("."))
     .disablePlugins(FlywayPlugin)
     .aggregate(api, processes, services)
+
+  lazy val googleplay = project.in(file("modules/googleplay"))
+    .disablePlugins(FlywayPlugin)
+    .settings(googleplaySettings ++ googleplayDeps)
 
   lazy val services = project.in(file("modules/services"))
     .disablePlugins(FlywayPlugin)
