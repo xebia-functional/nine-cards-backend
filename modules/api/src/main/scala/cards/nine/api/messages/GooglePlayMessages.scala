@@ -18,6 +18,7 @@ object GooglePlayMessages {
   case class ApiGetRecommendationsForAppsRequest(
     packages: List[String],
     excludePackages: List[String],
+    limitPerApp: Option[Int],
     limit: Int
   )
 

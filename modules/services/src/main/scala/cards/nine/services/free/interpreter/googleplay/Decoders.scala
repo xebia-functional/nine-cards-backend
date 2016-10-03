@@ -28,4 +28,15 @@ object Encoders {
   implicit val packageListEntityEncoder: EntityEncoder[PackageList] =
     jsonEncoderOf(packageListEncoder)
 
+  implicit val recommendationsForAppsReqEncoder: Encoder[RecommendationsForAppsRequest] =
+    deriveEncoder[RecommendationsForAppsRequest]
+
+  implicit val recommendationsForAppsReqEntityEncoder: EntityEncoder[RecommendationsForAppsRequest] =
+    jsonEncoderOf(recommendationsForAppsReqEncoder)
+
+  implicit val recommendByCategoryReqEncoder: Encoder[RecommendByCategoryRequest] =
+    deriveEncoder[RecommendByCategoryRequest]
+
+  implicit val recommendByCategoryReqEntityEncoder: EntityEncoder[RecommendByCategoryRequest] =
+    jsonEncoderOf(recommendByCategoryReqEncoder)
 }

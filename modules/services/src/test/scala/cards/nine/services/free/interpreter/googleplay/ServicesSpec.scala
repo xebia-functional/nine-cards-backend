@@ -67,6 +67,7 @@ trait MockGooglePlayServer extends MockServerService {
       .withHeader(headers.androidId)
       .withHeader(headers.locale)
       .withHeader(headers.contentType)
+      .withHeader(headers.recForAppsContentLength)
       .withBody(recommendationsForAppsRequest)
   ).respond(
       response
@@ -83,6 +84,7 @@ trait MockGooglePlayServer extends MockServerService {
       .withHeader(headers.androidId)
       .withHeader(headers.locale)
       .withHeader(headers.contentType)
+      .withHeader(headers.emptyRecForAppsContentLength)
       .withBody(recommendationsForAppsEmptyRequest)
   ).respond(
       response
@@ -93,11 +95,14 @@ trait MockGooglePlayServer extends MockServerService {
 
   mockServer.when(
     request
-      .withMethod("GET")
+      .withMethod("POST")
       .withPath(paths.recommendationsByCountries)
       .withHeader(headers.token)
       .withHeader(headers.androidId)
       .withHeader(headers.locale)
+      .withHeader(headers.contentType)
+      .withHeader(headers.recByCategoryContentLength)
+      .withBody(recommendationsByCategoryRequest)
   ).respond(
       response
         .withStatusCode(HttpStatusCode.OK_200.code)
@@ -107,11 +112,14 @@ trait MockGooglePlayServer extends MockServerService {
 
   mockServer.when(
     request
-      .withMethod("GET")
+      .withMethod("POST")
       .withPath(paths.freeRecommendationsByCountries)
       .withHeader(headers.token)
       .withHeader(headers.androidId)
       .withHeader(headers.locale)
+      .withHeader(headers.contentType)
+      .withHeader(headers.recByCategoryContentLength)
+      .withBody(recommendationsByCategoryRequest)
   ).respond(
       response
         .withStatusCode(HttpStatusCode.OK_200.code)
@@ -121,11 +129,14 @@ trait MockGooglePlayServer extends MockServerService {
 
   mockServer.when(
     request
-      .withMethod("GET")
+      .withMethod("POST")
       .withPath(paths.paidRecommendationsByCountries)
       .withHeader(headers.token)
       .withHeader(headers.androidId)
       .withHeader(headers.locale)
+      .withHeader(headers.contentType)
+      .withHeader(headers.recByCategoryContentLength)
+      .withBody(recommendationsByCategoryRequest)
   ).respond(
       response
         .withStatusCode(HttpStatusCode.OK_200.code)
@@ -180,20 +191,38 @@ class GooglePlayServicesSpec
 
   "recommendByCategory" should {
     "return a list of recommended apps for the given category" in {
-      val response = services.recommendByCategory("COUNTRY", "ALL", auth.params)
+      val response = services.recommendByCategory(
+        category         = "COUNTRY",
+        filter           = "ALL",
+        excludesPackages = List(appsNames.france),
+        limit            = limit,
+        auth             = auth.params
+      )
       response.unsafePerformSyncAttempt should be_\/-[Recommendations].which { rec ⇒
         rec.apps must haveSize(2)
       }
     }
     "return a list of free recommended apps for the given category" in {
-      val response = services.recommendByCategory("COUNTRY", "FREE", auth.params)
+      val response = services.recommendByCategory(
+        category         = "COUNTRY",
+        filter           = "FREE",
+        excludesPackages = List(appsNames.france),
+        limit            = limit,
+        auth             = auth.params
+      )
       response.unsafePerformSyncAttempt should be_\/-[Recommendations].which { rec ⇒
         rec.apps must haveSize(1)
         rec.apps must contain(recommendationIsFreeMatcher(true)).forall
       }
     }
     "return a list of paid recommended apps for the given category" in {
-      val response = services.recommendByCategory("COUNTRY", "PAID", auth.params)
+      val response = services.recommendByCategory(
+        category         = "COUNTRY",
+        filter           = "PAID",
+        excludesPackages = List(appsNames.france),
+        limit            = limit,
+        auth             = auth.params
+      )
 
       response.unsafePerformSyncAttempt should be_\/-[Recommendations].which { rec ⇒
         rec.apps must haveSize(1)
@@ -204,13 +233,25 @@ class GooglePlayServicesSpec
 
   "recommendationsForApps" should {
     "return an empty list of recommended apps if an empty list of packages is given" in {
-      val response = services.recommendationsForApps(Nil, auth.params)
+      val response = services.recommendationsForApps(
+        packageNames     = Nil,
+        excludesPackages = Nil,
+        limitByApp       = numPerApp,
+        limit            = limit,
+        auth             = auth.params
+      )
       response.unsafePerformSyncAttempt should be_\/-[Recommendations].which { rec ⇒
         rec.apps must beEmpty
       }
     }
     "return a list of recommended apps for the given list of packages" in {
-      val response = services.recommendationsForApps(List(appsNames.italy, appsNames.prussia), auth.params)
+      val response = services.recommendationsForApps(
+        packageNames     = List(appsNames.italy, appsNames.prussia),
+        excludesPackages = List(appsNames.france),
+        limitByApp       = numPerApp,
+        limit            = limit,
+        auth             = auth.params
+      )
       response.unsafePerformSyncAttempt should be_\/-[Recommendations].which { rec ⇒
         rec.apps must haveSize(2)
       }
@@ -223,7 +264,12 @@ object TestData {
   object appsNames {
     val italy = "earth.europe.italy"
     val prussia = "earth.europe.prussia"
+    val france = "earth.europe.france"
   }
+
+  val limit = 20
+
+  val numPerApp = 25
 
   val recommendationsForApps =
     s"""
@@ -231,7 +277,7 @@ object TestData {
        |  "apps": [
        |    {
        |      "packageName" : "${appsNames.italy}",
-       |      "name" : "Italy",
+       |      "title" : "Italy",
        |      "free" : true,
        |      "icon" : "https://lh5.ggpht.com/D5mlVsxok0icv00iCkwirgrncmym6s-mr_M=w300-rw",
        |      "stars" : 3.66,
@@ -243,7 +289,7 @@ object TestData {
        |    },
        |    {
        |      "packageName" : "${appsNames.prussia}",
-       |      "name" : "Prussia",
+       |      "title" : "Prussia",
        |      "free" : false,
        |      "icon" : "https://lh5.ggpht.com/D5mlVsxok0icv00iCkwirgrncmym6s-mr_M=w300-rw",
        |      "stars" : 3.66,
@@ -270,7 +316,7 @@ object TestData {
        |  "apps": [
        |    {
        |      "packageName" : "${appsNames.italy}",
-       |      "name" : "Italy",
+       |      "title" : "Italy",
        |      "free" : true,
        |      "icon" : "https://lh5.ggpht.com/D5mlVsxok0icv00iCkwirgrncmym6s-mr_M=w300-rw",
        |      "stars" : 3.66,
@@ -282,7 +328,7 @@ object TestData {
        |    },
        |    {
        |      "packageName" : "${appsNames.prussia}",
-       |      "name" : "Prussia",
+       |      "title" : "Prussia",
        |      "free" : false,
        |      "icon" : "https://lh5.ggpht.com/D5mlVsxok0icv00iCkwirgrncmym6s-mr_M=w300-rw",
        |      "stars" : 3.66,
@@ -302,7 +348,7 @@ object TestData {
       |  "apps": [
       |    {
       |      "packageName" : "${appsNames.italy}",
-      |      "name" : "Italy",
+      |      "title" : "Italy",
       |      "free" : true,
       |      "icon" : "https://lh5.ggpht.com/D5mlVsxok0icv00iCkwirgrncmym6s-mr_M=w300-rw",
       |      "stars" : 3.66,
@@ -322,7 +368,7 @@ object TestData {
       |  "apps": [
       |    {
       |      "packageName" : "${appsNames.prussia}",
-      |      "name" : "Prussia",
+      |      "title" : "Prussia",
       |      "free" : false,
       |      "icon" : "https://lh5.ggpht.com/D5mlVsxok0icv00iCkwirgrncmym6s-mr_M=w300-rw",
       |      "stars" : 3.66,
@@ -350,9 +396,14 @@ object TestData {
 
   val resolveManyRequest = s"""{"items":["${appsNames.italy}","${appsNames.prussia}"]}"""
 
-  val recommendationsForAppsEmptyRequest = s"""{"items":[]}"""
+  val recommendationsByCategoryRequest =
+    s"""{"excludedApps":["${appsNames.france}"],"maxTotal":$limit}""".stripMargin
 
-  val recommendationsForAppsRequest = s"""{"items":["${appsNames.italy}","${appsNames.prussia}"]}"""
+  val recommendationsForAppsEmptyRequest =
+    s"""{"searchByApps":[],"numPerApp":$numPerApp,"excludedApps":[],"maxTotal":$limit}""".stripMargin
+
+  val recommendationsForAppsRequest =
+    s"""{"searchByApps":["${appsNames.italy}","${appsNames.prussia}"],"numPerApp":$numPerApp,"excludedApps":["${appsNames.france}"],"maxTotal":$limit}""".stripMargin
 
   val resolveManyValidResponse = s"""
       |{
@@ -376,6 +427,9 @@ object TestData {
     val locale = new Header("X-Android-Market-Localization", auth.localization)
     val contentType = new Header("Content-Type", "application/json")
     val contentLength = new Header("Content-Length", resolveManyRequest.length.toString)
+    val recByCategoryContentLength = new Header("Content-Length", recommendationsByCategoryRequest.length.toString)
+    val emptyRecForAppsContentLength = new Header("Content-Length", recommendationsForAppsEmptyRequest.length.toString)
+    val recForAppsContentLength = new Header("Content-Length", recommendationsForAppsRequest.length.toString)
   }
 
   object paths {

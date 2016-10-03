@@ -17,14 +17,17 @@ class RecommendationsProcesses[F[_]](implicit services: GooglePlay.Services[F]) 
     authParams: AuthParams
   ): Free[F, GetRecommendationsResponse] =
     services.recommendByCategory(
-      category    = category,
-      priceFilter = filter,
-      auth        = toAuthParamsServices(authParams)
-    ) map generateRecommendationsResponse(excludePackages, limit)
+      category         = category,
+      priceFilter      = filter,
+      excludesPackages = excludePackages,
+      limit            = limit,
+      auth             = toAuthParamsServices(authParams)
+    ) map toGetRecommendationsResponse
 
   def getRecommendationsForApps(
     packagesName: List[String],
-    excludePackages: List[String],
+    excludedPackages: List[String],
+    limitPerApp: Int,
     limit: Int,
     authParams: AuthParams
   ): Free[F, GetRecommendationsResponse] =
@@ -32,17 +35,12 @@ class RecommendationsProcesses[F[_]](implicit services: GooglePlay.Services[F]) 
       Free.pure(GetRecommendationsResponse(Nil))
     else
       services.recommendationsForApps(
-        packagesName = packagesName,
-        auth         = toAuthParamsServices(authParams)
-      ) map generateRecommendationsResponse(excludePackages, limit)
-
-  private def generateRecommendationsResponse(excludePackages: List[String], limit: Int)(rec: Recommendations) =
-    GetRecommendationsResponse(
-      rec.apps
-        .filterNot(r ⇒ excludePackages.contains(r.packageName))
-        .take(limit)
-        .map(toGooglePlayRecommendation)
-    )
+        packagesName     = packagesName,
+        excludesPackages = excludedPackages,
+        limitPerApp      = limitPerApp,
+        limit            = limit,
+        auth             = toAuthParamsServices(authParams)
+      ) map toGetRecommendationsResponse
 }
 
 object RecommendationsProcesses {

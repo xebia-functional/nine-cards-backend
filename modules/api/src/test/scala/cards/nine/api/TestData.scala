@@ -48,6 +48,8 @@ object TestData {
 
   val limit = 20
 
+  val limitPerApp = 25
+
   val location = Option("US")
 
   val marketLocalization = "en-us"
@@ -154,7 +156,8 @@ object TestData {
     val apiGetRecommendationsForAppsRequest = ApiGetRecommendationsForAppsRequest(
       packages        = packagesName,
       excludePackages = excludePackages,
-      limit           = limit
+      limit           = limit,
+      limitPerApp     = Option(limitPerApp)
     )
 
     val apiRankAppsRequest = ApiRankAppsRequest(

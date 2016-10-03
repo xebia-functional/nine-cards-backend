@@ -48,7 +48,7 @@ class Services(config: Configuration) extends (Ops ~> Task) {
     client.fetchAs[String Xor AppInfo](request)
   }
 
-  def resolveMany(packageNames: Seq[String], auth: AuthParams): Task[AppsInfo] = {
+  def resolveMany(packageNames: List[String], auth: AuthParams): Task[AppsInfo] = {
     val resolveManyUri = Uri(
       scheme    = Option(config.protocol.ci),
       authority = Option(authority),
@@ -60,18 +60,44 @@ class Services(config: Configuration) extends (Ops ~> Task) {
     client.expect[AppsInfo](request)
   }
 
-  def recommendByCategory(category: String, filter: String, auth: AuthParams): Task[Recommendations] = {
+  def recommendByCategory(
+    category: String,
+    filter: String,
+    excludesPackages: List[String],
+    limit: Int,
+    auth: AuthParams
+  ): Task[Recommendations] = {
+
+    val requestBody = RecommendByCategoryRequest(
+      excludedApps = excludesPackages,
+      maxTotal     = limit
+    )
 
     val uri = recommendationsBaseUri./(category)./(filter)
 
-    val request = Request(Method.GET, uri = uri, headers = authHeaders(auth))
+    val request = Request(Method.POST, uri = uri, headers = authHeaders(auth))
+      .withBody[RecommendByCategoryRequest](requestBody)
+
     client.expect[Recommendations](request)
   }
 
-  def recommendationsForApps(packageNames: Seq[String], auth: AuthParams): Task[Recommendations] = {
+  def recommendationsForApps(
+    packageNames: List[String],
+    excludesPackages: List[String],
+    limitByApp: Int,
+    limit: Int,
+    auth: AuthParams
+  ): Task[Recommendations] = {
+
+    val requestBody = RecommendationsForAppsRequest(
+      searchByApps = packageNames,
+      numPerApp    = limitByApp,
+      excludedApps = excludesPackages,
+      maxTotal     = limit
+    )
 
     val request = Request(Method.POST, uri = recommendationsBaseUri, headers = authHeaders(auth))
-      .withBody[PackageList](PackageList(packageNames))
+      .withBody[RecommendationsForAppsRequest](requestBody)
 
     client.expect[Recommendations](request)
   }
@@ -81,10 +107,10 @@ class Services(config: Configuration) extends (Ops ~> Task) {
       resolveMany(packageNames, auth)
     case Resolve(packageName, auth) ⇒
       resolveOne(packageName, auth)
-    case RecommendationsByCategory(category, filter, auth) ⇒
-      recommendByCategory(category, filter, auth)
-    case RecommendationsForApps(packagesName, auth) ⇒
-      recommendationsForApps(packagesName, auth)
+    case RecommendationsByCategory(category, filter, excludesPackages, limit, auth) ⇒
+      recommendByCategory(category, filter, excludesPackages, limit, auth)
+    case RecommendationsForApps(packagesName, excludesPackages, limitPerApp, limit, auth) ⇒
+      recommendationsForApps(packagesName, excludesPackages, limitPerApp, limit, auth)
   }
 }
 

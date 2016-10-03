@@ -90,7 +90,7 @@ trait JsonFormats
 
   implicit val apiGetRecommendationsByCategoryRequestFormat = jsonFormat2(ApiGetRecommendationsByCategoryRequest)
 
-  implicit val apiGetRecommendationsForAppsRequestFormat = jsonFormat3(ApiGetRecommendationsForAppsRequest)
+  implicit val apiGetRecommendationsForAppsRequestFormat = jsonFormat4(ApiGetRecommendationsForAppsRequest)
 
   implicit val googlePlayRecommendationFormat = jsonFormat7(GooglePlayRecommendation)
 

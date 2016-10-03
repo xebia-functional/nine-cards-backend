@@ -2,7 +2,7 @@ package cards.nine.services.free.domain
 
 object GooglePlay {
 
-  case class PackageList(items: Seq[String]) extends AnyVal
+  case class PackageList(items: List[String]) extends AnyVal
 
   case class AuthParams(
     androidId: String,
@@ -31,12 +31,24 @@ object GooglePlay {
 
   case class Recommendation(
     packageName: String,
-    name: String,
+    title: String,
     free: Boolean,
     icon: String,
     stars: Double,
     downloads: String,
     screenshots: List[String]
+  )
+
+  case class RecommendByCategoryRequest(
+    excludedApps: List[String],
+    maxTotal: Int
+  )
+
+  case class RecommendationsForAppsRequest(
+    searchByApps: List[String],
+    numPerApp: Int,
+    excludedApps: List[String],
+    maxTotal: Int
   )
 }
 

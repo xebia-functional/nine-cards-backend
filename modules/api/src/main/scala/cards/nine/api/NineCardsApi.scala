@@ -353,6 +353,7 @@ class NineCardsRoutes(
       .getRecommendationsForApps(
         request.packages,
         request.excludePackages,
+        request.limitPerApp.getOrElse(Int.MaxValue),
         request.limit,
         toAuthParams(googlePlayContext, userContext)
       )
