@@ -1,10 +1,8 @@
-import sbt.Keys._
-import sbt._
-import spray.revolver.RevolverPlugin
-import com.typesafe.sbt.SbtNativePackager._
-import com.typesafe.sbt.packager.archetypes.JavaAppPackaging.autoImport._
 
-trait Settings extends Assembly9C {
+trait Settings {
+
+  import sbt.Keys._
+  import sbt._
 
   lazy val projectSettings: Seq[Def.Setting[_]] = Seq(
     addCompilerPlugin("org.spire-math" %% "kind-projector" % Versions.kindProjector ),
@@ -33,17 +31,18 @@ trait Settings extends Assembly9C {
     doc in Compile <<= target.map(_ / "none")
   )
 
-  lazy val googleplaySettings = projectSettings ++ Seq(
-    publishArtifact in(Test, packageBin) := false
-  ) ++ RevolverPlugin.settings ++ nineCardsAssemblySettings ++ protoBufSettings
+  val googleplaySettings = {
+    val protoBufSettings = {
+      import sbtprotobuf.{ProtobufPlugin => PB}
+      PB.protobufSettings ++ Seq(
+        PB.runProtoc in PB.protobufConfig := { args =>
+          com.github.os72.protocjar.Protoc.runProtoc("-v261" +: args.toArray)
+        }
+      )
+    }
 
+    projectSettings ++ Seq( publishArtifact in(Test, packageBin) := false ) ++ protoBufSettings
 
-  lazy val protoBufSettings = {
-    import sbtprotobuf.{ProtobufPlugin => PB}
-    PB.protobufSettings ++ Seq(
-      PB.runProtoc in PB.protobufConfig := { args =>
-        com.github.os72.protocjar.Protoc.runProtoc("-v261" +: args.toArray)
-      }
-    )
   }
+
 }
