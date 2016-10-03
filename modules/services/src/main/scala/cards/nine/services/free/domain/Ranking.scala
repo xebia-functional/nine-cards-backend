@@ -39,7 +39,7 @@ object rankings {
     val values = super.findValues
   }
 
-  sealed trait GeoScope
+  sealed abstract class GeoScope extends Serializable with Product
   case class CountryScope(country: Country) extends GeoScope
   case class ContinentScope(continent: Continent) extends GeoScope
   case object WorldScope extends GeoScope

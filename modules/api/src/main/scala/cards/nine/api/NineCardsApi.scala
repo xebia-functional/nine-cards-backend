@@ -12,6 +12,7 @@ import cards.nine.api.messages.SharedCollectionMessages._
 import cards.nine.api.messages.UserMessages._
 import cards.nine.api.utils.SprayMarshallers._
 import cards.nine.api.utils.SprayMatchers._
+import cards.nine.commons.NineCardsService.Result
 import cards.nine.processes.NineCardsServices._
 import cards.nine.processes._
 import cards.nine.processes.messages.ApplicationMessages.GetAppsInfoResponse
@@ -359,11 +360,10 @@ class NineCardsRoutes(
       )
       .map(toApiGetRecommendationsResponse)
 
-  //TODO: We have to define a way to select a GeoScope based on a location. In this moment, we'll use the WorldScope
   private[this] def rankApps(
     request: ApiRankAppsRequest,
     userContext: UserContext
-  ): NineCardsServed[ApiRankAppsResponse] =
+  ): NineCardsServed[Result[ApiRankAppsResponse]] =
     rankingProcesses.getRankedDeviceApps(request.location, request.items.mapValues(toDeviceAppList))
       .map(toApiRankAppsResponse)
 

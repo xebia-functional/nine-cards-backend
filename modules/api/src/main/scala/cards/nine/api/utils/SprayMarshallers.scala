@@ -1,14 +1,29 @@
 package cards.nine.api.utils
 
+import cards.nine.api.NineCardsErrorHandler
+import cards.nine.commons.NineCardsService.Result
+import cards.nine.processes.NineCardsServices._
 import cats.data.Xor
 import cats.free.Free
-import cards.nine.processes.NineCardsServices._
 import shapeless.Lazy
 import spray.httpx.marshalling.ToResponseMarshaller
 
 import scalaz.concurrent.Task
 
 object SprayMarshallers {
+
+  implicit def ninecardsResultMarshaller[A](
+    implicit
+    m: ToResponseMarshaller[A],
+    handler: NineCardsErrorHandler
+  ): ToResponseMarshaller[Result[A]] =
+    ToResponseMarshaller[Result[A]] {
+      (result, ctx) ⇒
+        result.fold(
+          left ⇒ handler.handleNineCardsErrors(left, ctx),
+          right ⇒ m(right, ctx)
+        )
+    }
 
   implicit def catsXorMarshaller[T <: Throwable, A](
     implicit

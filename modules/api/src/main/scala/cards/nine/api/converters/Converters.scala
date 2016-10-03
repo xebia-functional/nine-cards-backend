@@ -5,6 +5,7 @@ import cards.nine.api.messages.GooglePlayMessages._
 import cards.nine.api.messages.InstallationsMessages._
 import cards.nine.api.messages.SharedCollectionMessages._
 import cards.nine.api.messages.UserMessages._
+import cards.nine.commons.NineCardsService.Result
 import cards.nine.processes.messages.ApplicationMessages._
 import cards.nine.processes.messages.GooglePlayAuthMessages._
 import cards.nine.processes.messages.InstallationsMessages._
@@ -12,6 +13,7 @@ import cards.nine.processes.messages.RecommendationsMessages._
 import cards.nine.processes.messages.SharedCollectionMessages._
 import cards.nine.processes.messages.UserMessages._
 import cards.nine.processes.messages.rankings.GetRankedDeviceApps._
+import cats.syntax.either._
 
 object Converters {
 
@@ -137,8 +139,11 @@ object Converters {
       response.items
     )
 
-  def toApiRankAppsResponse(items: Map[String, List[RankedDeviceApp]]) =
-    ApiRankAppsResponse(items.mapValues(apps ⇒ apps.map(_.packageName)))
+  def toApiRankAppsResponse(result: Result[Map[String, List[RankedDeviceApp]]]) =
+    result.map {
+      items ⇒
+        ApiRankAppsResponse(items.mapValues(apps ⇒ apps.map(_.packageName)))
+    }
 
   def toDeviceAppList(items: List[String]) = items map DeviceApp.apply
 }

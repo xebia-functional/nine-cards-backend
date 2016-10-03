@@ -7,12 +7,15 @@ import cats.syntax.xor._
 import cards.nine.api.NineCardsHeaders._
 import cards.nine.api.TestData.Exceptions._
 import cards.nine.api.TestData._
+import cards.nine.commons.NineCardsService
+import cards.nine.commons.NineCardsService.NineCardsService
 import cards.nine.processes.NineCardsServices._
 import cards.nine.processes._
 import cards.nine.processes.messages.ApplicationMessages._
 import cards.nine.processes.messages.InstallationsMessages._
 import cards.nine.processes.messages.SharedCollectionMessages._
 import cards.nine.processes.messages.UserMessages._
+import cards.nine.processes.messages.rankings.GetRankedDeviceApps.RankedDeviceApp
 import cards.nine.services.common.FreeUtils._
 import org.mockito.Matchers.{ eq ⇒ mockEq }
 import org.specs2.matcher.Matchers
@@ -122,7 +125,7 @@ trait NineCardsApiSpecification
       Free.pure(Messages.getRecommendationsByCategoryResponse)
 
     rankingProcesses.getRankedDeviceApps(any, any) returns
-      Free.pure(Messages.getRankedAppsResponse)
+      NineCardsService.right(Messages.getRankedAppsResponse).value
   }
 
   trait UnsuccessfulScope extends BasicScope {
@@ -200,7 +203,7 @@ trait NineCardsApiSpecification
       Free.pure(Messages.rankings.reloadResponse.right)
 
     rankingProcesses.getRankedDeviceApps(any, any) returns
-      Free.pure(Messages.getRankedAppsResponse)
+      NineCardsService.right(Messages.getRankedAppsResponse).value
   }
 
 }

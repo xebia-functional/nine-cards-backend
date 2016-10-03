@@ -1,7 +1,7 @@
 package cards.nine.services.free.interpreter.ranking
 
 import cards.nine.services.free.domain.Category
-import cards.nine.services.free.domain.rankings.{ CategoryRanking, Entry, GeoScope, Queries, Ranking, UnrankedApp }
+import cards.nine.services.free.domain.rankings.{ CategoryRanking, Entry, GeoScope, Queries, RankedApp, Ranking, UnrankedApp }
 import cards.nine.services.persistence.{ CustomComposite, DomainDatabaseContext, NineCardsScalacheckGen }
 import org.specs2.ScalaCheck
 import org.specs2.matcher.DisjunctionMatchers
@@ -101,7 +101,7 @@ class ServicesSpec
           .getRankingForApps(scope, deviceApps)
           .transactAndRun
 
-        rankedApps must beEmpty
+        rankedApps must beRight[List[RankedApp]](Nil)
       }
     }
 
@@ -111,7 +111,7 @@ class ServicesSpec
           .getRankingForApps(scope, Set.empty)
           .transactAndRun
 
-        rankedApps must beEmpty
+        rankedApps must beRight[List[RankedApp]](Nil)
       }
     }
 
@@ -130,7 +130,9 @@ class ServicesSpec
           .getRankingForApps(scope, deviceApps)
           .transactAndRun
 
-        rankedApps must haveSize(be_>=(deviceApps.size))
+        rankedApps must beRight[List[RankedApp]].which { c ⇒
+          c must haveSize(be_>=(deviceApps.size))
+        }
       }
     }
   }
