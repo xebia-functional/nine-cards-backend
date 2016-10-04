@@ -4,6 +4,7 @@ import cats.data.Xor
 import cats.instances.list._
 import cats.syntax.traverse._
 import cats.~>
+import cards.nine.commons.TaskInstances._
 import cards.nine.googleplay.extracats._
 import cards.nine.googleplay.domain._
 import scalaz.concurrent.Task

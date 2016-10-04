@@ -1,8 +1,5 @@
 package cards.nine.services.free.domain.queries
 
-import java.sql.Timestamp
-import java.time.LocalDateTime
-
 import cards.nine.services.free.domain.SharedCollectionPackage.Queries._
 import cards.nine.services.persistence.DomainDatabaseContext
 import doobie.contrib.specs2.analysisspec.AnalysisSpec

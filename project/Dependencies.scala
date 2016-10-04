@@ -32,19 +32,18 @@ object Dependencies {
   private val tagSoup = "org.ccil.cowan.tagsoup" % "tagsoup" % Versions.tagSoup
   private val typesafeConfig = "com.typesafe" % "config" % Versions.typesafeConfig
 
-  val baseDepts = Seq(
+  val baseDeps = Seq(
     hasher,
     scalacheckShapeless,
     scalaz("-concurrent"),
     scalaz("-core"),
     specs2("-cats"),
-    specs2Core, 
+    specs2Core,
     specs2("-mock"),
-    specs2("-scalacheck"),
-    typesafeConfig
+    specs2("-scalacheck")
   )
 
-  val apiDeps = Seq(libraryDependencies ++= baseDepts ++ Seq(
+  val apiDeps = Seq(libraryDependencies ++= baseDeps ++ Seq(
     akkaActor,
     akkaTestKit % "test",
     cats % "test",
@@ -57,9 +56,15 @@ object Dependencies {
     sprayTestKit
   ))
 
-  val processesDeps = Seq(libraryDependencies ++= baseDepts)
+  val commonsDeps = Seq(libraryDependencies ++= Seq(
+    cats,
+    scalaz("-concurrent"),
+    typesafeConfig
+  ))
 
-  val servicesDeps = Seq(libraryDependencies ++= baseDepts ++ Seq(
+  val processesDeps = Seq(libraryDependencies ++= baseDeps)
+
+  val servicesDeps = Seq(libraryDependencies ++= baseDeps ++ Seq(
     cats,
     circe("-core"),
     circe("-generic"),

@@ -1,12 +1,12 @@
 package cards.nine.googleplay.service.free.interpreter
 
+import cards.nine.commons.NineCardsConfig._
 import cards.nine.googleplay.domain._
-import cards.nine.googleplay.config.NineCardsConfig
 
 object TestData {
 
   def googleApiConf = googleapi.Configuration.load()
-  def webEndpoint = NineCardsConfig.getConfigValue("ninecards.googleplay.web.endpoint")
+  def webEndpoint = defaultConfig.getString("ninecards.googleplay.web.endpoint")
 
   object nonexisting {
     val packageName = "com.package.does.not.exist"

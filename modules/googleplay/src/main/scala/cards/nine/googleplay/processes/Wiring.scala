@@ -1,6 +1,6 @@
 package cards.nine.googleplay.processes
 
-import cards.nine.googleplay.config.NineCardsConfig._
+import cards.nine.commons.NineCardsConfig._
 import cards.nine.googleplay.domain.{ AppRequest, Item }
 import cards.nine.googleplay.service.free.interpreter._
 import cards.nine.googleplay.service.free.interpreter.webscrapper.Http4sGooglePlayWebScraper
@@ -15,9 +15,9 @@ class Wiring() {
   val redisClientPool: RedisClientPool = {
     val baseConfig = "ninecards.googleplay.redis"
     new RedisClientPool(
-      host   = getConfigValue(s"$baseConfig.host"),
-      port   = getConfigNumber(s"$baseConfig.port"),
-      secret = getOptionalConfigValue(s"$baseConfig.secret")
+      host   = defaultConfig.getString(s"$baseConfig.host"),
+      port   = defaultConfig.getInt(s"$baseConfig.port"),
+      secret = defaultConfig.getOptionalString(s"$baseConfig.secret")
     )
   }
 
@@ -37,7 +37,7 @@ class Wiring() {
 
   val itemService: (AppRequest ⇒ Task[String Xor Item]) = {
     val webClient = new Http4sGooglePlayWebScraper(
-      getConfigValue("ninecards.googleplay.web.endpoint"),
+      defaultConfig.getString("ninecards.googleplay.web.endpoint"),
       webHttpClient
     )
     new XorTaskOrComposer[AppRequest, String, Item](apiServices.getItem, webClient.getItem)

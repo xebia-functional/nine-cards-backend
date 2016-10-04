@@ -1,6 +1,4 @@
-package cards.nine.services.common
-
-import org.specs2.mutable.Specification
+package cards.nine.commons
 
 class NineCardsConfigSpec extends Specification {
 

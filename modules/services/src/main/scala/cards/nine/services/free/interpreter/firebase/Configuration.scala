@@ -1,6 +1,6 @@
 package cards.nine.services.free.interpreter.firebase
 
-import cards.nine.services.common.NineCardsConfig
+import cards.nine.commons.NineCardsConfig
 
 case class Configuration(
   protocol: String,

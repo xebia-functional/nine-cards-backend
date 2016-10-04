@@ -1,7 +1,6 @@
 package cards.nine.services.free.interpreter.analytics
 
-import cats.data.Xor
-import cards.nine.services.free.domain.rankings.{ Continent, Country, DateRange, Ranking, RankingError }
+import cards.nine.services.free.domain.rankings.{ Continent, Country, DateRange }
 import enumeratum._
 
 object model {

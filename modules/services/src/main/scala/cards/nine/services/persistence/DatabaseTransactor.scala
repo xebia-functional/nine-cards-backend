@@ -1,6 +1,6 @@
 package cards.nine.services.persistence
 
-import cards.nine.services.common.NineCardsConfig
+import cards.nine.commons.NineCardsConfig
 import doobie.contrib.hikari.hikaritransactor.HikariTransactor
 import doobie.imports.Transactor
 import doobie.util.capture.Capture

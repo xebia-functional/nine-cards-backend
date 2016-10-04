@@ -5,7 +5,7 @@ import akka.event.Logging
 import akka.io.IO
 import akka.pattern.ask
 import akka.util.Timeout
-import cards.nine.services.common.NineCardsConfig._
+import cards.nine.commons.NineCardsConfig._
 import spray.can.Http
 
 import scala.concurrent.duration._

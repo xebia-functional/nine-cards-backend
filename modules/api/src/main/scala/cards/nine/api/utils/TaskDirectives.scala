@@ -2,14 +2,11 @@ package cards.nine.api.utils
 
 import shapeless.{ ::, HList, HNil }
 import spray.httpx.marshalling.ToResponseMarshaller
-import spray.routing.directives.OnCompleteFutureMagnet
 import spray.routing.{ Directive, HListable, _ }
 
-import scala.concurrent.{ ExecutionContext, Future }
 import scala.util.control.NonFatal
-import scala.util.{ Failure, Success, Try }
-import scalaz.{ -\/, \/, \/- }
 import scalaz.concurrent.Task
+import scalaz.{ -\/, \/, \/- }
 
 trait TaskDirectives {
 

@@ -2,7 +2,7 @@ package cards.nine.services.persistence
 
 import java.sql.Connection
 
-import cards.nine.services.common.NineCardsConfig
+import cards.nine.commons.NineCardsConfig
 import cards.nine.services.free.domain
 import cards.nine.services.free.domain._
 import cards.nine.services.free.interpreter.collection.{ Services ⇒ CollectionServices }
