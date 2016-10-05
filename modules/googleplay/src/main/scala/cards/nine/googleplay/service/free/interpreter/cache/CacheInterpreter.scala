@@ -1,8 +1,10 @@
 package cards.nine.googleplay.service.free.interpreter.cache
 
-import cats.~>
 import cards.nine.googleplay.service.free.algebra.Cache._
+import cats.~>
 import com.redis.RedisClient
+import org.joda.time.DateTime
+
 import scalaz.concurrent.Task
 
 object CacheInterpreter extends (Ops ~> WithRedisClient) {
@@ -40,10 +42,10 @@ object CacheInterpreter extends (Ops ~> WithRedisClient) {
       }
     }
 
-    case MarkError(pack, date) ⇒ { client: RedisClient ⇒
+    case MarkError(pack) ⇒ { client: RedisClient ⇒
       Task {
         val wrap = new CacheWrapper[CacheKey, CacheVal](client)
-        wrap.put(CacheEntry.error(pack, date))
+        wrap.put(CacheEntry.error(pack, DateTime.now))
       }
     }
 

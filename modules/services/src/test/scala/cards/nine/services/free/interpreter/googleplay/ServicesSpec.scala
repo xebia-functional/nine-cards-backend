@@ -1,444 +1,239 @@
 package cards.nine.services.free.interpreter.googleplay
 
+import cards.nine.googleplay.domain._
+import cards.nine.googleplay.processes.getcard.{ FailedResponse, UnknownPackage }
+import cards.nine.googleplay.processes.{ CardsProcesses, Wiring }
 import cats.data.Xor
-import cards.nine.services.free.domain.GooglePlay._
-import cards.nine.services.utils.MockServerService
-import org.mockserver.model.HttpRequest._
-import org.mockserver.model.HttpResponse._
-import org.mockserver.model.{ Header, HttpStatusCode }
+import cards.nine.services.free.domain.GooglePlay.{ AppInfo, AppsInfo, AuthParams, Recommendation, Recommendations }
+import cats.free.Free
 import org.specs2.matcher.{ DisjunctionMatchers, Matcher, Matchers, XorMatchers }
+import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
-
-trait MockGooglePlayServer extends MockServerService {
-
-  import TestData._
-
-  override val mockServerPort = 9998
-
-  mockServer.when(
-    request
-      .withMethod("GET")
-      .withPath(s"${paths.resolveOne}/${appsNames.italy}")
-      .withHeader(headers.token)
-      .withHeader(headers.androidId)
-      .withHeader(headers.locale)
-  ).respond(
-      response
-        .withStatusCode(HttpStatusCode.OK_200.code)
-        .withHeader(jsonHeader)
-        .withBody(resolvedPackage)
-    )
-
-  mockServer.when(
-    request
-      .withMethod("GET")
-      .withPath(s"${paths.resolveOne}/${appsNames.prussia}")
-      .withHeader(headers.token)
-      .withHeader(headers.androidId)
-      .withHeader(headers.locale)
-  ).respond(
-      response
-        .withStatusCode(HttpStatusCode.INTERNAL_SERVER_ERROR_500.code)
-        .withBody(failure)
-    )
-
-  mockServer.when(
-    request
-      .withMethod("POST")
-      .withPath(paths.resolveMany)
-      .withHeader(headers.token)
-      .withHeader(headers.androidId)
-      .withHeader(headers.locale)
-      .withHeader(headers.contentType)
-      .withHeader(headers.contentLength)
-      .withBody(resolveManyRequest)
-  ).respond(
-      response
-        .withStatusCode(HttpStatusCode.OK_200.code)
-        .withHeader(jsonHeader)
-        .withBody(resolveManyValidResponse)
-    )
-
-  mockServer.when(
-    request
-      .withMethod("POST")
-      .withPath(paths.recommendations)
-      .withHeader(headers.token)
-      .withHeader(headers.androidId)
-      .withHeader(headers.locale)
-      .withHeader(headers.contentType)
-      .withHeader(headers.recForAppsContentLength)
-      .withBody(recommendationsForAppsRequest)
-  ).respond(
-      response
-        .withStatusCode(HttpStatusCode.OK_200.code)
-        .withHeader(jsonHeader)
-        .withBody(recommendationsForApps)
-    )
-
-  mockServer.when(
-    request
-      .withMethod("POST")
-      .withPath(paths.recommendations)
-      .withHeader(headers.token)
-      .withHeader(headers.androidId)
-      .withHeader(headers.locale)
-      .withHeader(headers.contentType)
-      .withHeader(headers.emptyRecForAppsContentLength)
-      .withBody(recommendationsForAppsEmptyRequest)
-  ).respond(
-      response
-        .withStatusCode(HttpStatusCode.OK_200.code)
-        .withHeader(jsonHeader)
-        .withBody(recommendationsForAppsEmptyResponse)
-    )
-
-  mockServer.when(
-    request
-      .withMethod("POST")
-      .withPath(paths.recommendationsByCountries)
-      .withHeader(headers.token)
-      .withHeader(headers.androidId)
-      .withHeader(headers.locale)
-      .withHeader(headers.contentType)
-      .withHeader(headers.recByCategoryContentLength)
-      .withBody(recommendationsByCategoryRequest)
-  ).respond(
-      response
-        .withStatusCode(HttpStatusCode.OK_200.code)
-        .withHeader(jsonHeader)
-        .withBody(recommendationsForAll)
-    )
-
-  mockServer.when(
-    request
-      .withMethod("POST")
-      .withPath(paths.freeRecommendationsByCountries)
-      .withHeader(headers.token)
-      .withHeader(headers.androidId)
-      .withHeader(headers.locale)
-      .withHeader(headers.contentType)
-      .withHeader(headers.recByCategoryContentLength)
-      .withBody(recommendationsByCategoryRequest)
-  ).respond(
-      response
-        .withStatusCode(HttpStatusCode.OK_200.code)
-        .withHeader(jsonHeader)
-        .withBody(recommendationsForFree)
-    )
-
-  mockServer.when(
-    request
-      .withMethod("POST")
-      .withPath(paths.paidRecommendationsByCountries)
-      .withHeader(headers.token)
-      .withHeader(headers.androidId)
-      .withHeader(headers.locale)
-      .withHeader(headers.contentType)
-      .withHeader(headers.recByCategoryContentLength)
-      .withBody(recommendationsByCategoryRequest)
-  ).respond(
-      response
-        .withStatusCode(HttpStatusCode.OK_200.code)
-        .withHeader(jsonHeader)
-        .withBody(recommendationsForPaid)
-    )
-}
+import org.specs2.specification.Scope
 
 class GooglePlayServicesSpec
   extends Specification
   with Matchers
+  with Mockito
   with DisjunctionMatchers
-  with MockGooglePlayServer
   with XorMatchers {
 
   import TestData._
-
-  val tokenIdParameterName = "id_token"
-
-  implicit val googlePlayConfiguration = Configuration(
-    protocol            = "http",
-    host                = "localhost",
-    port                = Option(mockServerPort),
-    recommendationsPath = paths.recommendations,
-    resolveOnePath      = paths.resolveOne,
-    resolveManyPath     = paths.resolveMany
-  )
-
-  val services = Services.services
 
   def recommendationIsFreeMatcher(isFree: Boolean): Matcher[Recommendation] = { rec: Recommendation ⇒
     rec.free must_== isFree
   }
 
-  "resolveOne" should {
+  object TestData {
 
-    "return the App object when a valid package name is provided" in {
-      val response = services.resolveOne(appsNames.italy, auth.params)
-      response.unsafePerformSyncAttempt should be_\/-[String Xor AppInfo].which {
-        content ⇒ content should beXorRight[AppInfo]
+    def appInfoFor(packageName: String) = AppInfo(
+      packageName = packageName,
+      title       = s"Title of $packageName",
+      free        = false,
+      icon        = s"Icon of $packageName",
+      stars       = 5.0,
+      downloads   = s"Downloads of $packageName",
+      categories  = List(s"Category 1 of $packageName", s"Category 2 of $packageName")
+    )
+
+    def fullCardFor(packageName: String) = FullCard(
+      packageName = packageName,
+      title       = s"Title of $packageName",
+      free        = false,
+      icon        = s"Icon of $packageName",
+      stars       = 5.0,
+      downloads   = s"Downloads of $packageName",
+      categories  = List(s"Category 1 of $packageName", s"Category 2 of $packageName"),
+      screenshots = List(s"Screenshot 1 of $packageName", s"Screenshot 2 of $packageName")
+    )
+
+    def recommendationFor(packageName: String) = Recommendation(
+      packageName = packageName,
+      title       = s"Title of $packageName",
+      free        = false,
+      icon        = s"Icon of $packageName",
+      stars       = 5.0,
+      downloads   = s"Downloads of $packageName",
+      screenshots = List(s"Screenshot 1 of $packageName", s"Screenshot 2 of $packageName")
+    )
+
+    val packagesName = List("com.package.one", "com.package.two", "com.package.three", "com.package.four")
+    val onePackageName = packagesName.head
+
+    val packages = packagesName map Package
+    val onePackage = Package(onePackageName)
+
+    val (validPackagesName, wrongPackagesName) = packagesName.partition(_.length <= 15)
+
+    val validPackages = validPackagesName map Package
+    val wrongPackages = wrongPackagesName map Package
+
+    val appInfoList = validPackagesName map appInfoFor
+
+    val recommendations = validPackagesName map recommendationFor
+
+    val category = "SHOPPING"
+
+    val limit = 20
+
+    val numPerApp = 25
+
+    val priceFilter = "FREE"
+
+    object AuthData {
+      val androidId = "12345"
+      val localization = "en_GB"
+      val token = "m52_9876"
+      val params = AuthParams(androidId, Some(localization), token)
+
+      val googleAuthParams = GoogleAuthParams(
+        AndroidId(androidId),
+        Token(token),
+        Option(Localization(localization))
+      )
+    }
+
+    object Requests {
+      val recommendByAppsRequest = RecommendByAppsRequest(
+        searchByApps = packages,
+        numPerApp    = numPerApp,
+        excludedApps = wrongPackages,
+        maxTotal     = limit
+      )
+
+      val recommendByCategoryRequest = RecommendByCategoryRequest(
+        category     = Category.SHOPPING,
+        priceFilter  = PriceFilter.FREE,
+        excludedApps = wrongPackages,
+        maxTotal     = limit
+      )
+    }
+
+    object GooglePlayResponses {
+      val fullCard = fullCardFor(onePackageName)
+      val unknwonPackageError = UnknownPackage(onePackage)
+
+      val fullCards = validPackagesName map fullCardFor
+      val unknownPackageErrors = wrongPackages map UnknownPackage
+
+      val recommendationsInfoError = InfoError("Something went wrong!")
+
+      val fullCardList = FullCardList(
+        missing = wrongPackagesName,
+        cards   = fullCards
+      )
+
+      val getCardsResponse: List[Xor[FailedResponse, FullCard]] =
+        (fullCards map Xor.right) ++ (unknownPackageErrors map Xor.left)
+    }
+  }
+
+  trait BasicScope extends Scope {
+    implicit val googlePlayProcesses = mock[CardsProcesses[Wiring.GooglePlayApp]]
+    val services = Services.services
+  }
+
+  "resolveOne" should {
+    "return the App object when a valid package name is provided" in new BasicScope {
+
+      googlePlayProcesses.getCard(onePackage, AuthData.googleAuthParams) returns
+        Free.pure(Xor.right(GooglePlayResponses.fullCard))
+
+      val response = services.resolveOne(onePackageName, AuthData.params)
+
+      response.unsafePerformSyncAttempt must be_\/-[String Xor AppInfo].which {
+        content ⇒ content must beXorRight[AppInfo]
       }
     }
 
+    "return an error message when a wrong package name is provided" in new BasicScope {
+
+      googlePlayProcesses.getCard(onePackage, AuthData.googleAuthParams) returns
+        Free.pure(Xor.left(GooglePlayResponses.unknwonPackageError))
+
+      val response = services.resolveOne(onePackageName, AuthData.params)
+
+      response.unsafePerformSyncAttempt must be_\/-[String Xor AppInfo].which {
+        content ⇒ content must beXorLeft[String](onePackageName)
+      }
+    }
   }
 
   "resolveMany" should {
-    "return the list of apps that are valid" in {
-      val response = services.resolveMany(List(appsNames.italy, appsNames.prussia), auth.params)
-      response.unsafePerformSyncAttempt should be_\/-[AppsInfo]
+    "return the list of apps that are valid and those that are wrong" in new BasicScope {
+
+      googlePlayProcesses.getCards(packages, AuthData.googleAuthParams) returns
+        Free.pure(GooglePlayResponses.getCardsResponse)
+
+      val response = services.resolveMany(packagesName, AuthData.params)
+
+      response.unsafePerformSyncAttempt must be_\/-[AppsInfo].which { appsInfo ⇒
+        appsInfo.missing must containTheSameElementsAs(wrongPackagesName)
+        appsInfo.apps must containTheSameElementsAs(appInfoList)
+      }
     }
   }
 
   "recommendByCategory" should {
-    "return a list of recommended apps for the given category" in {
+    "return a list of free recommended apps for the given category" in new BasicScope {
+
+      googlePlayProcesses.recommendationsByCategory(
+        Requests.recommendByCategoryRequest,
+        AuthData.googleAuthParams
+      ) returns Free.pure(Xor.right(GooglePlayResponses.fullCardList))
+
       val response = services.recommendByCategory(
-        category         = "COUNTRY",
-        filter           = "ALL",
-        excludesPackages = List(appsNames.france),
+        category         = category,
+        filter           = priceFilter,
+        excludedPackages = wrongPackagesName,
         limit            = limit,
-        auth             = auth.params
-      )
-      response.unsafePerformSyncAttempt should be_\/-[Recommendations].which { rec ⇒
-        rec.apps must haveSize(2)
-      }
-    }
-    "return a list of free recommended apps for the given category" in {
-      val response = services.recommendByCategory(
-        category         = "COUNTRY",
-        filter           = "FREE",
-        excludesPackages = List(appsNames.france),
-        limit            = limit,
-        auth             = auth.params
-      )
-      response.unsafePerformSyncAttempt should be_\/-[Recommendations].which { rec ⇒
-        rec.apps must haveSize(1)
-        rec.apps must contain(recommendationIsFreeMatcher(true)).forall
-      }
-    }
-    "return a list of paid recommended apps for the given category" in {
-      val response = services.recommendByCategory(
-        category         = "COUNTRY",
-        filter           = "PAID",
-        excludesPackages = List(appsNames.france),
-        limit            = limit,
-        auth             = auth.params
+        auth             = AuthData.params
       )
 
-      response.unsafePerformSyncAttempt should be_\/-[Recommendations].which { rec ⇒
-        rec.apps must haveSize(1)
-        rec.apps must contain(recommendationIsFreeMatcher(false)).forall
+      response.unsafePerformSyncAttempt must be_\/-[Recommendations].which { rec ⇒
+        rec.apps must containTheSameElementsAs(recommendations)
       }
     }
+
+    "fail if something went wrong while getting recommendations" in new BasicScope {
+
+      googlePlayProcesses.recommendationsByCategory(
+        Requests.recommendByCategoryRequest,
+        AuthData.googleAuthParams
+      ) returns Free.pure(Xor.left(GooglePlayResponses.recommendationsInfoError))
+
+      val response = services.recommendByCategory(
+        category         = category,
+        filter           = priceFilter,
+        excludedPackages = wrongPackagesName,
+        limit            = limit,
+        auth             = AuthData.params
+      )
+
+      // TODO: We shouldn't use Throwable to model this error
+      response.unsafePerformSyncAttempt must be_-\/[Throwable]
+    }
+
   }
 
   "recommendationsForApps" should {
-    "return an empty list of recommended apps if an empty list of packages is given" in {
+    "return a list of recommended apps for the given list of packages" in new BasicScope {
+      googlePlayProcesses.recommendationsByApps(
+        Requests.recommendByAppsRequest,
+        AuthData.googleAuthParams
+      ) returns Free.pure(GooglePlayResponses.fullCardList)
+
       val response = services.recommendationsForApps(
-        packageNames     = Nil,
-        excludesPackages = Nil,
+        packageNames     = packagesName,
+        excludedPackages = wrongPackagesName,
         limitByApp       = numPerApp,
         limit            = limit,
-        auth             = auth.params
+        auth             = AuthData.params
       )
-      response.unsafePerformSyncAttempt should be_\/-[Recommendations].which { rec ⇒
-        rec.apps must beEmpty
-      }
-    }
-    "return a list of recommended apps for the given list of packages" in {
-      val response = services.recommendationsForApps(
-        packageNames     = List(appsNames.italy, appsNames.prussia),
-        excludesPackages = List(appsNames.france),
-        limitByApp       = numPerApp,
-        limit            = limit,
-        auth             = auth.params
-      )
-      response.unsafePerformSyncAttempt should be_\/-[Recommendations].which { rec ⇒
-        rec.apps must haveSize(2)
+
+      response.unsafePerformSyncAttempt must be_\/-[Recommendations].which { rec ⇒
+        rec.apps must containTheSameElementsAs(recommendations)
       }
     }
   }
-}
-
-object TestData {
-
-  object appsNames {
-    val italy = "earth.europe.italy"
-    val prussia = "earth.europe.prussia"
-    val france = "earth.europe.france"
-  }
-
-  val limit = 20
-
-  val numPerApp = 25
-
-  val recommendationsForApps =
-    s"""
-       |{
-       |  "apps": [
-       |    {
-       |      "packageName" : "${appsNames.italy}",
-       |      "title" : "Italy",
-       |      "free" : true,
-       |      "icon" : "https://lh5.ggpht.com/D5mlVsxok0icv00iCkwirgrncmym6s-mr_M=w300-rw",
-       |      "stars" : 3.66,
-       |      "downloads" : "542412",
-       |      "screenshots" : [
-       |        "https://lh5.ggpht.com/D5mlVsxok0icv00iCkwirgrncmym6s-mr_M=w300-rw",
-       |        "https://lh5.ggpht.com/D5mlVsxok0icv00iCkwirgrncmym7s-mr_M=w300-rw"
-       |      ]
-       |    },
-       |    {
-       |      "packageName" : "${appsNames.prussia}",
-       |      "title" : "Prussia",
-       |      "free" : false,
-       |      "icon" : "https://lh5.ggpht.com/D5mlVsxok0icv00iCkwirgrncmym6s-mr_M=w300-rw",
-       |      "stars" : 3.66,
-       |      "downloads" : "542412",
-       |      "screenshots" : [
-       |        "https://lh5.ggpht.com/D5mlVsxok0icv00iCkwirgrncmym6s-mr_M=w300-rw",
-       |        "https://lh5.ggpht.com/D5mlVsxok0icv00iCkwirgrncmym7s-mr_M=w300-rw"
-       |      ]
-       |    }
-       |  ]
-       |}
-    """.stripMargin
-
-  val recommendationsForAppsEmptyResponse =
-    s"""
-       |{
-       |  "apps": []
-       |}
-    """.stripMargin
-
-  val recommendationsForAll =
-    s"""
-       |{
-       |  "apps": [
-       |    {
-       |      "packageName" : "${appsNames.italy}",
-       |      "title" : "Italy",
-       |      "free" : true,
-       |      "icon" : "https://lh5.ggpht.com/D5mlVsxok0icv00iCkwirgrncmym6s-mr_M=w300-rw",
-       |      "stars" : 3.66,
-       |      "downloads" : "542412",
-       |      "screenshots" : [
-       |        "https://lh5.ggpht.com/D5mlVsxok0icv00iCkwirgrncmym6s-mr_M=w300-rw",
-       |        "https://lh5.ggpht.com/D5mlVsxok0icv00iCkwirgrncmym7s-mr_M=w300-rw"
-       |      ]
-       |    },
-       |    {
-       |      "packageName" : "${appsNames.prussia}",
-       |      "title" : "Prussia",
-       |      "free" : false,
-       |      "icon" : "https://lh5.ggpht.com/D5mlVsxok0icv00iCkwirgrncmym6s-mr_M=w300-rw",
-       |      "stars" : 3.66,
-       |      "downloads" : "542412",
-       |      "screenshots" : [
-       |        "https://lh5.ggpht.com/D5mlVsxok0icv00iCkwirgrncmym6s-mr_M=w300-rw",
-       |        "https://lh5.ggpht.com/D5mlVsxok0icv00iCkwirgrncmym7s-mr_M=w300-rw"
-       |      ]
-       |    }
-       |  ]
-       |}
-    """.stripMargin
-
-  val recommendationsForFree =
-    s"""
-      |{
-      |  "apps": [
-      |    {
-      |      "packageName" : "${appsNames.italy}",
-      |      "title" : "Italy",
-      |      "free" : true,
-      |      "icon" : "https://lh5.ggpht.com/D5mlVsxok0icv00iCkwirgrncmym6s-mr_M=w300-rw",
-      |      "stars" : 3.66,
-      |      "downloads" : "542412",
-      |      "screenshots" : [
-      |        "https://lh5.ggpht.com/D5mlVsxok0icv00iCkwirgrncmym6s-mr_M=w300-rw",
-      |        "https://lh5.ggpht.com/D5mlVsxok0icv00iCkwirgrncmym7s-mr_M=w300-rw"
-      |      ]
-      |    }
-      |  ]
-      |}
-    """.stripMargin
-
-  val recommendationsForPaid =
-    s"""
-      |{
-      |  "apps": [
-      |    {
-      |      "packageName" : "${appsNames.prussia}",
-      |      "title" : "Prussia",
-      |      "free" : false,
-      |      "icon" : "https://lh5.ggpht.com/D5mlVsxok0icv00iCkwirgrncmym6s-mr_M=w300-rw",
-      |      "stars" : 3.66,
-      |      "downloads" : "542412",
-      |      "screenshots" : [
-      |        "https://lh5.ggpht.com/D5mlVsxok0icv00iCkwirgrncmym6s-mr_M=w300-rw",
-      |        "https://lh5.ggpht.com/D5mlVsxok0icv00iCkwirgrncmym7s-mr_M=w300-rw"
-      |      ]
-      |    }
-      |  ]
-      |}
-    """.stripMargin
-
-  val resolvedPackage = s"""
-      |{
-      |  "packageName" : "${appsNames.italy}",
-      |  "title" : "Italy",
-      |  "free" : true,
-      |  "icon" : "https://lh5.ggpht.com/D5mlVsxok0icv00iCkwirgrncmym6s-mr_M=w300-rw",
-      |  "stars" : 3.66,
-      |  "downloads" : "542412",
-      |  "categories" : [ "Country" ]
-      |}
-    """.stripMargin
-
-  val resolveManyRequest = s"""{"items":["${appsNames.italy}","${appsNames.prussia}"]}"""
-
-  val recommendationsByCategoryRequest =
-    s"""{"excludedApps":["${appsNames.france}"],"maxTotal":$limit}""".stripMargin
-
-  val recommendationsForAppsEmptyRequest =
-    s"""{"searchByApps":[],"numPerApp":$numPerApp,"excludedApps":[],"maxTotal":$limit}""".stripMargin
-
-  val recommendationsForAppsRequest =
-    s"""{"searchByApps":["${appsNames.italy}","${appsNames.prussia}"],"numPerApp":$numPerApp,"excludedApps":["${appsNames.france}"],"maxTotal":$limit}""".stripMargin
-
-  val resolveManyValidResponse = s"""
-      |{
-      |  "missing" : [ "${appsNames.prussia}" ],
-      |  "apps" : [ $resolvedPackage ]
-      |}
-    """.stripMargin
-
-  val failure = "Cannot find item!"
-
-  object auth {
-    val androidId = "12345"
-    val localization = "en_GB"
-    val token = "m52_9876"
-    val params = AuthParams(androidId, Some(localization), token)
-  }
-
-  object headers {
-    val androidId = new Header("X-Android-ID", auth.androidId)
-    val token = new Header("X-Google-Play-Token", auth.token)
-    val locale = new Header("X-Android-Market-Localization", auth.localization)
-    val contentType = new Header("Content-Type", "application/json")
-    val contentLength = new Header("Content-Length", resolveManyRequest.length.toString)
-    val recByCategoryContentLength = new Header("Content-Length", recommendationsByCategoryRequest.length.toString)
-    val emptyRecForAppsContentLength = new Header("Content-Length", recommendationsForAppsEmptyRequest.length.toString)
-    val recForAppsContentLength = new Header("Content-Length", recommendationsForAppsRequest.length.toString)
-  }
-
-  object paths {
-    val recommendations = "/googleplay/recommendations"
-    val recommendationsByCountries = "/googleplay/recommendations/COUNTRY/ALL"
-    val freeRecommendationsByCountries = "/googleplay/recommendations/COUNTRY/FREE"
-    val paidRecommendationsByCountries = "/googleplay/recommendations/COUNTRY/PAID"
-    val resolveOne = "/googleplay/cards"
-    val resolveMany = "/googleplay/cards"
-  }
-
 }

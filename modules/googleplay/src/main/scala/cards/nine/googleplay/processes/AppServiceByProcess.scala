@@ -49,7 +49,7 @@ case class AppServiceByProcess(
   override def apply(appRequest: AppRequest): Task[InfoError Xor FullCard] = {
     val pack: Package = appRequest.packageName
     val date = DateTime.now(DateTimeZone.UTC)
-    process.getCard(appRequest.packageName, appRequest.authParams, date)
+    process.getCard(appRequest.packageName, appRequest.authParams)
       .foldMap(interpreter)
       .map(xor ⇒ xor.bimap(_ ⇒ InfoError(pack.value), c ⇒ c))
   }

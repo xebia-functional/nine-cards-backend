@@ -35,17 +35,17 @@ class CardsProcesses[F[_]](
           } yield Unit
       }
 
-    def storeAsError(pack: Package, date: DateTime): Free[F, Unit] =
+    def storeAsError(pack: Package): Free[F, Unit] =
       for {
         _ ← cacheService.unmarkPending(pack)
-        _ ← cacheService.markError(pack, date)
+        _ ← cacheService.markError(pack)
       } yield Unit
 
   }
 
   private[this] object PackagesResolution {
 
-    def resolveNewPackage(pack: Package, auth: GoogleAuthParams, date: DateTime): Free[F, getcard.Response] = {
+    def resolveNewPackage(pack: Package, auth: GoogleAuthParams): Free[F, getcard.Response] = {
 
       import getcard._
 
@@ -56,7 +56,7 @@ class CardsProcesses[F[_]](
           case true ⇒
             InCache.storeAsPending(pack).map(_ ⇒ PendingResolution(pack))
           case false ⇒
-            cacheService.markError(pack, date).map(_ ⇒ UnknownPackage(pack))
+            cacheService.markError(pack).map(_ ⇒ UnknownPackage(pack))
         }
       }
 
@@ -86,22 +86,21 @@ class CardsProcesses[F[_]](
         case Xor.Left(PageParseFailed(_)) ⇒
           for (_ ← InCache.storeAsPending(pack)) yield Pending
         case Xor.Left(PackageNotFound(_)) ⇒
-          for (_ ← InCache.storeAsError(pack, date)) yield Unknown
+          for (_ ← InCache.storeAsError(pack)) yield Unknown
         case Xor.Left(WebPageServerError) ⇒
           Free.pure(Pending)
       }
     }
   }
 
-  def getCard(pack: Package, auth: GoogleAuthParams, date: DateTime): Free[F, getcard.Response] =
-    PackagesResolution.resolveNewPackage(pack, auth, date)
+  def getCard(pack: Package, auth: GoogleAuthParams): Free[F, getcard.Response] =
+    PackagesResolution.resolveNewPackage(pack, auth)
 
   def getCards(
     packages: List[Package],
-    auth: GoogleAuthParams,
-    date: DateTime
+    auth: GoogleAuthParams
   ): Free[F, List[getcard.Response]] =
-    packages.traverse[Free[F, ?], getcard.Response](pack ⇒ PackagesResolution.resolveNewPackage(pack, auth, date))
+    packages.traverse[Free[F, ?], getcard.Response](pack ⇒ PackagesResolution.resolveNewPackage(pack, auth))
 
   def recommendationsByCategory(
     request: RecommendByCategoryRequest,
@@ -112,7 +111,7 @@ class CardsProcesses[F[_]](
       recommendations ← googleApi.recommendationsByCategory(request, auth).toXorT
       packages = recommendations.diff(request.excludedApps).take(request.maxTotal)
       resolvedPackages ← packages.traverse[Free[F, ?], getcard.Response](
-        p ⇒ PackagesResolution.resolveNewPackage(p, auth, DateTime.now)
+        p ⇒ PackagesResolution.resolveNewPackage(p, auth)
       ).toXorTRight[InfoError]
     } yield resolvedPackages.map(xor ⇒ xor.bimap(e ⇒ InfoError(e.packageName.value), c ⇒ c))
 
@@ -128,7 +127,7 @@ class CardsProcesses[F[_]](
       recommendations ← googleApi.recommendationsByApps(request, auth)
       packages = recommendations.diff(request.excludedApps).take(request.maxTotal)
       resolvedPackages ← packages.traverse[Free[F, ?], getcard.Response](
-        p ⇒ PackagesResolution.resolveNewPackage(p, auth, DateTime.now)
+        p ⇒ PackagesResolution.resolveNewPackage(p, auth)
       )
     } yield resolvedPackages.map(xor ⇒ xor.bimap(e ⇒ InfoError(e.packageName.value), c ⇒ c))
 

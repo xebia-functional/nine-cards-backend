@@ -2,7 +2,6 @@ package cards.nine.googleplay.service.free.algebra
 
 import cats.free.{ Free, Inject }
 import cards.nine.googleplay.domain.{ Package, FullCard }
-import org.joda.time.DateTime
 
 object Cache {
 
@@ -16,7 +15,7 @@ object Cache {
 
   case class UnmarkPending(`package`: Package) extends Ops[Unit]
 
-  case class MarkError(`package`: Package, date: DateTime) extends Ops[Unit]
+  case class MarkError(`package`: Package) extends Ops[Unit]
 
   case class ClearInvalid(`package`: Package) extends Ops[Unit]
 
@@ -38,8 +37,8 @@ object Cache {
     def unmarkPending(pack: Package): Free[F, Unit] =
       Free.inject[Ops, F](MarkPending(pack))
 
-    def markError(pack: Package, date: DateTime): Free[F, Unit] =
-      Free.inject[Ops, F](MarkError(pack, date))
+    def markError(pack: Package): Free[F, Unit] =
+      Free.inject[Ops, F](MarkError(pack))
 
     def clearInvalid(pack: Package): Free[F, Unit] =
       Free.inject[Ops, F](ClearInvalid(pack))
