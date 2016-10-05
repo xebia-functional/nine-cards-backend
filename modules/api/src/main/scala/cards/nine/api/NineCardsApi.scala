@@ -359,7 +359,6 @@ class NineCardsRoutes(
       )
       .map(toApiGetRecommendationsResponse)
 
-  //TODO: We have to define a way to select a GeoScope based on a location. In this moment, we'll use the WorldScope
   private[this] def rankApps(
     request: ApiRankAppsRequest,
     userContext: UserContext

@@ -1,6 +1,6 @@
 package cards.nine.services.utils
 
-import cards.nine.services.common.NineCardsConfig
+import cards.nine.commons.NineCardsConfig
 
 import scala.util.Random
 

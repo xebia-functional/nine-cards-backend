@@ -2,7 +2,6 @@ package cards.nine.services.free.interpreter.analytics
 
 import cards.nine.services.free.domain.{ Category, PackageName }
 import cards.nine.services.free.domain.rankings.{ GeoScope ⇒ DomainScope, _ }
-import scala.math.Ordering
 
 object Converters {
 

@@ -1,6 +1,6 @@
 package cards.nine.googleplay.service.free.interpreter.webscrapper
 
-import cards.nine.googleplay.config.NineCardsConfig.getConfigValue
+import cards.nine.commons.NineCardsConfig._
 
 case class Configuration(
   protocol: String,
@@ -12,7 +12,7 @@ case class Configuration(
 object Configuration {
 
   def load: Configuration = {
-    def getApiConf(suff: String) = getConfigValue(s"ninecards.googleplay.storeweb.$suff")
+    def getApiConf(suff: String) = defaultConfig.getString(s"ninecards.googleplay.storeweb.$suff")
     Configuration(
       protocol    = getApiConf("protocol"),
       host        = getApiConf("host"),

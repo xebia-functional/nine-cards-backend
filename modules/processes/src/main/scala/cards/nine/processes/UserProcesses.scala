@@ -1,11 +1,11 @@
 package cards.nine.processes
 
+import cards.nine.commons.NineCardsConfig
 import cards.nine.processes.converters.Converters._
 import cards.nine.processes.messages.InstallationsMessages._
 import cards.nine.processes.messages.UserMessages._
 import cards.nine.processes.utils.HashUtils
 import cards.nine.services.common.FreeUtils._
-import cards.nine.services.common.NineCardsConfig
 import cards.nine.services.free.algebra
 import cards.nine.services.free.domain._
 import cats.free.Free

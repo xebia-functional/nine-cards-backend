@@ -1,7 +1,8 @@
 package cards.nine.googleplay.service.free.interpreter.googleapi
 
+import cards.nine.commons.TaskInstances._
 import cards.nine.googleplay.domain._
-import cards.nine.googleplay.extracats.{ taskMonad, splitXors }
+import cards.nine.googleplay.extracats.splitXors
 import cats.data.Xor
 import cats.instances.list._
 import cats.syntax.traverse._

@@ -6,7 +6,7 @@ import cards.nine.services.common.XorDecoder
 import enumeratum.{ Circe ⇒ CirceEnum }
 import io.circe.generic.auto._
 import io.circe.generic.semiauto._
-import io.circe.{ Decoder, Encoder, Json, JsonObject }
+import io.circe.{ Decoder, Encoder, Json }
 
 object Encoders {
   import model._

@@ -1,10 +1,8 @@
 package cards.nine.api
 
-import cats.free.Free
 import cards.nine.api.messages._
 import cards.nine.api.utils.SprayMarshallers._
 import cards.nine.processes.NineCardsServices._
-import io.circe.spray.JsonSupport._
 import io.circe.spray.{ RootDecoder, JsonSupport }
 import scalaz.concurrent.Task
 import spray.httpx.marshalling.{ Marshaller, ToResponseMarshaller }

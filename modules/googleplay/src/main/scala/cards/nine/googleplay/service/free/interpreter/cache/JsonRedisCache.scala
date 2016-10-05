@@ -1,7 +1,5 @@
 package cards.nine.googleplay.service.free.interpreter.cache
 
-import cats.Monad
-import cats.syntax.all._
 import com.redis._
 import io.circe._
 import io.circe.parser._
