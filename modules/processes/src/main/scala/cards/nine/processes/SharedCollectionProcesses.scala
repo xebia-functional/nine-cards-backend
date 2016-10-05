@@ -5,7 +5,7 @@ import cards.nine.processes.converters.Converters._
 import cards.nine.processes.messages.GooglePlayAuthMessages.AuthParams
 import cards.nine.processes.messages.SharedCollectionMessages._
 import cards.nine.processes.utils.XorTSyntax._
-import cards.nine.services.common.FreeUtils._
+import cards.nine.commons.FreeUtils._
 import cards.nine.services.free.algebra
 import cards.nine.services.free.algebra.{ Firebase, GooglePlay }
 import cards.nine.services.free.domain.Firebase._

@@ -1,6 +1,7 @@
 package cards.nine.googleplay.service.free.interpreter.googleapi
 
 import cards.nine.googleplay.domain.{ FullCard, FullCardList, Item, Package }
+import cards.nine.googleplay.proto.GooglePlay.{ ResponseWrapper, DocV2, ListResponse }
 import cards.nine.googleplay.service.free.interpreter.TestData.{ fisherPrice, minecraft }
 import java.nio.file.{ Files, Paths }
 import org.specs2.mutable.Specification
@@ -9,7 +10,6 @@ import scodec.bits.ByteVector
 class ConvertersSpec extends Specification {
 
   import Converters._
-  import proto.GooglePlay.{ ResponseWrapper, DocV2, ListResponse }
 
   def readProtobufFile(fileName: String): ResponseWrapper = {
     val resource = getClass.getClassLoader.getResource(fileName)

@@ -4,7 +4,7 @@ import cats.~>
 import cats.data.Xor
 import cards.nine.googleplay.domain.{ FullCard, Package }
 import cards.nine.googleplay.domain.webscrapper.Failure
-import cards.nine.googleplay.service.free.algebra.webscrapper._
+import cards.nine.googleplay.service.free.algebra.WebScraper._
 
 trait InterpreterServer[F[_]] {
   def existsApp(pack: Package): F[Boolean]

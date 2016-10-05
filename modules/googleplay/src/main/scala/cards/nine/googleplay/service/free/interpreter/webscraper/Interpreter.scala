@@ -4,7 +4,7 @@ import cats.~>
 import cats.data.Xor
 import cards.nine.googleplay.domain.{ FullCard, Package }
 import cards.nine.googleplay.domain.webscrapper._
-import cards.nine.googleplay.service.free.algebra.webscrapper._
+import cards.nine.googleplay.service.free.algebra.WebScraper._
 import org.http4s.Http4s._
 import org.http4s.client.{ Client, UnexpectedStatus }
 import org.http4s.{ Method, Request, Status, Uri }

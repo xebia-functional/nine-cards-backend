@@ -1,7 +1,7 @@
 package cards.nine.googleplay.service.free.interpreter.cache
 
 import cats.~>
-import cards.nine.googleplay.service.free.algebra.cache._
+import cards.nine.googleplay.service.free.algebra.Cache._
 import com.redis.RedisClient
 import scalaz.concurrent.Task
 

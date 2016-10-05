@@ -4,7 +4,7 @@ import cats.free.{ Free, Inject }
 import cards.nine.googleplay.domain.{ Package, FullCard }
 import org.joda.time.DateTime
 
-object cache {
+object Cache {
 
   sealed trait Ops[A]
 

@@ -3,7 +3,7 @@ package cards.nine.googleplay.service.free.interpreter.googleapi
 import cats.data.Xor
 import cards.nine.googleplay.domain._
 import cards.nine.googleplay.domain.apigoogle._
-import cards.nine.googleplay.service.free.algebra.apigoogle._
+import cards.nine.googleplay.service.free.algebra.GoogleApi._
 import cards.nine.googleplay.service.util.MockServer
 import cards.nine.googleplay.util.WithHttp1Client
 import java.nio.file.{ Files, Paths }

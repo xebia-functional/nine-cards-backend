@@ -1,12 +1,11 @@
 package cards.nine.googleplay.service.free.interpreter.googleapi
 
+import cards.nine.googleplay.proto.GooglePlay.ResponseWrapper
 import java.io.File
 import java.io.FileInputStream
 import org.specs2.mutable.Specification
 
 class ProtoParsingSpec extends Specification {
-
-  import proto.GooglePlay.ResponseWrapper
 
   val packageName = "air.fisherprice.com.shapesAndColors"
 

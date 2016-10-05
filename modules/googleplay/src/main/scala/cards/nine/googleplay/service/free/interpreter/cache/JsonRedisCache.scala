@@ -1,10 +1,11 @@
 package cards.nine.googleplay.service.free.interpreter.cache
 
 import com.redis._
+import com.redis.serialization.Parse
 import io.circe._
 import io.circe.parser._
+
 import scala.annotation.tailrec
-import com.redis.serialization.Parse
 
 class JsonRedisCache(host: String, port: Int) {
 

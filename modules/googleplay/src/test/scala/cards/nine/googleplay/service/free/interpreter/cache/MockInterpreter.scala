@@ -2,7 +2,7 @@ package cards.nine.googleplay.service.free.interpreter.cache
 
 import cats.~>
 import cards.nine.googleplay.domain._
-import cards.nine.googleplay.service.free.algebra.cache._
+import cards.nine.googleplay.service.free.algebra.Cache._
 import org.joda.time.DateTime
 
 trait InterpreterServer[F[_]] {

@@ -3,7 +3,7 @@ package cards.nine.processes
 import cards.nine.processes.converters.Converters._
 import cards.nine.processes.messages.rankings.GetRankedDeviceApps.{ DeviceApp, RankedDeviceApp }
 import cards.nine.processes.messages.rankings._
-import cards.nine.services.common.FreeUtils._
+import cards.nine.commons.FreeUtils._
 import cards.nine.services.free.algebra
 import cards.nine.services.free.algebra.GoogleAnalytics
 import cards.nine.services.free.domain.rankings._

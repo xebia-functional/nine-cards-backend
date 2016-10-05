@@ -1,7 +1,7 @@
 package cards.nine.googleplay.service.free.interpreter.cache
 
 import cards.nine.googleplay.domain.{ Package, FullCard }
-import cards.nine.googleplay.service.free.algebra.cache._
+import cards.nine.googleplay.service.free.algebra.Cache._
 import cards.nine.googleplay.util.{ ScalaCheck ⇒ CustomArbitrary }
 import com.redis.RedisClient
 import org.joda.time.{ DateTime, DateTimeZone }
