@@ -1,9 +1,10 @@
 package cards.nine.googleplay.service.free.interpreter.googleapi
 
-import cats.data.Xor
 import cards.nine.googleplay.domain.{ DocV2 ⇒ DomainDocV2, _ }
-import cards.nine.googleplay.extracats.splitXors
-import cards.nine.googleplay.service.free.interpreter.googleapi.proto.GooglePlay.{ ListResponse, DocV2 }
+import cards.nine.googleplay.proto.GooglePlay.{ ListResponse, DocV2 }
+import cats.data.Xor
+import cats.instances.list._
+import cats.syntax.monadCombine._
 import scala.collection.JavaConversions._
 
 object Converters {
@@ -102,7 +103,7 @@ object Converters {
   }
 
   def toFullCardListXors(xors: List[InfoError Xor FullCard]): FullCardList = {
-    val (errs, apps) = splitXors(xors)
+    val (errs, apps) = xors.separate
     FullCardList(errs.map(_.message), apps)
   }
 

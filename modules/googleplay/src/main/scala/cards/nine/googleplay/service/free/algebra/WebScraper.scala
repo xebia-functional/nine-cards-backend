@@ -5,7 +5,7 @@ import cats.free.{ Free, Inject }
 import cards.nine.googleplay.domain.{ FullCard, Package }
 import cards.nine.googleplay.domain.webscrapper._
 
-object webscrapper {
+object WebScraper {
 
   sealed trait Ops[A]
 

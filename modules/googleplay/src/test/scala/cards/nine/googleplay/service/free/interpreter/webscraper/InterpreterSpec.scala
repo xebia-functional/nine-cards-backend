@@ -3,7 +3,7 @@ package cards.nine.googleplay.service.free.interpreter.webscrapper
 import cats.data.Xor
 import cards.nine.googleplay.domain.{ Package, FullCard }
 import cards.nine.googleplay.domain.webscrapper._
-import cards.nine.googleplay.service.free.algebra.webscrapper._
+import cards.nine.googleplay.service.free.algebra.WebScraper._
 import cards.nine.googleplay.service.util.MockServer
 import cards.nine.googleplay.util.WithHttp1Client
 import java.nio.file.{ Files, Paths }

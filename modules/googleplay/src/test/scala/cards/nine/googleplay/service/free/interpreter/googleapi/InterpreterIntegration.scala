@@ -13,11 +13,10 @@ class GoogleApiClientIntegration extends Specification with AfterAll {
 
   import TaskMatchers._
 
-  val wiring = new Wiring()
-  private val apiServices = wiring.apiServices
-  private val appCardService = wiring.appCardService
+  private val apiServices = Wiring.apiServices
+  private val appCardService = Wiring.appCardService
 
-  override def afterAll: Unit = wiring.shutdown
+  override def afterAll: Unit = Wiring.shutdown
 
   sequential
 

@@ -7,7 +7,7 @@ object NineCardsBuild extends Build with ApiSettings {
 
   lazy val root = project.in(file("."))
     .disablePlugins(FlywayPlugin)
-    .aggregate(api, processes, services)
+    .aggregate(api, commons, processes, services)
 
   lazy val api = project.in(file("modules/api"))
     .enablePlugins(JavaAppPackaging)
@@ -26,7 +26,7 @@ object NineCardsBuild extends Build with ApiSettings {
   lazy val services = project.in(file("modules/services"))
     .disablePlugins(FlywayPlugin)
     .settings(serviceSettings ++ servicesDeps)
-    .dependsOn(commons)
+    .dependsOn(googleplay, commons)
 
   lazy val processes = project.in(file("modules/processes"))
     .disablePlugins(FlywayPlugin)
@@ -36,5 +36,5 @@ object NineCardsBuild extends Build with ApiSettings {
   lazy val tests = Project(id = "tests", base = file("modules/tests"))
     .disablePlugins(FlywayPlugin)
     .settings(projectSettings: _*)
-    .aggregate(api, processes, services, api)
+    .aggregate(api, commons, processes, services)
 }

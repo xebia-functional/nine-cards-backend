@@ -1,16 +1,21 @@
 package cards.nine.googleplay.processes
 
 import cards.nine.commons.NineCardsConfig._
-import cards.nine.googleplay.domain.{ AppRequest, Item }
+import cards.nine.googleplay.processes.withTypes.{ HttpToTask, RedisToTask }
+import cards.nine.googleplay.service.free.algebra.{ Cache, GoogleApi, WebScraper }
 import cards.nine.googleplay.service.free.interpreter._
-import cards.nine.googleplay.service.free.interpreter.webscrapper.Http4sGooglePlayWebScraper
-import cats.data.Xor
-import cats.~>
+import cards.nine.googleplay.service.free.interpreter.cache.CacheInterpreter
+import cats._
+import cats.data.Coproduct
 import com.redis.RedisClientPool
 import org.http4s.client.blaze.PooledHttp1Client
+
 import scalaz.concurrent.Task
 
-class Wiring() {
+object Wiring {
+
+  private[this] val apiHttpClient = PooledHttp1Client()
+  private[this] val webHttpClient = PooledHttp1Client()
 
   val redisClientPool: RedisClientPool = {
     val baseConfig = "ninecards.googleplay.redis"
@@ -21,39 +26,44 @@ class Wiring() {
     )
   }
 
-  private[this] val apiHttpClient = PooledHttp1Client()
-  private[this] val webHttpClient = PooledHttp1Client()
+  val cacheInt: Cache.Ops ~> Task = {
+    val toTask = new RedisToTask(redisClientPool)
+    CacheInterpreter andThen toTask
+  }
 
-  val appCardService: AppServiceByProcess =
-    new AppServiceByProcess(redisClientPool, apiHttpClient, webHttpClient)
+  val googleApiInt: GoogleApi.Ops ~> Task = {
+    val interp = new googleapi.Interpreter(googleapi.Configuration.load())
+    val toTask = new HttpToTask(apiHttpClient)
+    interp andThen toTask
+  }
+
+  val webScrapperInt: WebScraper.Ops ~> Task = {
+    val interp = new webscrapper.Interpreter(webscrapper.Configuration.load)
+    val toTask = new HttpToTask(webHttpClient)
+    interp andThen toTask
+  }
+
+  type GooglePlayAppC01[A] = Coproduct[GoogleApi.Ops, WebScraper.Ops, A]
+  type GooglePlayApp[A] = Coproduct[Cache.Ops, GooglePlayAppC01, A]
+
+  val interpretersC01: GooglePlayAppC01 ~> Task = googleApiInt or webScrapperInt
+  val interpreters: GooglePlayApp ~> Task = cacheInt or interpretersC01
+
+  val appCardService: AppServiceByProcess = AppServiceByProcess(
+    redisPool     = redisClientPool,
+    apiHttpClient = apiHttpClient,
+    webHttpClient = webHttpClient
+  )
 
   val apiServices: googleapi.ApiServices = {
     import googleapi._
     val recommendClient = PooledHttp1Client()
-    val conf: Configuration = Configuration.load
-    val client = new ApiClient(conf, recommendClient)
-    new ApiServices(client, appCardService)
+    val conf: googleapi.Configuration = googleapi.Configuration.load()
+    val client = ApiClient(conf, recommendClient)
+    ApiServices(client, appCardService)
   }
 
-  val itemService: (AppRequest ⇒ Task[String Xor Item]) = {
-    val webClient = new Http4sGooglePlayWebScraper(
-      defaultConfig.getString("ninecards.googleplay.web.endpoint"),
-      webHttpClient
-    )
-    new XorTaskOrComposer[AppRequest, String, Item](apiServices.getItem, webClient.getItem)
-  }
-
-  val interpreter: (GooglePlay.Ops ~> Task) = {
-    val byCategory = { (message: GooglePlay.RecommendationsByCategory) ⇒
-      apiServices.recommendByCategory(message.request, message.auth)
-    }
-    val byAppList = { (message: GooglePlay.RecommendationsByAppList) ⇒
-      apiServices.recommendByAppList(message.request, message.auth)
-    }
-    new TaskInterpreter(itemService, appCardService, byCategory, byAppList)
-  }
-
-  def shutdown: Unit = {
+  def shutdown(): Unit = {
     apiHttpClient.shutdownNow
     webHttpClient.shutdownNow
     redisClientPool.close

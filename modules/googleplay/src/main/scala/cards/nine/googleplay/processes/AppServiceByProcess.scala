@@ -20,22 +20,22 @@ case class AppServiceByProcess(
 
   import withTypes._
 
-  val process: CardsProcess[JoinServices] = CardsProcess.processes[JoinServices]
+  val process: CardsProcesses[JoinServices] = CardsProcesses.processes[JoinServices]
 
-  val googleApiInt: Alg.apigoogle.Ops ~> Task = {
+  val googleApiInt: Alg.GoogleApi.Ops ~> Task = {
     import Inter.googleapi._
     val interp = new Interpreter(Configuration.load)
     val toTask = new HttpToTask(apiHttpClient)
     interp andThen toTask
   }
 
-  val cacheInt: Alg.cache.Ops ~> Task = {
+  val cacheInt: Alg.Cache.Ops ~> Task = {
     import Inter.cache._
     val toTask = new RedisToTask(redisPool)
     CacheInterpreter andThen toTask
   }
 
-  val webScrapperInt: Alg.webscrapper.Ops ~> Task = {
+  val webScrapperInt: Alg.WebScraper.Ops ~> Task = {
     import Inter.webscrapper._
     val interp = new Interpreter(Configuration.load)
     val toTask = new HttpToTask(webHttpClient)

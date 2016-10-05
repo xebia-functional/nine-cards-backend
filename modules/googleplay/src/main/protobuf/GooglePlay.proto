@@ -1,4 +1,4 @@
-option java_package = "cards.nine.googleplay.service.free.interpreter.googleapi.proto";
+option java_package = "cards.nine.googleplay.proto";
 
 message AndroidAppPatchData {
   optional int32 baseVersionCode = 1;
