@@ -370,7 +370,9 @@ class NineCardsRoutes(
 
     import cards.nine.api.converters.{ rankings ⇒ Converters }
     import cards.nine.api.messages.{ rankings ⇒ Api }
+    import io.circe.spray.JsonSupport._
     import NineCardsMarshallers._
+    import Decoders.reloadRankingRequest
 
     lazy val route: Route =
       geographicScope { scope ⇒
