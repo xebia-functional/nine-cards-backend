@@ -18,7 +18,7 @@ object Wiring {
   private[this] val webHttpClient = PooledHttp1Client()
 
   val redisClientPool: RedisClientPool = {
-    val baseConfig = "ninecards.googleplay.redis"
+    val baseConfig = "ninecards.google.play.redis"
     new RedisClientPool(
       host   = defaultConfig.getString(s"$baseConfig.host"),
       port   = defaultConfig.getInt(s"$baseConfig.port"),

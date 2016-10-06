@@ -11,12 +11,15 @@ case class Configuration(
 )
 
 object Configuration {
-  implicit def configuration(implicit config: NineCardsConfig): Configuration =
+  implicit def configuration(implicit config: NineCardsConfig): Configuration = {
+    val prefix = "ninecards.google.api"
+
     Configuration(
-      protocol              = config.getString("googleapi.protocol"),
-      host                  = config.getString("googleapi.host"),
-      port                  = config.getOptionalInt("googleapi.port"),
-      tokenInfoUri          = config.getString("googleapi.tokenInfo.uri"),
-      tokenIdQueryParameter = config.getString("googleapi.tokenInfo.tokenIdQueryParameter")
+      protocol              = config.getString(s"$prefix.protocol"),
+      host                  = config.getString(s"$prefix.host"),
+      port                  = config.getOptionalInt(s"$prefix.port"),
+      tokenInfoUri          = config.getString(s"$prefix.tokenInfo.path"),
+      tokenIdQueryParameter = config.getString(s"$prefix.tokenInfo.tokenIdQueryParameter")
     )
+  }
 }

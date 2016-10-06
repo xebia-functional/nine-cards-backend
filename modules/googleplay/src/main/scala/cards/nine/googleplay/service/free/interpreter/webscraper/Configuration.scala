@@ -12,7 +12,7 @@ case class Configuration(
 object Configuration {
 
   def load: Configuration = {
-    def getApiConf(suff: String) = defaultConfig.getString(s"ninecards.googleplay.storeweb.$suff")
+    def getApiConf(suff: String) = defaultConfig.getString(s"ninecards.google.play.storeweb.$suff")
     Configuration(
       protocol    = getApiConf("protocol"),
       host        = getApiConf("host"),
