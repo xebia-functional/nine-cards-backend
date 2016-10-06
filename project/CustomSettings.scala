@@ -11,7 +11,7 @@ object CustomSettings {
   lazy val databaseConfigDef: Def.Initialize[DatabaseConfig] =
     Def.setting[DatabaseConfig] {
       val config = ConfigFactory.load()
-      val prefix = "db.default"
+      val prefix = "ninecards.db.default"
 
       def envOrElseConfig(name: String) = {
         sys.props.get(name) getOrElse {

@@ -18,7 +18,7 @@ object Wiring {
   private[this] val webHttpClient = PooledHttp1Client()
 
   val redisClientPool: RedisClientPool = {
-    val baseConfig = "ninecards.googleplay.redis"
+    val baseConfig = "ninecards.google.play.redis"
     new RedisClientPool(
       host   = defaultConfig.getString(s"$baseConfig.host"),
       port   = defaultConfig.getInt(s"$baseConfig.port"),
@@ -54,14 +54,6 @@ object Wiring {
     apiHttpClient = apiHttpClient,
     webHttpClient = webHttpClient
   )
-
-  val apiServices: googleapi.ApiServices = {
-    import googleapi._
-    val recommendClient = PooledHttp1Client()
-    val conf: googleapi.Configuration = googleapi.Configuration.load()
-    val client = ApiClient(conf, recommendClient)
-    ApiServices(client, appCardService)
-  }
 
   def shutdown(): Unit = {
     apiHttpClient.shutdownNow

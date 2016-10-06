@@ -22,7 +22,7 @@ class CirceCodersSpec extends Specification {
   }
 
   val date: DateTime = new DateTime(2016, 7, 23, 12, 0, 14, DateTimeZone.UTC)
-  val dateJsonStr = s""" "16072312001400" """.trim
+  val dateJsonStr = s""" "160723120014000" """.trim
 
   val fortysevenDeg = "com.fortyseven.deg"
   val packageName = Package(fortysevenDeg)
@@ -38,7 +38,7 @@ class CirceCodersSpec extends Specification {
   val errorJsonStr = """
     | { "package" : "com.fortyseven.deg",
     |   "keyType" : "Error",
-    |   "date" : "16072312001400" }
+    |   "date" : "160723120014000" }
   """.stripMargin.filter(_ > ' ').trim
 
   val fullCard = FullCard(

@@ -1,16 +1,23 @@
 package cards.nine.googleplay.service.free.interpreter.cache
 
-import cards.nine.googleplay.domain.{ Package, FullCard }
+import cards.nine.googleplay.domain.{ FullCard, Package }
 import cards.nine.googleplay.service.free.algebra.Cache._
 import cards.nine.googleplay.util.{ ScalaCheck ⇒ CustomArbitrary }
 import com.redis.RedisClient
 import org.joda.time.{ DateTime, DateTimeZone }
+import org.specs2.ScalaCheck
 import org.specs2.mutable.Specification
 import org.specs2.specification.{ AfterAll, BeforeAll, BeforeEach }
-import org.specs2.ScalaCheck
 import redis.embedded.RedisServer
 
-class InterpreterSpec extends Specification with ScalaCheck with BeforeAll with BeforeEach with AfterAll {
+import scala.concurrent.duration._
+
+class InterpreterSpec
+  extends Specification
+  with ScalaCheck
+  with BeforeAll
+  with BeforeEach
+  with AfterAll {
 
   import CirceCoders._
   import CustomArbitrary._
@@ -28,6 +35,8 @@ class InterpreterSpec extends Specification with ScalaCheck with BeforeAll with 
 
     def eval[A](op: Ops[A]) = interpreter(op)(redisClient).unsafePerformSync
 
+    def evalWithDelay[A](op: Ops[A], delay: Duration) = interpreter(op)(redisClient).after(delay).unsafePerformSync
+
     def keyPattern(p: String, t: String, d: String) =
       s"""{"package":"$p","keyType":"$t","date":$d}""".trim
 
@@ -39,6 +48,7 @@ class InterpreterSpec extends Specification with ScalaCheck with BeforeAll with 
 
     def allByType(keyType: KeyType) = keyPattern("*", keyType.entryName, "*")
     def allByPackage(p: Package): String = keyPattern(p.value, "*", "*")
+    def allByPackageAndType(p: Package, keyType: KeyType): String = keyPattern(p.value, keyType.entryName, "*")
 
     val date: DateTime = new DateTime(2016, 7, 23, 12, 0, 14, DateTimeZone.UTC)
     val dateJsonStr = s""" "16072312001400" """.trim
@@ -154,27 +164,23 @@ class InterpreterSpec extends Specification with ScalaCheck with BeforeAll with 
     "add a package as error" >>
       prop { pack: Package ⇒
         flush
-        eval(MarkError(pack, date))
-        val keys = redisClient.keys("*")
-        redisClient.get(errorKey(pack.value, dateJsonStr)) must beSome
+        eval(MarkError(pack))
+        redisClient.keys(allByPackageAndType(pack, Error)) must beSome
       }
 
     "add no key as resolved or pending" >>
       prop { pack: Package ⇒
         flush
-        eval(MarkError(pack, date))
+        eval(MarkError(pack))
         redisClient.keys(allByType(Resolved)) must_=== Some(List())
         redisClient.keys(allByType(Pending)) must_=== Some(List())
       }
 
-    val date2: DateTime = new DateTime(2005, 11, 3, 7, 5, 59, DateTimeZone.UTC)
-    val date2JsonStr = s""" "05110307055900" """.trim
-
     "allow adding several error entries for package with different dates" >>
       prop { pack: Package ⇒
         flush
-        eval(MarkError(pack, date))
-        eval(MarkError(pack, date2))
+        eval(MarkError(pack))
+        evalWithDelay(MarkError(pack), 1.millis)
         redisClient.keys(allByType(Error)) must beSome.which(_.length === 2)
       }
 
@@ -213,7 +219,7 @@ class InterpreterSpec extends Specification with ScalaCheck with BeforeAll with 
         flush
         putEntry(CacheEntry.error(pack, date))
         eval(ClearInvalid(other))
-        redisClient.keys(allByPackage(pack)) must beSome.which(!_.isEmpty)
+        redisClient.keys(allByPackage(pack)) must beSome.which(_.nonEmpty)
       }
   }
 
@@ -236,7 +242,7 @@ class InterpreterSpec extends Specification with ScalaCheck with BeforeAll with 
         allPending.map(CacheEntry.pending).foreach(putEntry)
         val list = eval(ListPending(num))
         list must contain((p: Package) ⇒ allPending must contain(p)).forall
-        list must have size (Math.min(num, allPending.size))
+        list must have size Math.min(num, allPending.size)
       }
   }
 

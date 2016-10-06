@@ -65,7 +65,7 @@ class UserProcesses[F[_]](
   ): Free[F, Option[Long]] =
     userServices.getBySessionToken(sessionToken) flatMap {
       case Some(user) ⇒
-        if (config.getOptionalBoolean("ninecards.backend.debugMode").getOrElse(false))
+        if (config.getOptionalBoolean("ninecards.debugMode").getOrElse(false))
           Option(user.id).toFree
         else
           validateAuthToken(user, androidId, authToken, requestUri)
