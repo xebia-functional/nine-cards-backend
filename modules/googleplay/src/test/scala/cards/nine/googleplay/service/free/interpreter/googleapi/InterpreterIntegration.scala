@@ -9,44 +9,17 @@ import org.specs2.matcher.TaskMatchers
 import org.specs2.mutable.Specification
 import org.specs2.specification.AfterAll
 
-class GoogleApiClientIntegration extends Specification with AfterAll {
+class InterpreterIntegration extends Specification with AfterAll {
 
   import TaskMatchers._
 
-  private val apiServices = Wiring.apiServices
   private val appCardService = Wiring.appCardService
 
-  override def afterAll: Unit = Wiring.shutdown
+  override def afterAll: Unit = Wiring.shutdown()
 
   sequential
 
   "The ApiClient, the client to Google Play unofficial API" should {
-
-    "Making an API request for an Item" should {
-      "retrieve an Item for packages that exist" in {
-        val response = apiServices.getItem(AppRequest(fisherPrice.packageObj, authParams))
-        val fetchedDocId = response.map { xor ⇒
-          xor.map { item ⇒
-            (
-              item.docV2.docid,
-              item.docV2.title,
-              item.docV2.details.appDetails.appCategory
-            )
-          }
-        }
-        val expected = {
-          import fisherPrice.card
-          (card.packageName, card.title, card.categories.take(1))
-        }
-        fetchedDocId must returnValue(Xor.Right(expected))
-        // todo should this be more comprehensive? check all other tests too
-      }
-
-      "result in an error state for packages that do not exist" in {
-        val appRequest = AppRequest(nonexisting.packageObj, authParams)
-        apiServices.getItem(appRequest) must returnValue(Xor.left(nonexisting.packageName))
-      }
-    }
 
     "Making an API request for a Card" should {
 

@@ -1,13 +1,14 @@
 package cards.nine.googleplay.service.free.interpreter.googleapi
 
-import cats.data.Xor
+import java.nio.file.{ Files, Paths }
+
 import cards.nine.googleplay.domain._
 import cards.nine.googleplay.domain.apigoogle._
 import cards.nine.googleplay.service.free.algebra.GoogleApi._
 import cards.nine.googleplay.service.util.MockServer
 import cards.nine.googleplay.util.WithHttp1Client
-import java.nio.file.{ Files, Paths }
-import org.mockserver.model.{ HttpRequest, HttpResponse, HttpStatusCode, Header }
+import cats.data.Xor
+import org.mockserver.model.{ Header, HttpRequest, HttpResponse, HttpStatusCode }
 import org.specs2.matcher.{ Matchers, TaskMatchers }
 import org.specs2.mutable.Specification
 
@@ -16,6 +17,8 @@ class InterpreterSpec extends Specification with Matchers with MockServer with W
   import HttpStatusCode._
   import TaskMatchers._
   import TestData.fisherPrice
+
+  override val mockServerPort = 9995
 
   val auth = GoogleAuthParams(AndroidId("androidId"), Token("token"), None)
 

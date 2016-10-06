@@ -3,7 +3,7 @@ package cards.nine.googleplay.service.free.interpreter.cache
 import cards.nine.googleplay.service.free.algebra.Cache._
 import cats.~>
 import com.redis.RedisClient
-import org.joda.time.DateTime
+import org.joda.time.{ DateTime, DateTimeZone }
 
 import scalaz.concurrent.Task
 
@@ -13,43 +13,38 @@ object CacheInterpreter extends (Ops ~> WithRedisClient) {
 
   def apply[A](ops: Ops[A]): WithRedisClient[A] = ops match {
 
-    case GetValid(pack) ⇒ { client: RedisClient ⇒
+    case GetValid(pack) ⇒ client: RedisClient ⇒
       Task {
         val wrap = new CacheWrapper[CacheKey, CacheVal](client)
         val keys = List(CacheKey.resolved(pack), CacheKey.permanent(pack))
         wrap.findFirst(keys).flatMap(_.card)
       }
-    }
 
-    case PutResolved(card) ⇒ { client: RedisClient ⇒
+    case PutResolved(card) ⇒ client: RedisClient ⇒
       Task {
         val wrap = new CacheWrapper[CacheKey, CacheVal](client)
         wrap.put(CacheEntry.resolved(card))
       }
-    }
 
-    case MarkPending(pack) ⇒ { client: RedisClient ⇒
+    case MarkPending(pack) ⇒ client: RedisClient ⇒
       Task {
         val wrap = new CacheWrapper[CacheKey, CacheVal](client)
         wrap.put(CacheEntry.pending(pack))
       }
-    }
 
-    case UnmarkPending(pack) ⇒ { client: RedisClient ⇒
+    case UnmarkPending(pack) ⇒ client: RedisClient ⇒
       Task {
         val wrap = new CacheWrapper[CacheKey, CacheVal](client)
         wrap.delete(CacheKey.pending(pack))
       }
-    }
 
-    case MarkError(pack) ⇒ { client: RedisClient ⇒
+    case MarkError(pack) ⇒ client: RedisClient ⇒
       Task {
         val wrap = new CacheWrapper[CacheKey, CacheVal](client)
-        wrap.put(CacheEntry.error(pack, DateTime.now))
+        wrap.put(CacheEntry.error(pack, DateTime.now(DateTimeZone.UTC)))
       }
-    }
 
-    case ClearInvalid(pack) ⇒ { client: RedisClient ⇒
+    case ClearInvalid(pack) ⇒ client: RedisClient ⇒
       Task {
         val errorsPattern: JsonPattern = PObject(List(
           PString("package") → PString(pack.value),
@@ -60,16 +55,14 @@ object CacheInterpreter extends (Ops ~> WithRedisClient) {
         wrap.matchKeys(errorsPattern).foreach(wrap.delete)
         wrap.delete(CacheKey.pending(pack))
       }
-    }
 
-    case IsPending(pack) ⇒ { client: RedisClient ⇒
+    case IsPending(pack) ⇒ client: RedisClient ⇒
       Task {
         val wrap = new CacheWrapper[CacheKey, CacheVal](client)
         wrap.get(CacheKey.pending(pack)).isDefined
       }
-    }
 
-    case ListPending(num) ⇒ { client: RedisClient ⇒
+    case ListPending(num) ⇒ client: RedisClient ⇒
       Task {
         val wrap = new CacheWrapper[CacheKey, CacheVal](client)
         val pendingPattern: JsonPattern = PObject(List(
@@ -80,8 +73,6 @@ object CacheInterpreter extends (Ops ~> WithRedisClient) {
         wrap.matchKeys(pendingPattern)
           .take(num).map(_.`package`)
       }
-    }
-
   }
 
 }

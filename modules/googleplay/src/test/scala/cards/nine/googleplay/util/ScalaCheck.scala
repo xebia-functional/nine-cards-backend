@@ -1,12 +1,12 @@
 package cards.nine.googleplay.util
 
 import cards.nine.googleplay.domain._
-import cards.nine.googleplay.api._
 import cats.data.Xor
 import enumeratum.{ Enum, EnumEntry }
-import org.scalacheck._
 import org.scalacheck.Arbitrary._
 import org.scalacheck.Gen._
+import org.scalacheck.Shapeless._
+import org.scalacheck._
 
 object ScalaCheck {
 
@@ -15,7 +15,7 @@ object ScalaCheck {
   // The automatic generator would produce empty strings. We want non-empty ones.
 
   implicit val arbPathSegment: Arbitrary[PathSegment] =
-    Arbitrary(ScalaCheck_Aux.genUriPathString.map(PathSegment.apply(_)))
+    Arbitrary(ScalaCheck_Aux.genUriPathString.map(PathSegment.apply))
 
   implicit val arbPackage: Arbitrary[Package] =
     Arbitrary(nonEmptyListOf(alphaNumChar).map(chars ⇒ Package(chars.mkString)))
@@ -25,9 +25,6 @@ object ScalaCheck {
 
   implicit val arbFullCard: Arbitrary[FullCard] =
     ScalaCheck_Aux.arbFullCard
-
-  implicit val arbApiCard: Arbitrary[ApiCard] =
-    ScalaCheck_Aux.arbApiCard
 
   implicit val arbItem: Arbitrary[Item] =
     ScalaCheck_Aux.arbItem
@@ -60,7 +57,6 @@ object ScalaCheck {
 }
 
 object ScalaCheck_Aux {
-  import org.scalacheck.Shapeless._
 
   // A generator of strings that served as non-interpreted parts of an URI (path, query param or value)
   val genUriPathString: Gen[String] = {
@@ -86,21 +82,6 @@ object ScalaCheck_Aux {
 
   val arbPriceFilter: Arbitrary[PriceFilter] = enumeratumArbitrary[PriceFilter](PriceFilter)
 
-  val genApiCard: Gen[ApiCard] =
-    for /*scalacheck.Gen*/ {
-      title ← identifier
-      docid ← identifier
-      appDetails ← listOf(identifier)
-    } yield ApiCard(
-      packageName = docid,
-      title       = title,
-      free        = false,
-      icon        = "",
-      stars       = 0.0,
-      categories  = appDetails,
-      downloads   = ""
-    )
-
   val genFullCard: Gen[FullCard] =
     for /*ScalaCheck.Gen*/ {
       title ← identifier
@@ -116,8 +97,6 @@ object ScalaCheck_Aux {
       screenshots = List(),
       downloads   = ""
     )
-
-  val arbApiCard: Arbitrary[ApiCard] = Arbitrary(genApiCard)
 
   val arbFullCard: Arbitrary[FullCard] = Arbitrary(genFullCard)
 

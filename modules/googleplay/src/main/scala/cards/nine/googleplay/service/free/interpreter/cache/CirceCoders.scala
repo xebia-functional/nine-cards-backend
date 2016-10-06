@@ -10,7 +10,7 @@ object CirceCoders {
 
   import io.circe.generic.semiauto._
 
-  private[this] val dateFormatter = DateTimeFormat.forPattern("yyMMddHHmmssSS").withZoneUTC
+  private[this] val dateFormatter = DateTimeFormat.forPattern("yyMMddHHmmssSSS").withZoneUTC
 
   implicit val dateD: Decoder[DateTime] = Decoder.decodeString.map(str ⇒ DateTime.parse(str, dateFormatter))
   implicit val dateE: Encoder[DateTime] = Encoder.encodeString.contramap(dateFormatter.print)

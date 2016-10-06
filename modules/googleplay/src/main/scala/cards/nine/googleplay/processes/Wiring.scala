@@ -55,14 +55,6 @@ object Wiring {
     webHttpClient = webHttpClient
   )
 
-  val apiServices: googleapi.ApiServices = {
-    import googleapi._
-    val recommendClient = PooledHttp1Client()
-    val conf: googleapi.Configuration = googleapi.Configuration.load()
-    val client = ApiClient(conf, recommendClient)
-    ApiServices(client, appCardService)
-  }
-
   def shutdown(): Unit = {
     apiHttpClient.shutdownNow
     webHttpClient.shutdownNow

@@ -5,7 +5,7 @@ import cats.free.Free
 import cats.instances.list._
 import cats.syntax.traverse._
 import cards.nine.commons.FreeUtils._
-import cards.nine.googleplay.domain.{ FullCard, FullCardList, GoogleAuthParams, InfoError, Package, RecommendByAppsRequest, RecommendByCategoryRequest }
+import cards.nine.googleplay.domain._
 import cards.nine.googleplay.domain.apigoogle.{ Failure ⇒ ApiFailure }
 import cards.nine.googleplay.domain.webscrapper._
 import cards.nine.googleplay.service.free.algebra.{ Cache, GoogleApi, WebScraper }
@@ -43,64 +43,14 @@ class CardsProcesses[F[_]](
 
   }
 
-  private[this] object PackagesResolution {
-
-    def resolveNewPackage(pack: Package, auth: GoogleAuthParams): Free[F, getcard.Response] = {
-
-      import getcard._
-
-      // Third step: handle error and ask for package in Google Play
-      def handleFailedResponse(failed: ApiFailure): Free[F, FailedResponse] = {
-        // Does package exists in Google Play?
-        webScrapper.existsApp(pack) flatMap {
-          case true ⇒
-            InCache.storeAsPending(pack).map(_ ⇒ PendingResolution(pack))
-          case false ⇒
-            cacheService.markError(pack).map(_ ⇒ UnknownPackage(pack))
-        }
-      }
-
-      // "Resolved or permanent Item in Redis Cache?"
-      cacheService.getValid(pack) flatMap {
-        case Some(card) ⇒
-          // Yes -> Return the stored content
-          Free.pure(Xor.Right(card))
-        case None ⇒
-          // No -> Google Play API Returns valid response?
-          googleApi.getDetails(pack, auth) flatMap {
-            case r @ Xor.Right(card) ⇒
-              // Yes -> Create key/value in Redis as Resolved, Return package info
-              InCache.storeAsResolved(card).map(_ ⇒ r)
-            case Xor.Left(apiFailure) ⇒
-              handleFailedResponse(apiFailure).map(Xor.left)
-          }
-      }
-    }
-
-    def resolvePendingPackage(pack: Package, date: DateTime): Free[F, ResolvePending.PackageStatus] = {
-      import ResolvePending._
-
-      webScrapper.getDetails(pack) flatMap {
-        case Xor.Right(card) ⇒
-          for (_ ← InCache.storeAsResolved(card)) yield Resolved
-        case Xor.Left(PageParseFailed(_)) ⇒
-          for (_ ← InCache.storeAsPending(pack)) yield Pending
-        case Xor.Left(PackageNotFound(_)) ⇒
-          for (_ ← InCache.storeAsError(pack)) yield Unknown
-        case Xor.Left(WebPageServerError) ⇒
-          Free.pure(Pending)
-      }
-    }
-  }
-
   def getCard(pack: Package, auth: GoogleAuthParams): Free[F, getcard.Response] =
-    PackagesResolution.resolveNewPackage(pack, auth)
+    resolveNewPackage(pack, auth)
 
   def getCards(
     packages: List[Package],
     auth: GoogleAuthParams
   ): Free[F, List[getcard.Response]] =
-    packages.traverse[Free[F, ?], getcard.Response](pack ⇒ PackagesResolution.resolveNewPackage(pack, auth))
+    packages.traverse[Free[F, ?], getcard.Response](pack ⇒ resolveNewPackage(pack, auth))
 
   def recommendationsByCategory(
     request: RecommendByCategoryRequest,
@@ -111,7 +61,7 @@ class CardsProcesses[F[_]](
       recommendations ← googleApi.recommendationsByCategory(request, auth).toXorT
       packages = recommendations.diff(request.excludedApps).take(request.maxTotal)
       resolvedPackages ← packages.traverse[Free[F, ?], getcard.Response](
-        p ⇒ PackagesResolution.resolveNewPackage(p, auth)
+        p ⇒ resolveNewPackage(p, auth)
       ).toXorTRight[InfoError]
     } yield resolvedPackages.map(xor ⇒ xor.bimap(e ⇒ InfoError(e.packageName.value), c ⇒ c))
 
@@ -127,7 +77,7 @@ class CardsProcesses[F[_]](
       recommendations ← googleApi.recommendationsByApps(request, auth)
       packages = recommendations.diff(request.excludedApps).take(request.maxTotal)
       resolvedPackages ← packages.traverse[Free[F, ?], getcard.Response](
-        p ⇒ PackagesResolution.resolveNewPackage(p, auth)
+        p ⇒ resolveNewPackage(p, auth)
       )
     } yield resolvedPackages.map(xor ⇒ xor.bimap(e ⇒ InfoError(e.packageName.value), c ⇒ c))
 
@@ -147,12 +97,58 @@ class CardsProcesses[F[_]](
     for {
       list ← cacheService.listPending(numApps)
       status ← list.traverse[Free[F, ?], (Package, PackageStatus)] { pack ⇒
-        for (status ← PackagesResolution.resolvePendingPackage(pack, date)) yield (pack, status)
+        for (status ← resolvePendingPackage(pack, date)) yield (pack, status)
       }
     } yield splitStatus(status)
 
   }
 
+  def resolveNewPackage(pack: Package, auth: GoogleAuthParams): Free[F, getcard.Response] = {
+
+    import getcard._
+
+    // Third step: handle error and ask for package in Google Play
+    def handleFailedResponse(failed: ApiFailure): Free[F, FailedResponse] = {
+      // Does package exists in Google Play?
+      webScrapper.existsApp(pack) flatMap {
+        case true ⇒
+          InCache.storeAsPending(pack).map(_ ⇒ PendingResolution(pack))
+        case false ⇒
+          cacheService.markError(pack).map(_ ⇒ UnknownPackage(pack))
+      }
+    }
+
+    // "Resolved or permanent Item in Redis Cache?"
+    cacheService.getValid(pack) flatMap {
+      case Some(card) ⇒
+        // Yes -> Return the stored content
+        Free.pure(Xor.Right(card))
+      case None ⇒
+        // No -> Google Play API Returns valid response?
+        googleApi.getDetails(pack, auth) flatMap {
+          case r @ Xor.Right(card) ⇒
+            // Yes -> Create key/value in Redis as Resolved, Return package info
+            InCache.storeAsResolved(card).map(_ ⇒ r)
+          case Xor.Left(apiFailure) ⇒
+            handleFailedResponse(apiFailure).map(Xor.left)
+        }
+    }
+  }
+
+  def resolvePendingPackage(pack: Package, date: DateTime): Free[F, ResolvePending.PackageStatus] = {
+    import ResolvePending._
+
+    webScrapper.getDetails(pack) flatMap {
+      case Xor.Right(card) ⇒
+        for (_ ← InCache.storeAsResolved(card)) yield Resolved
+      case Xor.Left(PageParseFailed(_)) ⇒
+        for (_ ← InCache.storeAsPending(pack)) yield Pending
+      case Xor.Left(PackageNotFound(_)) ⇒
+        for (_ ← InCache.storeAsError(pack)) yield Unknown
+      case Xor.Left(WebPageServerError) ⇒
+        Free.pure(Pending)
+    }
+  }
 }
 
 object CardsProcesses {

@@ -2,6 +2,7 @@ package cards.nine.services.free.interpreter.googleplay
 
 import cards.nine.commons.TaskInstances._
 import cards.nine.googleplay.domain.Package
+import cards.nine.googleplay.processes.Wiring.GooglePlayApp
 import cards.nine.googleplay.processes.{ CardsProcesses, Wiring }
 import cards.nine.services.free.algebra.GooglePlay._
 import cards.nine.services.free.domain.GooglePlay._
@@ -10,12 +11,7 @@ import cats.~>
 
 import scalaz.concurrent.Task
 
-class Services(
-  config: Configuration
-)(
-  implicit
-  googlePlayProcesses: CardsProcesses[Wiring.GooglePlayApp]
-) extends (Ops ~> Task) {
+class Services(implicit googlePlayProcesses: CardsProcesses[GooglePlayApp]) extends (Ops ~> Task) {
 
   def resolveOne(packageName: String, auth: AuthParams): Task[String Xor AppInfo] = {
     googlePlayProcesses.getCard(
@@ -74,9 +70,5 @@ class Services(
 
 object Services {
 
-  def services(
-    implicit
-    config: Configuration,
-    googlePlayProcesses: CardsProcesses[Wiring.GooglePlayApp]
-  ) = new Services(config)
+  def services(implicit googlePlayProcesses: CardsProcesses[GooglePlayApp]) = new Services
 }
