@@ -42,17 +42,6 @@ trait DummyNineCardsConfig {
     val tokenIdParameterName = "id_token"
   }
 
-  object googleplay {
-    val protocol = "http"
-    val host = "localhost"
-    val port = 8081
-    object paths {
-      val recommendations = "/googleplay/recommendations"
-      val resolveOne = "/googleplay/cards"
-      val resolveMany = "/googleplay/cards"
-    }
-  }
-
   object googleanalytics {
     val protocol = "http"
     val host = "localhost"
@@ -67,43 +56,24 @@ trait DummyNineCardsConfig {
 
   val dummyConfigHocon =
     s"""
-       |db {
-       |  default {
-       |    driver = "${db.default.driver}"
-       |    url = "${db.default.url}"
-       |    user = "${db.default.user}"
-       |    password = "${db.default.password}"
+       |ninecards {
+       |  db {
+       |    default {
+       |      driver = "${db.default.driver}"
+       |      url = "${db.default.url}"
+       |      user = "${db.default.user}"
+       |      password = "${db.default.password}"
+       |    }
+       |    domain {
+       |      driver = "${db.domain.driver}"
+       |      url = "${db.domain.url}"
+       |      user = "${db.domain.user}"
+       |      password = "${db.domain.password}"
+       |    }
+       |    hikari {
+       |      maximumPoolSize = ${db.hikari.maximumPoolSize}
+       |    }
        |  }
-       |  domain {
-       |    driver = "${db.domain.driver}"
-       |    url = "${db.domain.url}"
-       |    user = "${db.domain.user}"
-       |    password = "${db.domain.password}"
-       |  }
-       |  hikari {
-       |    maximumPoolSize = ${db.hikari.maximumPoolSize}
-       |  }
-       |}
-       |googleapi {
-       |  host = "${googleapi.host}"
-       |  port = ${googleapi.port}
-       |  protocol = "${googleapi.protocol}"
-       |  tokenInfo {
-       |    uri = "${googleapi.tokenInfoUri}"
-       |    tokenIdQueryParameter = "${googleapi.tokenIdParameterName}"
-       |  }
-       |}
-       |googleplay {
-       |  host = "${googleplay.host}"
-       |  port = ${googleplay.port}
-       |  protocol = "${googleplay.protocol}"
-       |  paths = {
-       |    recommendations = ${googleplay.paths.recommendations}
-       |    resolveOne = ${googleplay.paths.resolveOne}
-       |    resolveMany = ${googleplay.paths.resolveMany}
-       |  }
-       |}
-       |ninecards.backend {
        |  firebase {
        |    authorizationKey = "${firebase.authorizationKey}"
        |    protocol = "${firebase.protocol}"
@@ -119,6 +89,15 @@ trait DummyNineCardsConfig {
        |    protocol = "${googleanalytics.protocol}"
        |    uri = "${googleanalytics.uri}"
        |    viewId = "${googleanalytics.viewId}"
+       |  }
+       |  googleapi {
+       |    host = "${googleapi.host}"
+       |    port = ${googleapi.port}
+       |    protocol = "${googleapi.protocol}"
+       |    tokenInfo {
+       |      uri = "${googleapi.tokenInfoUri}"
+       |      tokenIdQueryParameter = "${googleapi.tokenIdParameterName}"
+       |    }
        |  }
        |}
 
