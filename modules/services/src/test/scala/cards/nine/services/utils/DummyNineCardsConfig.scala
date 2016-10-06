@@ -74,29 +74,31 @@ trait DummyNineCardsConfig {
        |      maximumPoolSize = ${db.hikari.maximumPoolSize}
        |    }
        |  }
-       |  firebase {
-       |    authorizationKey = "${firebase.authorizationKey}"
-       |    protocol = "${firebase.protocol}"
-       |    host = "${firebase.host}"
-       |    port = ${firebase.port}
-       |    paths {
-       |      sendNotification = "${firebase.paths.sendNotification}"
+       |  google {
+       |    analytics {
+       |      host = "${googleanalytics.host}"
+       |      port = ${googleanalytics.port}
+       |      protocol = "${googleanalytics.protocol}"
+       |      uri = "${googleanalytics.uri}"
+       |      viewId = "${googleanalytics.viewId}"
        |    }
-       |  }
-       |  googleanalytics {
-       |    host = "${googleanalytics.host}"
-       |    port = ${googleanalytics.port}
-       |    protocol = "${googleanalytics.protocol}"
-       |    uri = "${googleanalytics.uri}"
-       |    viewId = "${googleanalytics.viewId}"
-       |  }
-       |  googleapi {
-       |    host = "${googleapi.host}"
-       |    port = ${googleapi.port}
-       |    protocol = "${googleapi.protocol}"
-       |    tokenInfo {
-       |      uri = "${googleapi.tokenInfoUri}"
-       |      tokenIdQueryParameter = "${googleapi.tokenIdParameterName}"
+       |    api {
+       |      host = "${googleapi.host}"
+       |      port = ${googleapi.port}
+       |      protocol = "${googleapi.protocol}"
+       |      tokenInfo {
+       |        path = "${googleapi.tokenInfoUri}"
+       |        tokenIdQueryParameter = "${googleapi.tokenIdParameterName}"
+       |      }
+       |    }
+       |    firebase {
+       |      authorizationKey = "${firebase.authorizationKey}"
+       |      protocol = "${firebase.protocol}"
+       |      host = "${firebase.host}"
+       |      port = ${firebase.port}
+       |      paths {
+       |        sendNotification = "${firebase.paths.sendNotification}"
+       |      }
        |    }
        |  }
        |}

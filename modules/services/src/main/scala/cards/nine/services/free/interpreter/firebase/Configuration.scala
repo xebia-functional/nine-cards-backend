@@ -12,7 +12,7 @@ case class Configuration(
 
 object Configuration {
   implicit def configuration(implicit config: NineCardsConfig): Configuration = {
-    val prefix = "ninecards.firebase"
+    val prefix = "ninecards.google.firebase"
 
     Configuration(
       protocol             = config.getString(s"$prefix.protocol"),
