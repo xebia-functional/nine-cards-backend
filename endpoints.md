@@ -12,7 +12,6 @@ several clients through the use of shared collections.
 - [NineCards Backend V2, List of Endpoints](#ninecards-backend-v2-list-of-endpoints)
     - [Glossary](#glossary)
     - [Headers](#headers)
-        - [-](#-)
         - [Client Authentication Headers](#client-authentication-headers)
             - [Client Authentication failure](#client-authentication-failure)
             - [Google Play Token Header](#google-play-token-header)
@@ -57,7 +56,7 @@ application's domain, involving the Google Play Store for Android applications.
 * A **client** refers to both the Android user account and the Android Id of a device
   running the [Nine Cards launcher](https://github.com/47deg/nine-cards-v2)
 * A **device token** identifies a notification mailbox, unique for each client (user account and device).
-  The backend uses the `deviceToken` to notify a client of any updates in a public collection the client
+  The backend uses the device token to notify a client of any updates in a public collection the client
   is has subscribed to. This is done through [Firebase notification API](https://firebase.google.com/).
   Note that a _client_ may have no _device token_ associated to it.
 * A **package name** (or _package_ for short) is a unique identifier for each Android app.
@@ -66,7 +65,7 @@ application's domain, involving the Google Play Store for Android applications.
   For instance, the [Youtube app](https://play.google.com/store/apps/details?id=com.google.android.youtube)
   has `com.google.android.youtube` as its package name.
 * A **category** within the Google Play Store is a name for a group of applications that solve
-  simmilar needs. Syntactically, a category is a list of underscore-separated upper-case words,
+  similar needs. Syntactically, a category is a list of underscore-separated upper-case words,
   such as `SOCIAL` or `GAME_ACTION`.
   Categories are not exclusive, so an app may belong to several categories.
 
@@ -90,10 +89,11 @@ Those endpoints will need the following standard content negotiation headers
 These headers are used to authenticate the sender, and to identify the user account
 and the Android device that corresponds to this server.
 
-* `X-Android-ID`: should give the `androidId` of the client's device. Note that, since the GAC process in the signup
-  involves a user and device, it is the device itself and not just the user that should be signed up beforehand.
-* `X-Session-Token`: should carry the user's `sessionToken` that the NCBE generated and gave to the client in Step 3 of the signup process.
-  This value acts as a way to identify the user within the NCBE.
+* `X-Android-ID`: should give the Android id of the client's device. Note that, since the
+  process in the signup involves a user and device, not only the user but the device as well should be signed up beforehand.
+* `X-Session-Token`: should carry the user's `sessionToken` that the backend generated and gave to the client
+  in Step 3 of the signup process (see the README).
+  This value acts as a way to identify the user within the backend.
 * `X-Auth-Token`: the [Hash-based message authentication code](https://en.wikipedia.org/wiki/Hash-based_message_authentication_code),
   used for authenticating the request. It ensures that the client using the `sessionToken` is the one that is acting for that user.
 
@@ -103,9 +103,9 @@ You can find more details about these headers in the `README`.
 Most endpoints in the backend API require the client authentication headers,
 to identify the sender as a client, on whose account the endpoint operates.
 Those endpoints fail with a `401 Unauthorized` status code if
-_a)_ any of the auth headers is missing; or
+_a)_ any of the authentication headers is missing; or
 _b)_ the `X-Session-Token` or the `X-Android-ID` correspond to no client signed up in the backend; or
-_c)_ the `X-Auth-Token` does not correspond with the backend's result of hashing the request's URL
+_c)_ the `X-Auth-Token` does not correspond with the result of hashing the request URL
     with the api key that the backend gave that client.
 
 #### Google Play Token Header
@@ -118,7 +118,7 @@ Access to this API may sometimes fail, because the given token is unauthorized o
 It may also fail if the request quota for that token is exhausted.
 
 Although the Google Play API is the main source of information, the backend uses a
-cache to store the information it has already feteched, and it sometimes uses
+cache to store any information it has already fetched, and it sometimes uses
 the public [web page of play store](https://play.google.com/store/) to retrieve it.
 For this reason, the endpoints generally do not inform if the `X-Google-Play-Token`
 is unauthorized, or its quota expired. They do, however, return a `401 Unauthorized`
@@ -151,7 +151,7 @@ The fields in an application card object are usually some or all of these:
 * `stars`: a floating-point number between `1.0` and `5.0`, with the average score given by the users of this app.
 * `downloads`: a string which gives an estimate on the number of times the app has been downloaded.
     This estimate is sometimes a range, such as  `"100-1000"`, or `1000000+`.
-* `icon`: a string with the url inside the play store  of the app's icon.
+* `icon`: a string with the URL inside the play store  of the app's icon.
 * `screenshots`: a list of strings, each of which is a URL to a screenshot of the google app execution.
 
 The fields `category` and `categories` do not appear together. Here is an example of an application card:
@@ -181,7 +181,7 @@ The fields in a shared collection card are some or all of these:
   in which the collection was published. This time is written with the format `2013-11-23T05:07:13.109`.
 * `author`: a human-readable alias  for the user who published the collection.
 * `category`: the category in which the collection falls.
-* `icon`: a string with the url to the icon for this shared collection.
+* `icon`: a string with the URL to the icon for this shared collection.
 * `community`: a boolean value to indicate if this is a community collection or not.
 * `packages`: a list of strings, that includes the _package names_ of every app in the collection.
 * `subscriptions` (optional field): the number of Nine Cards users who have subscribed to this collection.
@@ -293,10 +293,6 @@ For example, a valid request body would be the following one:
 }
 ```
 
-The action of this endpoint is to modify the `deviceToken` associated to the client.
-If the `deviceToken` field in the request is a string, then this value replaces the previous one.
-If it is `null`, or the field is missing, then the client is left with no `deviceToken`.
-
 If successful, the body response should be an object with the following fields:
 * `sessionToken`: a string containing the session token, as defined above,
   that the backend uses as an alternative identity for the client.
@@ -311,7 +307,6 @@ Here is an example of a valid response:
 }
 ```
 
-
 #### Update an installation
 
 The endpoint `PUT /installations` allows editing the _device token_  associated to the client.
@@ -322,6 +317,9 @@ This field's value is either a string, or `null`. Thus, each of these is a valid
 * With a string: ```{ "deviceToken" : "tokentoken" } ```
 * With null: ``` { "deviceToken" : null }```
 * Without field: ```{}```
+The action of this endpoint is to modify the `deviceToken` associated to the client.
+If the `deviceToken` field in the request is a string, then this value replaces the previous one.
+If it is `null`, or the field is missing, then the client is left with no `deviceToken`.
 
 If successful, the response body is an object that contains two fields:
 the `androidId` of the client that issued the request,
@@ -334,7 +332,7 @@ For instance, a valid response would be the following one:
 }
 ```
 
-The response status for this endpoint can be `200 OK`, if the request was correct and it was processed correctly; 
+The response status for this endpoint can be `200 OK`, if the request was correct and it was processed correctly;
 or `401 Unauthorized` if there was a [client authentication failure](#client-authentication-failure).
 
 
@@ -381,8 +379,8 @@ An example would be the following response:
 Failure to categorize an app may be because the Google Play token is unauthorized, or its
 quota exhausted. It may also be because a package name is not an app.
 It may also be an app bundled by some Android vendors, which is not published in the Play Store.
-These failures do not affect the response status for this endpoint. 
-The response status  can be `200 OK`, if the request was correct and it could be processed; 
+These failures do not affect the response status for this endpoint.
+The response status  can be `200 OK`, if the request was correct and it could be processed;
 or `401 Unauthorized`, either because of [wrong client authentication](#client-authentication-failure)
 or because the [Google Play Token Header](#google-play-token-header) is missing.
 
@@ -429,8 +427,8 @@ Here is an example response:
 }
 ```
 
-These failures do not affect the response status for this endpoint. This status can be 
- `200 OK`, if the request was correct and it could be processed; 
+These failures do not affect the response status for this endpoint. This status can be
+ `200 OK`, if the request was correct and it could be processed;
 or  `401 Unauthorized`, either because of wrong [client auth headers](#client-authentication-failure),
 or because the [Google Play Token Header](#google-play-token-header) is missing.
 
@@ -445,8 +443,8 @@ and the [Google Play Token Header](#google-play-token-header).
 The request body must be an object with the following fields:
 * `packages`: a list of strings, each of them a package name. These are the
    apps which are to be used as reference for the recommendations.
-* `excludePackages`: a list of strings, each of them a package name.
-  These are the packages that should not be excluded from the list of recommendations.
+* `excludePackages`: a list of strings, each of them a package name. These are the packages
+  that should not appear in the list of recommendations in the response.
 * `limitPerApp`: an integer number, which says how many related packages should be
   explored for each of the apps in `packages`.
 * `limit`: an integer number, that sets the maximum number of recommended elements
@@ -466,7 +464,7 @@ If this endpoint succeeds, then the response entity is an object with the only f
 `items`, which is a list of objects that represent the recommended apps.
 Each object has the fields `packageName`, `title`, `free`, `icon`, `stars`, `downloads`,
 and `screenshots`, as described in the [app card section](#application-cards).
-Here is an example of the response: 
+Here is an example of the response:
 ```json
 {
   "items" : [
@@ -482,8 +480,8 @@ Here is an example of the response:
   ]
 }
 ```
-The response status for this endpoints can be one 
- `200 OK`,  if the request was correct and it could be processed; or 
+The response status for this endpoints can be
+`200 OK`,  if the request was correct and it could be processed; or
 or  `401 Unauthorized`, either because of wrong [client auth headers](#client-authentication-failure),
 or because the [Google Play Token Header](#google-play-token-header) is missing.
 
@@ -510,7 +508,7 @@ A request body example is the following one:
 ```
 If successful, the response entity is just like that of the
 [previous endpoint](#recommend-by-list-of-apps).
-The response status for this endpoint can be 
+The response status for this endpoint can be
 `200 OK`,  if the request was correct and it could be processed; or
 `404 NotFound`, if either the `category` is not a valid category name or the  `priceFilter` is other that `FREE`, `PAID`, `ALL` ,
 or  `401 Unauthorized`, either because of wrong [client auth headers](#client-authentication-failure),
@@ -642,7 +640,7 @@ Here is an example of the response body:
   "packageStats" : { "added" : 2, "removed" : 1 }
 }
 ```
-The response status can be 
+The response status can be
 * `200 OK` if the request could be performed.
 * `401 Unauthorized` if there is a [client authentication failure](#client-authentication-failure).
 * `403 Forbidden` if the client is authenticated, but is not the author of the collection.
@@ -658,8 +656,6 @@ If successful, the response entity is a [shared collection list](#shared-collect
 The response status can be one of the following:
 * `200 OK` if the request could be performed.
 * `401 Unauthorized` if there is a [client authentication failure](#client-authentication-failure).
-* `404 NotFound` if there is no collection whose public identifier is the `collectionId` given in a path param.
-
 
 #### List of collections by category
 
@@ -740,51 +736,58 @@ management of the backend. For this reason, they do _not_ require the
 [client authentication headers](#client-authentication-headers).
 
 In these endpoints, we use a path segment to indicate the geographic scope of the ranking.
-This geographic scope can be one of the following: 
+This geographic scope can be one of the following:
 * The whole world, which is represented as the path prefix `/world`.
-* A continent, which is expressed as the path segments `/contintents/{cont}`, where `cont` 
-  can be one of `Africa`, `Americas`, `Oceania`, `Europe` or `Asia`. 
-* A country, which is expressed as the path segments `/countries/{count}`, where `count` is the name 
-  of a country supported by the backend. 
-  At present, we only support `Spain`, `United_Kingdom`, and `United_States`. 
+* A continent, which is expressed as the path segments `/continents/{cont}`, where `cont`
+  can be one of `Africa`, `Americas`, `Oceania`, `Europe` or `Asia`.
+* A country, which is expressed as the path segments `/countries/{count}`, where `count` is the name
+  of a country supported by the backend.
+  At present, we only support `Spain`, `United_Kingdom`, and `United_States`.
 
 
 #### Read a Ranking
 
-The `GET /rankings/{geographic}` endpoints gives the full list of rankings for a geographic scope. 
-This endpoint need no special headers. 
-If successful, the response body entity is an an object with a single field, `categories`, 
-whose value is a list of objects. Each of this object is the ranking for a given category. 
+The `GET /rankings/{geographic}` endpoints gives the full list of rankings for a geographic scope.
+This endpoint need no special headers.
+If successful, the response body entity is an an object with a single field, `categories`,
+whose value is a list of objects. Each of this object is the ranking for a given category.
 Its fields are:
 * `category`: a string with the name of the category.
-* `apps`: a list of app package names, orded by ranking (first position to last one). 
-Here is an example of this response: 
+* `apps`: a list of app package names, orded by ranking (first position to last one).
+Here is an example of this response:
 ```json
-{ "categories": [
-    "SOCIAL" : [ "com.facebook", "com.twitter" ],
-    "GAME_ARCADE" : [ "old.games.doom] 
-]
+{
+  "categories": [
+    {
+      "category" : "SOCIAL",
+      "apps" : [ "com.facebook", "com.twitter" ]
+    },
+    {
+      "category" : "GAME_ARCADE",
+      "apps" : [ "old.games.doom]
+    }
+  ]
 }
 ```
 
-The response status can be `200 OK`, if it succeeds, or `404 NotFound`, if the geographic scope 
+The response status can be `200 OK`, if it succeeds, or `404 NotFound`, if the geographic scope
 does not correspond to one of those  [described above](#rankings-endpoints).
 
 #### Refresh a Ranking
-The `POST /rankings/{geographic}` endpoints serve to refresh the rankings for the given geographic scope. 
+The `POST /rankings/{geographic}` endpoints serve to refresh the rankings for the given geographic scope.
 
-This endpoint requires a special `X-Google-Analytics-Token`, whose value carries the OAuth2 token 
+This endpoint requires a special `X-Google-Analytics-Token`, whose value carries the OAuth2 token
 that grants the backend server the access to the Google Analytics Report that collects the statistics
 of Nine Cards users, from which the rankings are made.
-This endpoint takes no body entity from the request. 
+This endpoint takes no body entity from the request.
 
-If successful, the endpoint returns an empty object `{}`. If there is a failure in the 
-execution of the endpoint, it returns an object with these fields: 
-* `error`: a number with the status code of the error, 
+If successful, the endpoint returns an empty object `{}`. If there is a failure in the
+execution of the endpoint, it returns an object with these fields:
+* `error`: a number with the status code of the error,
 * `message`: a message with the error.
-* `status`: a string describing the reason for the error. 
+* `status`: a string describing the reason for the error.
 
-The response status can be `200 OK`, if it succeeds, or `404 NotFound`, if the geographic scope 
+The response status can be `200 OK`, if it succeeds, or `404 NotFound`, if the geographic scope
 does not correspond to one of those  [described above](#rankings-endpoints).
 
 
