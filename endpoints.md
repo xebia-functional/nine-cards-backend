@@ -262,7 +262,7 @@ Each of these objects is just a [shared collection card](#shared-collection-card
 The specification of the endpoints follows the `REST` style of interfaces as a guideline.
 In the description of each endpoint's functionality, we use _"the client"_ to refer
 to the sender of the HTTP request, which would usually be an instance of the Nine Cards Launcher.
-The response status of most endpoints, in general, will be  a `200 OK` status code in case of success,
+The response status of most endpoints, in general, will be  a `200 OK` status code in case of success;
 or a `400 BadRequest` if the request is missing a needed entity body or if this one is present but does
 not fit the JSON schema outlined.
 
@@ -510,8 +510,9 @@ If successful, the response entity is just like that of the
 [previous endpoint](#recommend-by-list-of-apps).
 The response status for this endpoint can be
 `200 OK`,  if the request was correct and it could be processed; or
-`404 NotFound`, if either the `category` is not a valid category name or the  `priceFilter` is other that `FREE`, `PAID`, `ALL` ,
-or  `401 Unauthorized`, either because of wrong [client auth headers](#client-authentication-failure),
+`404 NotFound`, if either the `category` is not a valid category name
+or the  `priceFilter` is other that `FREE`, `PAID`, `ALL`;
+or `401 Unauthorized`, either because of wrong [client auth headers](#client-authentication-failure),
 or because the [Google Play Token Header](#google-play-token-header) is missing.
 
 
@@ -588,7 +589,7 @@ If successful, the response body is an object with two fields:
 * `packageStats`: an object with a single field `added`, which is the number of packages added to the collection.
 
 The response status of this endpoint can be `200 OK`, if it was successful; or `401 Unauthorized`, if there is a
-[client authentication failure](#client-authentication-failure), or `400 BadRequest` if the request body is malformed.
+[client authentication failure](#client-authentication-failure); or `400 BadRequest` if the request body is malformed.
 
 
 #### Read a collection
@@ -606,7 +607,7 @@ See [here for ab example of a response of this endpoint](#application-cards)
 The response status can be  `200 OK` if the shared collection exists;
 or  `404 NotFound`, if there is no collection with the given `collectionId`;
 or `401 Unauthorized`, either because of wrong [client auth headers](#client-authentication-failure),
-    or because the [Google Play Token Header](#google-play-token-header) is missing.
+ or because the [Google Play Token Header](#google-play-token-header) is missing.
 
 
 #### Edit a collection
@@ -770,7 +771,7 @@ Here is an example of this response:
 }
 ```
 
-The response status can be `200 OK`, if it succeeds, or `404 NotFound`, if the geographic scope
+The response status can be `200 OK`, if it succeeds; or `404 NotFound`, if the geographic scope
 does not correspond to one of those  [described above](#rankings-endpoints).
 
 #### Refresh a Ranking
