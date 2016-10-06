@@ -6,7 +6,7 @@ import cards.nine.googleplay.domain._
 object TestData {
 
   def googleApiConf = googleapi.Configuration.load()
-  def webEndpoint = defaultConfig.getString("ninecards.googleplay.web.endpoint")
+  def webEndpoint = defaultConfig.getString("ninecards.google.play.web.endpoint")
 
   object nonexisting {
     val packageName = "com.package.does.not.exist"

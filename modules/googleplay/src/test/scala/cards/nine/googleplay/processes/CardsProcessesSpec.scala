@@ -49,7 +49,7 @@ class CardsProcessesSpec
   "getCard" >> {
 
     def runGetCard(pack: Package, auth: GoogleAuthParams): getcard.Response =
-      processes.getCard(pack, auth, testDate).foldMap(interpreter)
+      processes.getCard(pack, auth).foldMap(interpreter)
 
     "if the Package is already resolved" >> {
 
@@ -130,7 +130,7 @@ class CardsProcessesSpec
         cacheIntServer.getValid(pack) returns None
         apiGoogleIntServer.getDetails(pack, auth) returns Xor.Left(ApiDom.PackageNotFound(pack))
         webScrapperIntServer.existsApp(pack) returns false
-        cacheIntServer.markError(pack, testDate) returns Unit
+        cacheIntServer.markError(pack) returns Unit
       }
 
       "Return the package as Unresolved" >>
@@ -145,7 +145,7 @@ class CardsProcessesSpec
           val pack = Package(card.packageName)
           setup(pack, card, auth)
           runGetCard(pack, auth)
-          there was one(cacheIntServer).markError(pack, testDate)
+          there was one(cacheIntServer).markError(pack)
         }
 
     }
@@ -186,7 +186,7 @@ class CardsProcessesSpec
       def setup(pack: Package, date: DateTime) = {
         clear()
         webScrapperIntServer.getDetails(pack) returns Xor.Left(WebDom.PackageNotFound(pack))
-        cacheIntServer.markError(pack, testDate) returns Unit
+        cacheIntServer.markError(pack) returns Unit
       }
 
       "it reports the package as Unknown" >> prop { pack: Package ⇒
@@ -197,7 +197,7 @@ class CardsProcessesSpec
       "it stores the package as an error" >> prop { pack: Package ⇒
         setup(pack, testDate)
         runResolvePending(pack, testDate)
-        there was one(cacheIntServer).markError(pack, testDate)
+        there was one(cacheIntServer).markError(pack)
       }
 
     }
