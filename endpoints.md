@@ -26,9 +26,10 @@ several clients through the use of shared collections.
         - [Application endpoints](#application-endpoints)
             - [Categorize apps](#categorize-apps)
             - [Get Apps Details](#get-apps-details)
+            - [Rank Applications](#get-ranking-of-applications)
+        - [Recommendation Endpoints](#recommendation-endpoints)
             - [Recommend by list of apps](#recommend-by-list-of-apps)
             - [Recommend by category](#recommend-by-category)
-            - [Get Ranking of Applications](#get-ranking-of-applications)
         - [Collection endpoints](#collection-endpoints)
             - [Publish a shared collection](#publish-a-shared-collection)
             - [Read a collection](#read-a-collection)
@@ -314,9 +315,11 @@ This client is identified through the [client authentication headers](#client-au
 which the request must provide.
 The request body must be an object which may contain the optional field `deviceToken`.
 This field's value is either a string, or `null`. Thus, each of these is a valid body:
-* With a string: ```{ "deviceToken" : "tokentoken" } ```
-* With null: ``` { "deviceToken" : null }```
-* Without field: ```{}```
+```json
+{ "deviceToken" : "tokentoken" }
+{ "deviceToken" : null }
+{}
+```
 The action of this endpoint is to modify the `deviceToken` associated to the client.
 If the `deviceToken` field in the request is a string, then this value replaces the previous one.
 If it is `null`, or the field is missing, then the client is left with no `deviceToken`.
@@ -434,6 +437,52 @@ or because the [Google Play Token Header](#google-play-token-header) is missing.
 
 
 
+#### Get Ranking of Applications
+
+The `POST /applications/rank` endpoint takes as input several lists of package names,
+and returns each list with the apps sorted according to the app's popularity
+amongst users of Nine Cards.
+
+The request must include the [client authentication headers](#client-authentication-headers).
+The request body must be an object with two fields:
+* `location`: an optional string which gives the geographic location of the client,
+  by giving the [two-letter code](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2 ISO-2) of the
+  country in which the client device is located. This is used to choose a ranking with a geographic scope
+  (country, continent) that better fits the client.
+* `items`: an object that contains the lists of apps. Each of the fields in this object corresponds to a
+  category, so the field key is the name of the category. The value of the field is the list of app
+  package names that are to be ranked within that category.
+
+Here is an example of this body entity.
+```json
+{
+  "location" : "ES",
+  "items" : {
+    "SOCIAL" : [ "com.facebook", "com.twitter"],
+    "VIDEO_PLAYER" : ["com.youtube", "com.vimeo"]
+  }
+}
+```
+
+If successful, the response body is an object with a single field `items`. The value of this field
+is an object like the request, whose keys are the categories, and whose values are the lists of app
+package names, sorted by ranking from most valued  to less valued by the users of Nine Cards.
+```json
+{
+  "items" : {
+    "SOCIAL" : [ "com.facebook", "com.twitter"],
+    "VIDEO_PLAYER" : ["com.vimeo", "com.youtube"]
+  }
+}
+```
+
+### Recommendation Endpoints
+
+These endpoints are used by the client to search for more apps that the client's user
+may be interested to.
+In these endpoints, the backend is not using any information of its own, about collections
+or rankings. It is just acting as an intermediary and cache for these results.
+
 #### Recommend by list of apps
 
 The endpoint `POST /recommendations` can be used to recommend a client a list of
@@ -514,47 +563,6 @@ The response status for this endpoint can be
 or the  `priceFilter` is other that `FREE`, `PAID`, `ALL`;
 or `401 Unauthorized`, either because of wrong [client auth headers](#client-authentication-failure),
 or because the [Google Play Token Header](#google-play-token-header) is missing.
-
-
-#### Get Ranking of Applications
-
-The `POST /applications/rank` endpoint takes as input several lists of package names,
-and returns each list with the apps sorted according to the app's popularity
-amongst users of Nine Cards.
-
-The request must include the [client authentication headers](#client-authentication-headers).
-The request body must be an object with two fields:
-* `location`: an optional string which gives the geographic location of the client,
-  by giving the [two-letter code](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2 ISO-2) of the
-  country in which the client device is located. This is used to choose a ranking with a geographic scope
-  (country, continent) that better fits the client.
-* `items`: an object that contains the lists of apps. Each of the fields in this object corresponds to a
-  category, so the field key is the name of the category. The value of the field is the list of app
-  package names that are to be ranked within that category.
-
-Here is an example of this body entity.
-```json
-{
-  "location" : "ES",
-  "items" : {
-    "SOCIAL" : [ "com.facebook", "com.twitter"],
-    "VIDEO_PLAYER" : ["com.youtube", "com.vimeo"]
-  }
-}
-```
-
-If successful, the response body is an object with a single field `items`. The value of this field
-is an object like the request, whose keys are the categories, and whose values are the lists of app
-package names, sorted by ranking from most valued  to less valued by the users of Nine Cards.
-```json
-{
-  "location" : "ES",
-  "items" : {
-    "SOCIAL" : [ "com.facebook", "com.twitter"],
-    "VIDEO_PLAYER" : ["com.vimeo", "com.youtube"]
-  }
-}
-```
 
 
 
