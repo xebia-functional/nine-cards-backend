@@ -788,7 +788,24 @@ The `POST /rankings/{geographic}` endpoints serve to refresh the rankings for th
 This endpoint requires a special `X-Google-Analytics-Token`, whose value carries the OAuth2 token
 that grants the backend server the access to the Google Analytics Report that collects the statistics
 of Nine Cards users, from which the rankings are made.
-This endpoint takes no body entity from the request.
+
+The entity body in the request must be an object with the following three fields:
+* `startDate`: a string that gives the start day from which we start the sample of the analytics.
+  Syntactically, it has the format `"yyyy-MM-dd"`, which gives the number of the year, the number of the month,
+  and the number of the day of the month, for the desired date.
+* `endDate`: a string, much like the `startDate`, that gives the end day of the sample period.
+  Syntactically, it is like the `startDate` field.
+* `rankingLength`: an integer number which gives the number of applications that each category's ranking should have _at most_.
+  These applications, of course, would be the most valued.
+
+An example of this request would be the following one:
+```json
+{
+  "startDate" : "2016-01-31",
+  "endDate" : "2016-03-21",
+  "rankingLength" : 10
+}
+```
 
 If successful, the endpoint returns an empty object `{}`. If there is a failure in the
 execution of the endpoint, it returns an object with these fields:
@@ -798,6 +815,7 @@ execution of the endpoint, it returns an object with these fields:
 
 The response status can be `200 OK`, if it succeeds, or `404 NotFound`, if the geographic scope
 does not correspond to one of those  [described above](#rankings-endpoints).
-
-
-
+The response can be `400 BadRequest` if the dates in the request are wrong,
+either because any of them is a wrong date (such as `"2016-02-30"`),
+or because the `endDate` precedes the `startDate`,
+or because the `startDate` precedes the launch of Google Analytics.
