@@ -1,39 +1,62 @@
 {
-	"id": "fb68a1e4-3e29-09e9-cc4c-4deded4f5983",
-	"name": "Ninecards - Local",
-	"values": [
-		{
-			"key": "base_url",
-			"value": "localhost:8080",
-			"type": "text",
-			"name": "baseurl",
-			"enabled": true
-		},
-		{
-			"key": "session_token",
-			"value": "toktok",
-			"type": "text",
-			"name": "token",
-			"enabled": true
-		},
-		{
-			"key": "android_id",
-			"value": "andrea",
-			"type": "text",
-			"name": "androidid",
-			"enabled": true
-		},
-		{
-			"key": "market_localization",
-			"value": "en-EN",
-			"type": "text",
-			"name": "localization",
-			"enabled": true
-		}
-	],
-	"team": null,
-	"timestamp": 1462355359494,
-	"synced": false,
-	"syncedFilename": "",
-	"isDeleted": false
+  "id": "6c6cbb11-75a6-b2d9-aa1a-583929b175af",
+  "name": "Ninecards - Local",
+  "values": [
+    {
+      "key": "scheme",
+      "value": "http",
+      "type": "text",
+      "enabled": true
+    },
+    {
+      "key": "authority",
+      "value": "localhost:8080",
+      "type": "text",
+      "name": "authority",
+      "enabled": true
+    },
+    {
+      "key": "root_path",
+      "value": "",
+      "type": "text",
+      "name": "root_path",
+      "enabled": true
+    },
+    {
+      "key": "user_sessionToken",
+      "value": "toktok",
+      "type": "text",
+      "name": "token",
+      "enabled": true
+    },
+    {
+      "key": "user_androidId",
+      "value": "andrea",
+      "type": "text",
+      "name": "user_androidid",
+      "enabled": true
+    },
+    {
+      "key": "google_play_token",
+      "value": "playtok",
+      "type": "text",
+      "enabled": true
+    },
+    {
+      "key": "google_analytics_token",
+      "value": "analytok",
+      "type": "text",
+      "enabled": true
+    },
+    {
+      "key": "COMPUTE_AUTH_TOKEN",
+      "value": "",
+      "type": "text",
+      "enabled": true
+    }
+  ],
+  "timestamp": 1475829563081,
+  "_postman_variable_scope": "environment",
+  "_postman_exported_at": "2016-10-07T08:40:14.390Z",
+  "_postman_exported_using": "Postman/4.7.2"
 }

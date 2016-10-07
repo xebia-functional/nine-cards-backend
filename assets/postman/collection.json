@@ -1,175 +1,747 @@
 {
-	"id": "b8f1e86d-0758-37be-508f-12c7438bbe7f",
-	"name": "NineCardsV2",
-	"description": "",
-	"order": [],
-	"folders": [
+	"variables": [],
+	"info": {
+		"name": "NineCardsV2",
+		"_postman_id": "4e7eaee0-9d97-63af-0282-63207db3fc43",
+		"description": "",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json"
+	},
+	"item": [
 		{
-			"id": "2cb339d4-9908-fb5d-bf85-175f21347324",
-			"name": "Login",
-			"description": "",
-			"order": [
-				"052efc3e-f341-caaf-1b35-80d599bc3229",
-				"d2f159bd-33dc-b9a3-7386-d7dffeaa0d0d"
-			],
-			"owner": 0
+			"name": "Accounts of Clients, Users and Installations",
+			"description": "Endpoints to create a Nine Cards user account and to edit its details",
+			"item": [
+				{
+					"name": "Signup",
+					"request": {
+						"url": "{{scheme}}://{{authority}}{{root_path}}/login",
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "\"application/json\"",
+								"description": ""
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"description": ""
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"user@example.com\",\n    \"androidId\":\"111a-bbb2-cc3-4444f\",\n    \"tokenId\":\"Y29udGVudC5jb20iLCJzdWIiOiIxMDYyMjI2OTM3MTk4N\"\n}"
+						},
+						"description": "Signs up a client (user and device) within the Nine Cards Backend.\n\nIts response should include the new client's session token and its api key."
+					},
+					"response": []
+				},
+				{
+					"name": "Update installation",
+					"request": {
+						"url": "{{scheme}}://{{authority}}{{root_path}}/installations",
+						"method": "PUT",
+						"header": [
+							{
+								"key": "X-Session-Token",
+								"value": "{{user_sessionToken}}",
+								"description": ""
+							},
+							{
+								"key": "X-Android-ID",
+								"value": "{{user_androidId}}",
+								"description": ""
+							},
+							{
+								"key": "X-Auth-Token",
+								"value": "{{COMPUTE_AUTH_TOKEN}}",
+								"description": ""
+							},
+							{
+								"key": "Accept",
+								"value": "\"application/json\"",
+								"description": ""
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"description": ""
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": " { \n     \"deviceToken\": \"1111a-2222b-33c-4444d\" \n }"
+						},
+						"description": ""
+					},
+					"response": []
+				}
+			]
 		},
 		{
-			"id": "2b5aa5f0-6cc5-3e54-5993-9fa332e2b437",
-			"name": "Shared Collections",
-			"description": "",
-			"order": [
-				"4f54e578-ad87-6df4-3afa-da46df17c319",
-				"27589784-4c58-4a91-e9ba-db997b69c9ef",
-				"a7134bb9-2d20-c72e-58d3-750818f6e6c8",
-				"ac4262a3-5453-c0a2-ab09-90f50176fe3f",
-				"17f43c2f-f010-d93c-15bf-a3799f7eee31"
-			],
-			"owner": 0
-		}
-	],
-	"timestamp": 1450177688588,
-	"owner": 0,
-	"remoteLink": "",
-	"public": false,
-	"requests": [
-		{
-			"id": "052efc3e-f341-caaf-1b35-80d599bc3229",
-			"headers": "Content-Type: application/json\n",
-			"url": "http://{{base_url}}/login",
-			"preRequestScript": "",
-			"pathVariables": {},
-			"method": "POST",
-			"data": [],
-			"dataMode": "raw",
-			"version": 2,
-			"tests": "",
-			"currentHelper": "normal",
-			"helperAttributes": {},
-			"time": 1458575494009,
-			"name": "Login",
-			"description": "",
-			"collectionId": "b8f1e86d-0758-37be-508f-12c7438bbe7f",
-			"responses": [],
-			"rawModeData": "{\n    \"email\": \"user@example.com\",\n    \"androidId\":\"111a-bbb2-cc3-4444f\",\n    \"tokenId\":\"Y29udGVudC5jb20iLCJzdWIiOiIxMDYyMjI2OTM3MTk4N\"\n}"
+			"name": "Android Apps",
+			"description": "Endpoints for querying data about applications.",
+			"item": [
+				{
+					"name": "Categorize a list of Apps",
+					"request": {
+						"url": "{{scheme}}://{{authority}}{{root_path}}/applications/categorize",
+						"method": "POST",
+						"header": [
+							{
+								"key": "X-Session-Token",
+								"value": "{{user_sessionToken}}",
+								"description": ""
+							},
+							{
+								"key": "X-Android-ID",
+								"value": "{{user_androidId}}",
+								"description": ""
+							},
+							{
+								"key": "X-Auth-Token",
+								"value": "{{COMPUTE_AUTH_TOKEN}}",
+								"description": ""
+							},
+							{
+								"key": "X-Google-Play-Token",
+								"value": "{{google_play_token}}",
+								"description": ""
+							},
+							{
+								"key": "Accept",
+								"value": "\"application/json\"",
+								"description": ""
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"description": ""
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"items\" : [\n\t\t\"com.google.android.youtube\",\n\t\t\"com.google.android.gm\",\n\t\t\"com.facebook.katana\",\n\t\t\"com.twitter.android\",\n\t\t\"flipboard.app\"\n\t]\n}"
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Details of a list of apps",
+					"request": {
+						"url": "{{scheme}}://{{authority}}{{root_path}}/applications/details",
+						"method": "POST",
+						"header": [
+							{
+								"key": "X-Session-Token",
+								"value": "{{user_sessionToken}}",
+								"description": ""
+							},
+							{
+								"key": "X-Android-ID",
+								"value": "{{user_androidId}}",
+								"description": ""
+							},
+							{
+								"key": "X-Auth-Token",
+								"value": "{{COMPUTE_AUTH_TOKEN}}",
+								"description": ""
+							},
+							{
+								"key": "X-Google-Play-Token",
+								"value": "{{google_play_token}}",
+								"description": ""
+							},
+							{
+								"key": "Accept",
+								"value": "\"application/json\"",
+								"description": ""
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"description": ""
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"items\" : [\n\t\t\"com.google.android.youtube\",\n\t\t\"com.google.android.gm\",\n\t\t\"com.facebook.katana\",\n\t\t\"com.twitter.android\",\n\t\t\"flipboard.app\"\n\t]\n}"
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Rank a list of Apps",
+					"request": {
+						"url": "{{scheme}}://{{authority}}{{root_path}}/applications/rank",
+						"method": "POST",
+						"header": [
+							{
+								"key": "X-Session-Token",
+								"value": "{{user_sessionToken}}",
+								"description": ""
+							},
+							{
+								"key": "X-Android-ID",
+								"value": "{{user_androidId}}",
+								"description": ""
+							},
+							{
+								"key": "X-Auth-Token",
+								"value": "{{COMPUTE_AUTH_TOKEN}}",
+								"description": ""
+							},
+							{
+								"key": "Accept",
+								"value": "\"application/json\"",
+								"description": ""
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"description": ""
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"location\" : \"ES\",\n\t\"items\" : {\n\t\t\"NEWS_AND_MAGAZINES\" : [ \"flipboard.app\", \"com.twitter.android\" ],\n\t\t\"VIDEO_PLAYER\" : [ \"com.google.android.videos\", \"com.google.android.youtube\"]\n\t}\n}"
+						},
+						"description": ""
+					},
+					"response": []
+				}
+			]
 		},
 		{
-			"id": "17f43c2f-f010-d93c-15bf-a3799f7eee31",
-			"headers": "Accept: \"application/json\"\nContent-Type: application/json\nX-Session-Token: {{session_token}}\nX-Android-ID: {{android_id}}\nX-Android-Market-Localization: {{market_localization}}\nX-Auth-Token: {{COMPUTE_AUTH_TOKEN}}\n",
-			"url": "http://{{base_url}}/collections",
-			"preRequestScript": "",
-			"pathVariables": {},
-			"method": "GET",
-			"data": [],
-			"dataMode": "params",
-			"version": 2,
-			"tests": "",
-			"currentHelper": "normal",
-			"helperAttributes": {},
-			"time": 1458575350597,
-			"name": "Get My Shared Collections",
+			"name": "Collections",
 			"description": "",
-			"collectionId": "b8f1e86d-0758-37be-508f-12c7438bbe7f",
-			"responses": []
+			"item": [
+				{
+					"name": "Get Published Collections",
+					"request": {
+						"url": "{{scheme}}://{{authority}}{{root_path}}/collections",
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-Session-Token",
+								"value": "{{user_sessionToken}}",
+								"description": ""
+							},
+							{
+								"key": "X-Android-ID",
+								"value": "{{user_androidId}}",
+								"description": ""
+							},
+							{
+								"key": "X-Auth-Token",
+								"value": "{{COMPUTE_AUTH_TOKEN}}",
+								"description": ""
+							},
+							{
+								"key": "X-Google-Play-Token",
+								"value": "{{google_play_token}}",
+								"description": ""
+							},
+							{
+								"key": "Accept",
+								"value": "\"application/json\"",
+								"description": ""
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": []
+						},
+						"description": "Gets the list of collections that a user (the sender) has published. "
+					},
+					"response": []
+				},
+				{
+					"name": "Publish (create) a new  Shared Collection",
+					"request": {
+						"url": "{{scheme}}://{{authority}}{{root_path}}/collections",
+						"method": "POST",
+						"header": [
+							{
+								"key": "X-Session-Token",
+								"value": "{{user_sessionToken}}",
+								"description": ""
+							},
+							{
+								"key": "X-Android-ID",
+								"value": "{{user_androidId}}",
+								"description": ""
+							},
+							{
+								"key": "X-Auth-Token",
+								"value": "{{COMPUTE_AUTH_TOKEN}}",
+								"description": ""
+							},
+							{
+								"key": "Accept",
+								"value": "\"application/json\"",
+								"description": ""
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"description": ""
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"author\": \"John Doe\",\n    \"name\": \"Social World\",\n    \"category\": \"SOCIAL\",\n    \"community\": true,\n    \"icon\": \"social\",\n    \"installations\" : 11,\n    \"views\" : 12,\n    \"packages\": [\n        \"com.whatsapp\",\n        \"org.telegram.messenger\",\n        \"com.snapchat.android\",\n        \"com.facebook.katana\"\n    ],\n}"
+						},
+						"description": "This endpoint allows a user, the sender, to publish a shared collection as the author of it."
+					},
+					"response": []
+				},
+				{
+					"name": "Read a Collection",
+					"request": {
+						"url": "{{scheme}}://{{authority}}{{root_path}}/collections/{{collection_id}}",
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-Session-Token",
+								"value": "{{user_sessionToken}}",
+								"description": ""
+							},
+							{
+								"key": "X-Android-ID",
+								"value": "{{user_androidId}}",
+								"description": ""
+							},
+							{
+								"key": "X-Auth-Token",
+								"value": "{{COMPUTE_AUTH_TOKEN}}",
+								"description": ""
+							},
+							{
+								"key": "X-Google-Play-Token",
+								"value": "{{google_play_token}}",
+								"description": ""
+							},
+							{
+								"key": "Accept",
+								"value": "\"application/json\"",
+								"description": ""
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": []
+						},
+						"description": "Read the details of an existing Collection,"
+					},
+					"response": []
+				},
+				{
+					"name": "Edit a Collection",
+					"request": {
+						"url": "{{scheme}}://{{authority}}{{root_path}}/collections/{{collection_id}}",
+						"method": "PUT",
+						"header": [
+							{
+								"key": "X-Session-Token",
+								"value": "{{user_sessionToken}}",
+								"description": ""
+							},
+							{
+								"key": "X-Android-ID",
+								"value": "{{user_androidId}}",
+								"description": ""
+							},
+							{
+								"key": "X-Auth-Token",
+								"value": "{{COMPUTE_AUTH_TOKEN}}",
+								"description": ""
+							},
+							{
+								"key": "Accept",
+								"value": "\"application/json\"",
+								"description": ""
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"description": ""
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"collectionInfo\" : {\n\t\t\"title\" : \"Social Plus, the greatest collection of Social apps!\"\n\t}\n    \"packages\": [\n        \"com.whatsapp\",\n        \"com.snapchat.android\",\n        \"com.facebook.katana\",\n        \"com.google.android.apps.plus\"\n    ],\n}"
+						},
+						"description": "Edit a collection that was publish by the user. "
+					},
+					"response": []
+				}
+			]
 		},
 		{
-			"id": "27589784-4c58-4a91-e9ba-db997b69c9ef",
-			"headers": "Accept: \"application/json\"\nContent-Type: application/json\nX-Session-Token: {{session_token}}\nX-Android-ID: {{android_id}}\nX-Android-Market-Localization: {{market_localization}}\nX-Auth-Token: {{COMPUTE_AUTH_TOKEN}}\n",
-			"url": "http://{{base_url}}/collections/5346f6802000003802fcf3ee",
-			"preRequestScript": "",
-			"pathVariables": {},
-			"method": "GET",
-			"data": [],
-			"dataMode": "params",
-			"version": 2,
-			"tests": "",
-			"currentHelper": "normal",
-			"helperAttributes": {},
-			"time": 1458575343072,
-			"name": "Get Shared Collection",
-			"description": "",
-			"collectionId": "b8f1e86d-0758-37be-508f-12c7438bbe7f",
-			"responses": []
+			"name": "Rankings",
+			"description": "Endpoints to query and update the application rankings that \nare kept for each country or continent",
+			"item": [
+				{
+					"name": "Get Rankings of Country",
+					"request": {
+						"url": "{{scheme}}://{{authority}}{{root_path}}/rankings/countries/Spain",
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "\"application/json\"",
+								"description": ""
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \t\"packages\" : [ \n\t\t\"com.google.android.youtube\",\n\t\t\"com.google.android.gm\",\n\t\t\"com.facebook.katana\"\n  \t],\n  \t\"excludePackages\" : [\n\t\t\"com.twitter.android\",\n\t\t\"flipboard.app\"\n  \t],\n  \t\"limitPerApp\" : 4,\n  \t\"limit\" : 10\n}"
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Get Rankings of Continent",
+					"request": {
+						"url": "{{scheme}}://{{authority}}{{root_path}}/rankings/continents/Africa",
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "\"application/json\"",
+								"description": ""
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \t\"packages\" : [ \n\t\t\"com.google.android.youtube\",\n\t\t\"com.google.android.gm\",\n\t\t\"com.facebook.katana\"\n  \t],\n  \t\"excludePackages\" : [\n\t\t\"com.twitter.android\",\n\t\t\"flipboard.app\"\n  \t],\n  \t\"limitPerApp\" : 4,\n  \t\"limit\" : 10\n}"
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Get Rankings of World",
+					"request": {
+						"url": "{{scheme}}://{{authority}}{{root_path}}/rankings/world",
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "\"application/json\"",
+								"description": ""
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \t\"packages\" : [ \n\t\t\"com.google.android.youtube\",\n\t\t\"com.google.android.gm\",\n\t\t\"com.facebook.katana\"\n  \t],\n  \t\"excludePackages\" : [\n\t\t\"com.twitter.android\",\n\t\t\"flipboard.app\"\n  \t],\n  \t\"limitPerApp\" : 4,\n  \t\"limit\" : 10\n}"
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Reload Rankings of Country",
+					"request": {
+						"url": "{{scheme}}://{{authority}}{{root_path}}/rankings/countries/Spain",
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "\"application/json\"",
+								"description": ""
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"description": ""
+							},
+							{
+								"key": "X-Google-Analytics-Token",
+								"value": "{{google_analytics_token}}",
+								"description": ""
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"startDate\": \"2016-01-01\",\n  \"endDate\": \"2016-03-31\",\n  \"rankingLength\": 10\n}\n"
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Reload Rankings of Continent",
+					"request": {
+						"url": "{{scheme}}://{{authority}}{{root_path}}/rankings/continents/Africa",
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "\"application/json\"",
+								"description": ""
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"description": ""
+							},
+							{
+								"key": "X-Google-Analytics-Token",
+								"value": "{{google_analytics_token}}",
+								"description": ""
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"startDate\": \"2016-01-01\",\n  \"endDate\": \"2016-03-31\",\n  \"rankingLength\": 10\n}\n"
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Reload Rankings of World",
+					"request": {
+						"url": "{{scheme}}://{{authority}}{{root_path}}/rankings/world",
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "\"application/json\"",
+								"description": ""
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"description": ""
+							},
+							{
+								"key": "X-Google-Analytics-Token",
+								"value": "{{google_analytics_token}}",
+								"description": ""
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"startDate\": \"2016-01-01\",\n  \"endDate\": \"2016-03-31\",\n  \"rankingLength\": 10\n}\n"
+						},
+						"description": ""
+					},
+					"response": []
+				}
+			]
 		},
 		{
-			"id": "4f54e578-ad87-6df4-3afa-da46df17c319",
-			"headers": "Accept: \"application/json\"\nContent-Type: application/json\nX-Session-Token: {{session_token}}\nX-Android-ID: {{android_id}}\nX-Android-Market-Localization: {{market_localization}}\nX-Auth-Token: {{COMPUTE_AUTH_TOKEN}}\n",
-			"url": "http://{{base_url}}/collections",
-			"preRequestScript": "",
-			"pathVariables": {},
-			"method": "POST",
-			"data": [],
-			"dataMode": "raw",
-			"version": 2,
-			"tests": "",
-			"currentHelper": "normal",
-			"helperAttributes": {},
-			"time": 1458575612397,
-			"name": "Create Shared Collection",
+			"name": "Recommend Applications",
 			"description": "",
-			"collectionId": "b8f1e86d-0758-37be-508f-12c7438bbe7f",
-			"responses": [],
-			"rawModeData": "{\n    \"publishedOn\": 1399695861613,\n    \"description\": \"The best social media apps\",\n    \"author\": \"John Doe\",\n    \"name\": \"Social World\",\n    \"packages\": [\n        \"jp.naver.line.android\",\n        \"com.whatsapp\",\n        \"com.tencent.mm\",\n        \"org.telegram.messenger\",\n        \"com.snapchat.android\",\n        \"com.viber.voip\",\n        \"com.facebook.katana\",\n        \"com.google.android.apps.plus\",\n        \"com.twitter.android\",\n        \"com.jb.gosms\",\n        \"com.android.mms\",\n        \"com.google.android.talk\",\n        \"com.android.contacts\",\n        \"com.marcow.birthdaylist\",\n        \"com.android.contacts\",\n        \"com.sec.chaton\",\n        \"com.skype.raider\",\n        \"com.google.android.gm\"\n    ],\n    \"category\": \"SOCIAL\",\n    \"icon\": \"social\",\n    \"community\": true\n}"
+			"item": [
+				{
+					"name": "Recommend by list of apps",
+					"request": {
+						"url": "{{scheme}}://{{authority}}{{root_path}}/recommendations",
+						"method": "POST",
+						"header": [
+							{
+								"key": "X-Session-Token",
+								"value": "{{user_sessionToken}}",
+								"description": ""
+							},
+							{
+								"key": "X-Android-ID",
+								"value": "{{user_androidId}}",
+								"description": ""
+							},
+							{
+								"key": "X-Auth-Token",
+								"value": "{{COMPUTE_AUTH_TOKEN}}",
+								"description": ""
+							},
+							{
+								"key": "X-Google-Play-Token",
+								"value": "{{google_play_token}}",
+								"description": ""
+							},
+							{
+								"key": "Accept",
+								"value": "\"application/json\"",
+								"description": ""
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"description": ""
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \t\"packages\" : [ \n\t\t\"com.google.android.youtube\",\n\t\t\"com.google.android.gm\",\n\t\t\"com.facebook.katana\"\n  \t],\n  \t\"excludePackages\" : [\n\t\t\"com.twitter.android\",\n\t\t\"flipboard.app\"\n  \t],\n  \t\"limitPerApp\" : 4,\n  \t\"limit\" : 10\n}"
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Recommend by Category",
+					"request": {
+						"url": "{{scheme}}://{{authority}}{{root_path}}/recommendations/SOCIAL/FREE",
+						"method": "POST",
+						"header": [
+							{
+								"key": "X-Session-Token",
+								"value": "{{user_sessionToken}}",
+								"description": ""
+							},
+							{
+								"key": "X-Android-ID",
+								"value": "{{user_androidId}}",
+								"description": ""
+							},
+							{
+								"key": "X-Auth-Token",
+								"value": "{{COMPUTE_AUTH_TOKEN}}",
+								"description": ""
+							},
+							{
+								"key": "X-Google-Play-Token",
+								"value": "{{google_play_token}}",
+								"description": ""
+							},
+							{
+								"key": "Accept",
+								"value": "\"application/json\"",
+								"description": ""
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \t\"excludePackages\" : [\n\t\t\"com.twitter.android\",\n\t\t\"flipboard.app\"\n  \t],\n  \t\"limit\" : 10\n}"
+						},
+						"description": ""
+					},
+					"response": []
+				}
+			]
 		},
 		{
-			"id": "a7134bb9-2d20-c72e-58d3-750818f6e6c8",
-			"headers": "Accept: \"application/json\"\nContent-Type: application/json\nX-Session-Token: {{session_token}}\nX-Android-ID: {{android_id}}\nX-Android-Market-Localization: {{market_localization}}\nX-Auth-Token: {{COMPUTE_AUTH_TOKEN}}\n",
-			"url": "http://{{base_url}}/collections/5346f6802000003802fcf3ee/subscribe",
-			"preRequestScript": "",
-			"pathVariables": {},
-			"method": "PUT",
-			"data": [],
-			"dataMode": "raw",
-			"version": 2,
-			"tests": "",
-			"currentHelper": "normal",
-			"helperAttributes": {},
-			"time": 1458575345690,
-			"name": "Subscribe Shared Collection",
-			"description": "",
-			"collectionId": "b8f1e86d-0758-37be-508f-12c7438bbe7f",
-			"responses": [],
-			"rawModeData": "{}"
-		},
-		{
-			"id": "ac4262a3-5453-c0a2-ab09-90f50176fe3f",
-			"headers": "Accept: \"application/json\"\nContent-Type: application/json\nX-Session-Token: {{session_token}}\nX-Android-ID: {{android_id}}\nX-Android-Market-Localization: {{market_localization}}\nX-Auth-Token: {{COMPUTE_AUTH_TOKEN}}\n",
-			"url": "http://{{base_url}}/collections/5346f6802000003802fcf3ee/subscribe",
-			"preRequestScript": "",
-			"pathVariables": {},
-			"method": "DELETE",
-			"data": [],
-			"dataMode": "raw",
-			"version": 2,
-			"tests": "",
-			"currentHelper": "normal",
-			"helperAttributes": {},
-			"time": 1458575348306,
-			"name": "Unsubscribe Shared Collection",
-			"description": "",
-			"collectionId": "b8f1e86d-0758-37be-508f-12c7438bbe7f",
-			"responses": [],
-			"rawModeData": "{}"
-		},
-		{
-			"id": "d2f159bd-33dc-b9a3-7386-d7dffeaa0d0d",
-			"headers": "Content-Type: application/json\nX-Session-Token: {{session_token}}\nX-Android-ID: {{android_id}}\nX-Android-Market-Localization: {{market_localization}}\nX-Auth-Token: {{COMPUTE_AUTH_TOKEN}}\n",
-			"url": "http://{{base_url}}/installations",
-			"preRequestScript": "",
-			"pathVariables": {},
-			"method": "PUT",
-			"data": [],
-			"dataMode": "raw",
-			"version": 2,
-			"tests": "",
-			"currentHelper": "normal",
-			"helperAttributes": {},
-			"time": 1458575338017,
-			"name": "Update installation",
-			"description": "",
-			"collectionId": "b8f1e86d-0758-37be-508f-12c7438bbe7f",
-			"responses": [],
-			"rawModeData": " { \n     \"deviceToken\": \"1111a-2222b-33c-4444d\" \n }"
+			"name": "Subscriptions",
+			"description": "Endpoints about the subscription relations between a user \n(the sender) and other users' collections. ",
+			"item": [
+				{
+					"name": "List of Subscribed Collections",
+					"request": {
+						"url": "{{scheme}}://{{authority}}{{root_path}}/collections/subscriptions/{{subscribedCollection}}",
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-Session-Token",
+								"value": "{{user_sessionToken}}",
+								"description": ""
+							},
+							{
+								"key": "X-Android-ID",
+								"value": "{{user_androidId}}",
+								"description": ""
+							},
+							{
+								"key": "X-Auth-Token",
+								"value": "{{COMPUTE_AUTH_TOKEN}}",
+								"description": ""
+							},
+							{
+								"key": "Accept",
+								"value": "\"application/json\"",
+								"description": ""
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{}"
+						},
+						"description": "This endpoint gives the list of shared collections a user (the sender) is subscribed to"
+					},
+					"response": []
+				},
+				{
+					"name": "Subscribe Shared Collection",
+					"request": {
+						"url": "{{scheme}}://{{authority}}{{root_path}}/collections/subscriptions/{{subscribed_collection}}",
+						"method": "PUT",
+						"header": [
+							{
+								"key": "X-Session-Token",
+								"value": "{{user_sessionToken}}",
+								"description": ""
+							},
+							{
+								"key": "X-Android-ID",
+								"value": "{{user_androidId}}",
+								"description": ""
+							},
+							{
+								"key": "X-Auth-Token",
+								"value": "{{COMPUTE_AUTH_TOKEN}}",
+								"description": ""
+							},
+							{
+								"key": "Accept",
+								"value": "\"application/json\"",
+								"description": ""
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"description": ""
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Unsubscribe Shared Collection",
+					"request": {
+						"url": "{{scheme}}://{{authority}}{{root_path}}/collections/subscriptions/{{subscribed_collection}}",
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "X-Session-Token",
+								"value": "{{user_sessionToken}}",
+								"description": ""
+							},
+							{
+								"key": "X-Android-ID",
+								"value": "{{user_androidId}}",
+								"description": ""
+							},
+							{
+								"key": "X-Auth-Token",
+								"value": "{{COMPUTE_AUTH_TOKEN}}",
+								"description": ""
+							},
+							{
+								"key": "Accept",
+								"value": "\"application/json\"",
+								"description": ""
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"description": ""
+					},
+					"response": []
+				}
+			]
 		}
 	]
 }
