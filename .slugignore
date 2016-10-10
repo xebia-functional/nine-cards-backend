@@ -1,0 +1,6 @@
+modules/api/src/test
+modules/commons/src/test
+modules/googleplay/src/test
+modules/processes/src/test
+modules/services/src/test
+modules/tests
