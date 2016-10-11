@@ -140,6 +140,9 @@ object Converters {
       response.items
     )
 
+  def toApiSearchAppsResponse(response: SearchAppsResponse): ApiSearchAppsResponse =
+    ApiSearchAppsResponse(response.apps)
+
   def toApiRankAppsResponse(result: Result[Map[String, List[RankedDeviceApp]]]) =
     result.map {
       items ⇒

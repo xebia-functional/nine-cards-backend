@@ -99,6 +99,9 @@ trait JsonFormats
   implicit val apiRankAppsRequestFormat = jsonFormat2(ApiRankAppsRequest)
 
   implicit val apiRankAppsResponseFormat = jsonFormat1(ApiRankAppsResponse)
+
+  implicit val apiSearchAppsRequest = jsonFormat3(ApiSearchAppsRequest)
+  implicit val apiSearchAppsResponse = jsonFormat1(ApiSearchAppsResponse)
 }
 
 object JsonFormats extends JsonFormats

@@ -1,7 +1,7 @@
 package cards.nine.googleplay.service.free.interpreter.googleapi
 
 import cards.nine.googleplay.domain.{ FullCard, FullCardList, Package }
-import cards.nine.googleplay.proto.GooglePlay.{ ResponseWrapper, DocV2, ListResponse }
+import cards.nine.googleplay.proto.GooglePlay.{ ResponseWrapper, DocV2, ListResponse, SearchResponse }
 import cards.nine.googleplay.service.free.interpreter.TestData.{ fisherPrice, minecraft }
 import java.nio.file.{ Files, Paths }
 import org.specs2.mutable.Specification
@@ -10,6 +10,7 @@ import scodec.bits.ByteVector
 class ConvertersSpec extends Specification {
 
   import Converters._
+  import TestData.searchCosmos
 
   def readProtobufFile(fileName: String): ResponseWrapper = {
     val resource = getClass.getClassLoader.getResource(fileName)
@@ -71,12 +72,6 @@ class ConvertersSpec extends Specification {
 
       ids must containTheSameElementsAs(expected)
     }
-
-    "build incomplete cards of it" in {
-      val apps: FullCardList = toFullCardList(listRes)
-      apps.cards.map(c ⇒ Package(c.packageName)) must_=== listResponseToPackages(listRes)
-    }
-
   }
 
   "From a series of lists responses, each one carrying the recommendations for a different app, it" should {
@@ -105,6 +100,18 @@ class ConvertersSpec extends Specification {
           "com.instagram.android", "com.facebook.katana", "com.facebook.orca")
       )
     }
+  }
+
+  """From a SearchResponse, with the results of a search for words, """ should {
+
+    def readSearchFile(file: String): SearchResponse =
+      readProtobufFile(s"search/$file").getPayload.getSearchResponse
+
+    "extract a list of search results for that App" in {
+      val actual = searchResponseToPackages(readSearchFile("cosmos"))
+      actual must containTheSameElementsAs(searchCosmos.results)
+    }
+
   }
 
 }

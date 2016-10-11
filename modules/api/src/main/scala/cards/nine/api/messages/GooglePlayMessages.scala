@@ -27,4 +27,13 @@ object GooglePlayMessages {
   case class ApiRankAppsRequest(location: Option[String], items: Map[String, List[String]])
 
   case class ApiRankAppsResponse(items: Map[String, List[String]])
+
+  case class ApiSearchAppsRequest(
+    query: String,
+    excludePackages: List[String],
+    limit: Int
+  )
+
+  case class ApiSearchAppsResponse(apps: List[GooglePlayRecommendation])
+
 }
