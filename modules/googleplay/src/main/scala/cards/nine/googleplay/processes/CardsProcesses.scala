@@ -95,20 +95,17 @@ class CardsProcesses[F[_]](
     recommendations.map(Converters.toFullCardListXors)
   }
 
-  def checkValidPackagesInCache(packages: List[Package]): Free[F, (List[Package], List[FullCard])] =
+  private[this] def checkValidPackagesInCache(packages: List[Package]) =
     packages.traverse[Free[F, ?], Package Xor FullCard] { p ⇒
       cacheService.getValid(p) map (card ⇒ Xor.fromOption(card, p))
     } map (_.separate)
 
-  def getPackagesInfoInGooglePlay(
-    packages: List[Package],
-    auth: GoogleAuthParams
-  ): Free[F, ResolveMany.Response] =
+  private[this] def getPackagesInfoInGooglePlay(packages: List[Package], auth: GoogleAuthParams) =
     googleApi.getBulkDetails(packages, auth) map {
       case Xor.Left(_) ⇒
         ResolveMany.Response(Nil, packages, Nil)
       case Xor.Right(apps) ⇒
-        val notFound = packages.filterNot(p ⇒ apps.exists(_.packageName == p.value))
+        val notFound = packages.diff(apps.map(c ⇒ Package(c.packageName)))
         ResolveMany.Response(notFound, Nil, apps)
     }
 

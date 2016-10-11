@@ -26,19 +26,19 @@ class Services(implicit googlePlayProcesses: CardsProcesses[GooglePlayApp]) exte
     packageNames: List[String],
     auth: AuthParams,
     extendedInfo: Boolean
-  ): Task[AppsInfo] =
+  ): Task[AppsInfo] = {
+    val authParams = Converters.toGoogleAuthParams(auth)
+    val packages = packageNames map Package
+
     if (extendedInfo)
-      googlePlayProcesses.getCards(
-        packages = packageNames map Package,
-        auth     = Converters.toGoogleAuthParams(auth)
-      ).foldMap(Wiring.interpreters)
+      googlePlayProcesses.getCards(packages, authParams)
+        .foldMap(Wiring.interpreters)
         .map(Converters.toAppsInfo)
     else
-      googlePlayProcesses.getBasicCards(
-        packages = packageNames map Package,
-        auth     = Converters.toGoogleAuthParams(auth)
-      ).foldMap(Wiring.interpreters)
+      googlePlayProcesses.getBasicCards(packages, authParams)
+        .foldMap(Wiring.interpreters)
         .map(Converters.toAppsInfo)
+  }
 
   def recommendByCategory(
     category: String,

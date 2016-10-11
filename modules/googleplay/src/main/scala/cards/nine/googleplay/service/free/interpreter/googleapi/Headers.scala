@@ -9,7 +9,7 @@ object headers {
 
   def fullHeaders(auth: GoogleAuthParams, contentType: Option[String] = None) =
     Headers(authHeaders(auth) ++ fixedHeaders)
-      .put(Header("Content-Type", contentType.fold("application/json; charset=UTF-8")(c ⇒ c)))
+      .put(Header("Content-Type", contentType.getOrElse("application/json; charset=UTF-8")))
 
   private[this] def authHeaders(auth: GoogleAuthParams): List[Header] = {
     Header("Authorization", s"GoogleLogin auth=${auth.token.value}") ::

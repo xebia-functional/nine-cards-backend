@@ -34,8 +34,6 @@ object AggregateRating {
 case class Image(imageType: Long, imageUrl: String) // todo check which fields are necessary here
 case class Offer(offerType: Long) // todo check which fields are necessary here
 
-case class BulkDetailsEntry(doc: DocV2)
-
 case class InfoError(message: String) extends AnyVal
 
 sealed trait PriceFilter extends EnumEntry

@@ -3,7 +3,7 @@ package cards.nine.googleplay.service.free.interpreter.googleapi
 import cards.nine.commons.TaskInstances._
 import cards.nine.googleplay.domain.{ Details ⇒ _, _ }
 import cards.nine.googleplay.domain.apigoogle._
-import cards.nine.googleplay.proto.GooglePlay.{ BulkDetailsEntry, BulkDetailsRequest, DocV2, ResponseWrapper }
+import cards.nine.googleplay.proto.GooglePlay.{ BulkDetailsRequest, DocV2, ResponseWrapper }
 import cards.nine.googleplay.service.free.algebra.GoogleApi._
 import cats.~>
 import cats.data.Xor
@@ -55,16 +55,13 @@ class Interpreter(config: Configuration) extends (Ops ~> WithHttpClient) {
     def apply(client: Client): Task[Failure Xor List[FullCard]] =
       client.expect[ByteVector](httpRequest).map { bv ⇒
         Xor.right {
-          val fullCardList: List[FullCard] = ResponseWrapper
+          ResponseWrapper
             .parseFrom(bv.toArray)
             .getPayload.getBulkDetailsResponse
             .getEntryList
             .toList
-            .map {
-              entry: BulkDetailsEntry ⇒
-                Converters.toFullCard(entry.getDoc)
-            }
-          fullCardList.filterNot(_.packageName.isEmpty)
+            .map(entry ⇒ Converters.toFullCard(entry.getDoc))
+            .filterNot(_.packageName.isEmpty)
         }
       }.handle {
         case e: UnexpectedStatus ⇒ Xor.Left(handleUnexpected(e))
