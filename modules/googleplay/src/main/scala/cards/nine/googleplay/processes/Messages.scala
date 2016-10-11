@@ -11,6 +11,10 @@ package object getcard {
   type Response = FailedResponse Xor FullCard
 }
 
+object ResolveMany {
+  case class Response(notFound: List[Package], pending: List[Package], apps: List[FullCard])
+}
+
 object ResolvePending {
 
   case class Response(solved: List[Package], unknown: List[Package], pending: List[Package])

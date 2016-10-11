@@ -1,7 +1,7 @@
 package cards.nine.services.free.interpreter.googleplay
 
 import cards.nine.googleplay.domain._
-import cards.nine.googleplay.processes.getcard.Response
+import cards.nine.googleplay.processes.{ getcard, ResolveMany }
 import cards.nine.services.free.domain.GooglePlay.{ RecommendByCategoryRequest ⇒ _, _ }
 import cats.instances.list._
 import cats.syntax.monadCombine._
@@ -57,7 +57,13 @@ object Converters {
       auth.localization map Localization.apply
     )
 
-  def toAppsInfo(response: List[Response]): AppsInfo = {
+  def toAppsInfo(response: ResolveMany.Response): AppsInfo =
+    AppsInfo(
+      (response.pending ++ response.notFound) map (_.value),
+      response.apps map toAppInfo
+    )
+
+  def toAppsInfo(response: List[getcard.Response]): AppsInfo = {
     val (errors, resolved) = response.separate
 
     AppsInfo(

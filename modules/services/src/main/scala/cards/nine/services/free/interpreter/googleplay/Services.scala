@@ -22,12 +22,23 @@ class Services(implicit googlePlayProcesses: CardsProcesses[GooglePlayApp]) exte
       }
   }
 
-  def resolveMany(packageNames: List[String], auth: AuthParams): Task[AppsInfo] =
-    googlePlayProcesses.getCards(
-      packages = packageNames map Package,
-      auth     = Converters.toGoogleAuthParams(auth)
-    ).foldMap(Wiring.interpreters)
-      .map(Converters.toAppsInfo)
+  def resolveMany(
+    packageNames: List[String],
+    auth: AuthParams,
+    extendedInfo: Boolean
+  ): Task[AppsInfo] =
+    if (extendedInfo)
+      googlePlayProcesses.getCards(
+        packages = packageNames map Package,
+        auth     = Converters.toGoogleAuthParams(auth)
+      ).foldMap(Wiring.interpreters)
+        .map(Converters.toAppsInfo)
+    else
+      googlePlayProcesses.getBasicCards(
+        packages = packageNames map Package,
+        auth     = Converters.toGoogleAuthParams(auth)
+      ).foldMap(Wiring.interpreters)
+        .map(Converters.toAppsInfo)
 
   def recommendByCategory(
     category: String,
@@ -57,8 +68,8 @@ class Services(implicit googlePlayProcesses: CardsProcesses[GooglePlayApp]) exte
     ).foldMap(Wiring.interpreters).map(Converters.toRecommendations)
 
   def apply[A](fa: Ops[A]): Task[A] = fa match {
-    case ResolveMany(packageNames, auth) ⇒
-      resolveMany(packageNames, auth)
+    case ResolveMany(packageNames, auth, basicInfo) ⇒
+      resolveMany(packageNames, auth, basicInfo)
     case Resolve(packageName, auth) ⇒
       resolveOne(packageName, auth)
     case RecommendationsByCategory(category, filter, excludesPackages, limit, auth) ⇒

@@ -190,7 +190,7 @@ class SharedCollectionProcesses[F[_]](
     collection: SharedCollection,
     authParams: AuthParams
   ): XorT[Free[F, ?], Throwable, GetCollectionByPublicIdentifierResponse] = {
-    googlePlayServices.resolveMany(collection.packages, toAuthParamsServices(authParams)) map { appsInfo ⇒
+    googlePlayServices.resolveMany(collection.packages, toAuthParamsServices(authParams), true) map { appsInfo ⇒
       GetCollectionByPublicIdentifierResponse(
         toSharedCollectionWithAppsInfo(collection, appsInfo.apps)
       )
@@ -208,7 +208,7 @@ class SharedCollectionProcesses[F[_]](
       authParams: AuthParams
     ): Free[F, AppsInfo] = {
       val packages = collections.flatMap(_.packages).distinct
-      googlePlayServices.resolveMany(packages, toAuthParamsServices(authParams))
+      googlePlayServices.resolveMany(packages, toAuthParamsServices(authParams), false)
     }
 
     def fillGooglePlayInfoForPackages(
