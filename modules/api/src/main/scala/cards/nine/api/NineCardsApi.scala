@@ -235,7 +235,11 @@ class NineCardsRoutes(
     userContext: UserContext
   ): NineCardsServed[XorApiGetCollectionByPublicId] =
     sharedCollectionProcesses
-      .getCollectionByPublicIdentifier(publicId.value, toAuthParams(googlePlayContext, userContext))
+      .getCollectionByPublicIdentifier(
+        userId           = userContext.userId.value,
+        publicIdentifier = publicId.value,
+        authParams       = toAuthParams(googlePlayContext, userContext)
+      )
       .map(_.map(r ⇒ toApiSharedCollection(r.data)))
 
   private[this] def createCollection(
@@ -280,6 +284,7 @@ class NineCardsRoutes(
   ): NineCardsServed[ApiSharedCollectionList] =
     sharedCollectionProcesses
       .getLatestCollectionsByCategory(
+        userId     = userContext.userId.value,
         category   = category.entryName,
         authParams = toAuthParams(googlePlayContext, userContext),
         pageNumber = pageNumber.value,
@@ -311,6 +316,7 @@ class NineCardsRoutes(
   ): NineCardsServed[ApiSharedCollectionList] =
     sharedCollectionProcesses
       .getTopCollectionsByCategory(
+        userId     = userContext.userId.value,
         category   = category.entryName,
         authParams = toAuthParams(googlePlayContext, userContext),
         pageNumber = pageNumber.value,

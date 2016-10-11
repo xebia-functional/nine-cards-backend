@@ -58,6 +58,8 @@ object TestData {
 
   val now = DateTime.now
 
+  val owned = true
+
   val packagesName = List(
     "earth.europe.italy",
     "earth.europe.unitedKingdom",
@@ -138,6 +140,7 @@ object TestData {
       category         = category,
       icon             = icon,
       community        = community,
+      owned            = owned,
       packages         = packagesName
     )
 

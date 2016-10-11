@@ -235,6 +235,7 @@ object TestData {
       category         = category,
       icon             = icon,
       community        = community,
+      owned            = true,
       packages         = packagesName
     )
 
@@ -248,6 +249,7 @@ object TestData {
       category           = category,
       icon               = icon,
       community          = community,
+      owned              = true,
       packages           = packagesName,
       subscriptionsCount = Option(subscriptionsCount)
     )

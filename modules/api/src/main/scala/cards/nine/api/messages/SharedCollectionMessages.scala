@@ -32,6 +32,7 @@ object SharedCollectionMessages {
     category: String,
     icon: String,
     community: Boolean,
+    owned: Boolean,
     packages: List[String],
     appsInfo: List[AppInfo],
     subscriptions: Option[Long] = None

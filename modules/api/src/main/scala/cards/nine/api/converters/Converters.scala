@@ -70,6 +70,7 @@ object Converters {
       category         = info.collection.category,
       icon             = info.collection.icon,
       community        = info.collection.community,
+      owned            = info.collection.owned,
       packages         = info.collection.packages,
       appsInfo         = info.appsInfo,
       subscriptions    = info.collection.subscriptionsCount
