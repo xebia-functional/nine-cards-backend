@@ -9,6 +9,9 @@ object GoogleApi {
 
   sealed trait Ops[A]
 
+  case class GetBulkDetails(packagesName: List[Package], authParams: GoogleAuthParams)
+    extends Ops[Failure Xor List[FullCard]]
+
   case class GetDetails(packageName: Package, authParams: GoogleAuthParams)
     extends Ops[Failure Xor FullCard]
 
@@ -19,6 +22,12 @@ object GoogleApi {
     extends Ops[InfoError Xor List[Package]]
 
   class Services[F[_]](implicit inj: Inject[Ops, F]) {
+
+    def getBulkDetails(
+      packagesName: List[Package],
+      auth: GoogleAuthParams
+    ): Free[F, Failure Xor List[FullCard]] =
+      Free.inject[Ops, F](GetBulkDetails(packagesName, auth))
 
     def getDetails(packageName: Package, auth: GoogleAuthParams): Free[F, Failure Xor FullCard] =
       Free.inject[Ops, F](GetDetails(packageName, auth))

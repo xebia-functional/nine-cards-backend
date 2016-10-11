@@ -165,7 +165,7 @@ class GooglePlayServicesSpec
       googlePlayProcesses.getCards(packages, AuthData.googleAuthParams) returns
         Free.pure(GooglePlayResponses.getCardsResponse)
 
-      val response = services.resolveMany(packagesName, AuthData.params)
+      val response = services.resolveMany(packagesName, AuthData.params, true)
 
       response.unsafePerformSyncAttempt must be_\/-[AppsInfo].which { appsInfo ⇒
         appsInfo.missing must containTheSameElementsAs(wrongPackagesName)

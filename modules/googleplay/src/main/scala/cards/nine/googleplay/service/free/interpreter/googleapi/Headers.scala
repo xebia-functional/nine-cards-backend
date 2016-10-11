@@ -7,7 +7,9 @@ import org.http4s.{ Header, Headers }
  * google-play-crawler, but it is not clear what functions they perform. */
 object headers {
 
-  def fullHeaders(auth: GoogleAuthParams) = Headers(authHeaders(auth) ++ fixedHeaders)
+  def fullHeaders(auth: GoogleAuthParams, contentType: Option[String] = None) =
+    Headers(authHeaders(auth) ++ fixedHeaders)
+      .put(Header("Content-Type", contentType.getOrElse("application/json; charset=UTF-8")))
 
   private[this] def authHeaders(auth: GoogleAuthParams): List[Header] = {
     Header("Authorization", s"GoogleLogin auth=${auth.token.value}") ::
@@ -25,7 +27,7 @@ object headers {
         "api=3", "versionCode=8016014", "sdk=15",
         "device=GT-I9300", "hardware=aries", "product=GT-I9300"
       ).mkString(",")
-      s"Android-Finsky/3.10.14 (${ls})"
+      s"Android-Finsky/3.10.14 ($ls)"
     }
     val unsopportedExperimentsValue = List(
       "nocache:billing.use_charging_poller",
@@ -42,7 +44,6 @@ object headers {
 
     List(
       Header("Accept-Language", "en-EN"),
-      Header("Content-Type", "application/json; charset=UTF-8"),
       Header("Host", "android.clients.google.com"),
       Header("User-Agent", userAgentValue),
       Header("X-DFE-Unsupported-Experiments", unsopportedExperimentsValue),

@@ -3,6 +3,7 @@ package cards.nine.googleplay.processes
 import cats.data.Xor
 import cats.free.Free
 import cats.instances.list._
+import cats.syntax.monadCombine._
 import cats.syntax.traverse._
 import cards.nine.commons.FreeUtils._
 import cards.nine.googleplay.domain._
@@ -42,6 +43,16 @@ class CardsProcesses[F[_]](
       } yield Unit
 
   }
+
+  def getBasicCards(
+    packages: List[Package],
+    auth: GoogleAuthParams
+  ): Free[F, ResolveMany.Response] =
+    for {
+      cacheResult ← checkValidPackagesInCache(packages)
+      (uncached, cached) = cacheResult
+      response ← getPackagesInfoInGooglePlay(uncached, auth)
+    } yield ResolveMany.Response(response.notFound, response.pending, cached ++ response.apps)
 
   def getCard(pack: Package, auth: GoogleAuthParams): Free[F, getcard.Response] =
     resolveNewPackage(pack, auth)
@@ -83,6 +94,20 @@ class CardsProcesses[F[_]](
 
     recommendations.map(Converters.toFullCardListXors)
   }
+
+  private[this] def checkValidPackagesInCache(packages: List[Package]) =
+    packages.traverse[Free[F, ?], Package Xor FullCard] { p ⇒
+      cacheService.getValid(p) map (card ⇒ Xor.fromOption(card, p))
+    } map (_.separate)
+
+  private[this] def getPackagesInfoInGooglePlay(packages: List[Package], auth: GoogleAuthParams) =
+    googleApi.getBulkDetails(packages, auth) map {
+      case Xor.Left(_) ⇒
+        ResolveMany.Response(Nil, packages, Nil)
+      case Xor.Right(apps) ⇒
+        val notFound = packages.diff(apps.map(c ⇒ Package(c.packageName)))
+        ResolveMany.Response(notFound, Nil, apps)
+    }
 
   def searchAndResolvePending(numApps: Int, date: DateTime): Free[F, ResolvePending.Response] = {
     import ResolvePending._

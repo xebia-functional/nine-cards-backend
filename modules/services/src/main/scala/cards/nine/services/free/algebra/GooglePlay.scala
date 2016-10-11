@@ -11,7 +11,7 @@ object GooglePlay {
   case class Resolve(packageName: String, auth: AuthParams)
     extends Ops[String Xor AppInfo]
 
-  case class ResolveMany(packageNames: List[String], auth: AuthParams)
+  case class ResolveMany(packageNames: List[String], auth: AuthParams, extendedInfo: Boolean)
     extends Ops[AppsInfo]
 
   case class RecommendationsByCategory(
@@ -34,8 +34,12 @@ object GooglePlay {
     def resolve(packageName: String, auth: AuthParams): Free[F, String Xor AppInfo] =
       Free.inject[Ops, F](Resolve(packageName, auth))
 
-    def resolveMany(packageNames: List[String], auth: AuthParams): Free[F, AppsInfo] =
-      Free.inject[Ops, F](ResolveMany(packageNames, auth))
+    def resolveMany(
+      packageNames: List[String],
+      auth: AuthParams,
+      extendedInfo: Boolean
+    ): Free[F, AppsInfo] =
+      Free.inject[Ops, F](ResolveMany(packageNames, auth, extendedInfo))
 
     def recommendByCategory(
       category: String,

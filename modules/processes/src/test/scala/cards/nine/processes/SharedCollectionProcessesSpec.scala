@@ -107,7 +107,7 @@ trait SharedCollectionProcessesSpecification
       .getByUser(any) returns
       Free.pure(List(subscription))
 
-    googlePlayServices.resolveMany(any, any) returns Free.pure(appsInfo)
+    googlePlayServices.resolveMany(any, any, any) returns Free.pure(appsInfo)
 
     userServices.getSubscribedInstallationByCollection(any) returns
       Free.pure(List(installation))

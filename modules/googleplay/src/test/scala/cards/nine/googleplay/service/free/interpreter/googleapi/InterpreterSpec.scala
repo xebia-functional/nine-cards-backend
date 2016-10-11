@@ -26,6 +26,7 @@ class InterpreterSpec extends Specification with Matchers with MockServer with W
     protocol            = "http",
     host                = "localhost",
     port                = mockServerPort,
+    bulkDetailsPath     = "/my/bulkdetails/path",
     detailsPath         = "/my/details/path",
     listPath            = "/path/to/list",
     recommendationsPath = "/my/path/to/recommendations"

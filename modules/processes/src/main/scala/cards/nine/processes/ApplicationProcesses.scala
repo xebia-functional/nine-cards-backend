@@ -18,7 +18,8 @@ class ApplicationProcesses[F[_]](implicit services: GooglePlay.Services[F]) {
     else
       services.resolveMany(
         packageNames = packagesName,
-        auth         = toAuthParamsServices(authParams)
+        auth         = toAuthParamsServices(authParams),
+        extendedInfo = true
       ) map toGetAppsInfoResponse
 }
 

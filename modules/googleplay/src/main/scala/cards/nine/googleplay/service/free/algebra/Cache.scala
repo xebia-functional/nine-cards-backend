@@ -35,7 +35,7 @@ object Cache {
       Free.inject[Ops, F](MarkPending(pack))
 
     def unmarkPending(pack: Package): Free[F, Unit] =
-      Free.inject[Ops, F](MarkPending(pack))
+      Free.inject[Ops, F](UnmarkPending(pack))
 
     def markError(pack: Package): Free[F, Unit] =
       Free.inject[Ops, F](MarkError(pack))

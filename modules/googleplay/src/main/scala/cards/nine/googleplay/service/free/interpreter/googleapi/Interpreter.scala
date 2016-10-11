@@ -3,7 +3,7 @@ package cards.nine.googleplay.service.free.interpreter.googleapi
 import cards.nine.commons.TaskInstances._
 import cards.nine.googleplay.domain.{ Details ⇒ _, _ }
 import cards.nine.googleplay.domain.apigoogle._
-import cards.nine.googleplay.proto.GooglePlay.{ DocV2, ResponseWrapper }
+import cards.nine.googleplay.proto.GooglePlay.{ BulkDetailsRequest, DocV2, ResponseWrapper }
 import cards.nine.googleplay.service.free.algebra.GoogleApi._
 import cats.~>
 import cats.data.Xor
@@ -14,12 +14,15 @@ import org.http4s.Http4s._
 import org.http4s._
 import org.http4s.client.{ Client, UnexpectedStatus }
 
+import scala.collection.JavaConversions._
+import collection.JavaConverters._
 import scalaz.concurrent.Task
 import scodec.bits.ByteVector
 
 class Interpreter(config: Configuration) extends (Ops ~> WithHttpClient) {
 
   def apply[A](ops: Ops[A]): WithHttpClient[A] = ops match {
+    case GetBulkDetails(packs, auth) ⇒ new BulkDetailsWithClient(packs, auth)
     case GetDetails(pack, auth) ⇒ new DetailsWithClient(pack, auth)
     case RecommendationsByApps(request, auth) ⇒ new RecommendationsByAppsWithClient(request, auth)
     case RecommendationsByCategory(request, auth) ⇒ new RecommendationsByCategoryWithClient(request, auth)
@@ -29,6 +32,41 @@ class Interpreter(config: Configuration) extends (Ops ~> WithHttpClient) {
     scheme    = Option(config.protocol.ci),
     authority = Option(Uri.Authority(host = Uri.RegName(config.host), port = Some(config.port)))
   )
+
+  class BulkDetailsWithClient(packagesName: List[Package], auth: GoogleAuthParams)
+    extends (Client ⇒ Task[Failure Xor List[FullCard]]) {
+
+    val builder = BulkDetailsRequest.newBuilder()
+    builder.addAllDocid(packagesName.map(_.value).asJava)
+
+    val httpRequest =
+      new Request(
+        method  = Method.POST,
+        uri     = baseUri.withPath(config.bulkDetailsPath),
+        headers = headers.fullHeaders(auth, Option("application/x-protobuf"))
+      ).withBody(builder.build().toByteArray)
+
+    def handleUnexpected(e: UnexpectedStatus): Failure = e.status match {
+      case Status.Unauthorized ⇒ WrongAuthParams(auth)
+      case Status.TooManyRequests ⇒ QuotaExceeded(auth)
+      case _ ⇒ GoogleApiServerError
+    }
+
+    def apply(client: Client): Task[Failure Xor List[FullCard]] =
+      client.expect[ByteVector](httpRequest).map { bv ⇒
+        Xor.right {
+          ResponseWrapper
+            .parseFrom(bv.toArray)
+            .getPayload.getBulkDetailsResponse
+            .getEntryList
+            .toList
+            .map(entry ⇒ Converters.toFullCard(entry.getDoc))
+            .filterNot(_.packageName.isEmpty)
+        }
+      }.handle {
+        case e: UnexpectedStatus ⇒ Xor.Left(handleUnexpected(e))
+      }
+  }
 
   class DetailsWithClient(packageName: Package, auth: GoogleAuthParams)
     extends (Client ⇒ Task[Failure Xor FullCard]) {
