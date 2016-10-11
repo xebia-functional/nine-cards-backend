@@ -67,17 +67,18 @@ object Converters {
       community        = data.community
     )
 
-  def toSharedCollection: (BaseSharedCollection, List[String]) ⇒ SharedCollection = {
-    case (collection: SharedCollectionWithAggregatedInfo, packages) ⇒
-      toSharedCollection(collection.sharedCollectionData, packages, Option(collection.subscriptionsCount))
-    case (collection: SharedCollectionServices, packages) ⇒
-      toSharedCollection(collection, packages, None)
+  def toSharedCollection: (BaseSharedCollection, List[String], Long) ⇒ SharedCollection = {
+    case (collection: SharedCollectionWithAggregatedInfo, packages, userId) ⇒
+      toSharedCollection(collection.sharedCollectionData, packages, Option(collection.subscriptionsCount), userId)
+    case (collection: SharedCollectionServices, packages, userId) ⇒
+      toSharedCollection(collection, packages, None, userId)
   }
 
   def toSharedCollection(
     collection: SharedCollectionServices,
     packages: List[String],
-    subscriptionCount: Option[Long]
+    subscriptionCount: Option[Long],
+    userId: Long
   ) =
     SharedCollection(
       publicIdentifier   = collection.publicIdentifier,
@@ -89,6 +90,7 @@ object Converters {
       category           = collection.category,
       icon               = collection.icon,
       community          = collection.community,
+      owned              = collection.userId.fold(false)(user ⇒ user == userId),
       packages           = packages,
       subscriptionsCount = subscriptionCount
     )

@@ -74,7 +74,7 @@ trait NineCardsApiSpecification
     sharedCollectionProcesses.createCollection(any) returns
       Free.pure(Messages.createOrUpdateCollectionResponse)
 
-    sharedCollectionProcesses.getCollectionByPublicIdentifier(any[String], any) returns
+    sharedCollectionProcesses.getCollectionByPublicIdentifier(any, any[String], any) returns
       Free.pure(Messages.getCollectionByPublicIdentifierResponse.right)
 
     sharedCollectionProcesses.subscribe(any[String], any[Long]) returns
@@ -83,7 +83,7 @@ trait NineCardsApiSpecification
     sharedCollectionProcesses.unsubscribe(any[String], any[Long]) returns
       Free.pure(Messages.unsubscribeResponse.right)
 
-    sharedCollectionProcesses.getLatestCollectionsByCategory(any, any, any, any) returns
+    sharedCollectionProcesses.getLatestCollectionsByCategory(any, any, any, any, any) returns
       Free.pure(Messages.getCollectionsResponse)
 
     sharedCollectionProcesses.getPublishedCollections(any[Long], any) returns
@@ -92,7 +92,7 @@ trait NineCardsApiSpecification
     sharedCollectionProcesses.getSubscriptionsByUser(any) returns
       Free.pure(Messages.getSubscriptionsByUserResponse)
 
-    sharedCollectionProcesses.getTopCollectionsByCategory(any, any, any, any) returns
+    sharedCollectionProcesses.getTopCollectionsByCategory(any, any, any, any, any) returns
       Free.pure(Messages.getCollectionsResponse)
 
     sharedCollectionProcesses.updateCollection(any, any, any) returns
@@ -127,7 +127,7 @@ trait NineCardsApiSpecification
       requestUri   = any[String]
     ) returns Free.pure(None)
 
-    sharedCollectionProcesses.getCollectionByPublicIdentifier(any[String], any) returns
+    sharedCollectionProcesses.getCollectionByPublicIdentifier(any, any[String], any) returns
       Free.pure(sharedCollectionNotFoundException.left)
 
     sharedCollectionProcesses.subscribe(any[String], any[Long]) returns
@@ -161,10 +161,10 @@ trait NineCardsApiSpecification
     sharedCollectionProcesses.createCollection(any) returns
       Free.pure(Messages.createOrUpdateCollectionResponse)
 
-    sharedCollectionProcesses.getCollectionByPublicIdentifier(any[String], any) returns
+    sharedCollectionProcesses.getCollectionByPublicIdentifier(any, any[String], any) returns
       Free.pure(Messages.getCollectionByPublicIdentifierResponse.right)
 
-    sharedCollectionProcesses.getLatestCollectionsByCategory(any, any, any, any) returns
+    sharedCollectionProcesses.getLatestCollectionsByCategory(any, any, any, any, any) returns
       Free.pure(Messages.getCollectionsResponse)
 
     sharedCollectionProcesses.getPublishedCollections(any[Long], any) returns
@@ -173,7 +173,7 @@ trait NineCardsApiSpecification
     sharedCollectionProcesses.getSubscriptionsByUser(any) returns
       Free.pure(Messages.getSubscriptionsByUserResponse)
 
-    sharedCollectionProcesses.getTopCollectionsByCategory(any, any, any, any) returns
+    sharedCollectionProcesses.getTopCollectionsByCategory(any, any, any, any, any) returns
       Free.pure(Messages.getCollectionsResponse)
 
     sharedCollectionProcesses.subscribe(any[String], any[Long]) returns
