@@ -56,17 +56,15 @@ class RankingProcesses[F[_]](
     if (deviceApps.isEmpty)
       NineCardsService.right(Map.empty[String, List[RankedDeviceApp]]).value
     else {
-      {
-        for {
-          geoScope ← location.fold(NineCardsService.right[F, GeoScope](WorldScope))(geoScopeFromLocation)
-          rankedApps ← rankingPersistence.getRankingForApps(geoScope, deviceApps.values.flatten.toSet map toUnrankedApp)
-          rankedAppsByCategory = rankedApps.groupBy(_.category).mapValues(_.map(toRankedDeviceApp))
-          unrankedDeviceApps = deviceApps map {
-            case (category, apps) ⇒
-              (category, findAppsWithoutRanking(apps, rankedAppsByCategory.getOrElse(category, Nil)))
-          }
-        } yield rankedAppsByCategory.combine(unrankedDeviceApps)
-      }
+      for {
+        geoScope ← location.fold(NineCardsService.right[F, GeoScope](WorldScope))(geoScopeFromLocation)
+        rankedApps ← rankingPersistence.getRankingForApps(geoScope, deviceApps.values.flatten.toSet map toUnrankedApp)
+        rankedAppsByCategory = rankedApps.groupBy(_.category).mapValues(_.map(toRankedDeviceApp))
+        unrankedDeviceApps = deviceApps map {
+          case (category, apps) ⇒
+            (category, findAppsWithoutRanking(apps, rankedAppsByCategory.getOrElse(category, Nil)))
+        }
+      } yield rankedAppsByCategory.combine(unrankedDeviceApps)
     }.value
   }
 

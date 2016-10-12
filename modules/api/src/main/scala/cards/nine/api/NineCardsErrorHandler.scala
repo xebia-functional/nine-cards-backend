@@ -6,11 +6,11 @@ import spray.httpx.marshalling.ToResponseMarshallingContext
 
 class NineCardsErrorHandler {
 
-  def handleNineCardsErrors(e: NineCardsError, ctx: ToResponseMarshallingContext) = e match {
+  def handleNineCardsErrors(e: NineCardsError, ctx: ToResponseMarshallingContext): Unit = e match {
     case CountryNotFound(_) ⇒ ctx.marshalTo(HttpResponse(status = StatusCodes.NotFound))
   }
 }
 
 object NineCardsErrorHandler {
-  implicit val handler = new NineCardsErrorHandler
+  implicit val handler: NineCardsErrorHandler = new NineCardsErrorHandler
 }
