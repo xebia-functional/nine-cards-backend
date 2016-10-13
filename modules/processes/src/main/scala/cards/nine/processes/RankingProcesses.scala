@@ -53,8 +53,11 @@ class RankingProcesses[F[_]](
 
     def unifyDeviceApps(deviceApps: Map[String, List[DeviceApp]]) = {
       val (games, otherApps) = deviceApps.partition { case (cat, apps) ⇒ cat.matches("GAME\\_.*") }
-      otherApps.combine(Map("GAME" → games.flatMap { case (cat, apps) ⇒ apps }.toList))
 
+      if (games.isEmpty)
+        otherApps
+      else
+        otherApps.combine(Map("GAME" → games.flatMap { case (cat, apps) ⇒ apps }.toList))
     }
 
     if (deviceApps.isEmpty)
