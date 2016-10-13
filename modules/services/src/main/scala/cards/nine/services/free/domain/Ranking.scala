@@ -69,7 +69,7 @@ object rankings {
     ranking: Int
   )
 
-  case class UnrankedApp(packageName: String)
+  case class UnrankedApp(packageName: String, category: String)
 
   case class RankedApp(packageName: String, category: String, ranking: Option[Int])
 
@@ -107,7 +107,8 @@ object rankings {
       s"""
          |CREATE TEMP TABLE $tableName(
          |  packagename character varying(256) NOT NULL,
-         |  PRIMARY KEY (packagename)
+         |  category character varying(64) NOT NULL,
+         |  PRIMARY KEY (packagename, category)
          |)
        """.stripMargin
 
@@ -115,14 +116,15 @@ object rankings {
 
     def insertDeviceApps(tableName: String) =
       s"""
-         |INSERT INTO $tableName(packageName)
-         |VALUES (?)
+         |INSERT INTO $tableName(packageName, category)
+         |VALUES (?,?)
        """.stripMargin
 
-    def getRankedApps(scope: GeoScope, tableName: String) =
+    def getRankedApps(scope: GeoScope, tableName: String, moments: List[String]) =
       s"""
          |SELECT A.packagename, R.category, R.ranking
          |FROM ${tableOf(scope)} as R INNER JOIN $tableName as A ON R.packagename=A.packagename
+         |WHERE R.category=A.category OR R.category IN (${moments.map(m ⇒ s"'$m'").mkString(",")})
          |ORDER BY R.category, R.ranking
        """.stripMargin
   }

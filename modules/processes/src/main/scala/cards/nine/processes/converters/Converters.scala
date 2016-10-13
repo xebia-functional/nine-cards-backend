@@ -163,7 +163,7 @@ object Converters {
       subscriptions map (_.sharedCollectionPublicId)
     )
 
-  def toUnrankedApp(app: DeviceApp) = UnrankedApp(app.packageName)
+  def toUnrankedApp(category: String)(app: DeviceApp) = UnrankedApp(app.packageName, category)
 
   def toRankedDeviceApp(app: RankedApp) = RankedDeviceApp(app.packageName, app.ranking)
 }

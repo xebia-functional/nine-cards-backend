@@ -1,6 +1,7 @@
 package cards.nine.services.free.domain
 
-import enumeratum.{ EnumEntry, Enum }
+import cards.nine.services.free.domain.Category.{ HOME, NIGHT, TRANSIT, WORK }
+import enumeratum.{ Enum, EnumEntry }
 
 case class PackageName(name: String) extends AnyVal
 
@@ -65,10 +66,18 @@ object Category extends Enum[Category] {
 
   /* These Are NineCards MOMENTS, not CategorieS*/
   case object HOME extends Category
+  case object WIDGET_HOME extends Category
   case object WORK extends Category
+  case object WIDGET_WORK extends Category
   case object NIGHT extends Category
+  case object WIDGET_NIGHT extends Category
   case object TRANSIT extends Category
+  case object WIDGET_TRANSIT extends Category
 
   val values = super.findValues
+}
+
+object Moments {
+  val all = List(HOME, WORK, NIGHT, TRANSIT)
 }
 
