@@ -1,6 +1,6 @@
 package cards.nine.googleplay.service.free.interpreter.googleapi
 
-import cards.nine.googleplay.domain.{ FullCard, FullCardList, Package }
+import cards.nine.googleplay.domain.{ FullCard, Package }
 import cards.nine.googleplay.proto.GooglePlay.{ ResponseWrapper, DocV2, ListResponse, SearchResponse }
 import cards.nine.googleplay.service.free.interpreter.TestData.{ fisherPrice, minecraft }
 import java.nio.file.{ Files, Paths }

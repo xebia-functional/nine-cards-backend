@@ -34,6 +34,6 @@ object GooglePlayMessages {
     limit: Int
   )
 
-  case class ApiSearchAppsResponse(apps: List[GooglePlayRecommendation])
+  case class ApiSearchAppsResponse(items: List[GooglePlayRecommendation])
 
 }
