@@ -121,10 +121,12 @@ class ServicesSpec
           .updateRanking(scope, ranking)
           .transactAndRun
 
-        val deviceApps = ranking.categories.values
-          .flatMap(_.ranking)
-          .collect { case p if p.name.length > 10 ⇒ UnrankedApp(p.name) }
-          .toSet
+        val deviceApps = ranking.categories.flatMap {
+          case (cat, ranks) ⇒
+            ranks.ranking.collect {
+              case p if p.name.length > 10 ⇒ UnrankedApp(p.name, cat.entryName)
+            }
+        }.toSet
 
         val rankedApps = rankingPersistenceServices
           .getRankingForApps(scope, deviceApps)
