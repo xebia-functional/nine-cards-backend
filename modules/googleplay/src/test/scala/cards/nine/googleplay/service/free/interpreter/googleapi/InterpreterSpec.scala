@@ -16,7 +16,7 @@ class InterpreterSpec extends Specification with Matchers with MockServer with W
 
   import HttpStatusCode._
   import TaskMatchers._
-  import TestData.fisherPrice
+  import TestData.{ fisherPrice, searchCosmos }
 
   override val mockServerPort = 9995
 
@@ -29,6 +29,7 @@ class InterpreterSpec extends Specification with Matchers with MockServer with W
     bulkDetailsPath     = "/my/bulkdetails/path",
     detailsPath         = "/my/details/path",
     listPath            = "/path/to/list",
+    searchPath          = "/to/searches/path",
     recommendationsPath = "/my/path/to/recommendations"
   )
 
@@ -48,6 +49,22 @@ class InterpreterSpec extends Specification with Matchers with MockServer with W
 
   def run[A](ops: Ops[A]) = interpreter(ops)(pooledClient)
 
+  def checkTokenErrors[A](request: HttpRequest, ops: Ops[Failure Xor A]) = {
+
+    "give a Too Many Request failure if the API replies with an TooManyRequests status" in {
+      val httpResponse = HttpResponse.response.withStatusCode(429)
+      mockServer.when(request).respond(httpResponse)
+      run(ops) must returnValue(Xor.Left(QuotaExceeded(auth)))
+    }
+
+    "return an Unauthorized failure if Google's Api replies with a Unauthorized status" in {
+      val httpResponse = HttpResponse.response.withStatusCode(UNAUTHORIZED_401.code)
+      mockServer.when(request).respond(httpResponse)
+      run(ops) must returnValue(Xor.Left(WrongAuthParams(auth)))
+    }
+
+  }
+
   sequential
 
   "get Details" should {
@@ -58,6 +75,8 @@ class InterpreterSpec extends Specification with Matchers with MockServer with W
       .withQueryStringParameter("doc", fisherPrice.packageName)
       .withHeaders(msHeaders(auth))
 
+    val ops: Ops[Failure Xor FullCard] = GetDetails(fisherPrice.packageObj, auth)
+
     "return 200 OK and the Full Card for a package if Google's API replies as 200 OK" in {
       val httpResponse: HttpResponse = {
         val protobufFile = getClass.getClassLoader.getResource(fisherPrice.packageName)
@@ -67,65 +86,51 @@ class InterpreterSpec extends Specification with Matchers with MockServer with W
           .withBody(byteVector)
       }
       mockServer.when(httpRequest).respond(httpResponse)
-
-      val actual = run(GetDetails(fisherPrice.packageObj, auth))
-      actual must returnValue(Xor.Right(fisherPrice.card))
-    }
-
-    "return an Unauthorized failure if Google's Api replies with a Unauthorized status" in {
-      val httpResponse: HttpResponse =
-        HttpResponse.response.withStatusCode(UNAUTHORIZED_401.code)
-      mockServer.when(httpRequest).respond(httpResponse)
-
-      val actual = run(GetDetails(fisherPrice.packageObj, auth))
-      actual must returnValue(Xor.Left(WrongAuthParams(auth)))
+      run(ops) must returnValue(Xor.Right(fisherPrice.card))
     }
 
     "give a PackageNotFound Failure if the Api replies with a NotFound status" in {
-      val httpResponse: HttpResponse =
-        HttpResponse.response.withStatusCode(NOT_FOUND_404.code)
+      val httpResponse = HttpResponse.response.withStatusCode(NOT_FOUND_404.code)
       mockServer.when(httpRequest).respond(httpResponse)
-
-      val actual = run(GetDetails(fisherPrice.packageObj, auth))
-      actual must returnValue(Xor.Left(PackageNotFound(fisherPrice.packageObj)))
+      run(ops) must returnValue(Xor.Left(PackageNotFound(fisherPrice.packageObj)))
     }
 
-    "give a Too Many Request failure if the API replies with an TooManyRequests status" in {
-      val httpResponse: HttpResponse =
-        HttpResponse.response.withStatusCode(429)
-      mockServer.when(httpRequest).respond(httpResponse)
+    checkTokenErrors(httpRequest, ops)
 
-      val actual = run(GetDetails(fisherPrice.packageObj, auth))
-      actual must returnValue(Xor.Left(QuotaExceeded(auth)))
+  }
+
+  "searchApps" should {
+
+    val httpRequest: HttpRequest = HttpRequest.request
+      .withMethod("GET")
+      .withPath(configuration.searchPath)
+      .withQueryStringParameter("q", searchCosmos.queryWord)
+      .withQueryStringParameter("rt", "1")
+      .withQueryStringParameter("c", "3")
+      .withHeaders(msHeaders(auth))
+
+    val numPacks = 7
+
+    val ops: Ops[Failure Xor List[Package]] = {
+      val request = SearchAppsRequest(word = "cosmos", excludedApps = Nil, maxTotal = numPacks)
+      SearchApps(request, auth)
     }
 
+    "return 200 OK and a list of packages if Google's API replies as 200 OK" in {
+      val httpResponse: HttpResponse = {
+        val protobufFile = getClass.getClassLoader.getResource(searchCosmos.fileName)
+        val byteVector = Files.readAllBytes(Paths.get(protobufFile.getFile))
+        HttpResponse.response
+          .withStatusCode(OK_200.code)
+          .withBody(byteVector)
+      }
+      mockServer.when(httpRequest).respond(httpResponse)
+      run(ops) must returnValue(Xor.Right(searchCosmos.results.take(numPacks)))
+
+    }
+
+    checkTokenErrors(httpRequest, ops)
   }
 
 }
 
-object TestData {
-
-  object fisherPrice {
-    val packageName = "air.fisherprice.com.shapesAndColors"
-    val packageObj = Package(packageName)
-
-    lazy val protobufFile = getClass.getClassLoader.getResource(packageName)
-    lazy val htmlFile = getClass.getClassLoader.getResource(packageName + ".html")
-
-    val card = FullCard(
-      packageName = packageName,
-      title       = "Shapes & Colors Music Show",
-      free        = true,
-      icon        = "http://lh4.ggpht.com/Pb8iLNmi9vHOwB-39TKe-kn4b_uU-E6rn7zSiFz6jC0RlaEQeNCcBh2MueyslcQ3mj2H",
-      stars       = 4.070538520812988,
-      downloads   = "1,000,000+",
-      screenshots = List(
-        "http://lh4.ggpht.com/fi-LxRsm8E5-940Zc5exQQyb4WWt1Q9D4oQFfEMP9oX0sWgV2MmIVAKwjtMN7ns5k7M",
-        "http://lh3.ggpht.com/3ojygv7ZArhODcEq_JTaYx8ap4WwrgU6qYzspYyuEH24byhtqsgSaS0W9YN6A8ySSXA",
-        "http://lh4.ggpht.com/974sdpZY4MiXIDn4Yyutylbh7cecJ7nKhHUz3LA3fAR3HdPwyM3yFUOdmcSlCwWjJiYc"
-      ),
-      categories  = List("EDUCATION")
-    )
-  }
-
-}

@@ -21,6 +21,9 @@ object GoogleApi {
   case class RecommendationsByCategory(request: RecommendByCategoryRequest, auth: GoogleAuthParams)
     extends Ops[InfoError Xor List[Package]]
 
+  case class SearchApps(request: SearchAppsRequest, auth: GoogleAuthParams)
+    extends Ops[Failure Xor List[Package]]
+
   class Services[F[_]](implicit inj: Inject[Ops, F]) {
 
     def getBulkDetails(
@@ -37,6 +40,9 @@ object GoogleApi {
 
     def recommendationsByCategory(request: RecommendByCategoryRequest, auth: GoogleAuthParams): Free[F, InfoError Xor List[Package]] =
       Free.inject[Ops, F](RecommendationsByCategory(request, auth))
+
+    def searchApps(request: SearchAppsRequest, auth: GoogleAuthParams): Free[F, Failure Xor List[Package]] =
+      Free.inject[Ops, F](SearchApps(request, auth))
   }
 
   object Services {

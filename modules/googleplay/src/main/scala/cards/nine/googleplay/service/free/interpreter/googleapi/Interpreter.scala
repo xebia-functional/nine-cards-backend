@@ -10,6 +10,7 @@ import cats.data.Xor
 import cats.instances.list._
 import cats.syntax.monadCombine._
 import cats.syntax.traverse._
+import java.net.URLEncoder
 import org.http4s.Http4s._
 import org.http4s._
 import org.http4s.client.{ Client, UnexpectedStatus }
@@ -26,6 +27,7 @@ class Interpreter(config: Configuration) extends (Ops ~> WithHttpClient) {
     case GetDetails(pack, auth) ⇒ new DetailsWithClient(pack, auth)
     case RecommendationsByApps(request, auth) ⇒ new RecommendationsByAppsWithClient(request, auth)
     case RecommendationsByCategory(request, auth) ⇒ new RecommendationsByCategoryWithClient(request, auth)
+    case SearchApps(request, auth) ⇒ new SearchAppsWithClient(request, auth)
   }
 
   private[this] val baseUri = Uri(
@@ -172,4 +174,36 @@ class Interpreter(config: Configuration) extends (Ops ~> WithHttpClient) {
         case Xor.Right(listResponse) ⇒ Xor.right(Converters.listResponseToPackages(listResponse))
       }
   }
+
+  class SearchAppsWithClient(request: SearchAppsRequest, auth: GoogleAuthParams)
+    extends (Client ⇒ Task[Failure Xor List[Package]]) {
+
+    val httpRequest: Request = new Request(
+      method  = Method.GET,
+      uri     = baseUri
+        .withPath(config.searchPath)
+        .withQueryParam("c", "3")
+        .withQueryParam("rt", "1")
+        .withQueryParam("q", URLEncoder.encode(request.word, "UTF-8")),
+      headers = headers.fullHeaders(auth)
+    )
+
+    def handleUnexpected(e: UnexpectedStatus): Failure = e.status match {
+      case Status.Unauthorized ⇒ WrongAuthParams(auth)
+      case Status.TooManyRequests ⇒ QuotaExceeded(auth)
+      case _ ⇒ GoogleApiServerError
+    }
+
+    def apply(client: Client): Task[Failure Xor List[Package]] =
+      client.expect[ByteVector](httpRequest).map { bv ⇒
+        val searchResponse = ResponseWrapper.parseFrom(bv.toArray).getPayload.getSearchResponse
+        val packages = Converters.searchResponseToPackages(searchResponse)
+        val filtered = packages.diff(request.excludedApps).take(request.maxTotal)
+        Xor.Right(filtered)
+      }.handle {
+        case e: UnexpectedStatus ⇒ Xor.Left(handleUnexpected(e))
+      }
+
+  }
+
 }

@@ -14,4 +14,8 @@ object RecommendationsMessages {
     screenshots: List[String]
   )
 
+  case class RecommendationAppList(apps: List[GooglePlayRecommendation])
+
+  type SearchAppsResponse = RecommendationAppList
+
 }

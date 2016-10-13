@@ -150,6 +150,9 @@ object Converters {
       items = recommendations.apps map toGooglePlayRecommendation
     )
 
+  def toSearchAppsResponse(searchResults: Recommendations): SearchAppsResponse =
+    RecommendationAppList(apps = searchResults.apps map toGooglePlayRecommendation)
+
   def toAuthParamsServices(authParams: AuthParams): AuthParamServices = {
     AuthParamServices(
       androidId    = authParams.androidId,

@@ -29,6 +29,13 @@ object GooglePlay {
     auth: AuthParams
   ) extends Ops[Recommendations]
 
+  case class SearchApps(
+    query: String,
+    excludePackages: List[String],
+    limit: Int,
+    auth: AuthParams
+  ) extends Ops[Recommendations]
+
   class Services[F[_]](implicit I: Inject[Ops, F]) {
 
     def resolve(packageName: String, auth: AuthParams): Free[F, String Xor AppInfo] =
@@ -58,6 +65,15 @@ object GooglePlay {
       auth: AuthParams
     ): Free[F, Recommendations] =
       Free.inject[Ops, F](RecommendationsForApps(packagesName, excludesPackages, limitPerApp, limit, auth))
+
+    def searchApps(
+      query: String,
+      excludesPackages: List[String],
+      limit: Int,
+      auth: AuthParams
+    ): Free[F, Recommendations] =
+      Free.inject[Ops, F](SearchApps(query, excludesPackages, limit, auth))
+
   }
 
   object Services {

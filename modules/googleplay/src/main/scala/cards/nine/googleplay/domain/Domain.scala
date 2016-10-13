@@ -60,3 +60,10 @@ case class RecommendByCategoryRequest(
   excludedApps: List[Package],
   maxTotal: Int
 )
+
+case class SearchAppsRequest(
+  word: String,
+  excludedApps: List[String],
+  maxTotal: Int
+)
+

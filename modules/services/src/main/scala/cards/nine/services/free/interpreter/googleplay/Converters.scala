@@ -24,6 +24,12 @@ object Converters {
       screenshots = card.screenshots
     )
 
+  def toSearchAppsRequest(
+    query: String,
+    excludePackages: List[String],
+    limit: Int
+  ): SearchAppsRequest = SearchAppsRequest(query, excludePackages, limit)
+
   def toRecommendByAppsRequest(
     packages: List[String],
     limitByApp: Int,

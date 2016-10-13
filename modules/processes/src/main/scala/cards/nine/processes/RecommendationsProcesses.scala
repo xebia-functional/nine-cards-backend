@@ -40,6 +40,20 @@ class RecommendationsProcesses[F[_]](implicit services: GooglePlay.Services[F]) 
         limit            = limit,
         auth             = toAuthParamsServices(authParams)
       ) map toGetRecommendationsResponse
+
+  def searchApps(
+    query: String,
+    excludePackages: List[String],
+    limit: Int,
+    authParams: AuthParams
+  ): Free[F, SearchAppsResponse] =
+    services.searchApps(
+      query            = query,
+      excludesPackages = excludePackages,
+      limit            = limit,
+      auth             = toAuthParamsServices(authParams)
+    ) map toSearchAppsResponse
+
 }
 
 object RecommendationsProcesses {

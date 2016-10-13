@@ -9,6 +9,7 @@ case class Configuration(
   bulkDetailsPath: String,
   detailsPath: String,
   listPath: String,
+  searchPath: String,
   recommendationsPath: String
 )
 
@@ -23,6 +24,7 @@ object Configuration {
       bulkDetailsPath     = getApiConf("paths.bulkDetails"),
       detailsPath         = getApiConf("paths.details"),
       listPath            = getApiConf("paths.list"),
+      searchPath          = getApiConf("paths.search"),
       recommendationsPath = getApiConf("paths.recommendations")
     )
   }

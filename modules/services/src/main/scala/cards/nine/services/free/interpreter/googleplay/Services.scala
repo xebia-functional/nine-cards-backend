@@ -67,6 +67,17 @@ class Services(implicit googlePlayProcesses: CardsProcesses[GooglePlayApp]) exte
       Converters.toGoogleAuthParams(auth)
     ).foldMap(Wiring.interpreters).map(Converters.toRecommendations)
 
+  def searchApps(
+    query: String,
+    excludePackages: List[String],
+    limit: Int,
+    auth: AuthParams
+  ): Task[Recommendations] =
+    googlePlayProcesses.searchApps(
+      Converters.toSearchAppsRequest(query, excludePackages, limit),
+      Converters.toGoogleAuthParams(auth)
+    ).foldMap(Wiring.interpreters).map(Converters.toRecommendations)
+
   def apply[A](fa: Ops[A]): Task[A] = fa match {
     case ResolveMany(packageNames, auth, basicInfo) ⇒
       resolveMany(packageNames, auth, basicInfo)
@@ -76,6 +87,8 @@ class Services(implicit googlePlayProcesses: CardsProcesses[GooglePlayApp]) exte
       recommendByCategory(category, filter, excludesPackages, limit, auth)
     case RecommendationsForApps(packagesName, excludesPackages, limitPerApp, limit, auth) ⇒
       recommendationsForApps(packagesName, excludesPackages, limitPerApp, limit, auth)
+    case SearchApps(query, excludePackages, limit, auth) ⇒
+      searchApps(query, excludePackages, limit, auth)
   }
 }
 

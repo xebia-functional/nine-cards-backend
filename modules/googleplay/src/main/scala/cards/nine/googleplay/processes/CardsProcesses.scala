@@ -5,12 +5,11 @@ import cats.free.Free
 import cats.instances.list._
 import cats.syntax.monadCombine._
 import cats.syntax.traverse._
-import cards.nine.commons.FreeUtils._
+import cats.syntax.xor._
 import cards.nine.googleplay.domain._
 import cards.nine.googleplay.domain.apigoogle.{ Failure ⇒ ApiFailure }
 import cards.nine.googleplay.domain.webscrapper._
 import cards.nine.googleplay.service.free.algebra.{ Cache, GoogleApi, WebScraper }
-import cards.nine.googleplay.service.free.interpreter.googleapi.Converters
 import org.joda.time.DateTime
 
 class CardsProcesses[F[_]](
@@ -66,34 +65,29 @@ class CardsProcesses[F[_]](
   def recommendationsByCategory(
     request: RecommendByCategoryRequest,
     auth: GoogleAuthParams
-  ): Free[F, InfoError Xor FullCardList] = {
-
-    val recommendations = for {
-      recommendations ← googleApi.recommendationsByCategory(request, auth).toXorT
-      packages = recommendations.diff(request.excludedApps).take(request.maxTotal)
-      resolvedPackages ← packages.traverse[Free[F, ?], getcard.Response](
-        p ⇒ resolveNewPackage(p, auth)
-      ).toXorTRight[InfoError]
-    } yield resolvedPackages.map(xor ⇒ xor.bimap(e ⇒ InfoError(e.packageName.value), c ⇒ c))
-
-    recommendations.map(Converters.toFullCardListXors).value
-  }
+  ): Free[F, InfoError Xor FullCardList] =
+    googleApi.recommendationsByCategory(request, auth) flatMap {
+      case ll @ Xor.Left(_) ⇒ Free.pure(ll)
+      case Xor.Right(recommendations) ⇒
+        val packages = recommendations.diff(request.excludedApps).take(request.maxTotal)
+        resolveNewPackageList(packages, auth).map(_.right[InfoError])
+    }
 
   def recommendationsByApps(
     request: RecommendByAppsRequest,
     auth: GoogleAuthParams
-  ): Free[F, FullCardList] = {
-
-    val recommendations = for {
+  ): Free[F, FullCardList] =
+    for /*Free[F,?]*/ {
       recommendations ← googleApi.recommendationsByApps(request, auth)
       packages = recommendations.diff(request.excludedApps).take(request.maxTotal)
-      resolvedPackages ← packages.traverse[Free[F, ?], getcard.Response](
-        p ⇒ resolveNewPackage(p, auth)
-      )
-    } yield resolvedPackages.map(xor ⇒ xor.bimap(e ⇒ InfoError(e.packageName.value), c ⇒ c))
+      resolvedPackages ← resolveNewPackageList(packages, auth)
+    } yield resolvedPackages
 
-    recommendations.map(Converters.toFullCardListXors)
-  }
+  def searchApps(request: SearchAppsRequest, auth: GoogleAuthParams): Free[F, FullCardList] =
+    googleApi.searchApps(request, auth) flatMap {
+      case Xor.Left(_) ⇒ Free.pure(FullCardList(Nil, Nil))
+      case Xor.Right(packs) ⇒ resolveNewPackageList(packs, auth)
+    }
 
   private[this] def checkValidPackagesInCache(packages: List[Package]) =
     packages.traverse[Free[F, ?], Package Xor FullCard] { p ⇒
@@ -127,6 +121,12 @@ class CardsProcesses[F[_]](
     } yield splitStatus(status)
 
   }
+
+  def resolveNewPackageList(packs: List[Package], auth: GoogleAuthParams): Free[F, FullCardList] =
+    for {
+      xors ← packs.traverse[Free[F, ?], getcard.Response](p ⇒ resolveNewPackage(p, auth))
+      (fails, apps) = xors.separate
+    } yield FullCardList(fails.map(e ⇒ e.packageName.value), apps)
 
   def resolveNewPackage(pack: Package, auth: GoogleAuthParams): Free[F, getcard.Response] = {
 

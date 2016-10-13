@@ -1,22 +1,24 @@
 package cards.nine.googleplay.service.free.interpreter.googleapi
 
 import cards.nine.googleplay.domain._
-import cards.nine.googleplay.proto.GooglePlay.{ ListResponse, DocV2 }
-import cats.data.Xor
-import cats.instances.list._
-import cats.syntax.monadCombine._
+import cards.nine.googleplay.proto.GooglePlay.{ ListResponse, DocV2, SearchResponse }
 import scala.collection.JavaConversions._
 
 object Converters {
 
-  def listResponseToPackages(listResponse: ListResponse): List[Package] = {
+  def listResponseToPackages(listResponse: ListResponse): List[Package] =
+    extractPackageList(listResponse.getDocList.toList)
+
+  def searchResponseToPackages(searchResponse: SearchResponse): List[Package] =
+    extractPackageList(searchResponse.getDocList.toList)
+
+  private def extractPackageList(docList: List[DocV2]): List[Package] =
     for /*List*/ {
-      app ← listResponse.getDocList.toList
+      app ← docList
       doc ← app.getChildList.toList
       docId = doc.getDocid
       if !docId.isEmpty
     } yield Package(docId)
-  }
 
   def listResponseListToPackages(listResponses: List[ListResponse]): List[Package] =
     listResponses.flatMap(listResponseToPackages).distinct
@@ -58,11 +60,6 @@ object Converters {
 
   def toFullCard(docV2: DocV2): FullCard = new WrapperDocV2(docV2).toFullCard
 
-  def toFullCardList(listResponse: ListResponse): FullCardList = {
-    val docs: List[DocV2] = listResponse.getDoc(0).getChildList().toList
-    toFullCardList(docs)
-  }
-
   def toFullCardList(docs: List[DocV2]): FullCardList = {
     val apps: List[FullCard] = for /*List*/ {
       doc ← docs
@@ -71,11 +68,6 @@ object Converters {
       // If a DocV2 corresponds to no app, it is a DefaultInstance and as such has an empty docId
     } yield wr.toFullCard
     FullCardList(List(), apps)
-  }
-
-  def toFullCardListXors(xors: List[InfoError Xor FullCard]): FullCardList = {
-    val (errs, apps) = xors.separate
-    FullCardList(errs.map(_.message), apps)
   }
 
 }
