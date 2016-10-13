@@ -21,22 +21,6 @@ class InterpretersIntegration extends Specification with WithHttp1Client {
 
     val auth = GoogleAuthParams(AndroidId(""), Token(""), Some(localization))
 
-    "result in an Item for packages that exist" in {
-      val appRequest = AppRequest(fisherPrice.packageObj, auth)
-      val response: Task[Xor[String, Item]] = webClient.getItem(appRequest)
-      val relevantDetails = response.map(_.map { i: Item ⇒
-        (i.docV2.docid, i.docV2.details.appDetails.appCategory, i.docV2.title)
-      })
-      val expected = (fisherPrice.packageName, fisherPrice.card.categories, fisherPrice.card.title)
-      relevantDetails must returnValue(Xor.right(expected))
-    }
-
-    "result in an error state for packages that do not exist" in {
-      val appRequest = AppRequest(nonexisting.packageObj, auth)
-      val response = webClient.getItem(appRequest)
-      response must returnValue(Xor.left(nonexisting.packageName))
-    }
-
     "result in an FullCard for packages that exist" in {
       val appRequest = AppRequest(fisherPrice.packageObj, auth)
       val response: Task[Xor[InfoError, FullCard]] = webClient.getCard(appRequest)

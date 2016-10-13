@@ -1,6 +1,6 @@
 package cards.nine.googleplay.service.free.interpreter.googleapi
 
-import cards.nine.googleplay.domain.{ DocV2 ⇒ DomainDocV2, _ }
+import cards.nine.googleplay.domain._
 import cards.nine.googleplay.proto.GooglePlay.{ ListResponse, DocV2 }
 import cats.data.Xor
 import cats.instances.list._
@@ -54,36 +54,7 @@ object Converters {
       categories  = categories
     )
 
-    def toItem(): Item = {
-      val details = docV2.getDetails
-      val appDetails = details.getAppDetails
-      val agg = docV2.getAggregateRating
-
-      Item(DomainDocV2(
-        title           = title,
-        creator         = docV2.getCreator,
-        docid           = docid,
-        details         = Details(appDetails = AppDetails(
-          appCategory  = appDetails.getAppCategoryList.toList,
-          numDownloads = appDetails.getNumDownloads,
-          permission   = appDetails.getPermissionList.toList
-        )),
-        aggregateRating = AggregateRating(
-          ratingsCount     = agg.getRatingsCount,
-          oneStarRatings   = agg.getOneStarRatings,
-          twoStarRatings   = agg.getTwoStarRatings,
-          threeStarRatings = agg.getThreeStarRatings,
-          fourStarRatings  = agg.getFourStarRatings,
-          fiveStarRatings  = agg.getFiveStarRatings,
-          starRating       = agg.getStarRating
-        ),
-        image           = Nil,
-        offer           = Nil
-      ))
-    }
   }
-
-  def toItem(docV2: DocV2): Item = new WrapperDocV2(docV2).toItem
 
   def toFullCard(docV2: DocV2): FullCard = new WrapperDocV2(docV2).toFullCard
 

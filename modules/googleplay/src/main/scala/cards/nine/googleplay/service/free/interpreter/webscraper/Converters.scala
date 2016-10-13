@@ -109,34 +109,7 @@ object GooglePlayPageParser {
 
     def parseCard(): Option[FullCard] = parseCardAux.headOption
 
-    def parseItem(): Option[Item] =
-      for { /*Option*/
-        title: String ← getTitle().headOption
-        docId: String ← getDocId().headOption
-        downloads ← getDownloads().headOption
-      } yield Item(
-        DocV2(
-          title           = title,
-          creator         = "",
-          docid           = docId,
-          details         = Details(appDetails = AppDetails(
-            appCategory  = getCategories().toList,
-            numDownloads = downloads,
-            permission   = Nil
-          )),
-          aggregateRating = AggregateRating.Zero,
-          image           = Nil,
-          offer           = Nil
-        )
-      )
-
   }
-
-  def parseItem(byteVector: ByteVector): Option[Item] =
-    parseItemAux(decodeNode(byteVector))
-
-  def parseItemAux(document: Node): Option[Item] =
-    new NodeWrapper(document).parseItem()
 
   def parseCard(byteVector: ByteVector): Option[FullCard] =
     parseCardAux(decodeNode(byteVector))

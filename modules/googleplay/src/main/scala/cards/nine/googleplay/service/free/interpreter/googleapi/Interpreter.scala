@@ -1,7 +1,7 @@
 package cards.nine.googleplay.service.free.interpreter.googleapi
 
 import cards.nine.commons.TaskInstances._
-import cards.nine.googleplay.domain.{ Details ⇒ _, _ }
+import cards.nine.googleplay.domain._
 import cards.nine.googleplay.domain.apigoogle._
 import cards.nine.googleplay.proto.GooglePlay.{ BulkDetailsRequest, DocV2, ResponseWrapper }
 import cards.nine.googleplay.service.free.algebra.GoogleApi._
