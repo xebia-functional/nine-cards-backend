@@ -26,17 +26,11 @@ object ScalaCheck {
   implicit val arbFullCard: Arbitrary[FullCard] =
     ScalaCheck_Aux.arbFullCard
 
-  implicit val arbItem: Arbitrary[Item] =
-    ScalaCheck_Aux.arbItem
-
   implicit val arbString: Arbitrary[String] =
     ScalaCheck_Aux.arbString
 
   implicit val arbGetCardAnswer: Arbitrary[Xor[InfoError, FullCard]] =
     ScalaCheck_Aux.arbGetCardAnswer
-
-  implicit val arbResolveAnswer: Arbitrary[Xor[String, Item]] =
-    ScalaCheck_Aux.arbResolveAnswer
 
   implicit val arbCategory: Arbitrary[Category] =
     ScalaCheck_Aux.arbCategory
@@ -100,37 +94,10 @@ object ScalaCheck_Aux {
 
   val arbFullCard: Arbitrary[FullCard] = Arbitrary(genFullCard)
 
-  val arbItem: Arbitrary[Item] = Arbitrary(for {
-    title ← identifier
-    docid ← identifier
-    appDetails ← listOf(identifier)
-  } yield Item(
-    DocV2(
-      title           = title,
-      creator         = "",
-      docid           = docid,
-      details         = Details(
-        appDetails = AppDetails(
-          appCategory  = appDetails,
-          numDownloads = "",
-          permission   = Nil
-        )
-      ),
-      aggregateRating = AggregateRating.Zero,
-      image           = Nil,
-      offer           = Nil
-    )
-  ))
-
   val arbGetCardAnswer = {
     implicit val app: Arbitrary[FullCard] = arbFullCard
     implicit val fail: Arbitrary[String] = arbString
     implicitly[Arbitrary[Xor[InfoError, FullCard]]]
-  }
-
-  val arbResolveAnswer: Arbitrary[Xor[String, Item]] = {
-    implicit val item: Arbitrary[Item] = arbItem
-    implicitly[Arbitrary[Xor[String, Item]]]
   }
 
 }

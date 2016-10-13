@@ -1,6 +1,6 @@
 package cards.nine.googleplay.service.free.interpreter.googleapi
 
-import cards.nine.googleplay.domain.{ FullCard, FullCardList, Item, Package }
+import cards.nine.googleplay.domain.{ FullCard, FullCardList, Package }
 import cards.nine.googleplay.proto.GooglePlay.{ ResponseWrapper, DocV2, ListResponse }
 import cards.nine.googleplay.service.free.interpreter.TestData.{ fisherPrice, minecraft }
 import java.nio.file.{ Files, Paths }
@@ -22,12 +22,6 @@ class ConvertersSpec extends Specification {
   def getListResponse(rw: ResponseWrapper): ListResponse = rw.getPayload.getListResponse
 
   "From a DocV2 carrying an application's details, it " should {
-
-    "result in an Item to send to the client" in {
-      val docV2: DocV2 = getDetailsResponse(readProtobufFile(fisherPrice.packageName))
-      val item: Item = toItem(docV2)
-      item.docV2.docid must_=== fisherPrice.packageName
-    }
 
     "result in a Card to send to the client" in {
       val docV2: DocV2 = getDetailsResponse(readProtobufFile(fisherPrice.packageName))

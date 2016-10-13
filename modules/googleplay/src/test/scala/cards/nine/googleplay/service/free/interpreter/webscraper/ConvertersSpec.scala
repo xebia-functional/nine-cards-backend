@@ -22,15 +22,6 @@ class ConvertersSpec extends Specification {
   def failTest(s: String) = throw new RuntimeException(s)
 
   "Parsing the HTML for the play store" should {
-    "result in an Item to send to the client" in {
-      val parsedItem = GooglePlayPageParser
-        .parseItemAux(readHtmlFile(fisherPrice.packageName))
-        .getOrElse(failTest("Item should parse correctly"))
-
-      parsedItem.docV2.details.appDetails.appCategory must_=== fisherPrice.card.categories
-      parsedItem.docV2.docid must_=== fisherPrice.packageName
-      parsedItem.docV2.title must_=== fisherPrice.card.title
-    }
 
     "result in an FullCard to send to the client" in {
       val card = GooglePlayPageParser
