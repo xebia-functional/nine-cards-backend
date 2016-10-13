@@ -1,6 +1,6 @@
 package cards.nine.services.free.algebra
 
-import cards.nine.domain.application.{ FullCard, FullCardList, Package }
+import cards.nine.domain.application.{ FullCard, FullCardList, Package, PriceFilter }
 import cards.nine.domain.market.MarketCredentials
 import cats.data.Xor
 import cats.free.{ Free, Inject }
@@ -17,7 +17,7 @@ object GooglePlay {
 
   case class RecommendationsByCategory(
     category: String,
-    priceFilter: String,
+    priceFilter: PriceFilter,
     excludesPackages: List[Package],
     limit: Int,
     auth: MarketCredentials
@@ -52,7 +52,7 @@ object GooglePlay {
 
     def recommendByCategory(
       category: String,
-      priceFilter: String,
+      priceFilter: PriceFilter,
       excludesPackages: List[Package],
       limit: Int,
       auth: MarketCredentials

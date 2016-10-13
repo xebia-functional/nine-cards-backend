@@ -1,6 +1,6 @@
 package cards.nine.services.free.interpreter.googleplay
 
-import cards.nine.domain.application.{ Category, FullCardList, Package }
+import cards.nine.domain.application.{ Category, FullCardList, Package, PriceFilter }
 import cards.nine.googleplay.domain._
 import cards.nine.googleplay.processes.{ getcard, ResolveMany }
 import cats.instances.list._
@@ -32,13 +32,13 @@ object Converters {
 
   def toRecommendByCategoryRequest(
     category: String,
-    filter: String,
+    filter: PriceFilter,
     excludedPackages: List[Package],
     limit: Int
   ): RecommendByCategoryRequest =
     RecommendByCategoryRequest(
       Category.withName(category),
-      PriceFilter.withName(filter),
+      filter,
       excludedPackages,
       limit
     )

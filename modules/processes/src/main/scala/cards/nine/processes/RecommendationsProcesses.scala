@@ -1,6 +1,6 @@
 package cards.nine.processes
 
-import cards.nine.domain.application.{ FullCardList, Package }
+import cards.nine.domain.application.{ FullCardList, Package, PriceFilter }
 import cards.nine.domain.market.MarketCredentials
 import cards.nine.services.free.algebra.GooglePlay
 import cats.free.Free
@@ -9,7 +9,7 @@ class RecommendationsProcesses[F[_]](implicit services: GooglePlay.Services[F]) 
 
   def getRecommendationsByCategory(
     category: String,
-    filter: String,
+    filter: PriceFilter,
     excludePackages: List[Package],
     limit: Int,
     marketAuth: MarketCredentials

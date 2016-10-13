@@ -4,11 +4,11 @@ import java.util.UUID
 
 import cards.nine.api.NineCardsHeaders.Domain._
 import cards.nine.api.NineCardsHeaders._
-import cards.nine.api.messages.PathEnumerations.PriceFilter
 import cards.nine.api.messages.UserMessages.ApiLoginRequest
 import cards.nine.api.utils.SprayMatchers.PriceFilterSegment
 import cards.nine.api.utils.TaskDirectives._
 import cards.nine.domain.account._
+import cards.nine.domain.application.PriceFilter
 import cards.nine.domain.market.{ MarketToken, Localization }
 import cards.nine.processes.NineCardsServices._
 import cards.nine.processes._

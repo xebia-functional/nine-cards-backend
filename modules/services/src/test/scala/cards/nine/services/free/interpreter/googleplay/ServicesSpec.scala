@@ -1,7 +1,7 @@
 package cards.nine.services.free.interpreter.googleplay
 
 import cards.nine.domain.account.AndroidId
-import cards.nine.domain.application.{ Category, FullCard, FullCardList, Package }
+import cards.nine.domain.application.{ Category, FullCard, FullCardList, Package, PriceFilter }
 import cards.nine.domain.market.{ Localization, MarketCredentials, MarketToken }
 import cards.nine.googleplay.domain._
 import cards.nine.googleplay.processes.getcard.{ FailedResponse, UnknownPackage }
@@ -58,7 +58,7 @@ class GooglePlayServicesSpec
 
     val numPerApp = 25
 
-    val priceFilter = "FREE"
+    val priceFilter = PriceFilter.FREE
 
     object AuthData {
       val androidId = "12345"

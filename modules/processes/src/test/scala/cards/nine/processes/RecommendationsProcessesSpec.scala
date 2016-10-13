@@ -1,7 +1,7 @@
 package cards.nine.processes
 
 import cards.nine.domain.account.AndroidId
-import cards.nine.domain.application.{ FullCard, FullCardList, Package }
+import cards.nine.domain.application.{ FullCard, FullCardList, Package, PriceFilter }
 import cards.nine.domain.market.{ Localization, MarketCredentials, MarketToken }
 import cards.nine.processes.NineCardsServices._
 import cards.nine.services.free.algebra.GooglePlay.Services
@@ -92,7 +92,7 @@ trait RecommendationsProcessesContext {
 
   val smallLimit = 1
 
-  val recommendationFilter = "ALL"
+  val recommendationFilter = PriceFilter.ALL
 
   val recommendations = FullCardList(Nil, recommendedApps)
 }

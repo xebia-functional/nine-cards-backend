@@ -1,9 +1,7 @@
 package cards.nine.googleplay.domain
 
-import cards.nine.domain.application.{ Category, Package }
+import cards.nine.domain.application.{ Category, Package, PriceFilter }
 import cards.nine.domain.market.MarketCredentials
-
-import enumeratum.{ Enum, EnumEntry }
 
 case class AppRequest(
   packageName: Package,
@@ -13,15 +11,6 @@ case class AppRequest(
 case class PackageList(items: List[Package]) extends AnyVal
 
 case class InfoError(message: String) extends AnyVal
-
-sealed trait PriceFilter extends EnumEntry
-object PriceFilter extends Enum[PriceFilter] {
-  case object ALL extends PriceFilter
-  case object FREE extends PriceFilter
-  case object PAID extends PriceFilter
-
-  val values = super.findValues
-}
 
 case class RecommendByAppsRequest(
   searchByApps: List[Package],

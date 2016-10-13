@@ -6,14 +6,13 @@ import cards.nine.api.NineCardsHeaders.Domain._
 import cards.nine.api.converters.Converters._
 import cards.nine.api.messages.GooglePlayMessages._
 import cards.nine.api.messages.InstallationsMessages._
-import cards.nine.api.messages.PathEnumerations.PriceFilter
 import cards.nine.api.messages.SharedCollectionMessages._
 import cards.nine.api.messages.UserMessages._
 import cards.nine.api.utils.SprayMarshallers._
 import cards.nine.api.utils.SprayMatchers._
 import cards.nine.domain.account.SessionToken
 import cards.nine.domain.analytics.{ ContinentScope, CountryScope, GeoScope, WorldScope }
-import cards.nine.domain.application.{ FullCardList, Category }
+import cards.nine.domain.application.{ FullCardList, Category, PriceFilter }
 import cards.nine.commons.NineCardsService.Result
 import cards.nine.processes.NineCardsServices._
 import cards.nine.processes._
@@ -353,7 +352,7 @@ class NineCardsRoutes(
     recommendationsProcesses
       .getRecommendationsByCategory(
         category.entryName,
-        priceFilter.entryName,
+        priceFilter,
         request.excludePackages,
         request.limit,
         toMarketAuth(googlePlayContext, userContext)

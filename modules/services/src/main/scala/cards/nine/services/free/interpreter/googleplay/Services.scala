@@ -1,7 +1,7 @@
 package cards.nine.services.free.interpreter.googleplay
 
 import cards.nine.commons.TaskInstances._
-import cards.nine.domain.application.{ FullCard, FullCardList, Package }
+import cards.nine.domain.application.{ FullCard, FullCardList, Package, PriceFilter }
 import cards.nine.domain.market.MarketCredentials
 import cards.nine.googleplay.processes.Wiring.GooglePlayApp
 import cards.nine.googleplay.processes.{ CardsProcesses, Wiring }
@@ -37,7 +37,7 @@ class Services(implicit googlePlayProcesses: CardsProcesses[GooglePlayApp]) exte
 
   def recommendByCategory(
     category: String,
-    filter: String,
+    filter: PriceFilter,
     excludedPackages: List[Package],
     limit: Int,
     auth: MarketCredentials
