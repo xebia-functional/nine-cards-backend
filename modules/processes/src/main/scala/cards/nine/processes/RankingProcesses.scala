@@ -1,5 +1,8 @@
 package cards.nine.processes
 
+import cards.nine.commons.NineCardsErrors.{ CountryNotFound, NineCardsError }
+import cards.nine.commons.NineCardsService
+import cards.nine.commons.NineCardsService._
 import cards.nine.processes.converters.Converters._
 import cards.nine.processes.messages.rankings.GetRankedDeviceApps.{ DeviceApp, RankedDeviceApp }
 import cards.nine.processes.messages.rankings._
@@ -7,10 +10,11 @@ import cards.nine.services.common.FreeUtils._
 import cards.nine.services.free.algebra
 import cards.nine.services.free.algebra.GoogleAnalytics
 import cards.nine.services.free.domain.rankings._
-import cats.data.Xor
+import cats.data.{ EitherT, Xor }
 import cats.free.Free
 import cats.instances.list._
 import cats.instances.map._
+import cats.syntax.either._
 import cats.syntax.semigroup._
 
 class RankingProcesses[F[_]](
@@ -35,7 +39,7 @@ class RankingProcesses[F[_]](
   def getRankedDeviceApps(
     location: Option[String],
     deviceApps: Map[String, List[DeviceApp]]
-  ): Free[F, Map[String, List[RankedDeviceApp]]] = {
+  ): Free[F, Result[Map[String, List[RankedDeviceApp]]]] = {
 
     def findAppsWithoutRanking(apps: List[DeviceApp], rankings: List[RankedDeviceApp]) =
       apps.collect {
@@ -44,17 +48,16 @@ class RankingProcesses[F[_]](
 
       }
 
-    def geoScopeFromLocation(isoCode: String): Free[F, GeoScope] =
-      countryPersistence.getCountryByIsoCode2(isoCode.toUpperCase) map {
-        case Some(country) ⇒ country.toGeoScope
-        case _ ⇒ WorldScope
-      }
+    def geoScopeFromLocation(isoCode: String): NineCardsService[F, GeoScope] =
+      countryPersistence.getCountryByIsoCode2(isoCode.toUpperCase)
+        .map(_.toGeoScope)
+        .recover { case _: CountryNotFound ⇒ WorldScope }
 
     if (deviceApps.isEmpty)
-      Map.empty[String, List[RankedDeviceApp]].toFree
+      NineCardsService.right(Map.empty[String, List[RankedDeviceApp]]).value
     else {
       for {
-        geoScope ← location.fold(Free.pure[F, GeoScope](WorldScope))(geoScopeFromLocation)
+        geoScope ← location.fold(NineCardsService.right[F, GeoScope](WorldScope))(geoScopeFromLocation)
         rankedApps ← rankingPersistence.getRankingForApps(geoScope, deviceApps.values.flatten.toSet map toUnrankedApp)
         rankedAppsByCategory = rankedApps.groupBy(_.category).mapValues(_.map(toRankedDeviceApp))
         unrankedDeviceApps = deviceApps map {
@@ -62,7 +65,7 @@ class RankingProcesses[F[_]](
             (category, findAppsWithoutRanking(apps, rankedAppsByCategory.getOrElse(category, Nil)))
         }
       } yield rankedAppsByCategory.combine(unrankedDeviceApps)
-    }
+    }.value
   }
 
   private[this] def setAux(scope: GeoScope, ranking: Ranking): Free[F, Reload.XorResponse] =

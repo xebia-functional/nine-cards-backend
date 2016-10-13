@@ -1,14 +1,19 @@
 package cards.nine.processes
 
+import cards.nine.commons.NineCardsService
+import cards.nine.commons.NineCardsService.Result
 import cards.nine.processes.NineCardsServices._
 import cards.nine.processes.TestData.Values._
 import cards.nine.processes.TestData.rankings._
 import cards.nine.processes.messages.rankings.GetRankedDeviceApps.RankedDeviceApp
 import cards.nine.processes.messages.rankings._
 import cards.nine.services.free.algebra.{ Country, GoogleAnalytics, Ranking }
+import cards.nine.services.free.domain
 import cards.nine.services.free.domain.rankings.UpdateRankingSummary
+import cats.Id
 import cats.data.Xor
 import cats.free.Free
+import cats.syntax.either._
 import org.mockito.Matchers.{ eq ⇒ mockEq }
 import org.specs2.matcher.{ Matcher, Matchers, XorMatchers }
 import org.specs2.mock.Mockito
@@ -46,24 +51,24 @@ trait RankingsProcessesSpecification
       params = mockEq(params)
     ) returns Free.pure(Xor.right(ranking))
 
-    countryServices.getCountryByIsoCode2("US") returns Free.pure(Option(country))
+    countryServices.getCountryByIsoCode2("US") returns NineCardsService.right(country)
 
     rankingServices.getRanking(any) returns Free.pure(ranking)
 
     rankingServices.updateRanking(scope, ranking) returns Free.pure(UpdateRankingSummary(0, 0))
 
-    rankingServices.getRankingForApps(any, any) returns Free.pure(rankedAppsList)
+    rankingServices.getRankingForApps(any, any) returns NineCardsService.right(rankedAppsList)
   }
 
   trait UnsuccessfulScope extends BasicScope {
 
     analyticsServices.getRanking(any, any) returns Free.pure(Xor.left(TestData.rankings.error))
 
-    countryServices.getCountryByIsoCode2("US") returns Free.pure(countryNotFound)
+    countryServices.getCountryByIsoCode2("US") returns NineCardsService.left(countryNotFoundError)
 
     rankingServices.getRanking(any) returns Free.pure(ranking)
 
-    rankingServices.getRankingForApps(any, any) returns Free.pure(emptyRankedAppsList)
+    rankingServices.getRankingForApps(any, any) returns NineCardsService.right(emptyRankedAppsList)
   }
 
 }
@@ -91,17 +96,21 @@ class RankingsProcessesSpec extends RankingsProcessesSpecification {
     "return an empty response if no device apps are given" in new SuccessfulScope {
       val response = rankingProcesses.getRankedDeviceApps(location, emptyDeviceAppsMap)
 
-      response.foldMap(testInterpreters) must beEmpty
+      response.foldMap(testInterpreters) must beRight[Map[String, List[RankedDeviceApp]]](Map.empty[String, List[RankedDeviceApp]])
     }
     "return all the device apps as ranked if there is ranking info for them" in new SuccessfulScope {
       val response = rankingProcesses.getRankedDeviceApps(location, deviceAppsMap)
 
-      response.foldMap(testInterpreters).values.flatten must contain(hasRankingInfo(true)).forall
+      response.foldMap(testInterpreters) must beRight[Map[String, List[RankedDeviceApp]]].which { r ⇒
+        r.values.flatten must contain(hasRankingInfo(true)).forall
+      }
     }
     "return all the device apps as unranked if there is no ranking info for them" in new UnsuccessfulScope {
       val response = rankingProcesses.getRankedDeviceApps(location, deviceAppsMap)
 
-      response.foldMap(testInterpreters).values.flatten must contain(hasRankingInfo(false)).forall
+      response.foldMap(testInterpreters) must beRight[Map[String, List[RankedDeviceApp]]].which { r ⇒
+        r.values.flatten must contain(hasRankingInfo(false)).forall
+      }
     }
 
   }

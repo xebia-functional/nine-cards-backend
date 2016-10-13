@@ -31,7 +31,8 @@ trait Dependencies {
   val newRelic = "com.newrelic.agent.java" % "newrelic-agent" % Versions.newRelic
   def enumeratum(suffix: String) = "com.beachape" %% s"enumeratum$suffix" % Versions.enumeratum
 
-  val baseDepts = Seq(
+  val baseDeps = Seq(
+    cats,
     typesafeConfig,
     hasher,
     scalaz,
@@ -42,7 +43,7 @@ trait Dependencies {
     specs2Scalacheck % "test",
     scalacheckShapeless % "test")
 
-  val apiDeps = Seq(libraryDependencies ++= baseDepts ++ Seq(
+  val apiDeps = Seq(libraryDependencies ++= baseDeps ++ Seq(
     sprayHttp,
     sprayJson,
     sprayRouting,
@@ -54,12 +55,21 @@ trait Dependencies {
     akkaTestKit % "test",
     cats % "test"))
 
-  val processesDeps = Seq(libraryDependencies ++= baseDepts)
+  val processesDeps = Seq(libraryDependencies ++= baseDeps)
 
-  val servicesDeps = Seq(libraryDependencies ++= baseDepts ++ Seq(
+  val commonsDeps = Seq(libraryDependencies ++= baseDeps ++ Seq(
+    circe("-core"),
+    circe("-generic"),
+    doobie("-core"),
+    doobie("-contrib-h2"),
+    doobie("-contrib-hikari"),
+    doobie("-contrib-postgresql"),
+    doobie("-contrib-specs2") % "test"
+  ))
+
+  val servicesDeps = Seq(libraryDependencies ++= baseDeps ++ Seq(
     jodaConvert,
     jodaTime,
-    cats,
     doobie("-core"),
     doobie("-contrib-h2"),
     doobie("-contrib-hikari"),

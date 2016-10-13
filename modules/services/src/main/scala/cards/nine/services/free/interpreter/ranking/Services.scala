@@ -3,10 +3,12 @@ package cards.nine.services.free.interpreter.ranking
 import java.security.MessageDigest
 import java.util.UUID
 
+import cards.nine.commons.NineCardsService.Result
 import cards.nine.services.free.algebra.Ranking._
 import cards.nine.services.free.domain.Category
 import cards.nine.services.free.domain.rankings._
 import cards.nine.services.persistence.{ CustomComposite, Persistence }
+import cats.syntax.either._
 import cats.~>
 import doobie.imports._
 
@@ -23,8 +25,10 @@ class Services(persistence: Persistence[Entry]) extends (Ops ~> ConnectionIO) {
     def fromEntries(entries: List[Entry]): Ranking = {
       def toCategoryRanking(catEntries: List[Entry]): CategoryRanking =
         CategoryRanking(catEntries.sortBy(_.ranking).map(_.packageName))
+
       Ranking(entries.groupBy(_.category).mapValues(toCategoryRanking))
     }
+
     persistence.fetchList(Queries.getBy(scope)).map(fromEntries)
   }
 
@@ -34,6 +38,7 @@ class Services(persistence: Persistence[Entry]) extends (Ops ~> ConnectionIO) {
         catrank.ranking.zipWithIndex.map {
           case (packageName, index0) ⇒ Entry(packageName, category, index0 + 1)
         }
+
       ranking.categories.toList.flatMap((toEntries _).tupled)
     }
 
@@ -43,7 +48,10 @@ class Services(persistence: Persistence[Entry]) extends (Ops ~> ConnectionIO) {
     } yield UpdateRankingSummary(ins, del)
   }
 
-  def getRankingForApps(scope: GeoScope, unrankedApps: Set[UnrankedApp]): ConnectionIO[List[RankedApp]] = {
+  def getRankingForApps(
+    scope: GeoScope,
+    unrankedApps: Set[UnrankedApp]
+  ): ConnectionIO[Result[List[RankedApp]]] = {
     val deviceAppTableName = generateTableName
 
     for {
@@ -51,7 +59,7 @@ class Services(persistence: Persistence[Entry]) extends (Ops ~> ConnectionIO) {
       _ ← persistence.updateMany(Queries.insertDeviceApps(deviceAppTableName), unrankedApps)
       rankedApps ← persistence.fetchListAs[RankedApp](Queries.getRankedApps(scope, deviceAppTableName))
       _ ← persistence.update(Queries.dropDeviceAppsTemporaryTableSql(deviceAppTableName))
-    } yield rankedApps
+    } yield Either.right(rankedApps)
   }
 
   private[this] def generateTableName = {
