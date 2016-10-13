@@ -1,5 +1,6 @@
 package cards.nine.services.free.interpreter.country
 
+import cards.nine.commons.NineCardsErrors.{ CountryNotFound, NineCardsError }
 import cards.nine.services.free.domain.Country
 import cards.nine.services.free.domain.Country.Queries
 import cards.nine.services.persistence.NineCardsGenEntities.WrongIsoCode2
@@ -23,11 +24,12 @@ class ServicesSpec
   }
 
   "getCountryByIsoCode2" should {
-    "return None if a non-existing ISO code is provided" in {
+    "return a CountryNotFound error if a non-existing ISO code is provided" in {
       prop { isoCode: WrongIsoCode2 ⇒
         val country = countryPersistenceServices.getCountryByIsoCode2(isoCode.value).transactAndRun
+        val error = CountryNotFound(s"Country with ISO code2 ${isoCode.value} doesn't exist")
 
-        country must beNone
+        country must beLeft[NineCardsError](error)
       }
     }
 
@@ -42,7 +44,7 @@ class ServicesSpec
           } yield (searchedCountry, country)
         }.transactAndRun
 
-        country must beSome[Country].which { c ⇒
+        country must beRight[Country].which { c ⇒
           c.isoCode2 must_== searchedCountry.isoCode2
           c.isoCode3 must_== searchedCountry.isoCode3
           c.name must_== searchedCountry.name

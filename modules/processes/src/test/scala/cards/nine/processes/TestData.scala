@@ -3,6 +3,7 @@ package cards.nine.processes
 import java.sql.Timestamp
 import java.time.Instant
 
+import cards.nine.commons.NineCardsErrors.CountryNotFound
 import cards.nine.processes.ProcessesExceptions.SharedCollectionNotFoundException
 import cards.nine.processes.messages.GooglePlayAuthMessages.AuthParams
 import cards.nine.processes.messages.SharedCollectionMessages._
@@ -161,7 +162,7 @@ object TestData {
       continent = countryContinent
     )
 
-    val countryNotFound: Option[Country] = None
+    val countryNotFoundError = CountryNotFound(s"Country with ISO code2 US doesn't exist")
 
     val nonExistentSharedCollection: Option[SharedCollectionServices] = None
 

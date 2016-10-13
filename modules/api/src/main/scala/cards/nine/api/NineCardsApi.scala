@@ -12,6 +12,7 @@ import cards.nine.api.messages.SharedCollectionMessages._
 import cards.nine.api.messages.UserMessages._
 import cards.nine.api.utils.SprayMarshallers._
 import cards.nine.api.utils.SprayMatchers._
+import cards.nine.commons.NineCardsService.Result
 import cards.nine.processes.NineCardsServices._
 import cards.nine.processes._
 import cards.nine.processes.messages.ApplicationMessages.GetAppsInfoResponse
@@ -368,7 +369,7 @@ class NineCardsRoutes(
   private[this] def rankApps(
     request: ApiRankAppsRequest,
     userContext: UserContext
-  ): NineCardsServed[ApiRankAppsResponse] =
+  ): NineCardsServed[Result[ApiRankAppsResponse]] =
     rankingProcesses.getRankedDeviceApps(request.location, request.items.mapValues(toDeviceAppList))
       .map(toApiRankAppsResponse)
 
