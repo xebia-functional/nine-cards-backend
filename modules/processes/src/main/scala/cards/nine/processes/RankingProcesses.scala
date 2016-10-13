@@ -1,20 +1,18 @@
 package cards.nine.processes
 
-import cards.nine.commons.NineCardsErrors.{ CountryNotFound, NineCardsError }
+import cards.nine.commons.NineCardsErrors.CountryNotFound
 import cards.nine.commons.NineCardsService
 import cards.nine.commons.NineCardsService._
 import cards.nine.processes.converters.Converters._
 import cards.nine.processes.messages.rankings.GetRankedDeviceApps.{ DeviceApp, RankedDeviceApp }
 import cards.nine.processes.messages.rankings._
-import cards.nine.commons.FreeUtils._
 import cards.nine.services.free.algebra
 import cards.nine.services.free.algebra.GoogleAnalytics
 import cards.nine.services.free.domain.rankings._
-import cats.data.{ EitherT, Xor }
+import cats.data.Xor
 import cats.free.Free
 import cats.instances.list._
 import cats.instances.map._
-import cats.syntax.either._
 import cats.syntax.semigroup._
 
 class RankingProcesses[F[_]](
