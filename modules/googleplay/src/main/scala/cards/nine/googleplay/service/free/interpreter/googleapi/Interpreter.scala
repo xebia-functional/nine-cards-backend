@@ -1,6 +1,7 @@
 package cards.nine.googleplay.service.free.interpreter.googleapi
 
 import cards.nine.commons.TaskInstances._
+import cards.nine.domain.application.Package
 import cards.nine.domain.market.MarketCredentials
 import cards.nine.googleplay.domain._
 import cards.nine.googleplay.domain.apigoogle._
@@ -64,7 +65,7 @@ class Interpreter(config: Configuration) extends (Ops ~> WithHttpClient) {
             .getEntryList
             .toList
             .map(entry ⇒ Converters.toFullCard(entry.getDoc))
-            .filterNot(_.packageName.isEmpty)
+            .filterNot(_.packageName.value.isEmpty)
         }
       }.handle {
         case e: UnexpectedStatus ⇒ Xor.Left(handleUnexpected(e))

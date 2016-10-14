@@ -1,7 +1,7 @@
 package cards.nine.services.free.interpreter.googleplay
 
 import cards.nine.domain.account.AndroidId
-import cards.nine.domain.application.Category
+import cards.nine.domain.application.{ Category, Package }
 import cards.nine.domain.market.{ Localization, MarketCredentials, MarketToken }
 import cards.nine.googleplay.domain._
 import cards.nine.googleplay.processes.getcard.{ FailedResponse, UnknownPackage }
@@ -30,7 +30,7 @@ class GooglePlayServicesSpec
   object TestData {
 
     def appInfoFor(packageName: String) = AppInfo(
-      packageName = packageName,
+      packageName = Package(packageName),
       title       = s"Title of $packageName",
       free        = false,
       icon        = s"Icon of $packageName",
@@ -40,7 +40,7 @@ class GooglePlayServicesSpec
     )
 
     def fullCardFor(packageName: String) = FullCard(
-      packageName = packageName,
+      packageName = Package(packageName),
       title       = s"Title of $packageName",
       free        = false,
       icon        = s"Icon of $packageName",
@@ -51,7 +51,7 @@ class GooglePlayServicesSpec
     )
 
     def recommendationFor(packageName: String) = Recommendation(
-      packageName = packageName,
+      packageName = Package(packageName),
       title       = s"Title of $packageName",
       free        = false,
       icon        = s"Icon of $packageName",
@@ -122,7 +122,7 @@ class GooglePlayServicesSpec
       val recommendationsInfoError = InfoError("Something went wrong!")
 
       val fullCardList = FullCardList(
-        missing = wrongPackagesName,
+        missing = wrongPackages,
         cards   = fullCards
       )
 
@@ -142,7 +142,7 @@ class GooglePlayServicesSpec
       googlePlayProcesses.getCard(onePackage, AuthData.marketAuth) returns
         Free.pure(Xor.right(GooglePlayResponses.fullCard))
 
-      val response = services.resolveOne(onePackageName, AuthData.marketAuth)
+      val response = services.resolveOne(onePackage, AuthData.marketAuth)
 
       response.unsafePerformSyncAttempt must be_\/-[String Xor AppInfo].which {
         content ⇒ content must beXorRight[AppInfo]
@@ -154,7 +154,7 @@ class GooglePlayServicesSpec
       googlePlayProcesses.getCard(onePackage, AuthData.marketAuth) returns
         Free.pure(Xor.left(GooglePlayResponses.unknwonPackageError))
 
-      val response = services.resolveOne(onePackageName, AuthData.marketAuth)
+      val response = services.resolveOne(onePackage, AuthData.marketAuth)
 
       response.unsafePerformSyncAttempt must be_\/-[String Xor AppInfo].which {
         content ⇒ content must beXorLeft[String](onePackageName)
@@ -168,10 +168,10 @@ class GooglePlayServicesSpec
       googlePlayProcesses.getCards(packages, AuthData.marketAuth) returns
         Free.pure(GooglePlayResponses.getCardsResponse)
 
-      val response = services.resolveMany(packagesName, AuthData.marketAuth, true)
+      val response = services.resolveMany(packages, AuthData.marketAuth, true)
 
       response.unsafePerformSyncAttempt must be_\/-[AppsInfo].which { appsInfo ⇒
-        appsInfo.missing must containTheSameElementsAs(wrongPackagesName)
+        appsInfo.missing must containTheSameElementsAs(wrongPackages)
         appsInfo.apps must containTheSameElementsAs(appInfoList)
       }
     }
@@ -188,7 +188,7 @@ class GooglePlayServicesSpec
       val response = services.recommendByCategory(
         category         = category,
         filter           = priceFilter,
-        excludedPackages = wrongPackagesName,
+        excludedPackages = wrongPackages,
         limit            = limit,
         auth             = AuthData.marketAuth
       )
@@ -208,7 +208,7 @@ class GooglePlayServicesSpec
       val response = services.recommendByCategory(
         category         = category,
         filter           = priceFilter,
-        excludedPackages = wrongPackagesName,
+        excludedPackages = wrongPackages,
         limit            = limit,
         auth             = AuthData.marketAuth
       )
@@ -227,8 +227,8 @@ class GooglePlayServicesSpec
       ) returns Free.pure(GooglePlayResponses.fullCardList)
 
       val response = services.recommendationsForApps(
-        packageNames     = packagesName,
-        excludedPackages = wrongPackagesName,
+        packageNames     = packages,
+        excludedPackages = wrongPackages,
         limitByApp       = numPerApp,
         limit            = limit,
         auth             = AuthData.marketAuth

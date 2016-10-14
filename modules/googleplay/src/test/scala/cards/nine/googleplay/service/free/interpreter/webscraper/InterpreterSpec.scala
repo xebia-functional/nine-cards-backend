@@ -1,7 +1,8 @@
 package cards.nine.googleplay.service.free.interpreter.webscrapper
 
 import cats.data.Xor
-import cards.nine.googleplay.domain.{ Package, FullCard }
+import cards.nine.domain.application.Package
+import cards.nine.googleplay.domain.FullCard
 import cards.nine.googleplay.domain.webscrapper._
 import cards.nine.googleplay.service.free.algebra.WebScraper._
 import cards.nine.googleplay.service.util.MockServer
@@ -119,7 +120,7 @@ object TestData {
     val packageObj = Package(packageName)
 
     val card = FullCard(
-      packageName = packageName,
+      packageName = packageObj,
       title       = "Shapes & Colors Music Show",
       free        = true,
       icon        = "http://lh4.ggpht.com/Pb8iLNmi9vHOwB-39TKe-kn4b_uU-E6rn7zSiFz6jC0RlaEQeNCcBh2MueyslcQ3mj2H",
@@ -142,7 +143,7 @@ object TestData {
     val packageObj = Package(packageName)
 
     val card = FullCard(
-      packageName = packageName,
+      packageName = packageObj,
       title       = "Sky Map",
       free        = true,
       icon        = "http://lh4.ggpht.com/4VGiZutofCjs_wEC3BOuFPXysyF-ClYDTa40F3qK-GhKcISkWFFpRiBFmD8HPDTrElQ",

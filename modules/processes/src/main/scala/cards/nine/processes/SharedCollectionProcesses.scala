@@ -1,6 +1,7 @@
 package cards.nine.processes
 
 import cards.nine.commons.FreeUtils._
+import cards.nine.domain.application.Package
 import cards.nine.domain.market.MarketCredentials
 import cards.nine.processes.ProcessesExceptions.SharedCollectionNotFoundException
 import cards.nine.processes.converters.Converters._
@@ -112,7 +113,7 @@ class SharedCollectionProcesses[F[_]](
 
   def sendNotifications(
     publicIdentifier: String,
-    packagesName: List[String]
+    packagesName: List[Package]
   ): Free[F, List[FirebaseError Xor NotificationResponse]] = {
 
     def toUpdateCollectionNotificationInfoList(installations: List[Installation]) =
@@ -120,7 +121,7 @@ class SharedCollectionProcesses[F[_]](
 
     def sendNotificationsByDeviceTokenGroup(
       publicIdentifier: String,
-      packagesName: List[String]
+      packagesName: List[Package]
     )(
       deviceTokens: List[String]
     ) =
@@ -143,7 +144,7 @@ class SharedCollectionProcesses[F[_]](
   def updateCollection(
     publicIdentifier: String,
     collectionInfo: Option[SharedCollectionUpdateInfo],
-    packages: Option[List[String]]
+    packages: Option[List[Package]]
   ): Free[F, Xor[Throwable, CreateOrUpdateCollectionResponse]] = {
 
     def updateCollectionInfo(collectionId: Long, info: Option[SharedCollectionUpdateInfo]) =
@@ -151,16 +152,16 @@ class SharedCollectionProcesses[F[_]](
         .map(c ⇒ collectionServices.update(collectionId, c.title))
         .getOrElse(0.toFree)
 
-    def updatePackages(collectionId: Long, packagesName: Option[List[String]]) =
+    def updatePackages(collectionId: Long, packagesName: Option[List[Package]]) =
       packagesName
         .map(p ⇒ collectionServices.updatePackages(collectionId, p))
-        .getOrElse((List.empty[String], List.empty[String]).toFree)
+        .getOrElse((List.empty[Package], List.empty[Package]).toFree)
 
     def updateCollectionAndPackages(
       publicIdentifier: String,
       collectionInfo: Option[SharedCollectionUpdateInfo],
-      packages: Option[List[String]]
-    ): Free[F, Throwable Xor (List[String], List[String])] = {
+      packages: Option[List[Package]]
+    ): Free[F, Throwable Xor (List[Package], List[Package])] = {
       for {
         collection ← findCollection(publicIdentifier)
         _ ← updateCollectionInfo(collection.id, collectionInfo).rightXorT[Throwable]
@@ -234,7 +235,7 @@ class SharedCollectionProcesses[F[_]](
 
   private[this] def getCollectionPackages(userId: Long)(collection: BaseSharedCollection) =
     collectionServices.getPackagesByCollection(collection.sharedCollectionId) map { packages ⇒
-      toSharedCollection(collection, packages map (_.packageName), userId)
+      toSharedCollection(collection, packages map (p ⇒ Package(p.packageName)), userId)
     }
 }
 

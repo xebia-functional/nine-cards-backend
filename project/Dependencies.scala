@@ -64,6 +64,7 @@ object Dependencies {
     jodaTime,
     specs2Core,
     specs2("-scalacheck"),
+    scalacheckShapeless,
     typesafeConfig
   ))
 

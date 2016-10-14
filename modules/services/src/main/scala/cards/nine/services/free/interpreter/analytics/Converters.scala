@@ -1,15 +1,14 @@
 package cards.nine.services.free.interpreter.analytics
 
 import cards.nine.domain.analytics.{ GeoScope ⇒ DomainScope, _ }
-import cards.nine.domain.application.Category
-import cards.nine.services.free.domain.PackageName
+import cards.nine.domain.application.{ Category, Package }
 import cards.nine.services.free.domain.rankings._
 
 object Converters {
 
   import model._
 
-  type Cell = (Category, PackageName)
+  type Cell = (Category, Package)
 
   def parseRanking(response: ResponseBody, rankingSize: Int, geoScope: DomainScope): Ranking = {
     def buildScore(cells: List[Cell]): CategoryRanking = CategoryRanking(
@@ -65,7 +64,7 @@ object Converters {
       case WorldScope ⇒ row.dimensions
     }
     val List(categoryStr, packageStr) = tailDimensions
-    (Category.withName(categoryStr), PackageName(packageStr))
+    (Category.withName(categoryStr), Package(packageStr))
   }
 
 }

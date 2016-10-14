@@ -1,7 +1,7 @@
 package cards.nine.api
 
 import cards.nine.api.messages.rankings
-import cards.nine.domain.application.Category
+import cards.nine.domain.application.{ Category, Package }
 import enumeratum.{ Circe ⇒ CirceEnum }
 import io.circe.generic.semiauto._
 import io.circe.{ Decoder, Encoder, ObjectEncoder }
@@ -30,6 +30,9 @@ object Encoders {
     Encoder.encodeString.contramap(dayFormatter.print)
   }
 
+  implicit val packageName: Encoder[Package] =
+    Encoder.encodeString.contramap(_.value)
+
   implicit val category: Encoder[Category] = CirceEnum.encoder(Category)
 
   implicit val catRanking: ObjectEncoder[rankings.CategoryRanking] = deriveEncoder[rankings.CategoryRanking]
@@ -44,4 +47,3 @@ object Encoders {
     deriveEncoder[rankings.Reload.Response]
 
 }
-

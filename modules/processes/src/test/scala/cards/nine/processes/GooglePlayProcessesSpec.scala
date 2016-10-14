@@ -1,6 +1,7 @@
 package cards.nine.processes
 
 import cards.nine.domain.account.AndroidId
+import cards.nine.domain.application.Package
 import cards.nine.domain.market.{ MarketCredentials, MarketToken }
 import cards.nine.processes.NineCardsServices.NineCardsServices
 import cards.nine.services.free.algebra.GooglePlay.Services
@@ -40,9 +41,9 @@ trait GooglePlayProcessesContext {
     "earth.europe.france",
     "earth.europe.portugal",
     "earth.europe.spain"
-  )
+  ).map(Package.apply)
 
-  val (missing, foundPackageNames) = packageNames.partition(_.length < 20)
+  val (missing, foundPackageNames) = packageNames.partition(_.value.length < 20)
 
   val apps = foundPackageNames map { packageName ⇒
     AppInfo(

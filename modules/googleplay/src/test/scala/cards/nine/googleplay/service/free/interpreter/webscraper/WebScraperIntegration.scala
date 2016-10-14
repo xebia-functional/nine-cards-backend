@@ -31,7 +31,7 @@ class InterpretersIntegration extends Specification with WithHttp1Client {
           (c.packageName, c.categories, c.title)
         }
       }
-      val expected = (fisherPrice.packageName, fisherPrice.card.categories, fisherPrice.card.title)
+      val expected = (fisherPrice.packageObj, fisherPrice.card.categories, fisherPrice.card.title)
       relevantDetails must returnValue(Xor.right(expected))
     }
 

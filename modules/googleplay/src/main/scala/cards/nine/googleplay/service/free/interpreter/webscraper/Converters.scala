@@ -1,5 +1,6 @@
 package cards.nine.googleplay.service.free.interpreter.webscrapper
 
+import cards.nine.domain.application.Package
 import cards.nine.googleplay.domain._
 import org.ccil.cowan.tagsoup.jaxp.SAXFactoryImpl
 import org.xml.sax.InputSource
@@ -97,7 +98,7 @@ object GooglePlayPageParser {
         stars ← getStars()
         downloads ← getDownloads()
       } yield FullCard(
-        packageName = docId,
+        packageName = Package(docId),
         title       = title,
         free        = free,
         icon        = icon,

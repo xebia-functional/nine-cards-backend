@@ -1,6 +1,7 @@
 package cards.nine.googleplay.service.free.interpreter.cache
 
-import cards.nine.googleplay.domain.{ FullCard, Package }
+import cards.nine.domain.application.Package
+import cards.nine.googleplay.domain.FullCard
 import enumeratum.{ Circe ⇒ CirceEnum }
 import io.circe.{ Decoder, Encoder }
 import org.joda.time.DateTime

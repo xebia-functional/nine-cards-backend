@@ -1,5 +1,6 @@
 package cards.nine.services.free.interpreter.collection
 
+import cards.nine.domain.application.Package
 import cards.nine.services.free.domain.{ SharedCollection, SharedCollectionPackage, SharedCollectionWithAggregatedInfo, User }
 import cards.nine.services.free.interpreter.collection.Services.SharedCollectionData
 import cards.nine.services.free.interpreter.user.Services.UserData
@@ -92,6 +93,8 @@ class ServicesSpec
     flywaydb.clean()
     flywaydb.migrate()
   }
+
+  import cards.nine.domain.application.ScalaCheck.arbPackage
 
   "addCollection" should {
     "create a new shared collection when an existing user id is given" in {
@@ -396,7 +399,7 @@ class ServicesSpec
 
   "addPackage" should {
     "create a new package associated with an existing shared collection" in {
-      prop { (userData: UserData, collectionData: SharedCollectionData, packageName: String) ⇒
+      prop { (userData: UserData, collectionData: SharedCollectionData, packageName: Package) ⇒
         val collectionId = (for {
           u ← createUser(userData)
           c ← createCollectionWithUser(collectionData, Option(u))
@@ -420,7 +423,7 @@ class ServicesSpec
 
   "addPackages" should {
     "create new packages associated with an existing shared collection" in {
-      prop { (userData: UserData, collectionData: SharedCollectionData, packagesName: List[String]) ⇒
+      prop { (userData: UserData, collectionData: SharedCollectionData, packagesName: List[Package]) ⇒
         val collectionId = (for {
           u ← createUser(userData)
           c ← createCollectionWithUser(collectionData, Option(u))

@@ -1,6 +1,6 @@
 package cards.nine.services.free.domain
 
-import cards.nine.domain.application.Category
+import cards.nine.domain.application.{ Category, Package }
 import cards.nine.domain.analytics.{ Country ⇒ ACountry, _ }
 import cats.data.Xor
 
@@ -17,21 +17,21 @@ object rankings {
   case class UpdateRankingSummary(created: Int, deleted: Int)
 
   /*A CategoryRanking contains a list of application's package names */
-  case class CategoryRanking(ranking: List[PackageName]) extends AnyVal
+  case class CategoryRanking(ranking: List[Package]) extends AnyVal
 
   case class RankingError(code: Int, message: String, status: String)
 
   type TryRanking = RankingError Xor Ranking
 
   case class Entry(
-    packageName: PackageName,
+    packageName: Package,
     category: Category,
     ranking: Int
   )
 
-  case class UnrankedApp(packageName: String, category: String)
+  case class UnrankedApp(packageName: Package, category: String)
 
-  case class RankedApp(packageName: String, category: String, ranking: Option[Int])
+  case class RankedApp(packageName: Package, category: String, ranking: Option[Int])
 
   object Queries {
 

@@ -1,5 +1,7 @@
 package cards.nine.services.free.domain
 
+import cards.nine.domain.application.Package
+
 object Firebase {
 
   sealed trait FirebaseError
@@ -13,7 +15,7 @@ object Firebase {
   case class UpdatedCollectionNotificationInfo(
     deviceTokens: List[String],
     publicIdentifier: String,
-    packagesName: List[String]
+    packagesName: List[Package]
   )
 
   case class SendNotificationRequest[T](
@@ -28,7 +30,7 @@ object Firebase {
 
   case class UpdateCollectionNotificationPayload(
     publicIdentifier: String,
-    addedPackages: List[String]
+    addedPackages: List[Package]
   )
 
   case class NotificationResponse(

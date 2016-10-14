@@ -1,5 +1,6 @@
 package cards.nine.googleplay.service.free.interpreter.googleapi
 
+import cards.nine.domain.application.Package
 import cards.nine.googleplay.domain._
 import cards.nine.googleplay.proto.GooglePlay.{ ListResponse, DocV2, SearchResponse }
 import scala.collection.JavaConversions._
@@ -46,7 +47,7 @@ object Converters {
     lazy val starRating: Double = docV2.getAggregateRating.getStarRating
 
     def toFullCard(): FullCard = FullCard(
-      packageName = docid,
+      packageName = Package(docid),
       title       = title,
       free        = isFree,
       icon        = icon,

@@ -1,12 +1,13 @@
 package cards.nine.processes.messages
 
+import cards.nine.domain.application.Package
 import cats.data.Xor
 import org.joda.time.DateTime
 
 object SharedCollectionMessages {
 
   case class AppInfo(
-    packageName: String,
+    packageName: Package,
     title: String,
     free: Boolean,
     icon: String,
@@ -44,7 +45,7 @@ object SharedCollectionMessages {
     icon: String,
     community: Boolean,
     owned: Boolean,
-    packages: List[String],
+    packages: List[Package],
     subscriptionsCount: Option[Long] = None
   )
 
@@ -54,7 +55,7 @@ object SharedCollectionMessages {
 
   case class CreateCollectionRequest(
     collection: SharedCollectionData,
-    packages: List[String]
+    packages: List[Package]
   )
 
   case class PackagesStats(added: Int, removed: Option[Int] = None)

@@ -3,7 +3,7 @@ package cards.nine.processes
 import cards.nine.commons.NineCardsErrors.CountryNotFound
 import cards.nine.domain.account.AndroidId
 import cards.nine.domain.analytics.{ AnalyticsToken, Country ⇒ CountryEnum, CountryScope, DateRange }
-import cards.nine.domain.application.Category
+import cards.nine.domain.application.{ Category, Package }
 import cards.nine.domain.market.{ Localization, MarketCredentials, MarketToken }
 import cards.nine.processes.ProcessesExceptions.SharedCollectionNotFoundException
 import cards.nine.processes.messages.SharedCollectionMessages._
@@ -99,27 +99,27 @@ object TestData {
     "earth.europe.france",
     "earth.europe.portugal",
     "earth.europe.spain"
-  )
+  ).map(Package.apply)
 
   val missing = List(
     "earth.europe.italy",
     "earth.europe.unitedKingdom"
-  )
+  ).map(Package.apply)
 
   val updatePackagesName = List(
     "earth.europe.italy",
     "earth.europe.unitedKingdom",
     "earth.europe.germany"
-  )
+  ).map(Package.apply)
 
   val addedPackages = List(
     "earth.europe.italy",
     "earth.europe.unitedKingdom"
-  )
+  ).map(Package.apply)
 
   val removedPackages = List(
     "earth.europe.germany"
-  )
+  ).map(Package.apply)
 
   val updatedPackages = (addedPackages, removedPackages)
 
@@ -169,7 +169,7 @@ object TestData {
 
     val packages = packagesName.zip(1l to packagesName.size.toLong) map {
       case (n, id) ⇒
-        SharedCollectionPackage(id, collectionId, n)
+        SharedCollectionPackage(id, collectionId, n.value)
     }
 
     val createPackagesStats = PackagesStats(addedPackagesCount, None)
@@ -316,7 +316,7 @@ object TestData {
     lazy val params = RankingParams(DateRange(startDate, endDate), 5, AnalyticsToken("auth_token"))
     lazy val error = RankingError(401, "Unauthorized", "Unauthorized")
     lazy val ranking = Ranking(Map(Category.SOCIAL →
-      CategoryRanking(List(PackageName("socialite"), PackageName("socialist")))))
+      CategoryRanking(List(Package("socialite"), Package("socialist")))))
 
     val emptyDeviceAppsMap = Map.empty[String, List[DeviceApp]]
 
@@ -330,22 +330,22 @@ object TestData {
       "earth.europe.france",
       "earth.europe.germany",
       "earth.europe.italy"
-    )
+    ).map(Package.apply)
 
     val countriesNZList = List(
       "earth.europe.portugal",
       "earth.europe.spain",
       "earth.europe.unitedKingdom"
-    )
+    ).map(Package.apply)
 
     val deviceAppsMap = Map(
       countriesAMCategory → countriesAMList.map(DeviceApp.apply),
       countriesNZCategory → countriesNZList.map(DeviceApp.apply)
     )
 
-    def appsWithRanking(apps: List[String], category: String) =
+    def appsWithRanking(apps: List[Package], category: String) =
       apps.zipWithIndex.map {
-        case (packageName: String, rank: Int) ⇒
+        case (packageName: Package, rank: Int) ⇒
           RankedApp(packageName, category, Option(rank))
       }
 

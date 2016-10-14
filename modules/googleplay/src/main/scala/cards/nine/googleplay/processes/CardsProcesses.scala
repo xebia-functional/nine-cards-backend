@@ -6,6 +6,7 @@ import cats.instances.list._
 import cats.syntax.monadCombine._
 import cats.syntax.traverse._
 import cats.syntax.xor._
+import cards.nine.domain.application.Package
 import cards.nine.domain.market.MarketCredentials
 import cards.nine.googleplay.domain._
 import cards.nine.googleplay.domain.apigoogle.{ Failure ⇒ ApiFailure }
@@ -23,7 +24,7 @@ class CardsProcesses[F[_]](
     def storeAsResolved(card: FullCard): Free[F, Unit] =
       for {
         _ ← cacheService.putResolved(card)
-        _ ← cacheService.clearInvalid(Package(card.packageName))
+        _ ← cacheService.clearInvalid(card.packageName)
       } yield Unit
 
     def storeAsPending(pack: Package): Free[F, Unit] =
@@ -100,7 +101,7 @@ class CardsProcesses[F[_]](
       case Xor.Left(_) ⇒
         ResolveMany.Response(Nil, packages, Nil)
       case Xor.Right(apps) ⇒
-        val notFound = packages.diff(apps.map(c ⇒ Package(c.packageName)))
+        val notFound = packages.diff(apps.map(_.packageName))
         ResolveMany.Response(notFound, Nil, apps)
     }
 
@@ -127,7 +128,7 @@ class CardsProcesses[F[_]](
     for {
       xors ← packs.traverse[Free[F, ?], getcard.Response](p ⇒ resolveNewPackage(p, auth))
       (fails, apps) = xors.separate
-    } yield FullCardList(fails.map(e ⇒ e.packageName.value), apps)
+    } yield FullCardList(fails.map(e ⇒ e.packageName), apps)
 
   def resolveNewPackage(pack: Package, auth: MarketCredentials): Free[F, getcard.Response] = {
 

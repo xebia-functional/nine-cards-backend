@@ -2,6 +2,7 @@ package cards.nine.processes.converters
 
 import java.sql.Timestamp
 
+import cards.nine.domain.application.Package
 import cards.nine.processes.messages.ApplicationMessages._
 import cards.nine.processes.messages.InstallationsMessages._
 import cards.nine.processes.messages.rankings.GetRankedDeviceApps._
@@ -65,7 +66,7 @@ object Converters {
       community        = data.community
     )
 
-  def toSharedCollection: (BaseSharedCollection, List[String], Long) ⇒ SharedCollection = {
+  def toSharedCollection: (BaseSharedCollection, List[Package], Long) ⇒ SharedCollection = {
     case (collection: SharedCollectionWithAggregatedInfo, packages, userId) ⇒
       toSharedCollection(collection.sharedCollectionData, packages, Option(collection.subscriptionsCount), userId)
     case (collection: SharedCollectionServices, packages, userId) ⇒
@@ -74,7 +75,7 @@ object Converters {
 
   def toSharedCollection(
     collection: SharedCollectionServices,
-    packages: List[String],
+    packages: List[Package],
     subscriptionCount: Option[Long],
     userId: Long
   ) =

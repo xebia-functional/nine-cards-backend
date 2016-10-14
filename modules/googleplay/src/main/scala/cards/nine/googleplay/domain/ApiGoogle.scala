@@ -1,5 +1,6 @@
 package cards.nine.googleplay.domain
 
+import cards.nine.domain.application.Package
 import cards.nine.domain.market.MarketCredentials
 
 package apigoogle {

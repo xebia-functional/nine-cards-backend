@@ -1,16 +1,16 @@
 package cards.nine.services.free.domain
 
+import cards.nine.domain.application.Package
+
 object GooglePlay {
 
-  case class PackageList(items: List[String]) extends AnyVal
-
   case class AppsInfo(
-    missing: List[String],
+    missing: List[Package],
     apps: List[AppInfo]
   )
 
   case class AppInfo(
-    packageName: String,
+    packageName: Package,
     title: String,
     free: Boolean,
     icon: String,
@@ -24,7 +24,7 @@ object GooglePlay {
   )
 
   case class Recommendation(
-    packageName: String,
+    packageName: Package,
     title: String,
     free: Boolean,
     icon: String,
@@ -34,14 +34,14 @@ object GooglePlay {
   )
 
   case class RecommendByCategoryRequest(
-    excludedApps: List[String],
+    excludedApps: List[Package],
     maxTotal: Int
   )
 
   case class RecommendationsForAppsRequest(
-    searchByApps: List[String],
+    searchByApps: List[Package],
     numPerApp: Int,
-    excludedApps: List[String],
+    excludedApps: List[Package],
     maxTotal: Int
   )
 }

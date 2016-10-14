@@ -1,6 +1,7 @@
 package cards.nine.processes
 
 import cards.nine.domain.account.AndroidId
+import cards.nine.domain.application.Package
 import cards.nine.domain.market.{ Localization, MarketCredentials, MarketToken }
 import cards.nine.processes.NineCardsServices._
 import cards.nine.processes.messages.RecommendationsMessages._
@@ -64,9 +65,9 @@ trait RecommendationsProcessesContext {
     "earth.europe.france",
     "earth.europe.portugal",
     "earth.europe.spain"
-  )
+  ).map(Package.apply)
 
-  val excludePackages = packagesName.filter(_.length > 20)
+  val excludePackages = packagesName.filter(_.value.length > 20)
 
   val title = "Title of the app"
 

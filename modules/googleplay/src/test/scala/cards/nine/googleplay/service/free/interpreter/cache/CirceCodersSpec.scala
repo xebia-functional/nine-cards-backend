@@ -1,7 +1,8 @@
 package cards.nine.googleplay.service.free.interpreter.cache
 
 import cats.data.Xor
-import cards.nine.googleplay.domain.{ Package, FullCard }
+import cards.nine.domain.application.Package
+import cards.nine.googleplay.domain.FullCard
 import org.specs2.mutable.Specification
 import org.joda.time.{ DateTime, DateTimeZone }
 import io.circe.{ Decoder, Encoder }
@@ -42,7 +43,7 @@ class CirceCodersSpec extends Specification {
   """.stripMargin.filter(_ > ' ').trim
 
   val fullCard = FullCard(
-    packageName = fortysevenDeg,
+    packageName = Package(fortysevenDeg),
     title       = "47 Degrees",
     categories  = List("Consulting"),
     downloads   = "42",

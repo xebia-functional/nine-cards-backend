@@ -5,7 +5,7 @@ import cards.nine.api.messages.GooglePlayMessages._
 import cards.nine.api.messages.InstallationsMessages.ApiUpdateInstallationRequest
 import cards.nine.api.messages.SharedCollectionMessages._
 import cards.nine.api.messages.UserMessages.ApiLoginRequest
-import cards.nine.domain.application.Category
+import cards.nine.domain.application.{ Category, Package }
 import cards.nine.processes.ProcessesExceptions.SharedCollectionNotFoundException
 import cards.nine.processes.messages.ApplicationMessages.GetAppsInfoResponse
 import cards.nine.processes.messages.InstallationsMessages._
@@ -68,11 +68,11 @@ object TestData {
     "earth.europe.france",
     "earth.europe.portugal",
     "earth.europe.spain"
-  )
+  ).map(Package.apply)
 
   val deviceApps = Map("countries" → packagesName)
 
-  val excludePackages = packagesName.filter(_.length > 18)
+  val excludePackages = packagesName.filter(_.value.length > 18)
 
   val publicIdentifier = "40daf308-fecf-4228-9262-a712d783cf49"
 
@@ -150,7 +150,7 @@ object TestData {
       appsInfo   = List.empty
     )
 
-    val apiGetAppsInfoRequest = ApiGetAppsInfoRequest(items = List("", "", ""))
+    val apiGetAppsInfoRequest = ApiGetAppsInfoRequest(items = List("", "", "").map(Package.apply))
 
     val apiGetRecommendationsByCategoryRequest = ApiGetRecommendationsByCategoryRequest(
       excludePackages = excludePackages,
@@ -223,16 +223,16 @@ object TestData {
     object rankings {
       import cards.nine.api.messages.{ rankings ⇒ Api }
       import cards.nine.processes.messages.{ rankings ⇒ Proc }
-      import cards.nine.services.free.domain.{ PackageName, rankings ⇒ Domain }
+      import cards.nine.services.free.domain.{ rankings ⇒ Domain }
 
       val ranking = Domain.Ranking(Map(
-        Category.SOCIAL → Domain.CategoryRanking(List(PackageName("testApp")))
+        Category.SOCIAL → Domain.CategoryRanking(List(Package("testApp")))
       ))
       val getResponse = Proc.Get.Response(ranking)
 
       val apiRanking = Api.Ranking(List(
-        Api.CategoryRanking(Category.SOCIAL, List("socialite", "socialist")),
-        Api.CategoryRanking(Category.COMMUNICATION, List("es.elpais", "es.elmundo", "uk.theguardian"))
+        Api.CategoryRanking(Category.SOCIAL, List("socialite", "socialist").map(Package)),
+        Api.CategoryRanking(Category.COMMUNICATION, List("es.elpais", "es.elmundo", "uk.theguardian").map(Package.apply))
       ))
 
       val reloadResponse = Proc.Reload.Response()

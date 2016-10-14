@@ -1,6 +1,7 @@
 package cards.nine.processes
 
 import cards.nine.domain.account.AndroidId
+import cards.nine.domain.application.Package
 import cards.nine.domain.market.{ Localization, MarketCredentials, MarketToken }
 import cards.nine.processes.NineCardsServices._
 import cards.nine.processes.messages.ApplicationMessages._
@@ -43,7 +44,7 @@ trait ApplicationProcessesContext {
     "earth.europe.france",
     "earth.europe.portugal",
     "earth.europe.spain"
-  )
+  ).map(Package.apply)
 
   val title = "Title of the app"
 
@@ -57,7 +58,7 @@ trait ApplicationProcessesContext {
 
   val category = "SOCIAL"
 
-  val (missing, found) = packagesName.partition(_.length > 6)
+  val (missing, found) = packagesName.partition(_.value.length > 6)
 
   val apps = found map (packageName ⇒ AppInfo(packageName, title, free, icon, stars, downloads, List(category)))
   val appsGooglePlayInfo = found map (packageName ⇒ AppGooglePlayInfo(packageName, title, free, icon, stars, downloads, List(category)))

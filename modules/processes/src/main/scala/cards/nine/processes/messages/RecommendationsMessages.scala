@@ -1,11 +1,13 @@
 package cards.nine.processes.messages
 
+import cards.nine.domain.application.Package
+
 object RecommendationsMessages {
 
   case class GetRecommendationsResponse(items: List[GooglePlayRecommendation])
 
   case class GooglePlayRecommendation(
-    packageName: String,
+    packageName: Package,
     title: String,
     free: Boolean,
     icon: String,
