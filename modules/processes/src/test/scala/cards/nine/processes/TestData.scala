@@ -4,9 +4,10 @@ import java.sql.Timestamp
 import java.time.Instant
 
 import cards.nine.commons.NineCardsErrors.CountryNotFound
+import cards.nine.domain.account.AndroidId
 import cards.nine.domain.application.Category
+import cards.nine.domain.market.{ Localization, MarketCredentials, MarketToken }
 import cards.nine.processes.ProcessesExceptions.SharedCollectionNotFoundException
-import cards.nine.processes.messages.GooglePlayAuthMessages.AuthParams
 import cards.nine.processes.messages.SharedCollectionMessages._
 import cards.nine.processes.messages.rankings.GetRankedDeviceApps.DeviceApp
 import cards.nine.services.free.domain.{ SharedCollection ⇒ SharedCollectionServices, _ }
@@ -52,7 +53,7 @@ object TestData {
 
   val installations = 1
 
-  val localization = Option("en-EN")
+  val localization = Localization("en-EN")
 
   val messageId = "a000dcbd-5419-446f-b2c6-6eaefd88480c"
 
@@ -131,10 +132,10 @@ object TestData {
 
     val appsInfo = AppsInfo(missing, apps)
 
-    val authParams = AuthParams(
-      androidId    = androidId,
-      localization = localization,
-      token        = token
+    val marketAuth = MarketCredentials(
+      androidId    = AndroidId(androidId),
+      localization = Some(localization),
+      token        = MarketToken(token)
     )
 
     val collection = SharedCollectionServices(

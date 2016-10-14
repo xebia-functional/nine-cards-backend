@@ -6,8 +6,8 @@ import cards.nine.api.messages.InstallationsMessages._
 import cards.nine.api.messages.SharedCollectionMessages._
 import cards.nine.api.messages.UserMessages._
 import cards.nine.commons.NineCardsService.Result
+import cards.nine.domain.market.MarketCredentials
 import cards.nine.processes.messages.ApplicationMessages._
-import cards.nine.processes.messages.GooglePlayAuthMessages._
 import cards.nine.processes.messages.InstallationsMessages._
 import cards.nine.processes.messages.RecommendationsMessages._
 import cards.nine.processes.messages.SharedCollectionMessages._
@@ -105,11 +105,11 @@ object Converters {
   def toApiUnsubscribeResponse(response: UnsubscribeResponse): ApiUnsubscribeResponse =
     ApiUnsubscribeResponse()
 
-  def toAuthParams(googlePlayContext: GooglePlayContext, userContext: UserContext) =
-    AuthParams(
-      androidId    = userContext.androidId.value,
-      localization = googlePlayContext.marketLocalization map (_.value),
-      token        = googlePlayContext.googlePlayToken.value
+  def toMarketAuth(googlePlayContext: GooglePlayContext, userContext: UserContext): MarketCredentials =
+    MarketCredentials(
+      androidId    = userContext.androidId,
+      localization = googlePlayContext.marketLocalization,
+      token        = googlePlayContext.googlePlayToken
     )
 
   def toCategorizedApp(appInfo: AppGooglePlayInfo): CategorizedApp =

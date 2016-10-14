@@ -1,6 +1,7 @@
 package cards.nine.googleplay.service.free.interpreter.googleapi
 
 import cards.nine.commons.TaskInstances._
+import cards.nine.domain.market.MarketCredentials
 import cards.nine.googleplay.domain._
 import cards.nine.googleplay.domain.apigoogle._
 import cards.nine.googleplay.proto.GooglePlay.{ BulkDetailsRequest, DocV2, ResponseWrapper }
@@ -35,7 +36,7 @@ class Interpreter(config: Configuration) extends (Ops ~> WithHttpClient) {
     authority = Option(Uri.Authority(host = Uri.RegName(config.host), port = Some(config.port)))
   )
 
-  class BulkDetailsWithClient(packagesName: List[Package], auth: GoogleAuthParams)
+  class BulkDetailsWithClient(packagesName: List[Package], auth: MarketCredentials)
     extends (Client ⇒ Task[Failure Xor List[FullCard]]) {
 
     val builder = BulkDetailsRequest.newBuilder()
@@ -70,7 +71,7 @@ class Interpreter(config: Configuration) extends (Ops ~> WithHttpClient) {
       }
   }
 
-  class DetailsWithClient(packageName: Package, auth: GoogleAuthParams)
+  class DetailsWithClient(packageName: Package, auth: MarketCredentials)
     extends (Client ⇒ Task[Failure Xor FullCard]) {
 
     val httpRequest: Request =
@@ -99,7 +100,7 @@ class Interpreter(config: Configuration) extends (Ops ~> WithHttpClient) {
       }
   }
 
-  class RecommendationsByAppsWithClient(request: RecommendByAppsRequest, auth: GoogleAuthParams)
+  class RecommendationsByAppsWithClient(request: RecommendByAppsRequest, auth: MarketCredentials)
     extends (Client ⇒ Task[List[Package]]) {
 
     def recommendationsByApp(client: Client)(pack: Package): Task[InfoError Xor List[Package]] = {
@@ -143,7 +144,7 @@ class Interpreter(config: Configuration) extends (Ops ~> WithHttpClient) {
     }
   }
 
-  class RecommendationsByCategoryWithClient(request: RecommendByCategoryRequest, auth: GoogleAuthParams)
+  class RecommendationsByCategoryWithClient(request: RecommendByCategoryRequest, auth: MarketCredentials)
     extends (Client ⇒ Task[InfoError Xor List[Package]]) {
 
     val infoError = InfoError(s"Recommendations for category ${request.category} that are ${request.priceFilter}")
@@ -175,7 +176,7 @@ class Interpreter(config: Configuration) extends (Ops ~> WithHttpClient) {
       }
   }
 
-  class SearchAppsWithClient(request: SearchAppsRequest, auth: GoogleAuthParams)
+  class SearchAppsWithClient(request: SearchAppsRequest, auth: MarketCredentials)
     extends (Client ⇒ Task[Failure Xor List[Package]]) {
 
     val httpRequest: Request = new Request(

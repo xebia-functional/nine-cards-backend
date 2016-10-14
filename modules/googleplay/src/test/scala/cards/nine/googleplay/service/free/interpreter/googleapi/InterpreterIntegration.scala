@@ -30,7 +30,7 @@ class InterpreterIntegration extends Specification with AfterAll {
           screenshots = List(),
           stars       = 3.145
         )
-        val appRequest = AppRequest(fisherPrice.packageObj, authParams)
+        val appRequest = AppRequest(fisherPrice.packageObj, marketAuth)
         val response = appCardService(appRequest)
         val fields = response.map(_.map(eraseDetails))
         // The number of downloads can be different from the Google API.
@@ -38,7 +38,7 @@ class InterpreterIntegration extends Specification with AfterAll {
       }
 
       "result in an error state for packages that do not exist" in {
-        val appRequest = AppRequest(nonexisting.packageObj, authParams)
+        val appRequest = AppRequest(nonexisting.packageObj, marketAuth)
         appCardService(appRequest) must returnValue(Xor.left(nonexisting.infoError))
       }
     }

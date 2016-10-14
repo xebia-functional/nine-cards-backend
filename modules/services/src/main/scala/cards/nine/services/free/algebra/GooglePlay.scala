@@ -1,24 +1,26 @@
 package cards.nine.services.free.algebra
 
+import cards.nine.domain.market.MarketCredentials
+import cards.nine.services.free.domain.GooglePlay._
 import cats.data.Xor
 import cats.free.{ Free, Inject }
-import cards.nine.services.free.domain.GooglePlay._
 
 object GooglePlay {
 
   sealed trait Ops[A]
 
-  case class Resolve(packageName: String, auth: AuthParams)
+  case class Resolve(packageName: String, auth: MarketCredentials)
     extends Ops[String Xor AppInfo]
 
-  case class ResolveMany(packageNames: List[String], auth: AuthParams, extendedInfo: Boolean)
+  case class ResolveMany(packageNames: List[String], auth: MarketCredentials, extendedInfo: Boolean)
     extends Ops[AppsInfo]
 
   case class RecommendationsByCategory(
     category: String,
     priceFilter: String,
     excludesPackages: List[String],
-    limit: Int, auth: AuthParams
+    limit: Int,
+    auth: MarketCredentials
   ) extends Ops[Recommendations]
 
   case class RecommendationsForApps(
@@ -26,24 +28,24 @@ object GooglePlay {
     excludesPackages: List[String],
     limitPerApp: Int,
     limit: Int,
-    auth: AuthParams
+    auth: MarketCredentials
   ) extends Ops[Recommendations]
 
   case class SearchApps(
     query: String,
     excludePackages: List[String],
     limit: Int,
-    auth: AuthParams
+    auth: MarketCredentials
   ) extends Ops[Recommendations]
 
   class Services[F[_]](implicit I: Inject[Ops, F]) {
 
-    def resolve(packageName: String, auth: AuthParams): Free[F, String Xor AppInfo] =
+    def resolve(packageName: String, auth: MarketCredentials): Free[F, String Xor AppInfo] =
       Free.inject[Ops, F](Resolve(packageName, auth))
 
     def resolveMany(
       packageNames: List[String],
-      auth: AuthParams,
+      auth: MarketCredentials,
       extendedInfo: Boolean
     ): Free[F, AppsInfo] =
       Free.inject[Ops, F](ResolveMany(packageNames, auth, extendedInfo))
@@ -53,7 +55,7 @@ object GooglePlay {
       priceFilter: String,
       excludesPackages: List[String],
       limit: Int,
-      auth: AuthParams
+      auth: MarketCredentials
     ): Free[F, Recommendations] =
       Free.inject[Ops, F](RecommendationsByCategory(category, priceFilter, excludesPackages, limit, auth))
 
@@ -62,7 +64,7 @@ object GooglePlay {
       excludesPackages: List[String],
       limitPerApp: Int,
       limit: Int,
-      auth: AuthParams
+      auth: MarketCredentials
     ): Free[F, Recommendations] =
       Free.inject[Ops, F](RecommendationsForApps(packagesName, excludesPackages, limitPerApp, limit, auth))
 
@@ -70,7 +72,7 @@ object GooglePlay {
       query: String,
       excludesPackages: List[String],
       limit: Int,
-      auth: AuthParams
+      auth: MarketCredentials
     ): Free[F, Recommendations] =
       Free.inject[Ops, F](SearchApps(query, excludesPackages, limit, auth))
 

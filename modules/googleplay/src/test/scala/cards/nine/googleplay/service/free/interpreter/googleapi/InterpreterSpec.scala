@@ -2,6 +2,8 @@ package cards.nine.googleplay.service.free.interpreter.googleapi
 
 import java.nio.file.{ Files, Paths }
 
+import cards.nine.domain.account.AndroidId
+import cards.nine.domain.market.{ MarketCredentials, MarketToken }
 import cards.nine.googleplay.domain._
 import cards.nine.googleplay.domain.apigoogle._
 import cards.nine.googleplay.service.free.algebra.GoogleApi._
@@ -20,7 +22,7 @@ class InterpreterSpec extends Specification with Matchers with MockServer with W
 
   override val mockServerPort = 9995
 
-  val auth = GoogleAuthParams(AndroidId("androidId"), Token("token"), None)
+  val auth = MarketCredentials(AndroidId("androidId"), MarketToken("token"), None)
 
   val configuration = Configuration(
     protocol            = "http",
@@ -33,7 +35,7 @@ class InterpreterSpec extends Specification with Matchers with MockServer with W
     recommendationsPath = "/my/path/to/recommendations"
   )
 
-  private[this] def msHeaders(auth: GoogleAuthParams): java.util.List[Header] = {
+  private[this] def msHeaders(auth: MarketCredentials): java.util.List[Header] = {
     import scala.collection.JavaConverters._
     def toMS(header: org.http4s.Header): Header =
       new Header(header.name.toString, header.value)

@@ -13,7 +13,7 @@ class Http4sGooglePlayWebScraper(serverUrl: String, client: Client) {
 
   private[this] def buildRequest(appRequest: AppRequest): Option[Request] = {
     val packageName: String = appRequest.packageName.value
-    val locale = appRequest.authParams.localization.fold("")(l ⇒ s"&hl=${l.value}")
+    val locale = appRequest.marketAuth.localization.fold("")(l ⇒ s"&hl=${l.value}")
     val uriString = s"${serverUrl}?id=${packageName}${locale}"
 
     for /*Option*/ {

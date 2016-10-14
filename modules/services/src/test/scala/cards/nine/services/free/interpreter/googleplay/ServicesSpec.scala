@@ -1,10 +1,12 @@
 package cards.nine.services.free.interpreter.googleplay
 
+import cards.nine.domain.account.AndroidId
 import cards.nine.domain.application.Category
+import cards.nine.domain.market.{ Localization, MarketCredentials, MarketToken }
 import cards.nine.googleplay.domain._
 import cards.nine.googleplay.processes.getcard.{ FailedResponse, UnknownPackage }
 import cards.nine.googleplay.processes.{ CardsProcesses, Wiring }
-import cards.nine.services.free.domain.GooglePlay.{ AppInfo, AppsInfo, AuthParams, Recommendation, Recommendations }
+import cards.nine.services.free.domain.GooglePlay.{ AppInfo, AppsInfo, Recommendation, Recommendations }
 import cats.data.Xor
 import cats.free.Free
 import org.specs2.matcher.{ DisjunctionMatchers, Matcher, Matchers, XorMatchers }
@@ -85,13 +87,13 @@ class GooglePlayServicesSpec
       val androidId = "12345"
       val localization = "en_GB"
       val token = "m52_9876"
-      val params = AuthParams(androidId, Some(localization), token)
 
-      val googleAuthParams = GoogleAuthParams(
+      val marketAuth = MarketCredentials(
         AndroidId(androidId),
-        Token(token),
-        Option(Localization(localization))
+        MarketToken(token),
+        Some(Localization(localization))
       )
+
     }
 
     object Requests {
@@ -137,10 +139,10 @@ class GooglePlayServicesSpec
   "resolveOne" should {
     "return the App object when a valid package name is provided" in new BasicScope {
 
-      googlePlayProcesses.getCard(onePackage, AuthData.googleAuthParams) returns
+      googlePlayProcesses.getCard(onePackage, AuthData.marketAuth) returns
         Free.pure(Xor.right(GooglePlayResponses.fullCard))
 
-      val response = services.resolveOne(onePackageName, AuthData.params)
+      val response = services.resolveOne(onePackageName, AuthData.marketAuth)
 
       response.unsafePerformSyncAttempt must be_\/-[String Xor AppInfo].which {
         content ⇒ content must beXorRight[AppInfo]
@@ -149,10 +151,10 @@ class GooglePlayServicesSpec
 
     "return an error message when a wrong package name is provided" in new BasicScope {
 
-      googlePlayProcesses.getCard(onePackage, AuthData.googleAuthParams) returns
+      googlePlayProcesses.getCard(onePackage, AuthData.marketAuth) returns
         Free.pure(Xor.left(GooglePlayResponses.unknwonPackageError))
 
-      val response = services.resolveOne(onePackageName, AuthData.params)
+      val response = services.resolveOne(onePackageName, AuthData.marketAuth)
 
       response.unsafePerformSyncAttempt must be_\/-[String Xor AppInfo].which {
         content ⇒ content must beXorLeft[String](onePackageName)
@@ -163,10 +165,10 @@ class GooglePlayServicesSpec
   "resolveMany" should {
     "return the list of apps that are valid and those that are wrong" in new BasicScope {
 
-      googlePlayProcesses.getCards(packages, AuthData.googleAuthParams) returns
+      googlePlayProcesses.getCards(packages, AuthData.marketAuth) returns
         Free.pure(GooglePlayResponses.getCardsResponse)
 
-      val response = services.resolveMany(packagesName, AuthData.params, true)
+      val response = services.resolveMany(packagesName, AuthData.marketAuth, true)
 
       response.unsafePerformSyncAttempt must be_\/-[AppsInfo].which { appsInfo ⇒
         appsInfo.missing must containTheSameElementsAs(wrongPackagesName)
@@ -180,7 +182,7 @@ class GooglePlayServicesSpec
 
       googlePlayProcesses.recommendationsByCategory(
         Requests.recommendByCategoryRequest,
-        AuthData.googleAuthParams
+        AuthData.marketAuth
       ) returns Free.pure(Xor.right(GooglePlayResponses.fullCardList))
 
       val response = services.recommendByCategory(
@@ -188,7 +190,7 @@ class GooglePlayServicesSpec
         filter           = priceFilter,
         excludedPackages = wrongPackagesName,
         limit            = limit,
-        auth             = AuthData.params
+        auth             = AuthData.marketAuth
       )
 
       response.unsafePerformSyncAttempt must be_\/-[Recommendations].which { rec ⇒
@@ -200,7 +202,7 @@ class GooglePlayServicesSpec
 
       googlePlayProcesses.recommendationsByCategory(
         Requests.recommendByCategoryRequest,
-        AuthData.googleAuthParams
+        AuthData.marketAuth
       ) returns Free.pure(Xor.left(GooglePlayResponses.recommendationsInfoError))
 
       val response = services.recommendByCategory(
@@ -208,7 +210,7 @@ class GooglePlayServicesSpec
         filter           = priceFilter,
         excludedPackages = wrongPackagesName,
         limit            = limit,
-        auth             = AuthData.params
+        auth             = AuthData.marketAuth
       )
 
       // TODO: We shouldn't use Throwable to model this error
@@ -221,7 +223,7 @@ class GooglePlayServicesSpec
     "return a list of recommended apps for the given list of packages" in new BasicScope {
       googlePlayProcesses.recommendationsByApps(
         Requests.recommendByAppsRequest,
-        AuthData.googleAuthParams
+        AuthData.marketAuth
       ) returns Free.pure(GooglePlayResponses.fullCardList)
 
       val response = services.recommendationsForApps(
@@ -229,7 +231,7 @@ class GooglePlayServicesSpec
         excludedPackages = wrongPackagesName,
         limitByApp       = numPerApp,
         limit            = limit,
-        auth             = AuthData.params
+        auth             = AuthData.marketAuth
       )
 
       response.unsafePerformSyncAttempt must be_\/-[Recommendations].which { rec ⇒

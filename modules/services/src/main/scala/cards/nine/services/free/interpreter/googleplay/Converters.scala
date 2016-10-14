@@ -57,13 +57,6 @@ object Converters {
       limit
     )
 
-  def toGoogleAuthParams(auth: AuthParams): GoogleAuthParams =
-    GoogleAuthParams(
-      AndroidId(auth.androidId),
-      Token(auth.token),
-      auth.localization map Localization.apply
-    )
-
   def toAppsInfo(response: ResolveMany.Response): AppsInfo =
     AppsInfo(
       (response.pending ++ response.notFound) map (_.value),

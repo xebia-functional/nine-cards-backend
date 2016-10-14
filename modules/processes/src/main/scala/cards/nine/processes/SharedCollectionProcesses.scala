@@ -1,11 +1,11 @@
 package cards.nine.processes
 
+import cards.nine.commons.FreeUtils._
+import cards.nine.domain.market.MarketCredentials
 import cards.nine.processes.ProcessesExceptions.SharedCollectionNotFoundException
 import cards.nine.processes.converters.Converters._
-import cards.nine.processes.messages.GooglePlayAuthMessages.AuthParams
 import cards.nine.processes.messages.SharedCollectionMessages._
 import cards.nine.processes.utils.XorTSyntax._
-import cards.nine.commons.FreeUtils._
 import cards.nine.services.free.algebra
 import cards.nine.services.free.algebra.{ Firebase, GooglePlay }
 import cards.nine.services.free.domain.Firebase._
@@ -42,38 +42,38 @@ class SharedCollectionProcesses[F[_]](
   def getCollectionByPublicIdentifier(
     userId: Long,
     publicIdentifier: String,
-    authParams: AuthParams
+    marketAuth: MarketCredentials
   ): Free[F, XorGetCollectionByPublicId] = {
     for {
       sharedCollection ← findCollection(publicIdentifier)
       sharedCollectionInfo ← getCollectionPackages(userId)(sharedCollection).rightXorT[Throwable]
-      resolvedSharedCollection ← getAppsInfoForCollection(sharedCollectionInfo, authParams)
+      resolvedSharedCollection ← getAppsInfoForCollection(sharedCollectionInfo, marketAuth)
     } yield resolvedSharedCollection
   }.value
 
   def getLatestCollectionsByCategory(
     userId: Long,
     category: String,
-    authParams: AuthParams,
+    marketAuth: MarketCredentials,
     pageNumber: Int,
     pageSize: Int
   ): Free[F, GetCollectionsResponse] =
-    getCollections(collectionServices.getLatestByCategory(category, pageNumber, pageSize), userId, authParams)
+    getCollections(collectionServices.getLatestByCategory(category, pageNumber, pageSize), userId, marketAuth)
 
   def getPublishedCollections(
     userId: Long,
-    authParams: AuthParams
+    marketAuth: MarketCredentials
   ): Free[F, GetCollectionsResponse] =
-    getCollections(collectionServices.getByUser(userId), userId, authParams)
+    getCollections(collectionServices.getByUser(userId), userId, marketAuth)
 
   def getTopCollectionsByCategory(
     userId: Long,
     category: String,
-    authParams: AuthParams,
+    marketAuth: MarketCredentials,
     pageNumber: Int,
     pageSize: Int
   ): Free[F, GetCollectionsResponse] =
-    getCollections(collectionServices.getTopByCategory(category, pageNumber, pageSize), userId, authParams)
+    getCollections(collectionServices.getTopByCategory(category, pageNumber, pageSize), userId, marketAuth)
 
   /**
     * This process changes the application state to one where the user is subscribed to the collection.
@@ -188,9 +188,9 @@ class SharedCollectionProcesses[F[_]](
 
   private def getAppsInfoForCollection(
     collection: SharedCollection,
-    authParams: AuthParams
+    marketAuth: MarketCredentials
   ): XorT[Free[F, ?], Throwable, GetCollectionByPublicIdentifierResponse] = {
-    googlePlayServices.resolveMany(collection.packages, toAuthParamsServices(authParams), true) map { appsInfo ⇒
+    googlePlayServices.resolveMany(collection.packages, marketAuth, true) map { appsInfo ⇒
       GetCollectionByPublicIdentifierResponse(
         toSharedCollectionWithAppsInfo(collection, appsInfo.apps)
       )
@@ -200,15 +200,15 @@ class SharedCollectionProcesses[F[_]](
   private def getCollections[T <: BaseSharedCollection](
     sharedCollections: Free[F, List[T]],
     userId: Long,
-    authParams: AuthParams
+    marketAuth: MarketCredentials
   ) = {
 
     def getGooglePlayInfoForPackages(
       collections: List[SharedCollection],
-      authParams: AuthParams
+      marketAuth: MarketCredentials
     ): Free[F, AppsInfo] = {
       val packages = collections.flatMap(_.packages).distinct
-      googlePlayServices.resolveMany(packages, toAuthParamsServices(authParams), false)
+      googlePlayServices.resolveMany(packages, marketAuth, false)
     }
 
     def fillGooglePlayInfoForPackages(
@@ -228,7 +228,7 @@ class SharedCollectionProcesses[F[_]](
 
     for {
       collections ← collectionsWithPackages
-      appsInfo ← getGooglePlayInfoForPackages(collections, authParams)
+      appsInfo ← getGooglePlayInfoForPackages(collections, marketAuth)
     } yield fillGooglePlayInfoForPackages(collections, appsInfo)
   }
 

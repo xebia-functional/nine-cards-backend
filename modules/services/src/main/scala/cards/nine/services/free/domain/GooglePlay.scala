@@ -4,12 +4,6 @@ object GooglePlay {
 
   case class PackageList(items: List[String]) extends AnyVal
 
-  case class AuthParams(
-    androidId: String,
-    localization: Option[String],
-    token: String
-  )
-
   case class AppsInfo(
     missing: List[String],
     apps: List[AppInfo]

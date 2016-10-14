@@ -1,6 +1,5 @@
 package cards.nine.processes.converters
 
-import cards.nine.processes.messages.GooglePlayAuthMessages.AuthParams
 import cards.nine.services.free.domain.GooglePlay.AppsInfo
 import cards.nine.services.free.domain._
 import org.scalacheck.Shapeless._
@@ -49,19 +48,6 @@ class ConvertersSpec
               app.categories == item.categories
           } should beTrue
         }
-      }
-    }
-  }
-
-  "toAuthParamsServices" should {
-    "convert an AuthParams (processes) to an AuthParams (services) object" in {
-      prop { authParams: AuthParams ⇒
-
-        val authParamsServices = Converters.toAuthParamsServices(authParams)
-
-        authParamsServices.androidId shouldEqual authParams.androidId
-        authParamsServices.localization shouldEqual authParams.localization
-        authParamsServices.token shouldEqual authParams.token
       }
     }
   }

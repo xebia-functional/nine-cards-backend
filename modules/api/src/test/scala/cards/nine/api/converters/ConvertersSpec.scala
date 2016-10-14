@@ -3,6 +3,8 @@ package cards.nine.api.converters
 import cards.nine.api.NineCardsHeaders.Domain._
 import cards.nine.api.messages.InstallationsMessages._
 import cards.nine.api.messages.UserMessages._
+import cards.nine.domain.account.AndroidId
+import cards.nine.domain.market.{ MarketToken, Localization }
 import cards.nine.processes.messages.ApplicationMessages._
 import cards.nine.processes.messages.InstallationsMessages._
 import cards.nine.processes.messages.SharedCollectionMessages._
@@ -102,18 +104,18 @@ class ConvertersSpec
     }
   }
 
-  "toAuthParams" should {
+  "toMarketAuth" should {
     "convert UserContext and GooglePlayContext objects to an AuthParams object" in {
-      prop { (userId: UserId, androidId: AndroidId, token: GooglePlayToken, localization: Option[MarketLocalization]) ⇒
+      prop { (userId: UserId, androidId: AndroidId, token: MarketToken, localization: Option[Localization]) ⇒
 
         val userContext = UserContext(userId, androidId)
         val googlePlayContext = GooglePlayContext(token, localization)
 
-        val authParams = Converters.toAuthParams(googlePlayContext, userContext)
+        val marketAuth = Converters.toMarketAuth(googlePlayContext, userContext)
 
-        authParams.token shouldEqual googlePlayContext.googlePlayToken.value
-        authParams.localization shouldEqual googlePlayContext.marketLocalization.map(_.value)
-        authParams.androidId shouldEqual userContext.androidId.value
+        marketAuth.token shouldEqual token
+        marketAuth.localization shouldEqual localization
+        marketAuth.androidId shouldEqual androidId
       }
     }
   }
