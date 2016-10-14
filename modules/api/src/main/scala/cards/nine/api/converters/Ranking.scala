@@ -1,8 +1,9 @@
 package cards.nine.api.converters
 
 import cards.nine.api.messages.{ rankings ⇒ Api }
+import cards.nine.domain.application.Category
 import cards.nine.processes.messages.{ rankings ⇒ Proc }
-import cards.nine.services.free.domain.{ Category, rankings ⇒ Domain }
+import cards.nine.services.free.domain.{ rankings ⇒ Domain }
 
 object rankings {
 

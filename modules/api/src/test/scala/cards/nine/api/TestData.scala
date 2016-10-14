@@ -5,6 +5,7 @@ import cards.nine.api.messages.GooglePlayMessages._
 import cards.nine.api.messages.InstallationsMessages.ApiUpdateInstallationRequest
 import cards.nine.api.messages.SharedCollectionMessages._
 import cards.nine.api.messages.UserMessages.ApiLoginRequest
+import cards.nine.domain.application.Category
 import cards.nine.processes.ProcessesExceptions.SharedCollectionNotFoundException
 import cards.nine.processes.messages.ApplicationMessages.GetAppsInfoResponse
 import cards.nine.processes.messages.InstallationsMessages._
@@ -222,7 +223,7 @@ object TestData {
     object rankings {
       import cards.nine.api.messages.{ rankings ⇒ Api }
       import cards.nine.processes.messages.{ rankings ⇒ Proc }
-      import cards.nine.services.free.domain.{ Category, PackageName, rankings ⇒ Domain }
+      import cards.nine.services.free.domain.{ PackageName, rankings ⇒ Domain }
 
       val ranking = Domain.Ranking(Map(
         Category.SOCIAL → Domain.CategoryRanking(List(PackageName("testApp")))

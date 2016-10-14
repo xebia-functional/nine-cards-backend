@@ -1,10 +1,11 @@
 package cards.nine.services.free.interpreter.googleplay
 
+import cards.nine.domain.application.Category
 import cards.nine.googleplay.domain._
 import cards.nine.googleplay.processes.getcard.{ FailedResponse, UnknownPackage }
 import cards.nine.googleplay.processes.{ CardsProcesses, Wiring }
-import cats.data.Xor
 import cards.nine.services.free.domain.GooglePlay.{ AppInfo, AppsInfo, AuthParams, Recommendation, Recommendations }
+import cats.data.Xor
 import cats.free.Free
 import org.specs2.matcher.{ DisjunctionMatchers, Matcher, Matchers, XorMatchers }
 import org.specs2.mock.Mockito

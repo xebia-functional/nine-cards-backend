@@ -1,5 +1,6 @@
 package cards.nine.googleplay.domain
 
+import cards.nine.domain.application.Category
 import enumeratum.{ Enum, EnumEntry }
 
 case class Package(value: String) extends AnyVal

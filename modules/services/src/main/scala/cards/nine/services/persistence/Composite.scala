@@ -1,6 +1,7 @@
 package cards.nine.services.persistence
 
-import cards.nine.services.free.domain.{ Category, PackageName }
+import cards.nine.domain.application.Category
+import cards.nine.services.free.domain.PackageName
 import cards.nine.services.free.domain.rankings.Entry
 import doobie.imports._
 

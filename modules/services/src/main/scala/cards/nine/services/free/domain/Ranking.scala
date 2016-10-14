@@ -1,5 +1,6 @@
 package cards.nine.services.free.domain
 
+import cards.nine.domain.application.Category
 import cats.data.Xor
 import org.joda.time.DateTime
 
