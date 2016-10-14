@@ -2,6 +2,7 @@ package cards.nine.googleplay.processes
 
 import cats.data.Xor
 import cats.{ ~>, Id }
+import cards.nine.domain.market.MarketCredentials
 import cards.nine.googleplay.domain._
 import cards.nine.googleplay.domain.{ apigoogle ⇒ ApiDom, webscrapper ⇒ WebDom }
 import cards.nine.googleplay.service.free.algebra.{ GoogleApi ⇒ ApiAlg, Cache ⇒ CacheAlg, WebScraper ⇒ WebAlg }
@@ -48,18 +49,18 @@ class CardsProcessesSpec
 
   "getCard" >> {
 
-    def runGetCard(pack: Package, auth: GoogleAuthParams): getcard.Response =
+    def runGetCard(pack: Package, auth: MarketCredentials): getcard.Response =
       processes.getCard(pack, auth).foldMap(interpreter)
 
     "if the Package is already resolved" >> {
 
-      def setup(pack: Package, card: FullCard, auth: GoogleAuthParams) = {
+      def setup(pack: Package, card: FullCard, auth: MarketCredentials) = {
         clear()
         cacheIntServer.getValid(pack) returns Some(card)
       }
 
       "give back the card in the cache" >>
-        prop { (card: FullCard, auth: GoogleAuthParams) ⇒
+        prop { (card: FullCard, auth: MarketCredentials) ⇒
           val pack = Package(card.packageName)
           setup(pack, card, auth)
           runGetCard(pack, auth) must_== Xor.Right(card)
@@ -68,7 +69,7 @@ class CardsProcessesSpec
 
     "The package is not resolved in cache, but is available in Google API" >> {
 
-      def setup(pack: Package, card: FullCard, auth: GoogleAuthParams) = {
+      def setup(pack: Package, card: FullCard, auth: MarketCredentials) = {
         clear()
         cacheIntServer.getValid(pack) returns None
         apiGoogleIntServer.getDetails(pack, auth) returns Xor.Right(card)
@@ -76,7 +77,7 @@ class CardsProcessesSpec
       }
 
       "return the card given by the Google API and store it in the cache" >> {
-        prop { (card: FullCard, auth: GoogleAuthParams) ⇒
+        prop { (card: FullCard, auth: MarketCredentials) ⇒
           val pack = Package(card.packageName)
           setup(pack, card, auth)
           runGetCard(pack, auth) must_== Xor.Right(card)
@@ -84,7 +85,7 @@ class CardsProcessesSpec
       }
 
       "store the card given by the Google API in the cache" >> {
-        prop { (card: FullCard, auth: GoogleAuthParams) ⇒
+        prop { (card: FullCard, auth: MarketCredentials) ⇒
           val pack = Package(card.packageName)
           setup(pack, card, auth)
           runGetCard(pack, auth)
@@ -97,7 +98,7 @@ class CardsProcessesSpec
 
       "If the package appears in the Web Page" >> {
 
-        def setup(pack: Package, card: FullCard, auth: GoogleAuthParams) = {
+        def setup(pack: Package, card: FullCard, auth: MarketCredentials) = {
           clear()
           cacheIntServer.getValid(pack) returns None
           apiGoogleIntServer.getDetails(pack, auth) returns Xor.Left(ApiDom.PackageNotFound(pack))
@@ -106,14 +107,14 @@ class CardsProcessesSpec
         }
 
         "Return the package as PendingResolution" >>
-          prop { (card: FullCard, auth: GoogleAuthParams) ⇒
+          prop { (card: FullCard, auth: MarketCredentials) ⇒
             val pack = Package(card.packageName)
             setup(pack, card, auth)
             runGetCard(pack, auth) must_== Xor.Left(getcard.PendingResolution(pack))
           }
 
         "Stores the package as Pending in the cache " >>
-          prop { (card: FullCard, auth: GoogleAuthParams) ⇒
+          prop { (card: FullCard, auth: MarketCredentials) ⇒
             val pack = Package(card.packageName)
             setup(pack, card, auth)
             runGetCard(pack, auth)
@@ -125,7 +126,7 @@ class CardsProcessesSpec
 
     "The package is not in the cache, the API, nor the WebPage" >> {
 
-      def setup(pack: Package, card: FullCard, auth: GoogleAuthParams) = {
+      def setup(pack: Package, card: FullCard, auth: MarketCredentials) = {
         clear()
         cacheIntServer.getValid(pack) returns None
         apiGoogleIntServer.getDetails(pack, auth) returns Xor.Left(ApiDom.PackageNotFound(pack))
@@ -134,14 +135,14 @@ class CardsProcessesSpec
       }
 
       "Return the package as Unresolved" >>
-        prop { (card: FullCard, auth: GoogleAuthParams) ⇒
+        prop { (card: FullCard, auth: MarketCredentials) ⇒
           val pack = Package(card.packageName)
           setup(pack, card, auth)
           runGetCard(pack, auth) must_== Xor.Left(getcard.UnknownPackage(pack))
         }
 
       "Store it in the cache as Error" >>
-        prop { (card: FullCard, auth: GoogleAuthParams) ⇒
+        prop { (card: FullCard, auth: MarketCredentials) ⇒
           val pack = Package(card.packageName)
           setup(pack, card, auth)
           runGetCard(pack, auth)

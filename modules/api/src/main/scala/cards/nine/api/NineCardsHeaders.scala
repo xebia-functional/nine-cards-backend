@@ -1,5 +1,7 @@
 package cards.nine.api
 
+import cards.nine.domain.account.AndroidId
+import cards.nine.domain.market.{ MarketToken, Localization }
 import org.joda.time.DateTime
 
 object NineCardsHeaders {
@@ -14,17 +16,11 @@ object NineCardsHeaders {
 
   object Domain {
 
-    case class AndroidId(value: String) extends AnyVal
-
     case class AuthToken(value: String) extends AnyVal
 
     case class CurrentDateTime(value: DateTime) extends AnyVal
 
-    case class GooglePlayToken(value: String) extends AnyVal
-
     case class GoogleAnalyticsToken(value: String) extends AnyVal
-
-    case class MarketLocalization(value: String) extends AnyVal
 
     case class NewSharedCollectionInfo(currentDate: CurrentDateTime, identifier: PublicIdentifier)
 
@@ -41,8 +37,8 @@ object NineCardsHeaders {
     case class UserContext(userId: UserId, androidId: AndroidId)
 
     case class GooglePlayContext(
-      googlePlayToken: GooglePlayToken,
-      marketLocalization: Option[MarketLocalization]
+      googlePlayToken: MarketToken,
+      marketLocalization: Option[Localization]
     )
 
   }

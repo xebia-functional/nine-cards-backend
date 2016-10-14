@@ -3,7 +3,6 @@ package cards.nine.processes.converters
 import java.sql.Timestamp
 
 import cards.nine.processes.messages.ApplicationMessages._
-import cards.nine.processes.messages.GooglePlayAuthMessages._
 import cards.nine.processes.messages.InstallationsMessages._
 import cards.nine.processes.messages.rankings.GetRankedDeviceApps._
 import cards.nine.processes.messages.RecommendationsMessages._
@@ -12,7 +11,6 @@ import cards.nine.processes.messages.UserMessages.LoginResponse
 import cards.nine.services.free.domain.GooglePlay.{
   AppsInfo,
   AppInfo ⇒ AppInfoServices,
-  AuthParams ⇒ AuthParamServices,
   Recommendation,
   Recommendations
 }
@@ -152,14 +150,6 @@ object Converters {
 
   def toSearchAppsResponse(searchResults: Recommendations): SearchAppsResponse =
     RecommendationAppList(apps = searchResults.apps map toGooglePlayRecommendation)
-
-  def toAuthParamsServices(authParams: AuthParams): AuthParamServices = {
-    AuthParamServices(
-      androidId    = authParams.androidId,
-      localization = authParams.localization,
-      token        = authParams.token
-    )
-  }
 
   def toGetSubscriptionsByUserResponse(subscriptions: List[SharedCollectionSubscriptionServices]) =
     GetSubscriptionsByUserResponse(

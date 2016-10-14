@@ -1,22 +1,15 @@
 package cards.nine.googleplay.domain
 
 import cards.nine.domain.application.Category
+import cards.nine.domain.market.MarketCredentials
+
 import enumeratum.{ Enum, EnumEntry }
 
 case class Package(value: String) extends AnyVal
-case class AndroidId(value: String) extends AnyVal
-case class Token(value: String) extends AnyVal
-case class Localization(value: String) extends AnyVal
-
-case class GoogleAuthParams(
-  androidId: AndroidId,
-  token: Token,
-  localization: Option[Localization]
-)
 
 case class AppRequest(
   packageName: Package,
-  authParams: GoogleAuthParams
+  marketAuth: MarketCredentials
 )
 
 case class PackageList(items: List[String]) extends AnyVal
