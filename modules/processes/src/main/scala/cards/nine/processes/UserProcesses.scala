@@ -1,11 +1,11 @@
 package cards.nine.processes
 
+import cards.nine.commons.NineCardsConfig
 import cards.nine.processes.converters.Converters._
 import cards.nine.processes.messages.InstallationsMessages._
 import cards.nine.processes.messages.UserMessages._
 import cards.nine.processes.utils.HashUtils
-import cards.nine.services.common.FreeUtils._
-import cards.nine.services.common.NineCardsConfig
+import cards.nine.commons.FreeUtils._
 import cards.nine.services.free.algebra
 import cards.nine.services.free.domain._
 import cats.free.Free
@@ -65,7 +65,7 @@ class UserProcesses[F[_]](
   ): Free[F, Option[Long]] =
     userServices.getBySessionToken(sessionToken) flatMap {
       case Some(user) ⇒
-        if (config.getOptionalBoolean("ninecards.backend.debugMode").getOrElse(false))
+        if (config.getOptionalBoolean("ninecards.debugMode").getOrElse(false))
           Option(user.id).toFree
         else
           validateAuthToken(user, androidId, authToken, requestUri)

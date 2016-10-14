@@ -5,7 +5,7 @@ import cards.nine.processes.converters.Converters._
 import cards.nine.processes.messages.GooglePlayAuthMessages.AuthParams
 import cards.nine.processes.messages.SharedCollectionMessages._
 import cards.nine.processes.utils.XorTSyntax._
-import cards.nine.services.common.FreeUtils._
+import cards.nine.commons.FreeUtils._
 import cards.nine.services.free.algebra
 import cards.nine.services.free.algebra.{ Firebase, GooglePlay }
 import cards.nine.services.free.domain.Firebase._
@@ -40,37 +40,40 @@ class SharedCollectionProcesses[F[_]](
   }
 
   def getCollectionByPublicIdentifier(
+    userId: Long,
     publicIdentifier: String,
     authParams: AuthParams
   ): Free[F, XorGetCollectionByPublicId] = {
     for {
       sharedCollection ← findCollection(publicIdentifier)
-      sharedCollectionInfo ← getCollectionPackages(sharedCollection).rightXorT[Throwable]
+      sharedCollectionInfo ← getCollectionPackages(userId)(sharedCollection).rightXorT[Throwable]
       resolvedSharedCollection ← getAppsInfoForCollection(sharedCollectionInfo, authParams)
     } yield resolvedSharedCollection
   }.value
 
   def getLatestCollectionsByCategory(
+    userId: Long,
     category: String,
     authParams: AuthParams,
     pageNumber: Int,
     pageSize: Int
   ): Free[F, GetCollectionsResponse] =
-    getCollections(collectionServices.getLatestByCategory(category, pageNumber, pageSize), authParams)
+    getCollections(collectionServices.getLatestByCategory(category, pageNumber, pageSize), userId, authParams)
 
   def getPublishedCollections(
     userId: Long,
     authParams: AuthParams
   ): Free[F, GetCollectionsResponse] =
-    getCollections(collectionServices.getByUser(userId), authParams)
+    getCollections(collectionServices.getByUser(userId), userId, authParams)
 
   def getTopCollectionsByCategory(
+    userId: Long,
     category: String,
     authParams: AuthParams,
     pageNumber: Int,
     pageSize: Int
   ): Free[F, GetCollectionsResponse] =
-    getCollections(collectionServices.getTopByCategory(category, pageNumber, pageSize), authParams)
+    getCollections(collectionServices.getTopByCategory(category, pageNumber, pageSize), userId, authParams)
 
   /**
     * This process changes the application state to one where the user is subscribed to the collection.
@@ -187,7 +190,7 @@ class SharedCollectionProcesses[F[_]](
     collection: SharedCollection,
     authParams: AuthParams
   ): XorT[Free[F, ?], Throwable, GetCollectionByPublicIdentifierResponse] = {
-    googlePlayServices.resolveMany(collection.packages, toAuthParamsServices(authParams)) map { appsInfo ⇒
+    googlePlayServices.resolveMany(collection.packages, toAuthParamsServices(authParams), true) map { appsInfo ⇒
       GetCollectionByPublicIdentifierResponse(
         toSharedCollectionWithAppsInfo(collection, appsInfo.apps)
       )
@@ -196,6 +199,7 @@ class SharedCollectionProcesses[F[_]](
 
   private def getCollections[T <: BaseSharedCollection](
     sharedCollections: Free[F, List[T]],
+    userId: Long,
     authParams: AuthParams
   ) = {
 
@@ -203,8 +207,8 @@ class SharedCollectionProcesses[F[_]](
       collections: List[SharedCollection],
       authParams: AuthParams
     ): Free[F, AppsInfo] = {
-      val packages = collections.flatMap(_.packages).toSet.toList
-      googlePlayServices.resolveMany(packages, toAuthParamsServices(authParams))
+      val packages = collections.flatMap(_.packages).distinct
+      googlePlayServices.resolveMany(packages, toAuthParamsServices(authParams), false)
     }
 
     def fillGooglePlayInfoForPackages(
@@ -219,7 +223,7 @@ class SharedCollectionProcesses[F[_]](
     }
 
     val collectionsWithPackages = sharedCollections flatMap { collections ⇒
-      collections.traverse[Free[F, ?], SharedCollection](getCollectionPackages)
+      collections.traverse[Free[F, ?], SharedCollection](getCollectionPackages(userId))
     }
 
     for {
@@ -228,9 +232,9 @@ class SharedCollectionProcesses[F[_]](
     } yield fillGooglePlayInfoForPackages(collections, appsInfo)
   }
 
-  private[this] def getCollectionPackages(collection: BaseSharedCollection) =
+  private[this] def getCollectionPackages(userId: Long)(collection: BaseSharedCollection) =
     collectionServices.getPackagesByCollection(collection.sharedCollectionId) map { packages ⇒
-      toSharedCollection(collection, packages map (_.packageName))
+      toSharedCollection(collection, packages map (_.packageName), userId)
     }
 }
 

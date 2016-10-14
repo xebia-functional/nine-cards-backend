@@ -1,6 +1,6 @@
 package cards.nine.processes.utils
 
-import cards.nine.services.common.NineCardsConfig
+import cards.nine.commons.NineCardsConfig
 
 import scala.util.Random
 
@@ -19,23 +19,25 @@ trait DummyNineCardsConfig {
 
   def dummyConfigHocon(debugMode: Boolean) =
     s"""
-       |db {
-       |  default {
-       |    driver = "$dbDefaultDriver"
-       |    url = "$dbDefaultUrl"
-       |    user = "$dbDefaultUser"
-       |    password = "$dbDefaultPassword"
+       |ninecards {
+       |  db {
+       |    default {
+       |      driver = "$dbDefaultDriver"
+       |      url = "$dbDefaultUrl"
+       |      user = "$dbDefaultUser"
+       |      password = "$dbDefaultPassword"
+       |    }
+       |    hikari {
+       |      maximumPoolSize = $dbHikariMaximumPoolSize
+       |      maxLifetime = $dbHikariMaxLifetime
+       |    }
        |  }
-       |  hikari {
-       |    maximumPoolSize = $dbHikariMaximumPoolSize
-       |    maxLifetime = $dbHikariMaxLifetime
-       |  }
-       |}
-       |ninecards.backend {
+       |
        |  debugMode = $debugMode
+       |
+       |  secretKey = "$nineCardsSecretKey"
+       |  salt = "$nineCardsSalt"
        |}
-       |ninecards.secretKey = "$nineCardsSecretKey"
-       |ninecards.salt = "$nineCardsSalt"
      """.stripMargin
 
   def dummyConfig(debugMode: Boolean) = new NineCardsConfig(Option(dummyConfigHocon(debugMode)))

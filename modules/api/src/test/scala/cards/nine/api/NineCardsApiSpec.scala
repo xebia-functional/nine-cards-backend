@@ -2,21 +2,15 @@ package cards.nine.api
 
 import akka.actor.ActorSystem
 import akka.testkit._
-import cats.free.Free
-import cats.syntax.xor._
 import cards.nine.api.NineCardsHeaders._
 import cards.nine.api.TestData.Exceptions._
 import cards.nine.api.TestData._
 import cards.nine.commons.NineCardsService
-import cards.nine.commons.NineCardsService.NineCardsService
 import cards.nine.processes.NineCardsServices._
 import cards.nine.processes._
-import cards.nine.processes.messages.ApplicationMessages._
-import cards.nine.processes.messages.InstallationsMessages._
-import cards.nine.processes.messages.SharedCollectionMessages._
 import cards.nine.processes.messages.UserMessages._
-import cards.nine.processes.messages.rankings.GetRankedDeviceApps.RankedDeviceApp
-import cards.nine.services.common.FreeUtils._
+import cats.free.Free
+import cats.syntax.xor._
 import org.mockito.Matchers.{ eq ⇒ mockEq }
 import org.specs2.matcher.Matchers
 import org.specs2.mock.Mockito
@@ -28,7 +22,6 @@ import spray.routing.HttpService
 import spray.testkit.Specs2RouteTest
 
 import scala.concurrent.duration.DurationInt
-import scalaz.concurrent.Task
 
 trait NineCardsApiSpecification
   extends Specification
@@ -39,8 +32,6 @@ trait NineCardsApiSpecification
   with Mockito
   with NineCardsExceptionHandler
   with Specs2RouteTest {
-
-  import NineCardsMarshallers._
 
   implicit def default(implicit system: ActorSystem) = RouteTestTimeout(20.second dilated system)
 
@@ -59,8 +50,6 @@ trait NineCardsApiSpecification
     implicit val recommendationsProcesses: RecommendationsProcesses[NineCardsServices] = mock[RecommendationsProcesses[NineCardsServices]]
 
     implicit val sharedCollectionProcesses: SharedCollectionProcesses[NineCardsServices] = mock[SharedCollectionProcesses[NineCardsServices]]
-
-    import cards.nine.services.persistence.CustomComposite._
 
     val nineCardsApi = new NineCardsRoutes().nineCardsRoutes
 
@@ -86,7 +75,7 @@ trait NineCardsApiSpecification
     sharedCollectionProcesses.createCollection(any) returns
       Free.pure(Messages.createOrUpdateCollectionResponse)
 
-    sharedCollectionProcesses.getCollectionByPublicIdentifier(any[String], any) returns
+    sharedCollectionProcesses.getCollectionByPublicIdentifier(any, any[String], any) returns
       Free.pure(Messages.getCollectionByPublicIdentifierResponse.right)
 
     sharedCollectionProcesses.subscribe(any[String], any[Long]) returns
@@ -95,7 +84,7 @@ trait NineCardsApiSpecification
     sharedCollectionProcesses.unsubscribe(any[String], any[Long]) returns
       Free.pure(Messages.unsubscribeResponse.right)
 
-    sharedCollectionProcesses.getLatestCollectionsByCategory(any, any, any, any) returns
+    sharedCollectionProcesses.getLatestCollectionsByCategory(any, any, any, any, any) returns
       Free.pure(Messages.getCollectionsResponse)
 
     sharedCollectionProcesses.getPublishedCollections(any[Long], any) returns
@@ -104,7 +93,7 @@ trait NineCardsApiSpecification
     sharedCollectionProcesses.getSubscriptionsByUser(any) returns
       Free.pure(Messages.getSubscriptionsByUserResponse)
 
-    sharedCollectionProcesses.getTopCollectionsByCategory(any, any, any, any) returns
+    sharedCollectionProcesses.getTopCollectionsByCategory(any, any, any, any, any) returns
       Free.pure(Messages.getCollectionsResponse)
 
     sharedCollectionProcesses.updateCollection(any, any, any) returns
@@ -139,7 +128,7 @@ trait NineCardsApiSpecification
       requestUri   = any[String]
     ) returns Free.pure(None)
 
-    sharedCollectionProcesses.getCollectionByPublicIdentifier(any[String], any) returns
+    sharedCollectionProcesses.getCollectionByPublicIdentifier(any, any[String], any) returns
       Free.pure(sharedCollectionNotFoundException.left)
 
     sharedCollectionProcesses.subscribe(any[String], any[Long]) returns
@@ -173,10 +162,10 @@ trait NineCardsApiSpecification
     sharedCollectionProcesses.createCollection(any) returns
       Free.pure(Messages.createOrUpdateCollectionResponse)
 
-    sharedCollectionProcesses.getCollectionByPublicIdentifier(any[String], any) returns
+    sharedCollectionProcesses.getCollectionByPublicIdentifier(any, any[String], any) returns
       Free.pure(Messages.getCollectionByPublicIdentifierResponse.right)
 
-    sharedCollectionProcesses.getLatestCollectionsByCategory(any, any, any, any) returns
+    sharedCollectionProcesses.getLatestCollectionsByCategory(any, any, any, any, any) returns
       Free.pure(Messages.getCollectionsResponse)
 
     sharedCollectionProcesses.getPublishedCollections(any[Long], any) returns
@@ -185,7 +174,7 @@ trait NineCardsApiSpecification
     sharedCollectionProcesses.getSubscriptionsByUser(any) returns
       Free.pure(Messages.getSubscriptionsByUserResponse)
 
-    sharedCollectionProcesses.getTopCollectionsByCategory(any, any, any, any) returns
+    sharedCollectionProcesses.getTopCollectionsByCategory(any, any, any, any, any) returns
       Free.pure(Messages.getCollectionsResponse)
 
     sharedCollectionProcesses.subscribe(any[String], any[Long]) returns

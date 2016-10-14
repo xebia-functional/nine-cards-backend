@@ -1,120 +1,98 @@
 package cards.nine.services.free.interpreter.googleplay
 
+import cards.nine.commons.TaskInstances._
+import cards.nine.googleplay.domain.Package
+import cards.nine.googleplay.processes.Wiring.GooglePlayApp
+import cards.nine.googleplay.processes.{ CardsProcesses, Wiring }
 import cards.nine.services.free.algebra.GooglePlay._
-import cats.data.Xor
 import cards.nine.services.free.domain.GooglePlay._
+import cats.data.Xor
 import cats.~>
-import org.http4s.Http4s._
-import org.http4s._
-import org.http4s.Uri.{ Authority, RegName }
 
 import scalaz.concurrent.Task
 
-class Services(config: Configuration) extends (Ops ~> Task) {
-
-  import Encoders._
-  import Decoders._
-
-  private[this] val client = org.http4s.client.blaze.PooledHttp1Client()
-
-  private[this] val authority = Authority(host = RegName(config.host), port = config.port)
-
-  private[this] def authHeaders(auth: AuthParams): Headers = {
-    val locHeader: List[Header] = auth.localization
-      .map(Header("X-Android-Market-Localization", _))
-      .toList
-
-    Headers(
-      Header("X-Google-Play-Token", auth.token)
-        :: Header("X-Android-ID", auth.androidId)
-        :: locHeader
-    )
-  }
-
-  private[this] val recommendationsBaseUri = Uri(
-    scheme    = Option(config.protocol.ci),
-    authority = Option(authority),
-    path      = config.recommendationsPath
-  )
+class Services(implicit googlePlayProcesses: CardsProcesses[GooglePlayApp]) extends (Ops ~> Task) {
 
   def resolveOne(packageName: String, auth: AuthParams): Task[String Xor AppInfo] = {
-    val uri = Uri(
-      scheme    = Option(config.protocol.ci),
-      authority = Option(authority),
-      path      = s"${config.resolveOnePath}/$packageName"
-    )
-
-    val request = Request(Method.GET, uri = uri, headers = authHeaders(auth))
-    client.fetchAs[String Xor AppInfo](request)
+    googlePlayProcesses.getCard(
+      pack = Package(packageName),
+      auth = Converters.toGoogleAuthParams(auth)
+    ).foldMap(Wiring.interpreters).map {
+        _.bimap(e ⇒ e.packageName.value, c ⇒ Converters.toAppInfo(c))
+      }
   }
 
-  def resolveMany(packageNames: List[String], auth: AuthParams): Task[AppsInfo] = {
-    val resolveManyUri = Uri(
-      scheme    = Option(config.protocol.ci),
-      authority = Option(authority),
-      path      = config.resolveManyPath
-    )
+  def resolveMany(
+    packageNames: List[String],
+    auth: AuthParams,
+    extendedInfo: Boolean
+  ): Task[AppsInfo] = {
+    val authParams = Converters.toGoogleAuthParams(auth)
+    val packages = packageNames map Package
 
-    val request = Request(Method.POST, uri = resolveManyUri, headers = authHeaders(auth))
-      .withBody[PackageList](PackageList(packageNames))
-    client.expect[AppsInfo](request)
+    if (extendedInfo)
+      googlePlayProcesses.getCards(packages, authParams)
+        .foldMap(Wiring.interpreters)
+        .map(Converters.toAppsInfo)
+    else
+      googlePlayProcesses.getBasicCards(packages, authParams)
+        .foldMap(Wiring.interpreters)
+        .map(Converters.toAppsInfo)
   }
 
   def recommendByCategory(
     category: String,
     filter: String,
-    excludesPackages: List[String],
+    excludedPackages: List[String],
     limit: Int,
     auth: AuthParams
-  ): Task[Recommendations] = {
-
-    val requestBody = RecommendByCategoryRequest(
-      excludedApps = excludesPackages,
-      maxTotal     = limit
-    )
-
-    val uri = recommendationsBaseUri./(category)./(filter)
-
-    val request = Request(Method.POST, uri = uri, headers = authHeaders(auth))
-      .withBody[RecommendByCategoryRequest](requestBody)
-
-    client.expect[Recommendations](request)
-  }
+  ): Task[Recommendations] =
+    googlePlayProcesses.recommendationsByCategory(
+      Converters.toRecommendByCategoryRequest(category, filter, excludedPackages, limit),
+      Converters.toGoogleAuthParams(auth)
+    ).foldMap(Wiring.interpreters).flatMap {
+        case Xor.Right(rec) ⇒ Task.delay(Converters.toRecommendations(rec))
+        case Xor.Left(e) ⇒ Task.fail(new RuntimeException(e.message))
+      }
 
   def recommendationsForApps(
     packageNames: List[String],
-    excludesPackages: List[String],
+    excludedPackages: List[String],
     limitByApp: Int,
     limit: Int,
     auth: AuthParams
-  ): Task[Recommendations] = {
+  ): Task[Recommendations] =
+    googlePlayProcesses.recommendationsByApps(
+      Converters.toRecommendByAppsRequest(packageNames, limitByApp, excludedPackages, limit),
+      Converters.toGoogleAuthParams(auth)
+    ).foldMap(Wiring.interpreters).map(Converters.toRecommendations)
 
-    val requestBody = RecommendationsForAppsRequest(
-      searchByApps = packageNames,
-      numPerApp    = limitByApp,
-      excludedApps = excludesPackages,
-      maxTotal     = limit
-    )
-
-    val request = Request(Method.POST, uri = recommendationsBaseUri, headers = authHeaders(auth))
-      .withBody[RecommendationsForAppsRequest](requestBody)
-
-    client.expect[Recommendations](request)
-  }
+  def searchApps(
+    query: String,
+    excludePackages: List[String],
+    limit: Int,
+    auth: AuthParams
+  ): Task[Recommendations] =
+    googlePlayProcesses.searchApps(
+      Converters.toSearchAppsRequest(query, excludePackages, limit),
+      Converters.toGoogleAuthParams(auth)
+    ).foldMap(Wiring.interpreters).map(Converters.toRecommendations)
 
   def apply[A](fa: Ops[A]): Task[A] = fa match {
-    case ResolveMany(packageNames, auth) ⇒
-      resolveMany(packageNames, auth)
+    case ResolveMany(packageNames, auth, basicInfo) ⇒
+      resolveMany(packageNames, auth, basicInfo)
     case Resolve(packageName, auth) ⇒
       resolveOne(packageName, auth)
     case RecommendationsByCategory(category, filter, excludesPackages, limit, auth) ⇒
       recommendByCategory(category, filter, excludesPackages, limit, auth)
     case RecommendationsForApps(packagesName, excludesPackages, limitPerApp, limit, auth) ⇒
       recommendationsForApps(packagesName, excludesPackages, limitPerApp, limit, auth)
+    case SearchApps(query, excludePackages, limit, auth) ⇒
+      searchApps(query, excludePackages, limit, auth)
   }
 }
 
 object Services {
 
-  def services(implicit config: Configuration) = new Services(config)
+  def services(implicit googlePlayProcesses: CardsProcesses[GooglePlayApp]) = new Services
 }

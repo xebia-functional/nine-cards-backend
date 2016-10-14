@@ -107,7 +107,7 @@ trait SharedCollectionProcessesSpecification
       .getByUser(any) returns
       Free.pure(List(subscription))
 
-    googlePlayServices.resolveMany(any, any) returns Free.pure(appsInfo)
+    googlePlayServices.resolveMany(any, any, any) returns Free.pure(appsInfo)
 
     userServices.getSubscribedInstallationByCollection(any) returns
       Free.pure(List(installation))
@@ -140,6 +140,7 @@ class SharedCollectionProcessesSpec
     "return a valid shared collection info when the shared collection exists" in
       new SharedCollectionSuccessfulScope {
         val collectionInfo = sharedCollectionProcesses.getCollectionByPublicIdentifier(
+          userId           = publisherId,
           publicIdentifier = publicIdentifier,
           authParams       = authParams
         )
@@ -150,6 +151,7 @@ class SharedCollectionProcessesSpec
     "return a SharedCollectionNotFoundException when the shared collection doesn't exist" in
       new SharedCollectionUnsuccessfulScope {
         val collectionInfo = sharedCollectionProcesses.getCollectionByPublicIdentifier(
+          userId           = publisherId,
           publicIdentifier = publicIdentifier,
           authParams       = authParams
         )
@@ -163,6 +165,7 @@ class SharedCollectionProcessesSpec
     "return a list of Shared collections of the given category" in new SharedCollectionSuccessfulScope {
       val response = GetCollectionsResponse(List(sharedCollectionWithAppsInfo))
       val collectionsInfo = sharedCollectionProcesses.getLatestCollectionsByCategory(
+        userId     = publisherId,
         category   = category,
         authParams = authParams,
         pageNumber = pageNumber,
@@ -212,6 +215,7 @@ class SharedCollectionProcessesSpec
     "return a list of Shared collections of the given category" in new SharedCollectionSuccessfulScope {
       val response = GetCollectionsResponse(List(sharedCollectionWithAppsInfo))
       val collectionsInfo = sharedCollectionProcesses.getTopCollectionsByCategory(
+        userId     = publisherId,
         category   = category,
         authParams = authParams,
         pageNumber = pageNumber,

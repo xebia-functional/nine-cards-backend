@@ -23,10 +23,10 @@ trait GooglePlayProcessesSpecification
     implicit val googlePlayServices: Services[NineCardsServices] = mock[Services[NineCardsServices]]
     implicit val applicationProcesses = new ApplicationProcesses[NineCardsServices]
 
-    googlePlayServices.resolveMany(Nil, toAuthParamsServices(authParams)) returns
+    googlePlayServices.resolveMany(Nil, toAuthParamsServices(authParams), true) returns
       Free.pure(AppsInfo(Nil, Nil))
 
-    googlePlayServices.resolveMany(packageNames, toAuthParamsServices(authParams)) returns
+    googlePlayServices.resolveMany(packageNames, toAuthParamsServices(authParams), true) returns
       Free.pure(AppsInfo(missing, apps))
   }
 }

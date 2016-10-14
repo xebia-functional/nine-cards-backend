@@ -2,7 +2,7 @@ package cards.nine.services.persistence
 
 import java.sql.Connection
 
-import cards.nine.services.common.NineCardsConfig
+import cards.nine.commons.NineCardsConfig
 import cards.nine.services.free.domain
 import cards.nine.services.free.domain._
 import cards.nine.services.free.interpreter.collection.{ Services ⇒ CollectionServices }
@@ -22,15 +22,17 @@ import scalaz.syntax.apply._
 
 trait BasicDatabaseContext extends DummyNineCardsConfig {
 
+  val dbPrefix = "ninecards.db"
+
   class CustomTransactor[B](
     implicit
     beforeActions: ConnectionIO[B],
     config: NineCardsConfig
   ) extends Transactor[Task] {
-    val driver = config.getString("db.default.driver")
-    def url = config.getString("db.default.url")
-    val user = config.getString("db.default.user")
-    val pass = config.getString("db.default.password")
+    val driver = config.getString(s"$dbPrefix.default.driver")
+    def url = config.getString(s"$dbPrefix.default.url")
+    val user = config.getString(s"$dbPrefix.default.user")
+    val pass = config.getString(s"$dbPrefix.default.password")
 
     val connect: Task[Connection] =
       Task.delay(Class.forName(driver)) *> FD.getConnection(url, user, pass).trans[Task]
@@ -80,18 +82,18 @@ trait DomainDatabaseContext extends BasicDatabaseContext {
 
   implicit val transactor: Transactor[Task] =
     DriverManagerTransactor[Task](
-      driver = dummyConfig.getString("db.domain.driver"),
-      url    = dummyConfig.getString("db.domain.url"),
-      user   = dummyConfig.getString("db.domain.user"),
-      pass   = dummyConfig.getString("db.domain.password")
+      driver = dummyConfig.getString(s"$dbPrefix.domain.driver"),
+      url    = dummyConfig.getString(s"$dbPrefix.domain.url"),
+      user   = dummyConfig.getString(s"$dbPrefix.domain.user"),
+      pass   = dummyConfig.getString(s"$dbPrefix.domain.password")
     )
 
   val flywaydb = new Flyway
 
   flywaydb.setDataSource(
-    dummyConfig.getString("db.domain.url"),
-    dummyConfig.getString("db.domain.user"),
-    dummyConfig.getString("db.domain.password")
+    dummyConfig.getString(s"$dbPrefix.domain.url"),
+    dummyConfig.getString(s"$dbPrefix.domain.user"),
+    dummyConfig.getString(s"$dbPrefix.domain.password")
   )
 
   flywaydb.migrate()

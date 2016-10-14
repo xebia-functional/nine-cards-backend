@@ -3,7 +3,7 @@ package cards.nine.processes
 import cards.nine.processes.converters.Converters._
 import cards.nine.processes.messages.ApplicationMessages._
 import cards.nine.processes.messages.GooglePlayAuthMessages._
-import cards.nine.services.common.FreeUtils._
+import cards.nine.commons.FreeUtils._
 import cards.nine.services.free.algebra.GooglePlay
 import cats.free.Free
 
@@ -18,7 +18,8 @@ class ApplicationProcesses[F[_]](implicit services: GooglePlay.Services[F]) {
     else
       services.resolveMany(
         packageNames = packagesName,
-        auth         = toAuthParamsServices(authParams)
+        auth         = toAuthParamsServices(authParams),
+        extendedInfo = true
       ) map toGetAppsInfoResponse
 }
 

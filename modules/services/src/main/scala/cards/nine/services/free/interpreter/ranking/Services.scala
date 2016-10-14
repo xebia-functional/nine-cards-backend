@@ -5,7 +5,7 @@ import java.util.UUID
 
 import cards.nine.commons.NineCardsService.Result
 import cards.nine.services.free.algebra.Ranking._
-import cards.nine.services.free.domain.Category
+import cards.nine.services.free.domain.{ Category, Moments }
 import cards.nine.services.free.domain.rankings._
 import cards.nine.services.persistence.{ CustomComposite, Persistence }
 import cats.syntax.either._
@@ -53,11 +53,13 @@ class Services(persistence: Persistence[Entry]) extends (Ops ~> ConnectionIO) {
     unrankedApps: Set[UnrankedApp]
   ): ConnectionIO[Result[List[RankedApp]]] = {
     val deviceAppTableName = generateTableName
+    val moments = Moments.all map (_.entryName)
+    val query = Queries.getRankedApps(scope, deviceAppTableName, moments)
 
     for {
       _ ← persistence.update(Queries.createDeviceAppsTemporaryTableSql(deviceAppTableName))
       _ ← persistence.updateMany(Queries.insertDeviceApps(deviceAppTableName), unrankedApps)
-      rankedApps ← persistence.fetchListAs[RankedApp](Queries.getRankedApps(scope, deviceAppTableName))
+      rankedApps ← persistence.fetchListAs[RankedApp](query)
       _ ← persistence.update(Queries.dropDeviceAppsTemporaryTableSql(deviceAppTableName))
     } yield Either.right(rankedApps)
   }

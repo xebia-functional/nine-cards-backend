@@ -1,19 +1,15 @@
 package cards.nine.processes
 
 import cards.nine.commons.NineCardsService
-import cards.nine.commons.NineCardsService.Result
 import cards.nine.processes.NineCardsServices._
 import cards.nine.processes.TestData.Values._
 import cards.nine.processes.TestData.rankings._
 import cards.nine.processes.messages.rankings.GetRankedDeviceApps.RankedDeviceApp
 import cards.nine.processes.messages.rankings._
 import cards.nine.services.free.algebra.{ Country, GoogleAnalytics, Ranking }
-import cards.nine.services.free.domain
 import cards.nine.services.free.domain.rankings.UpdateRankingSummary
-import cats.Id
 import cats.data.Xor
 import cats.free.Free
-import cats.syntax.either._
 import org.mockito.Matchers.{ eq ⇒ mockEq }
 import org.specs2.matcher.{ Matcher, Matchers, XorMatchers }
 import org.specs2.mock.Mockito

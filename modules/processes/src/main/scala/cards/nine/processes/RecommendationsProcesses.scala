@@ -4,7 +4,6 @@ import cards.nine.processes.converters.Converters._
 import cards.nine.processes.messages.GooglePlayAuthMessages._
 import cards.nine.processes.messages.RecommendationsMessages._
 import cards.nine.services.free.algebra.GooglePlay
-import cards.nine.services.free.domain.GooglePlay.Recommendations
 import cats.free.Free
 
 class RecommendationsProcesses[F[_]](implicit services: GooglePlay.Services[F]) {
@@ -41,6 +40,20 @@ class RecommendationsProcesses[F[_]](implicit services: GooglePlay.Services[F]) 
         limit            = limit,
         auth             = toAuthParamsServices(authParams)
       ) map toGetRecommendationsResponse
+
+  def searchApps(
+    query: String,
+    excludePackages: List[String],
+    limit: Int,
+    authParams: AuthParams
+  ): Free[F, SearchAppsResponse] =
+    services.searchApps(
+      query            = query,
+      excludesPackages = excludePackages,
+      limit            = limit,
+      auth             = toAuthParamsServices(authParams)
+    ) map toSearchAppsResponse
+
 }
 
 object RecommendationsProcesses {

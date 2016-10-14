@@ -1,6 +1,6 @@
-package cards.nine.services.common
+package cards.nine.commons
 
-import cards.nine.services.common.NineCardsConfig._
+import cards.nine.commons.NineCardsConfig._
 import com.typesafe.config.{ Config, ConfigFactory }
 
 class NineCardsConfig(hocon: Option[String] = None) {

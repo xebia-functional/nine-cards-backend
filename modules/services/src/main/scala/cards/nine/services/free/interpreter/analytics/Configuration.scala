@@ -1,6 +1,6 @@
 package cards.nine.services.free.interpreter.analytics
 
-import cards.nine.services.common.NineCardsConfig
+import cards.nine.commons.NineCardsConfig
 
 case class Configuration(
   protocol: String,
@@ -12,13 +12,14 @@ case class Configuration(
 
 object Configuration {
   implicit def configuration(implicit config: NineCardsConfig): Configuration = {
-    val base = "ninecards.backend.googleanalytics"
+    val prefix = "ninecards.google.analytics"
+
     Configuration(
-      protocol = config.getString(s"${base}.protocol"),
-      host     = config.getString(s"${base}.host"),
-      port     = config.getOptionalInt(s"${base}.port"),
-      uri      = config.getString(s"${base}.uri"),
-      viewId   = config.getString(s"${base}.viewId")
+      protocol = config.getString(s"$prefix.protocol"),
+      host     = config.getString(s"$prefix.host"),
+      port     = config.getOptionalInt(s"$prefix.port"),
+      uri      = config.getString(s"$prefix.uri"),
+      viewId   = config.getString(s"$prefix.viewId")
     )
   }
 }

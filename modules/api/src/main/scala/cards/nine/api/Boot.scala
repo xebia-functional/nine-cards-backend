@@ -5,7 +5,7 @@ import akka.event.Logging
 import akka.io.IO
 import akka.pattern.ask
 import akka.util.Timeout
-import cards.nine.services.common.NineCardsConfig._
+import cards.nine.commons.NineCardsConfig._
 import spray.can.Http
 
 import scala.concurrent.duration._
@@ -21,8 +21,8 @@ object Boot extends App {
 
   implicit val timeout = Timeout(5.seconds)
 
-  val host = defaultConfig.getString("http.host")
-  val port = defaultConfig.getInt("http.port")
+  val host = defaultConfig.getString("ninecards.http.host")
+  val port = defaultConfig.getInt("ninecards.http.port")
 
   IO(Http) ? Http.Bind(service, interface = host, port = port)
 

@@ -1,20 +1,18 @@
 package cards.nine.processes
 
-import cards.nine.commons.NineCardsErrors.{ CountryNotFound, NineCardsError }
+import cards.nine.commons.NineCardsErrors.CountryNotFound
 import cards.nine.commons.NineCardsService
 import cards.nine.commons.NineCardsService._
 import cards.nine.processes.converters.Converters._
 import cards.nine.processes.messages.rankings.GetRankedDeviceApps.{ DeviceApp, RankedDeviceApp }
 import cards.nine.processes.messages.rankings._
-import cards.nine.services.common.FreeUtils._
 import cards.nine.services.free.algebra
 import cards.nine.services.free.algebra.GoogleAnalytics
 import cards.nine.services.free.domain.rankings._
-import cats.data.{ EitherT, Xor }
+import cats.data.Xor
 import cats.free.Free
 import cats.instances.list._
 import cats.instances.map._
-import cats.syntax.either._
 import cats.syntax.semigroup._
 
 class RankingProcesses[F[_]](
@@ -53,14 +51,28 @@ class RankingProcesses[F[_]](
         .map(_.toGeoScope)
         .recover { case _: CountryNotFound ⇒ WorldScope }
 
+    def unifyDeviceApps(deviceApps: Map[String, List[DeviceApp]]) = {
+      val (games, otherApps) = deviceApps.partition { case (cat, apps) ⇒ cat.matches("GAME\\_.*") }
+
+      if (games.isEmpty)
+        otherApps
+      else
+        otherApps.combine(Map("GAME" → games.flatMap { case (cat, apps) ⇒ apps }.toList))
+    }
+
     if (deviceApps.isEmpty)
       NineCardsService.right(Map.empty[String, List[RankedDeviceApp]]).value
     else {
+      val unifiedDeviceApps = unifyDeviceApps(deviceApps)
+      val unrankedApps = unifiedDeviceApps.flatMap {
+        case (cat, apps) ⇒ apps map toUnrankedApp(cat)
+      }.toSet
+
       for {
         geoScope ← location.fold(NineCardsService.right[F, GeoScope](WorldScope))(geoScopeFromLocation)
-        rankedApps ← rankingPersistence.getRankingForApps(geoScope, deviceApps.values.flatten.toSet map toUnrankedApp)
+        rankedApps ← rankingPersistence.getRankingForApps(geoScope, unrankedApps)
         rankedAppsByCategory = rankedApps.groupBy(_.category).mapValues(_.map(toRankedDeviceApp))
-        unrankedDeviceApps = deviceApps map {
+        unrankedDeviceApps = unifiedDeviceApps map {
           case (category, apps) ⇒
             (category, findAppsWithoutRanking(apps, rankedAppsByCategory.getOrElse(category, Nil)))
         }

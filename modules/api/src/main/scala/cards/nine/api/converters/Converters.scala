@@ -72,6 +72,7 @@ object Converters {
       category         = info.collection.category,
       icon             = info.collection.icon,
       community        = info.collection.community,
+      owned            = info.collection.owned,
       packages         = info.collection.packages,
       appsInfo         = info.appsInfo,
       subscriptions    = info.collection.subscriptionsCount
@@ -138,6 +139,9 @@ object Converters {
     ApiGetRecommendationsResponse(
       response.items
     )
+
+  def toApiSearchAppsResponse(response: SearchAppsResponse): ApiSearchAppsResponse =
+    ApiSearchAppsResponse(response.apps)
 
   def toApiRankAppsResponse(result: Result[Map[String, List[RankedDeviceApp]]]) =
     result.map {

@@ -2,9 +2,9 @@ package cards.nine.api
 
 import cards.nine.api.messages.rankings
 import cards.nine.services.free.domain.Category
-import enumeratum.{ Enum, EnumEntry, Circe ⇒ CirceEnum }
-import io.circe.{ Decoder, Encoder, Json, ObjectEncoder }
+import enumeratum.{ Circe ⇒ CirceEnum }
 import io.circe.generic.semiauto._
+import io.circe.{ Decoder, Encoder, ObjectEncoder }
 import org.joda.time.DateTime
 
 object Decoders {

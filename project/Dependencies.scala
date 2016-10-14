@@ -1,88 +1,109 @@
-import sbt.Keys._
-import sbt._
 
-trait Dependencies {
-  this: Build =>
+object Dependencies {
 
-  val sprayHttp = "io.spray" %% "spray-can" % Versions.spray
-  val sprayJson = "io.spray" %% "spray-json" % Versions.sprayJson
-  val sprayRouting = "io.spray" %% "spray-routing-shapeless2" % Versions.spray
-  val sprayTestKit = "io.spray" %% "spray-testkit" % Versions.spray % "test" exclude("org.specs2", "specs2_2.11")
-  val akkaActor = "com.typesafe.akka" %% "akka-actor" % Versions.akka
-  val akkaTestKit = "com.typesafe.akka" %% "akka-testkit" % Versions.akka
-  val cats = "org.typelevel" %% "cats" % Versions.cats
-  val specs2Core = "org.specs2" %% "specs2-core" % Versions.specs2
-  val specs2Cats = "org.specs2" %% "specs2-cats" % Versions.specs2
-  val specs2Scalacheck = "org.specs2" %% "specs2-scalacheck" % Versions.specs2
-  val specs2Mockito = "org.specs2" %% "specs2-mock" % Versions.specs2
-  val scalaz = "org.scalaz" %% "scalaz-core" % Versions.scalaz
-  val scalazConcurrent = "org.scalaz" %% "scalaz-concurrent" % Versions.scalaz
-  val jodaConvert = "org.joda" % "joda-convert" % Versions.jodaConvert
-  val jodaTime = "joda-time" % "joda-time" % Versions.jodaTime
-  def doobie(suff: String) = "org.tpolecat" %% s"doobie$suff" % Versions.doobie exclude("org.scalaz", "*")
-  val typesafeConfig = "com.typesafe" % "config" % Versions.typesafeConfig
-  val flywaydbCore = "org.flywaydb" % "flyway-core" % Versions.flywaydb
-  val scalacheckShapeless = "com.github.alexarchambault" %% "scalacheck-shapeless_1.13" % Versions.scalacheckShapeless
-  val http4sClient = "org.http4s" %% "http4s-blaze-client" % Versions.http4s
-  val http4sCirce = "org.http4s" %% "http4s-circe" % Versions.http4s
-  def circe(suff: String) = "io.circe" %% s"circe$suff" % Versions.circe
-  val mockserver = "org.mock-server" % "mockserver-netty" % Versions.mockserver
-  val hasher = "com.roundeights" %% "hasher" % Versions.hasher
-  val newRelic = "com.newrelic.agent.java" % "newrelic-agent" % Versions.newRelic
-  def enumeratum(suffix: String) = "com.beachape" %% s"enumeratum$suffix" % Versions.enumeratum
+  import sbt._
+  import sbt.Keys.libraryDependencies
+
+  private def akka(suff: String) = "com.typesafe.akka" %% s"akka$suff" % Versions.akka
+  private def circe(suff: String) = "io.circe" %% s"circe$suff" % Versions.circe
+  private def doobie(suff: String) = "org.tpolecat" %% s"doobie$suff" % Versions.doobie exclude("org.scalaz", "*")
+  private def enumeratum(suff: String) = "com.beachape" %% s"enumeratum$suff" % Versions.enumeratum
+  private def http4s(suff: String) = "org.http4s" %% s"http4s$suff" % Versions.http4s
+  private def scalaz(suff: String) = "org.scalaz" %% s"scalaz$suff" % Versions.scalaz
+  private def specs2(suff: String) = "org.specs2" %% s"specs2$suff" % Versions.specs2 % "test"
+  private def spray(suff: String) = "io.spray" %% s"spray$suff" % Versions.spray
+
+  private val akkaActor = akka("-actor")
+  private val akkaTestKit = akka("-testkit") % "test"
+  private val cats = "org.typelevel" %% "cats" % Versions.cats
+  private val embeddedRedis = "com.orange.redis-embedded" % "embedded-redis" % Versions.embeddedRedis % "test"
+  private val flywaydbCore = "org.flywaydb" % "flyway-core" % Versions.flywaydb
+  private val hasher = "com.roundeights" %% "hasher" % Versions.hasher
+  private val http4sClient = "org.http4s" %% "http4s-blaze-client" % Versions.http4s
+  private val jodaConvert = "org.joda" % "joda-convert" % Versions.jodaConvert
+  private val jodaTime = "joda-time" % "joda-time" % Versions.jodaTime
+  private val mockserver = "org.mock-server" % "mockserver-netty" % Versions.mockserver % "test"
+  private val newRelic = "com.newrelic.agent.java" % "newrelic-agent" % Versions.newRelic
+  private val redisClient = "net.debasishg" %% "redisclient" % Versions.redisClient
+  private val scalacheckShapeless = "com.github.alexarchambault" %% "scalacheck-shapeless_1.13" % Versions.scalacheckShapeless % "test"
+  private val specs2Core = specs2("-core") exclude("org.scalaz", "*")
+  private val sprayJson = "io.spray" %% "spray-json" % Versions.sprayJson
+  private val sprayTestKit = spray("-testkit") % "test" exclude("org.specs2", "specs2_2.11")
+  private val tagSoup = "org.ccil.cowan.tagsoup" % "tagsoup" % Versions.tagSoup
+  private val typesafeConfig = "com.typesafe" % "config" % Versions.typesafeConfig
 
   val baseDeps = Seq(
-    cats,
-    typesafeConfig,
     hasher,
-    scalaz,
-    scalazConcurrent,
-    specs2Core % "test" exclude("org.scalaz", "*"),
-    specs2Cats % "test",
-    specs2Mockito % "test",
-    specs2Scalacheck % "test",
-    scalacheckShapeless % "test")
+    scalacheckShapeless,
+    scalaz("-concurrent"),
+    scalaz("-core"),
+    specs2("-cats"),
+    specs2Core,
+    specs2("-mock"),
+    specs2("-scalacheck")
+  )
 
   val apiDeps = Seq(libraryDependencies ++= baseDeps ++ Seq(
-    sprayHttp,
-    sprayJson,
-    sprayRouting,
-    sprayTestKit,
+    akkaActor,
+    akkaTestKit,
+    cats % "test",
     circe("-core"),
     circe("-spray"),
-    akkaActor,
     newRelic,
-    akkaTestKit % "test",
-    cats % "test"))
+    spray("-can"),
+    spray("-routing-shapeless2"),
+    sprayJson,
+    sprayTestKit
+  ))
+
+  val commonsDeps = Seq(libraryDependencies ++= Seq(
+    cats,
+    scalaz("-concurrent"),
+    specs2Core,
+    specs2("-scalacheck"),
+    typesafeConfig
+  ))
 
   val processesDeps = Seq(libraryDependencies ++= baseDeps)
 
-  val commonsDeps = Seq(libraryDependencies ++= baseDeps ++ Seq(
+  val servicesDeps = Seq(libraryDependencies ++= baseDeps ++ Seq(
+    cats,
     circe("-core"),
     circe("-generic"),
-    doobie("-core"),
-    doobie("-contrib-h2"),
     doobie("-contrib-hikari"),
     doobie("-contrib-postgresql"),
-    doobie("-contrib-specs2") % "test"
-  ))
-
-  val servicesDeps = Seq(libraryDependencies ++= baseDeps ++ Seq(
-    jodaConvert,
-    jodaTime,
-    doobie("-core"),
     doobie("-contrib-h2"),
-    doobie("-contrib-hikari"),
-    doobie("-contrib-postgresql"),
     doobie("-contrib-specs2") % "test",
+    doobie("-core"),
     enumeratum(""),
     enumeratum("-circe"),
-    sprayJson,
     flywaydbCore % "test",
-    mockserver % "test",
-    http4sClient,
-    http4sCirce,
+    http4s("-blaze-client"),
+    http4s("-circe"),
+    jodaConvert,
+    jodaTime,
+    mockserver
+  ))
+
+  val googleplayDeps = Seq(sbt.Keys.libraryDependencies ++= Seq(
+    cats,
     circe("-core"),
-    circe("-generic")
+    circe("-generic"),
+    circe("-parser"),
+    embeddedRedis,
+    enumeratum(""),
+    enumeratum("-circe"),
+    http4sClient,
+    jodaConvert,
+    jodaTime,
+    mockserver,
+    newRelic,
+    redisClient,
+    scalacheckShapeless,
+    specs2Core,
+    specs2("-matcher-extra"),
+    specs2("-mock"),
+    specs2("-scalacheck"),
+    tagSoup
   ))
 }

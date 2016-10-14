@@ -102,6 +102,15 @@ class NineCardsRoutes(
               complete(rankApps(request, userContext))
             }
           }
+        } ~
+        path("search") {
+          post {
+            entity(as[ApiSearchAppsRequest]) { request ⇒
+              nineCardsDirectives.googlePlayInfo { googlePlayContext ⇒
+                complete(searchApps(request, googlePlayContext, userContext))
+              }
+            }
+          }
         }
     }
 
@@ -236,7 +245,11 @@ class NineCardsRoutes(
     userContext: UserContext
   ): NineCardsServed[XorApiGetCollectionByPublicId] =
     sharedCollectionProcesses
-      .getCollectionByPublicIdentifier(publicId.value, toAuthParams(googlePlayContext, userContext))
+      .getCollectionByPublicIdentifier(
+        userId           = userContext.userId.value,
+        publicIdentifier = publicId.value,
+        authParams       = toAuthParams(googlePlayContext, userContext)
+      )
       .map(_.map(r ⇒ toApiSharedCollection(r.data)))
 
   private[this] def createCollection(
@@ -281,6 +294,7 @@ class NineCardsRoutes(
   ): NineCardsServed[ApiSharedCollectionList] =
     sharedCollectionProcesses
       .getLatestCollectionsByCategory(
+        userId     = userContext.userId.value,
         category   = category.entryName,
         authParams = toAuthParams(googlePlayContext, userContext),
         pageNumber = pageNumber.value,
@@ -312,6 +326,7 @@ class NineCardsRoutes(
   ): NineCardsServed[ApiSharedCollectionList] =
     sharedCollectionProcesses
       .getTopCollectionsByCategory(
+        userId     = userContext.userId.value,
         category   = category.entryName,
         authParams = toAuthParams(googlePlayContext, userContext),
         pageNumber = pageNumber.value,
@@ -360,6 +375,20 @@ class NineCardsRoutes(
       )
       .map(toApiGetRecommendationsResponse)
 
+  private[this] def searchApps(
+    request: ApiSearchAppsRequest,
+    googlePlayContext: GooglePlayContext,
+    userContext: UserContext
+  ): NineCardsServed[ApiSearchAppsResponse] =
+    recommendationsProcesses
+      .searchApps(
+        request.query,
+        request.excludePackages,
+        request.limit,
+        toAuthParams(googlePlayContext, userContext)
+      )
+      .map(toApiSearchAppsResponse)
+
   private[this] def rankApps(
     request: ApiRankAppsRequest,
     userContext: UserContext
@@ -373,7 +402,6 @@ class NineCardsRoutes(
     import cards.nine.api.messages.{ rankings ⇒ Api }
     import io.circe.spray.JsonSupport._
     import NineCardsMarshallers._
-    import Decoders.reloadRankingRequest
 
     lazy val route: Route =
       geographicScope { scope ⇒

@@ -3,7 +3,6 @@ package cards.nine.processes
 import cards.nine.processes.NineCardsServices._
 import cards.nine.processes.messages.InstallationsMessages._
 import cards.nine.processes.messages.UserMessages.{ LoginRequest, LoginResponse }
-import cards.nine.processes.utils.DatabaseContext._
 import cards.nine.processes.utils.{ DummyNineCardsConfig, HashUtils }
 import cards.nine.services.free.algebra
 import cards.nine.services.free.domain.{ Installation, User }
