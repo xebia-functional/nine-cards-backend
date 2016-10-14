@@ -4,6 +4,7 @@ import java.sql.Timestamp
 import java.time.Instant
 
 import cards.nine.commons.NineCardsErrors.CountryNotFound
+import cards.nine.domain.application.Category
 import cards.nine.processes.ProcessesExceptions.SharedCollectionNotFoundException
 import cards.nine.processes.messages.GooglePlayAuthMessages.AuthParams
 import cards.nine.processes.messages.SharedCollectionMessages._

@@ -1,5 +1,6 @@
 package cards.nine.googleplay.util
 
+import cards.nine.domain.application.Category
 import cards.nine.googleplay.domain._
 import cats.data.Xor
 import enumeratum.{ Enum, EnumEntry }

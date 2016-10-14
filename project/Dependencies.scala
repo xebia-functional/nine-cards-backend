@@ -59,6 +59,7 @@ object Dependencies {
   val commonsDeps = Seq(libraryDependencies ++= Seq(
     cats,
     scalaz("-concurrent"),
+    enumeratum(""),
     specs2Core,
     specs2("-scalacheck"),
     typesafeConfig

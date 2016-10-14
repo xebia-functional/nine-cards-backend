@@ -1,5 +1,6 @@
 package cards.nine.services.free.interpreter.googleplay
 
+import cards.nine.domain.application.Category
 import cards.nine.googleplay.domain._
 import cards.nine.googleplay.processes.{ getcard, ResolveMany }
 import cards.nine.services.free.domain.GooglePlay.{ RecommendByCategoryRequest ⇒ _, _ }
