@@ -1,7 +1,8 @@
 package cards.nine.services.free.interpreter.analytics
 
 import cats.data.Xor
-import cards.nine.services.free.domain.rankings.{ DateRange, RankingError }
+import cards.nine.domain.analytics.DateRange
+import cards.nine.services.free.domain.rankings.RankingError
 import cards.nine.services.common.XorDecoder
 import enumeratum.{ Circe ⇒ CirceEnum }
 import io.circe.generic.auto._

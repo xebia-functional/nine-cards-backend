@@ -1,18 +1,18 @@
 package cards.nine.services.persistence
 
-import java.sql.Timestamp
-import java.time.Instant
-
-import cats.Monad
-import cats.syntax.traverse._
-import cats.instances.list._
+import cards.nine.domain.analytics._
 import cards.nine.domain.application.Category
 import cards.nine.services.free.domain.rankings._
 import cards.nine.services.free.domain.PackageName
 import cards.nine.services.free.interpreter.collection.Services.SharedCollectionData
 import cards.nine.services.free.interpreter.user.Services.UserData
 import cards.nine.services.persistence.NineCardsGenEntities._
+import cats.Monad
+import cats.syntax.traverse._
+import cats.instances.list._
 import enumeratum.{ Enum, EnumEntry }
+import java.sql.Timestamp
+import java.time.Instant
 import org.scalacheck.{ Arbitrary, Gen }
 
 object NineCardsGenEntities {

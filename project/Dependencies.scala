@@ -60,6 +60,8 @@ object Dependencies {
     cats,
     scalaz("-concurrent"),
     enumeratum(""),
+    jodaConvert,
+    jodaTime,
     specs2Core,
     specs2("-scalacheck"),
     typesafeConfig

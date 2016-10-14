@@ -1,7 +1,6 @@
 package cards.nine.services.free.domain
 
-import cards.nine.services.free.domain.rankings.{ GeoScopeStringOps, WorldScope }
-import enumeratum.Enum
+import cards.nine.domain.analytics.{ CountryScope, ContinentScope, GeoScope, WorldScope }
 
 case class Country(
   isoCode2: String,
@@ -13,12 +12,10 @@ case class Country(
 object Country {
 
   implicit class CountryOps(country: Country) {
-    def toGeoScope(implicit countryEnum: Enum[rankings.Country], continentEnum: Enum[rankings.Continent]) =
-      country.name.replace(" ", "_").toOptionalCountry
-        .getOrElse(
-          country.continent.toOptionalContinent
-            .getOrElse(WorldScope)
-        )
+    def toGeoScope: GeoScope =
+      CountryScope.lookup(country.name.replace(" ", "_"))
+        .orElse(ContinentScope.lookup(country.continent))
+        .getOrElse(WorldScope)
   }
 
   object Queries {

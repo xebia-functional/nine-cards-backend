@@ -20,8 +20,6 @@ object NineCardsHeaders {
 
     case class CurrentDateTime(value: DateTime) extends AnyVal
 
-    case class GoogleAnalyticsToken(value: String) extends AnyVal
-
     case class NewSharedCollectionInfo(currentDate: CurrentDateTime, identifier: PublicIdentifier)
 
     case class PageNumber(value: Int) extends AnyVal

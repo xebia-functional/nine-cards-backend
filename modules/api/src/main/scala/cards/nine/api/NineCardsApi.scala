@@ -1,7 +1,6 @@
 package cards.nine.api
 
 import akka.actor.{ Actor, ActorRefFactory }
-import cats.data.Xor
 import cards.nine.api.NineCardsDirectives._
 import cards.nine.api.NineCardsHeaders.Domain._
 import cards.nine.api.converters.Converters._
@@ -12,16 +11,17 @@ import cards.nine.api.messages.SharedCollectionMessages._
 import cards.nine.api.messages.UserMessages._
 import cards.nine.api.utils.SprayMarshallers._
 import cards.nine.api.utils.SprayMatchers._
+import cards.nine.domain.analytics.{ ContinentScope, CountryScope, GeoScope, WorldScope }
 import cards.nine.domain.application.Category
 import cards.nine.commons.NineCardsService.Result
 import cards.nine.processes.NineCardsServices._
 import cards.nine.processes._
 import cards.nine.processes.messages.ApplicationMessages.GetAppsInfoResponse
 import cards.nine.services.free.domain.rankings._
+import cats.data.Xor
+import scala.concurrent.ExecutionContext
 import spray.http.StatusCodes.NotFound
 import spray.routing._
-
-import scala.concurrent.ExecutionContext
 
 class NineCardsApiActor
   extends Actor

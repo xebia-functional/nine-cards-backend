@@ -1,5 +1,6 @@
 package cards.nine.services.free.interpreter.analytics
 
+import cards.nine.domain.analytics._
 import cards.nine.services.free.domain.rankings._
 import cards.nine.services.utils.MockServerService
 import org.joda.time.{ DateTime, DateTimeZone }
@@ -73,7 +74,7 @@ class ServicesSpec
     }
 
     "respond 200 OK and return the Rankings object if a valid access token is provided" in {
-      val params = RankingParams(dateRange, 5, AuthParams(auth.valid_token))
+      val params = RankingParams(dateRange, 5, AnalyticsToken(auth.valid_token))
       val response = services.getRanking(CountryScope(Country.Spain), params)
       response.unsafePerformSyncAttempt should be_\/-[TryRanking].which {
         content ⇒ content should beXorRight[Ranking]
@@ -82,7 +83,7 @@ class ServicesSpec
 
     /* Return a 401 error message if the auth token is wrong*/
     "respond 401 Unauthorized if the authToken is not authenticated" in {
-      val params = RankingParams(dateRange, 5, AuthParams(auth.invalid_token))
+      val params = RankingParams(dateRange, 5, AnalyticsToken(auth.invalid_token))
       val response = services.getRanking(CountryScope(Country.Spain), params)
       response.unsafePerformSyncAttempt should be_\/-[TryRanking].which {
         content ⇒ content should beXorLeft[RankingError]

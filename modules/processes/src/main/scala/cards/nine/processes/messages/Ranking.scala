@@ -1,7 +1,8 @@
 package cards.nine.processes.messages
 
-import cats.data.Xor
+import cards.nine.domain.analytics.GeoScope
 import cards.nine.services.free.domain.rankings._
+import cats.data.Xor
 
 object rankings {
 

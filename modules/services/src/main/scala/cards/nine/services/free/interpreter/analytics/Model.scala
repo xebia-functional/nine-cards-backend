@@ -1,6 +1,6 @@
 package cards.nine.services.free.interpreter.analytics
 
-import cards.nine.services.free.domain.rankings.{ Continent, Country, DateRange }
+import cards.nine.domain.analytics.{ Continent, Country, DateRange }
 import enumeratum._
 
 object model {

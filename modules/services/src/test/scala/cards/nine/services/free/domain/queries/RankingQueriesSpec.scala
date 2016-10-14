@@ -1,5 +1,6 @@
 package cards.nine.services.free.domain.queries
 
+import cards.nine.domain.analytics._
 import cards.nine.domain.application.Category
 import cards.nine.services.free.domain.PackageName
 import cards.nine.services.free.domain.rankings._
