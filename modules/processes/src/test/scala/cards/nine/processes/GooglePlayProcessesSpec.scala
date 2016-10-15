@@ -1,11 +1,11 @@
 package cards.nine.processes
 
-import cats.free.Free
+import cards.nine.domain.account.AndroidId
+import cards.nine.domain.market.{ MarketCredentials, MarketToken }
 import cards.nine.processes.NineCardsServices.NineCardsServices
-import cards.nine.processes.converters.Converters._
-import cards.nine.processes.messages.GooglePlayAuthMessages.AuthParams
 import cards.nine.services.free.algebra.GooglePlay.Services
 import cards.nine.services.free.domain.GooglePlay.{ AppInfo, AppsInfo }
+import cats.free.Free
 import org.specs2.matcher.Matchers
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
@@ -23,10 +23,10 @@ trait GooglePlayProcessesSpecification
     implicit val googlePlayServices: Services[NineCardsServices] = mock[Services[NineCardsServices]]
     implicit val applicationProcesses = new ApplicationProcesses[NineCardsServices]
 
-    googlePlayServices.resolveMany(Nil, toAuthParamsServices(authParams), true) returns
+    googlePlayServices.resolveMany(Nil, marketAuth, true) returns
       Free.pure(AppsInfo(Nil, Nil))
 
-    googlePlayServices.resolveMany(packageNames, toAuthParamsServices(authParams), true) returns
+    googlePlayServices.resolveMany(packageNames, marketAuth, true) returns
       Free.pure(AppsInfo(missing, apps))
   }
 }
@@ -56,21 +56,21 @@ trait GooglePlayProcessesContext {
     )
   }
 
-  val authParams = AuthParams("androidId", None, "token")
+  val marketAuth = MarketCredentials(AndroidId("androidId"), MarketToken("token"), None)
 }
 
 class GooglePlayProcessesSpec extends GooglePlayProcessesSpecification {
 
   "categorizeApps" should {
     "return empty items and errors lists if an empty list of apps is provided" in new BasicScope {
-      val response = applicationProcesses.getAppsInfo(Nil, authParams).foldMap(testInterpreters)
+      val response = applicationProcesses.getAppsInfo(Nil, marketAuth).foldMap(testInterpreters)
 
       response.errors should beEmpty
       response.items should beEmpty
     }
 
     "return items and errors lists for a non empty list of apps" in new BasicScope {
-      val response = applicationProcesses.getAppsInfo(packageNames, authParams).foldMap(testInterpreters)
+      val response = applicationProcesses.getAppsInfo(packageNames, marketAuth).foldMap(testInterpreters)
 
       response.errors shouldEqual missing
       forall(response.items) { item ⇒

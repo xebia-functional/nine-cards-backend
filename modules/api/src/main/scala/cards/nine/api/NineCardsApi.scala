@@ -248,7 +248,7 @@ class NineCardsRoutes(
       .getCollectionByPublicIdentifier(
         userId           = userContext.userId.value,
         publicIdentifier = publicId.value,
-        authParams       = toAuthParams(googlePlayContext, userContext)
+        marketAuth       = toMarketAuth(googlePlayContext, userContext)
       )
       .map(_.map(r ⇒ toApiSharedCollection(r.data)))
 
@@ -296,7 +296,7 @@ class NineCardsRoutes(
       .getLatestCollectionsByCategory(
         userId     = userContext.userId.value,
         category   = category.entryName,
-        authParams = toAuthParams(googlePlayContext, userContext),
+        marketAuth = toMarketAuth(googlePlayContext, userContext),
         pageNumber = pageNumber.value,
         pageSize   = pageSize.value
       )
@@ -307,7 +307,7 @@ class NineCardsRoutes(
     userContext: UserContext
   ): NineCardsServed[ApiSharedCollectionList] =
     sharedCollectionProcesses
-      .getPublishedCollections(userContext.userId.value, toAuthParams(googlePlayContext, userContext))
+      .getPublishedCollections(userContext.userId.value, toMarketAuth(googlePlayContext, userContext))
       .map(toApiSharedCollectionList)
 
   private[this] def getSubscriptionsByUser(
@@ -328,7 +328,7 @@ class NineCardsRoutes(
       .getTopCollectionsByCategory(
         userId     = userContext.userId.value,
         category   = category.entryName,
-        authParams = toAuthParams(googlePlayContext, userContext),
+        marketAuth = toMarketAuth(googlePlayContext, userContext),
         pageNumber = pageNumber.value,
         pageSize   = pageSize.value
       )
@@ -340,7 +340,7 @@ class NineCardsRoutes(
     userContext: UserContext
   )(converter: GetAppsInfoResponse ⇒ T): NineCardsServed[T] =
     applicationProcesses
-      .getAppsInfo(request.items, toAuthParams(googlePlayContext, userContext))
+      .getAppsInfo(request.items, toMarketAuth(googlePlayContext, userContext))
       .map(converter)
 
   private[this] def getRecommendationsByCategory(
@@ -356,7 +356,7 @@ class NineCardsRoutes(
         priceFilter.entryName,
         request.excludePackages,
         request.limit,
-        toAuthParams(googlePlayContext, userContext)
+        toMarketAuth(googlePlayContext, userContext)
       )
       .map(toApiGetRecommendationsResponse)
 
@@ -371,7 +371,7 @@ class NineCardsRoutes(
         request.excludePackages,
         request.limitPerApp.getOrElse(Int.MaxValue),
         request.limit,
-        toAuthParams(googlePlayContext, userContext)
+        toMarketAuth(googlePlayContext, userContext)
       )
       .map(toApiGetRecommendationsResponse)
 
@@ -385,7 +385,7 @@ class NineCardsRoutes(
         request.query,
         request.excludePackages,
         request.limit,
-        toAuthParams(googlePlayContext, userContext)
+        toMarketAuth(googlePlayContext, userContext)
       )
       .map(toApiSearchAppsResponse)
 

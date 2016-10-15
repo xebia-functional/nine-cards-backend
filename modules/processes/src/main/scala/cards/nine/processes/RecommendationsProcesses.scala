@@ -1,7 +1,7 @@
 package cards.nine.processes
 
+import cards.nine.domain.market.MarketCredentials
 import cards.nine.processes.converters.Converters._
-import cards.nine.processes.messages.GooglePlayAuthMessages._
 import cards.nine.processes.messages.RecommendationsMessages._
 import cards.nine.services.free.algebra.GooglePlay
 import cats.free.Free
@@ -13,14 +13,14 @@ class RecommendationsProcesses[F[_]](implicit services: GooglePlay.Services[F]) 
     filter: String,
     excludePackages: List[String],
     limit: Int,
-    authParams: AuthParams
+    marketAuth: MarketCredentials
   ): Free[F, GetRecommendationsResponse] =
     services.recommendByCategory(
       category         = category,
       priceFilter      = filter,
       excludesPackages = excludePackages,
       limit            = limit,
-      auth             = toAuthParamsServices(authParams)
+      auth             = marketAuth
     ) map toGetRecommendationsResponse
 
   def getRecommendationsForApps(
@@ -28,7 +28,7 @@ class RecommendationsProcesses[F[_]](implicit services: GooglePlay.Services[F]) 
     excludedPackages: List[String],
     limitPerApp: Int,
     limit: Int,
-    authParams: AuthParams
+    marketAuth: MarketCredentials
   ): Free[F, GetRecommendationsResponse] =
     if (packagesName.isEmpty)
       Free.pure(GetRecommendationsResponse(Nil))
@@ -38,20 +38,20 @@ class RecommendationsProcesses[F[_]](implicit services: GooglePlay.Services[F]) 
         excludesPackages = excludedPackages,
         limitPerApp      = limitPerApp,
         limit            = limit,
-        auth             = toAuthParamsServices(authParams)
+        auth             = marketAuth
       ) map toGetRecommendationsResponse
 
   def searchApps(
     query: String,
     excludePackages: List[String],
     limit: Int,
-    authParams: AuthParams
+    marketAuth: MarketCredentials
   ): Free[F, SearchAppsResponse] =
     services.searchApps(
       query            = query,
       excludesPackages = excludePackages,
       limit            = limit,
-      auth             = toAuthParamsServices(authParams)
+      auth             = marketAuth
     ) map toSearchAppsResponse
 
 }

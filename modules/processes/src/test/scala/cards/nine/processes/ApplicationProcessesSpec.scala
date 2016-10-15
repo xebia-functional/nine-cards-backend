@@ -1,11 +1,12 @@
 package cards.nine.processes
 
-import cats.free.Free
+import cards.nine.domain.account.AndroidId
+import cards.nine.domain.market.{ Localization, MarketCredentials, MarketToken }
 import cards.nine.processes.NineCardsServices._
 import cards.nine.processes.messages.ApplicationMessages._
-import cards.nine.processes.messages.GooglePlayAuthMessages._
 import cards.nine.services.free.algebra.GooglePlay.Services
-import cards.nine.services.free.domain.GooglePlay.{ AuthParams ⇒ GooglePlayAuthParams, _ }
+import cards.nine.services.free.domain.GooglePlay._
+import cats.free.Free
 import org.specs2.matcher.Matchers
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
@@ -27,7 +28,7 @@ trait ApplicationProcessesSpecification
 
   trait SuccessfulScope extends BasicScope {
 
-    googlePlayServices.resolveMany(packagesName, googlePlayAuthParams, true) returns Free.pure(appsInfo)
+    googlePlayServices.resolveMany(packagesName, marketAuth, true) returns Free.pure(appsInfo)
 
   }
 
@@ -65,8 +66,7 @@ trait ApplicationProcessesContext {
   val localization = "en_GB"
   val token = "m52_9876"
 
-  val authParams = AuthParams(androidId, Some(localization), token)
-  val googlePlayAuthParams = GooglePlayAuthParams(androidId, Some(localization), token)
+  val marketAuth = MarketCredentials(AndroidId(androidId), MarketToken(token), Some(Localization(localization)))
 
   val emptyGetAppsInfoResponse = GetAppsInfoResponse(
     errors = Nil,
@@ -81,13 +81,13 @@ class ApplicationProcessesSpec extends ApplicationProcessesSpecification {
   "getAppsInfo" should {
     "return an empty response without calling the Google Play service if an empty list of" +
       "packages name is passed" in new BasicScope {
-        val response = applicationProcesses.getAppsInfo(Nil, authParams)
+        val response = applicationProcesses.getAppsInfo(Nil, marketAuth)
 
         response.foldMap(testInterpreters) must_== emptyGetAppsInfoResponse
       }
 
     "return a valid response if a non empty list of packages name is passed" in new SuccessfulScope {
-      val response = applicationProcesses.getAppsInfo(packagesName, authParams)
+      val response = applicationProcesses.getAppsInfo(packagesName, marketAuth)
 
       response.foldMap(testInterpreters) must beLike[GetAppsInfoResponse] {
         case r ⇒

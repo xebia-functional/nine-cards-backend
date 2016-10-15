@@ -1,11 +1,12 @@
 package cards.nine.googleplay.processes
 
 import cats.data.Xor
-import cards.nine.googleplay.domain.{ Package, FullCard, GoogleAuthParams }
+import cards.nine.domain.market.MarketCredentials
+import cards.nine.googleplay.domain.{ Package, FullCard }
 
 package object getcard {
   sealed trait FailedResponse { val packageName: Package }
-  case class WrongAuthParams(packageName: Package, authParams: GoogleAuthParams) extends FailedResponse
+  case class WrongAuthParams(packageName: Package, marketAuth: MarketCredentials) extends FailedResponse
   case class PendingResolution(packageName: Package) extends FailedResponse
   case class UnknownPackage(packageName: Package) extends FailedResponse
   type Response = FailedResponse Xor FullCard

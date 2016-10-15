@@ -8,6 +8,8 @@ import cards.nine.api.messages.PathEnumerations.PriceFilter
 import cards.nine.api.messages.UserMessages.ApiLoginRequest
 import cards.nine.api.utils.SprayMatchers.PriceFilterSegment
 import cards.nine.api.utils.TaskDirectives._
+import cards.nine.domain.account.AndroidId
+import cards.nine.domain.market.{ MarketToken, Localization }
 import cards.nine.processes.NineCardsServices._
 import cards.nine.processes._
 import org.joda.time.DateTime
@@ -75,8 +77,8 @@ class NineCardsDirectives(
     googlePlayToken ← headerValueByName(headerGooglePlayToken)
     marketLocalization ← optionalHeaderValueByName(headerMarketLocalization)
   } yield GooglePlayContext(
-    googlePlayToken    = GooglePlayToken(googlePlayToken),
-    marketLocalization = marketLocalization map MarketLocalization.apply
+    googlePlayToken    = MarketToken(googlePlayToken),
+    marketLocalization = marketLocalization map Localization.apply
   )
 
   def validateUser(

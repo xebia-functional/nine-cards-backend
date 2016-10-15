@@ -1,6 +1,8 @@
 package cards.nine.googleplay.service.free.interpreter.webscrapper
 
 import cats.data.Xor
+import cards.nine.domain.account.AndroidId
+import cards.nine.domain.market.{ MarketCredentials, MarketToken }
 import cards.nine.googleplay.config.TestConfig._
 import cards.nine.googleplay.domain._
 import cards.nine.googleplay.service.free.interpreter.TestData._
@@ -19,7 +21,7 @@ class InterpretersIntegration extends Specification with WithHttp1Client {
 
   "Http4sGooglePlayWebScraper, the parser of Google Play's pages" should {
 
-    val auth = GoogleAuthParams(AndroidId(""), Token(""), Some(localization))
+    val auth = MarketCredentials(AndroidId(""), MarketToken(""), Some(localization))
 
     "result in an FullCard for packages that exist" in {
       val appRequest = AppRequest(fisherPrice.packageObj, auth)

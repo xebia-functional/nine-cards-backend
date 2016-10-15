@@ -142,7 +142,7 @@ class SharedCollectionProcessesSpec
         val collectionInfo = sharedCollectionProcesses.getCollectionByPublicIdentifier(
           userId           = publisherId,
           publicIdentifier = publicIdentifier,
-          authParams       = authParams
+          marketAuth       = marketAuth
         )
 
         collectionInfo.foldMap(testInterpreters) must beXorRight(getCollectionByPublicIdentifierResponse)
@@ -153,7 +153,7 @@ class SharedCollectionProcessesSpec
         val collectionInfo = sharedCollectionProcesses.getCollectionByPublicIdentifier(
           userId           = publisherId,
           publicIdentifier = publicIdentifier,
-          authParams       = authParams
+          marketAuth       = marketAuth
         )
 
         collectionInfo.foldMap(testInterpreters) must beXorLeft(sharedCollectionNotFoundException)
@@ -167,7 +167,7 @@ class SharedCollectionProcessesSpec
       val collectionsInfo = sharedCollectionProcesses.getLatestCollectionsByCategory(
         userId     = publisherId,
         category   = category,
-        authParams = authParams,
+        marketAuth = marketAuth,
         pageNumber = pageNumber,
         pageSize   = pageSize
       )
@@ -182,7 +182,7 @@ class SharedCollectionProcessesSpec
       val response = GetCollectionsResponse(List(sharedCollectionWithAppsInfoAndSubscriptions))
       val collectionsInfo = sharedCollectionProcesses.getPublishedCollections(
         userId     = publisherId,
-        authParams = authParams
+        marketAuth = marketAuth
       )
       collectionsInfo.foldMap(testInterpreters) mustEqual response
     }
@@ -191,7 +191,7 @@ class SharedCollectionProcessesSpec
       val response = GetCollectionsResponse(List())
       val collectionsInfo = sharedCollectionProcesses.getPublishedCollections(
         userId     = subscriberId,
-        authParams = authParams
+        marketAuth = marketAuth
       )
       collectionsInfo.foldMap(testInterpreters) mustEqual response
     }
@@ -217,7 +217,7 @@ class SharedCollectionProcessesSpec
       val collectionsInfo = sharedCollectionProcesses.getTopCollectionsByCategory(
         userId     = publisherId,
         category   = category,
-        authParams = authParams,
+        marketAuth = marketAuth,
         pageNumber = pageNumber,
         pageSize   = pageSize
       )
