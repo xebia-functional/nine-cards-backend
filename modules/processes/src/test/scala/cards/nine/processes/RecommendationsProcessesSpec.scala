@@ -33,7 +33,7 @@ trait RecommendationsProcessesSpecification
       priceFilter      = recommendationFilter,
       excludesPackages = excludePackages,
       limit            = limit,
-      auth             = auth.googlePlayAuthParams
+      auth             = auth.marketAuth
     ) returns Free.pure(recommendations)
 
     googlePlayServices.recommendationsForApps(
@@ -41,7 +41,7 @@ trait RecommendationsProcessesSpecification
       excludesPackages = excludePackages,
       limitPerApp      = limitPerApp,
       limit            = limit,
-      auth             = auth.googlePlayAuthParams
+      auth             = auth.marketAuth
     ) returns Free.pure(recommendations)
   }
 
@@ -55,7 +55,6 @@ trait RecommendationsProcessesContext {
     val token = "m52_9876"
 
     val marketAuth = MarketCredentials(AndroidId(androidId), MarketToken(token), Some(Localization(localization)))
-    val googlePlayAuthParams = marketAuth
   }
 
   val packagesName = List(

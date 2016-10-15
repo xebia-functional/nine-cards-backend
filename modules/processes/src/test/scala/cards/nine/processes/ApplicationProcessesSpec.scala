@@ -28,7 +28,7 @@ trait ApplicationProcessesSpecification
 
   trait SuccessfulScope extends BasicScope {
 
-    googlePlayServices.resolveMany(packagesName, googlePlayAuthParams, true) returns Free.pure(appsInfo)
+    googlePlayServices.resolveMany(packagesName, marketAuth, true) returns Free.pure(appsInfo)
 
   }
 
@@ -66,8 +66,7 @@ trait ApplicationProcessesContext {
   val localization = "en_GB"
   val token = "m52_9876"
 
-  val googlePlayAuthParams = MarketCredentials(AndroidId(androidId), MarketToken(token), Some(Localization(localization)))
-  val marketAuth = googlePlayAuthParams
+  val marketAuth = MarketCredentials(AndroidId(androidId), MarketToken(token), Some(Localization(localization)))
 
   val emptyGetAppsInfoResponse = GetAppsInfoResponse(
     errors = Nil,
