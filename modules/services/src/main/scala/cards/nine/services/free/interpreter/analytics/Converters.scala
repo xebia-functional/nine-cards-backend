@@ -59,20 +59,13 @@ object Converters {
   }
 
   private[Converters] def parseCellFor(scope: DomainScope, row: ReportRow): Cell = {
-    def makeCell(categoryStr: String, packageStr: String): Cell =
-      (Category.withName(categoryStr), PackageName(packageStr))
-
-    scope match {
-      case CountryScope(_) ⇒
-        val List(_country, categoryStr, packageStr) = row.dimensions
-        makeCell(categoryStr, packageStr)
-      case ContinentScope(_) ⇒
-        val List(_continent, categoryStr, packageStr) = row.dimensions
-        makeCell(categoryStr, packageStr)
-      case WorldScope ⇒
-        val List(categoryStr, packageStr) = row.dimensions
-        makeCell(categoryStr, packageStr)
+    val tailDimensions: List[String] = scope match {
+      case CountryScope(_) ⇒ row.dimensions.drop(1) // drop first dimension: country
+      case ContinentScope(_) ⇒ row.dimensions.drop(1) // drop first dimension: continent
+      case WorldScope ⇒ row.dimensions
     }
+    val List(categoryStr, packageStr) = tailDimensions
+    (Category.withName(categoryStr), PackageName(packageStr))
   }
 
 }
