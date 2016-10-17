@@ -12,11 +12,10 @@ import cards.nine.api.messages.UserMessages._
 import cards.nine.api.utils.SprayMarshallers._
 import cards.nine.api.utils.SprayMatchers._
 import cards.nine.domain.analytics.{ ContinentScope, CountryScope, GeoScope, WorldScope }
-import cards.nine.domain.application.Category
+import cards.nine.domain.application.{ FullCardList, Category }
 import cards.nine.commons.NineCardsService.Result
 import cards.nine.processes.NineCardsServices._
 import cards.nine.processes._
-import cards.nine.processes.messages.ApplicationMessages.GetAppsInfoResponse
 import cards.nine.services.free.domain.rankings._
 import cats.data.Xor
 import scala.concurrent.ExecutionContext
@@ -338,7 +337,7 @@ class NineCardsRoutes(
     request: ApiGetAppsInfoRequest,
     googlePlayContext: GooglePlayContext,
     userContext: UserContext
-  )(converter: GetAppsInfoResponse ⇒ T): NineCardsServed[T] =
+  )(converter: FullCardList ⇒ T): NineCardsServed[T] =
     applicationProcesses
       .getAppsInfo(request.items, toMarketAuth(googlePlayContext, userContext))
       .map(converter)

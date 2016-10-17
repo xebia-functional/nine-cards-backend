@@ -1,12 +1,11 @@
 package cards.nine.services.free.interpreter.googleplay
 
 import cards.nine.domain.account.AndroidId
-import cards.nine.domain.application.{ Category, Package }
+import cards.nine.domain.application.{ Category, FullCard, FullCardList, Package }
 import cards.nine.domain.market.{ Localization, MarketCredentials, MarketToken }
 import cards.nine.googleplay.domain._
 import cards.nine.googleplay.processes.getcard.{ FailedResponse, UnknownPackage }
 import cards.nine.googleplay.processes.{ CardsProcesses, Wiring }
-import cards.nine.services.free.domain.GooglePlay.{ AppInfo, AppsInfo, Recommendation, Recommendations }
 import cats.data.Xor
 import cats.free.Free
 import org.specs2.matcher.{ DisjunctionMatchers, Matcher, Matchers, XorMatchers }
@@ -23,21 +22,11 @@ class GooglePlayServicesSpec
 
   import TestData._
 
-  def recommendationIsFreeMatcher(isFree: Boolean): Matcher[Recommendation] = { rec: Recommendation ⇒
+  def recommendationIsFreeMatcher(isFree: Boolean): Matcher[FullCard] = { rec: FullCard ⇒
     rec.free must_== isFree
   }
 
   object TestData {
-
-    def appInfoFor(packageName: String) = AppInfo(
-      packageName = Package(packageName),
-      title       = s"Title of $packageName",
-      free        = false,
-      icon        = s"Icon of $packageName",
-      stars       = 5.0,
-      downloads   = s"Downloads of $packageName",
-      categories  = List(s"Category 1 of $packageName", s"Category 2 of $packageName")
-    )
 
     def fullCardFor(packageName: String) = FullCard(
       packageName = Package(packageName),
@@ -47,16 +36,6 @@ class GooglePlayServicesSpec
       stars       = 5.0,
       downloads   = s"Downloads of $packageName",
       categories  = List(s"Category 1 of $packageName", s"Category 2 of $packageName"),
-      screenshots = List(s"Screenshot 1 of $packageName", s"Screenshot 2 of $packageName")
-    )
-
-    def recommendationFor(packageName: String) = Recommendation(
-      packageName = Package(packageName),
-      title       = s"Title of $packageName",
-      free        = false,
-      icon        = s"Icon of $packageName",
-      stars       = 5.0,
-      downloads   = s"Downloads of $packageName",
       screenshots = List(s"Screenshot 1 of $packageName", s"Screenshot 2 of $packageName")
     )
 
@@ -71,9 +50,7 @@ class GooglePlayServicesSpec
     val validPackages = validPackagesName map Package
     val wrongPackages = wrongPackagesName map Package
 
-    val appInfoList = validPackagesName map appInfoFor
-
-    val recommendations = validPackagesName map recommendationFor
+    val fullCards = validPackagesName map fullCardFor
 
     val category = "SHOPPING"
 
@@ -144,8 +121,8 @@ class GooglePlayServicesSpec
 
       val response = services.resolveOne(onePackage, AuthData.marketAuth)
 
-      response.unsafePerformSyncAttempt must be_\/-[String Xor AppInfo].which {
-        content ⇒ content must beXorRight[AppInfo]
+      response.unsafePerformSyncAttempt must be_\/-[String Xor FullCard].which {
+        content ⇒ content must beXorRight[FullCard]
       }
     }
 
@@ -156,7 +133,7 @@ class GooglePlayServicesSpec
 
       val response = services.resolveOne(onePackage, AuthData.marketAuth)
 
-      response.unsafePerformSyncAttempt must be_\/-[String Xor AppInfo].which {
+      response.unsafePerformSyncAttempt must be_\/-[String Xor FullCard].which {
         content ⇒ content must beXorLeft[String](onePackageName)
       }
     }
@@ -170,9 +147,9 @@ class GooglePlayServicesSpec
 
       val response = services.resolveMany(packages, AuthData.marketAuth, true)
 
-      response.unsafePerformSyncAttempt must be_\/-[AppsInfo].which { appsInfo ⇒
+      response.unsafePerformSyncAttempt must be_\/-[FullCardList].which { appsInfo ⇒
         appsInfo.missing must containTheSameElementsAs(wrongPackages)
-        appsInfo.apps must containTheSameElementsAs(appInfoList)
+        appsInfo.cards must containTheSameElementsAs(fullCards)
       }
     }
   }
@@ -193,8 +170,8 @@ class GooglePlayServicesSpec
         auth             = AuthData.marketAuth
       )
 
-      response.unsafePerformSyncAttempt must be_\/-[Recommendations].which { rec ⇒
-        rec.apps must containTheSameElementsAs(recommendations)
+      response.unsafePerformSyncAttempt must be_\/-[FullCardList].which { rec ⇒
+        rec.cards must containTheSameElementsAs(fullCards)
       }
     }
 
@@ -234,8 +211,8 @@ class GooglePlayServicesSpec
         auth             = AuthData.marketAuth
       )
 
-      response.unsafePerformSyncAttempt must be_\/-[Recommendations].which { rec ⇒
-        rec.apps must containTheSameElementsAs(recommendations)
+      response.unsafePerformSyncAttempt must be_\/-[FullCardList].which { rec ⇒
+        rec.cards must containTheSameElementsAs(fullCards)
       }
     }
   }

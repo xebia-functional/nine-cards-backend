@@ -1,6 +1,7 @@
 package cards.nine.googleplay.service.free.interpreter.googleapi
 
 import cats.data.Xor
+import cards.nine.domain.application.FullCard
 import cards.nine.googleplay.domain._
 import cards.nine.googleplay.processes.Wiring
 import cards.nine.googleplay.config.TestConfig._

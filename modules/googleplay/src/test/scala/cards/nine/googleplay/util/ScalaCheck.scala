@@ -1,6 +1,6 @@
 package cards.nine.googleplay.util
 
-import cards.nine.domain.application.{ Category, Package }
+import cards.nine.domain.application.{ Category, FullCard, Package }
 import cards.nine.domain.market.MarketCredentials
 import cards.nine.googleplay.domain._
 import cats.data.Xor

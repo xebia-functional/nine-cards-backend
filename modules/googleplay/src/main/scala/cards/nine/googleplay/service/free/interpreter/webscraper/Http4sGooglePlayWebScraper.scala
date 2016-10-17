@@ -2,6 +2,7 @@ package cards.nine.googleplay.service.free.interpreter.webscrapper
 
 import cats.data.Xor
 import cats.syntax.xor._
+import cards.nine.domain.application.FullCard
 import cards.nine.googleplay.domain._
 import org.http4s.{ Method, Request, Uri }
 import org.http4s.Status.ResponseClass.Successful
