@@ -1,12 +1,10 @@
 package cards.nine.processes
 
 import cards.nine.domain.account.AndroidId
-import cards.nine.domain.application.Package
+import cards.nine.domain.application.{ FullCard, FullCardList, Package }
 import cards.nine.domain.market.{ Localization, MarketCredentials, MarketToken }
 import cards.nine.processes.NineCardsServices._
-import cards.nine.processes.messages.RecommendationsMessages._
 import cards.nine.services.free.algebra.GooglePlay.Services
-import cards.nine.services.free.domain.GooglePlay._
 import cats.free.Free
 import org.specs2.matcher.Matchers
 import org.specs2.mock.Mockito
@@ -82,10 +80,9 @@ trait RecommendationsProcessesContext {
   val screenshots = List("path-to-screenshot-1", "path-to-screenshot-2")
 
   val recommendedApps = packagesName map (packageName ⇒
-    Recommendation(packageName, title, free, icon, stars, downloads, screenshots))
+    FullCard(packageName, title, Nil, downloads, free, icon, screenshots, stars))
 
-  val googlePlayRecommendations = packagesName map (packageName ⇒
-    GooglePlayRecommendation(packageName, title, free, icon, stars, downloads, screenshots))
+  val googlePlayRecommendations = recommendedApps
 
   val category = "SOCIAL"
 
@@ -97,7 +94,7 @@ trait RecommendationsProcessesContext {
 
   val recommendationFilter = "ALL"
 
-  val recommendations = Recommendations(recommendedApps)
+  val recommendations = FullCardList(Nil, recommendedApps)
 }
 
 class RecommendationsProcessesSpec extends RecommendationsProcessesSpecification {
@@ -113,9 +110,9 @@ class RecommendationsProcessesSpec extends RecommendationsProcessesSpecification
         auth.marketAuth
       )
 
-      response.foldMap(testInterpreters) must beLike[GetRecommendationsResponse] {
+      response.foldMap(testInterpreters) must beLike[FullCardList] {
         case r ⇒
-          r.items must_== googlePlayRecommendations
+          r.cards must_== googlePlayRecommendations
       }
     }
   }
@@ -131,9 +128,9 @@ class RecommendationsProcessesSpec extends RecommendationsProcessesSpecification
         auth.marketAuth
       )
 
-      response.foldMap(testInterpreters) must beLike[GetRecommendationsResponse] {
+      response.foldMap(testInterpreters) must beLike[FullCardList] {
         case r ⇒
-          r.items must beEmpty
+          r.cards must beEmpty
           there was noCallsTo(googlePlayServices)
       }
     }
@@ -147,9 +144,9 @@ class RecommendationsProcessesSpec extends RecommendationsProcessesSpecification
         auth.marketAuth
       )
 
-      response.foldMap(testInterpreters) must beLike[GetRecommendationsResponse] {
+      response.foldMap(testInterpreters) must beLike[FullCardList] {
         case r ⇒
-          r.items must_== googlePlayRecommendations
+          r.cards must_== googlePlayRecommendations
       }
     }
   }

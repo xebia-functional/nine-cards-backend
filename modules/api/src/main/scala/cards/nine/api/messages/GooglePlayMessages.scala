@@ -1,8 +1,6 @@
 package cards.nine.api.messages
 
 import cards.nine.domain.application.Package
-import cards.nine.processes.messages.ApplicationMessages._
-import cards.nine.processes.messages.RecommendationsMessages._
 
 object GooglePlayMessages {
 
@@ -12,7 +10,18 @@ object GooglePlayMessages {
 
   case class ApiCategorizeAppsResponse(errors: List[Package], items: List[CategorizedApp])
 
-  case class ApiDetailAppsResponse(errors: List[Package], items: List[AppGooglePlayInfo])
+  // ApiDetailsApp: FullCard without Screenshots
+  case class ApiDetailsApp(
+    packageName: Package,
+    title: String,
+    free: Boolean,
+    icon: String,
+    stars: Double,
+    downloads: String,
+    categories: List[String]
+  )
+
+  case class ApiDetailAppsResponse(errors: List[Package], items: List[ApiDetailsApp])
 
   case class ApiGetRecommendationsByCategoryRequest(excludePackages: List[Package], limit: Int)
 
@@ -23,7 +32,18 @@ object GooglePlayMessages {
     limit: Int
   )
 
-  case class ApiGetRecommendationsResponse(items: List[GooglePlayRecommendation])
+  case class ApiGetRecommendationsResponse(items: List[ApiRecommendation])
+
+  // ApiRecommendation: FullCard without Categories
+  case class ApiRecommendation(
+    packageName: Package,
+    title: String,
+    free: Boolean,
+    icon: String,
+    stars: Double,
+    downloads: String,
+    screenshots: List[String]
+  )
 
   case class ApiRankAppsRequest(location: Option[String], items: Map[String, List[Package]])
 
@@ -35,6 +55,6 @@ object GooglePlayMessages {
     limit: Int
   )
 
-  case class ApiSearchAppsResponse(items: List[GooglePlayRecommendation])
+  case class ApiSearchAppsResponse(items: List[ApiRecommendation])
 
 }

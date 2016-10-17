@@ -1,12 +1,10 @@
 package cards.nine.processes
 
 import cards.nine.domain.account.AndroidId
-import cards.nine.domain.application.Package
+import cards.nine.domain.application.{ FullCard, FullCardList, Package }
 import cards.nine.domain.market.{ Localization, MarketCredentials, MarketToken }
 import cards.nine.processes.NineCardsServices._
-import cards.nine.processes.messages.ApplicationMessages._
 import cards.nine.services.free.algebra.GooglePlay.Services
-import cards.nine.services.free.domain.GooglePlay._
 import cats.free.Free
 import org.specs2.matcher.Matchers
 import org.specs2.mock.Mockito
@@ -60,8 +58,7 @@ trait ApplicationProcessesContext {
 
   val (missing, found) = packagesName.partition(_.value.length > 6)
 
-  val apps = found map (packageName ⇒ AppInfo(packageName, title, free, icon, stars, downloads, List(category)))
-  val appsGooglePlayInfo = found map (packageName ⇒ AppGooglePlayInfo(packageName, title, free, icon, stars, downloads, List(category)))
+  val apps = found map (packageName ⇒ FullCard(packageName, title, List(category), downloads, free, icon, Nil, stars))
 
   val androidId = "12345"
   val localization = "en_GB"
@@ -69,12 +66,9 @@ trait ApplicationProcessesContext {
 
   val marketAuth = MarketCredentials(AndroidId(androidId), MarketToken(token), Some(Localization(localization)))
 
-  val emptyGetAppsInfoResponse = GetAppsInfoResponse(
-    errors = Nil,
-    items  = Nil
-  )
+  val emptyGetAppsInfoResponse = FullCardList(Nil, Nil)
 
-  val appsInfo = AppsInfo(missing, apps)
+  val appsInfo = FullCardList(missing, apps)
 }
 
 class ApplicationProcessesSpec extends ApplicationProcessesSpecification {
@@ -90,10 +84,10 @@ class ApplicationProcessesSpec extends ApplicationProcessesSpecification {
     "return a valid response if a non empty list of packages name is passed" in new SuccessfulScope {
       val response = applicationProcesses.getAppsInfo(packagesName, marketAuth)
 
-      response.foldMap(testInterpreters) must beLike[GetAppsInfoResponse] {
+      response.foldMap(testInterpreters) must beLike[FullCardList] {
         case r ⇒
-          r.errors must_== missing
-          r.items must_== appsGooglePlayInfo
+          r.missing must_== missing
+          r.cards must_== apps
       }
     }
   }

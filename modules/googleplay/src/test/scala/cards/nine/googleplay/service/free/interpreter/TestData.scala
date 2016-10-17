@@ -1,7 +1,7 @@
 package cards.nine.googleplay.service.free.interpreter
 
 import cards.nine.commons.NineCardsConfig._
-import cards.nine.domain.application.Package
+import cards.nine.domain.application.{ FullCard, Package }
 import cards.nine.googleplay.domain._
 
 object TestData {

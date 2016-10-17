@@ -3,7 +3,7 @@ package cards.nine.googleplay.processes
 import cats.data.Xor
 import cats.~>
 import cards.nine.commons.TaskInstances._
-import cards.nine.domain.application.Package
+import cards.nine.domain.application.{ FullCard, Package }
 import cards.nine.googleplay.domain._
 import cards.nine.googleplay.service.free.{ JoinServices, JoinInterpreter }
 import cards.nine.googleplay.service.free.{ algebra ⇒ Alg, interpreter ⇒ Inter }

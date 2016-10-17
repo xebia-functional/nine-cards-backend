@@ -3,14 +3,13 @@ package cards.nine.processes
 import cards.nine.commons.NineCardsErrors.CountryNotFound
 import cards.nine.domain.account.AndroidId
 import cards.nine.domain.analytics.{ AnalyticsToken, Country ⇒ CountryEnum, CountryScope, DateRange }
-import cards.nine.domain.application.{ Category, Package }
+import cards.nine.domain.application.{ Category, FullCard, FullCardList, Package }
 import cards.nine.domain.market.{ Localization, MarketCredentials, MarketToken }
 import cards.nine.processes.ProcessesExceptions.SharedCollectionNotFoundException
 import cards.nine.processes.messages.SharedCollectionMessages._
 import cards.nine.processes.messages.rankings.GetRankedDeviceApps.DeviceApp
 import cards.nine.services.free.domain.{ SharedCollection ⇒ SharedCollectionServices, _ }
 import cards.nine.services.free.domain.Firebase.{ NotificationIndividualResult, NotificationResponse }
-import cards.nine.services.free.domain.GooglePlay.{ AppsInfo, AppInfo ⇒ AppInfoServices }
 import cards.nine.services.free.interpreter.collection.Services.{ SharedCollectionData ⇒ SharedCollectionDataServices }
 import java.sql.Timestamp
 import java.time.Instant
@@ -126,10 +125,19 @@ object TestData {
   object Values {
 
     val apps = packagesName map { packageName ⇒
-      AppInfoServices(packageName, "Germany", true, icon, stars, "100.000+", List(appCategory))
+      FullCard(
+        packageName = packageName,
+        title       = "Germany",
+        free        = true,
+        icon        = icon,
+        stars       = stars,
+        downloads   = "100.000+",
+        categories  = List(appCategory),
+        screenshots = Nil
+      )
     }
 
-    val appsInfo = AppsInfo(missing, apps)
+    val appsInfo = FullCardList(missing, apps)
 
     val marketAuth = MarketCredentials(
       androidId    = AndroidId(androidId),
@@ -177,7 +185,7 @@ object TestData {
     val updatePackagesStats = PackagesStats(addedPackagesCount, Option(removedPackagesCount))
 
     val appInfoList = packagesName map { packageName ⇒
-      AppInfo(packageName, "Germany", true, icon, stars, "100.000+", appCategory)
+      FullCard(packageName, "Germany", List(appCategory), "100.000+", true, icon, Nil, stars)
     }
 
     val installation = Installation(

@@ -2,9 +2,8 @@ package cards.nine.googleplay.processes
 
 import cats.data.Xor
 import cats.{ ~>, Id }
-import cards.nine.domain.application.Package
+import cards.nine.domain.application.{ FullCard, Package }
 import cards.nine.domain.market.MarketCredentials
-import cards.nine.googleplay.domain._
 import cards.nine.googleplay.domain.{ apigoogle ⇒ ApiDom, webscrapper ⇒ WebDom }
 import cards.nine.googleplay.service.free.algebra.{ GoogleApi ⇒ ApiAlg, Cache ⇒ CacheAlg, WebScraper ⇒ WebAlg }
 import cards.nine.googleplay.service.free.interpreter.{ googleapi ⇒ ApiInt, cache ⇒ CacheInt, webscrapper ⇒ WebInt }

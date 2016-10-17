@@ -5,11 +5,9 @@ import cards.nine.api.messages.GooglePlayMessages._
 import cards.nine.api.messages.InstallationsMessages.ApiUpdateInstallationRequest
 import cards.nine.api.messages.SharedCollectionMessages._
 import cards.nine.api.messages.UserMessages.ApiLoginRequest
-import cards.nine.domain.application.{ Category, Package }
+import cards.nine.domain.application.{ Category, FullCardList, Package }
 import cards.nine.processes.ProcessesExceptions.SharedCollectionNotFoundException
-import cards.nine.processes.messages.ApplicationMessages.GetAppsInfoResponse
 import cards.nine.processes.messages.InstallationsMessages._
-import cards.nine.processes.messages.RecommendationsMessages._
 import cards.nine.processes.messages.SharedCollectionMessages._
 import cards.nine.processes.messages.UserMessages.{ LoginRequest, LoginResponse }
 import cards.nine.processes.messages.rankings.GetRankedDeviceApps.RankedDeviceApp
@@ -171,7 +169,7 @@ object TestData {
 
     val getRankedAppsResponse = Map.empty[String, List[RankedDeviceApp]]
 
-    val getRecommendationsByCategoryResponse = GetRecommendationsResponse(Nil)
+    val getRecommendationsByCategoryResponse = FullCardList(Nil, Nil)
 
     val apiCreateCollectionRequest = ApiCreateCollectionRequest(
       author        = author,
@@ -193,7 +191,7 @@ object TestData {
 
     val apiUpdateInstallationRequest = ApiUpdateInstallationRequest(deviceToken)
 
-    val getAppsInfoResponse = GetAppsInfoResponse(Nil, Nil)
+    val getAppsInfoResponse = FullCardList(Nil, Nil)
 
     val createOrUpdateCollectionResponse = CreateOrUpdateCollectionResponse(
       publicIdentifier = publicIdentifier,

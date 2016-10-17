@@ -1,20 +1,10 @@
 package cards.nine.processes.messages
 
-import cards.nine.domain.application.Package
+import cards.nine.domain.application.{ FullCard, Package }
 import cats.data.Xor
 import org.joda.time.DateTime
 
 object SharedCollectionMessages {
-
-  case class AppInfo(
-    packageName: Package,
-    title: String,
-    free: Boolean,
-    icon: String,
-    stars: Double,
-    downloads: String,
-    category: String
-  )
 
   case class SharedCollectionData(
     publicIdentifier: String,
@@ -31,7 +21,7 @@ object SharedCollectionMessages {
 
   case class SharedCollectionWithAppsInfo(
     collection: SharedCollection,
-    appsInfo: List[AppInfo]
+    appsInfo: List[FullCard]
   )
 
   case class SharedCollection(

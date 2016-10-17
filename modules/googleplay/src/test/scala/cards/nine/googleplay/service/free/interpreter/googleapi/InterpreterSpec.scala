@@ -3,7 +3,7 @@ package cards.nine.googleplay.service.free.interpreter.googleapi
 import java.nio.file.{ Files, Paths }
 
 import cards.nine.domain.account.AndroidId
-import cards.nine.domain.application.Package
+import cards.nine.domain.application.{ FullCard, Package }
 import cards.nine.domain.market.{ MarketCredentials, MarketToken }
 import cards.nine.googleplay.domain._
 import cards.nine.googleplay.domain.apigoogle._

@@ -1,7 +1,7 @@
 package cards.nine.processes
 
 import cards.nine.commons.FreeUtils._
-import cards.nine.domain.application.Package
+import cards.nine.domain.application.{ FullCardList, Package }
 import cards.nine.domain.market.MarketCredentials
 import cards.nine.processes.ProcessesExceptions.SharedCollectionNotFoundException
 import cards.nine.processes.converters.Converters._
@@ -10,7 +10,6 @@ import cards.nine.processes.utils.XorTSyntax._
 import cards.nine.services.free.algebra
 import cards.nine.services.free.algebra.{ Firebase, GooglePlay }
 import cards.nine.services.free.domain.Firebase._
-import cards.nine.services.free.domain.GooglePlay.AppsInfo
 import cards.nine.services.free.domain.{ BaseSharedCollection, Installation, SharedCollectionSubscription }
 import cats.data.{ Xor, XorT }
 import cats.free.Free
@@ -193,7 +192,7 @@ class SharedCollectionProcesses[F[_]](
   ): XorT[Free[F, ?], Throwable, GetCollectionByPublicIdentifierResponse] = {
     googlePlayServices.resolveMany(collection.packages, marketAuth, true) map { appsInfo ⇒
       GetCollectionByPublicIdentifierResponse(
-        toSharedCollectionWithAppsInfo(collection, appsInfo.apps)
+        toSharedCollectionWithAppsInfo(collection, appsInfo.cards)
       )
     }
   }.rightXorT[Throwable]
@@ -207,17 +206,17 @@ class SharedCollectionProcesses[F[_]](
     def getGooglePlayInfoForPackages(
       collections: List[SharedCollection],
       marketAuth: MarketCredentials
-    ): Free[F, AppsInfo] = {
+    ): Free[F, FullCardList] = {
       val packages = collections.flatMap(_.packages).distinct
       googlePlayServices.resolveMany(packages, marketAuth, false)
     }
 
     def fillGooglePlayInfoForPackages(
       collections: List[SharedCollection],
-      appsInfo: AppsInfo
+      appsInfo: FullCardList
     ) = GetCollectionsResponse {
       collections map { collection ⇒
-        val foundAppInfo = appsInfo.apps.filter(a ⇒ collection.packages.contains(a.packageName))
+        val foundAppInfo = appsInfo.cards.filter(a ⇒ collection.packages.contains(a.packageName))
 
         toSharedCollectionWithAppsInfo(collection, foundAppInfo)
       }
