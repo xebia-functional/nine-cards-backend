@@ -1,9 +1,8 @@
 package cards.nine.googleplay.processes
 
 import cats.data.Xor
-import cards.nine.domain.application.Package
+import cards.nine.domain.application.{ FullCard, Package }
 import cards.nine.domain.market.MarketCredentials
-import cards.nine.googleplay.domain.FullCard
 
 package object getcard {
   sealed trait FailedResponse { val packageName: Package }

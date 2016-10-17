@@ -1,29 +1,15 @@
 package cards.nine.services.free.interpreter.googleplay
 
-import cards.nine.domain.application.{ Category, Package }
+import cards.nine.domain.application.{ Category, FullCardList, Package }
 import cards.nine.googleplay.domain._
 import cards.nine.googleplay.processes.{ getcard, ResolveMany }
-import cards.nine.services.free.domain.GooglePlay.{ RecommendByCategoryRequest ⇒ _, _ }
 import cats.instances.list._
 import cats.syntax.monadCombine._
 
 object Converters {
 
-  def toRecommendations(cardsList: FullCardList): Recommendations =
-    Recommendations(
-      cardsList.cards map toRecommendation
-    )
-
-  def toRecommendation(card: FullCard): Recommendation =
-    Recommendation(
-      packageName = card.packageName,
-      title       = card.title,
-      free        = card.free,
-      icon        = card.icon,
-      stars       = card.stars,
-      downloads   = card.downloads,
-      screenshots = card.screenshots
-    )
+  def toRecommendations(cardsList: FullCardList): FullCardList =
+    FullCardList(Nil, cardsList.cards)
 
   def toSearchAppsRequest(
     query: String,
@@ -57,29 +43,19 @@ object Converters {
       limit
     )
 
-  def toAppsInfo(response: ResolveMany.Response): AppsInfo =
-    AppsInfo(
+  def toFullCardList(response: ResolveMany.Response): FullCardList =
+    FullCardList(
       response.pending ++ response.notFound,
-      response.apps map toAppInfo
+      response.apps
     )
 
-  def toAppsInfo(response: List[getcard.Response]): AppsInfo = {
+  def toFullCardList(response: List[getcard.Response]): FullCardList = {
     val (errors, resolved) = response.separate
 
-    AppsInfo(
+    FullCardList(
       errors map (_.packageName),
-      resolved map toAppInfo
+      resolved
     )
   }
 
-  def toAppInfo(card: FullCard): AppInfo =
-    AppInfo(
-      packageName = card.packageName,
-      title       = card.title,
-      free        = card.free,
-      icon        = card.icon,
-      stars       = card.stars,
-      downloads   = card.downloads,
-      categories  = card.categories
-    )
 }

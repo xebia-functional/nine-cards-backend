@@ -1,7 +1,6 @@
 package cards.nine.googleplay.service.free.interpreter.cache
 
-import cards.nine.domain.application.Package
-import cards.nine.googleplay.domain.FullCard
+import cards.nine.domain.application.{ FullCard, Package }
 import enumeratum.{ Enum, EnumEntry }
 import org.joda.time.DateTime
 

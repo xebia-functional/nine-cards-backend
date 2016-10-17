@@ -35,8 +35,19 @@ object SharedCollectionMessages {
     community: Boolean,
     owned: Boolean,
     packages: List[Package],
-    appsInfo: List[AppInfo],
+    appsInfo: List[ApiCollectionApp],
     subscriptions: Option[Long] = None
+  )
+
+  // AppCollectionApp: FullCard without Screenshots, and only one category
+  case class ApiCollectionApp(
+    packageName: Package,
+    title: String,
+    free: Boolean,
+    icon: String,
+    stars: Double,
+    downloads: String,
+    category: String
   )
 
   case class ApiSharedCollectionList(collections: List[ApiSharedCollection])

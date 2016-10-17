@@ -6,8 +6,6 @@ import cards.nine.api.messages.InstallationsMessages._
 import cards.nine.api.messages.SharedCollectionMessages._
 import cards.nine.api.messages.UserMessages._
 import cards.nine.domain.application.Package
-import cards.nine.processes.messages.ApplicationMessages._
-import cards.nine.processes.messages.RecommendationsMessages._
 import cards.nine.processes.messages.SharedCollectionMessages._
 import io.circe.{ Decoder, Encoder, Json }
 import org.joda.time.DateTime
@@ -62,7 +60,7 @@ trait JsonFormats
 
   implicit val updateInstallationResponseFormat = jsonFormat2(ApiUpdateInstallationResponse)
 
-  implicit val appInfoFormat = jsonFormat7(AppInfo)
+  implicit val appInfoFormat = jsonFormat7(ApiCollectionApp)
 
   implicit val apiSharedCollection = jsonFormat13(ApiSharedCollection)
 
@@ -88,7 +86,7 @@ trait JsonFormats
 
   implicit val apiCategorizeAppsResponseFormat = jsonFormat2(ApiCategorizeAppsResponse)
 
-  implicit val appGooglePlayInfoFormat = jsonFormat7(AppGooglePlayInfo)
+  implicit val appGooglePlayInfoFormat = jsonFormat7(ApiDetailsApp)
 
   implicit val apiDetailAppsResponseFormat = jsonFormat2(ApiDetailAppsResponse)
 
@@ -98,7 +96,7 @@ trait JsonFormats
 
   implicit val apiGetRecommendationsForAppsRequestFormat = jsonFormat4(ApiGetRecommendationsForAppsRequest)
 
-  implicit val googlePlayRecommendationFormat = jsonFormat7(GooglePlayRecommendation)
+  implicit val googlePlayRecommendationFormat = jsonFormat7(ApiRecommendation)
 
   implicit val apiGetRecommendationsResponseFormat = jsonFormat1(ApiGetRecommendationsResponse)
 

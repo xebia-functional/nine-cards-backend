@@ -1,7 +1,6 @@
 package cards.nine.googleplay.service.free.interpreter.cache
 
-import cards.nine.domain.application.Package
-import cards.nine.googleplay.domain.FullCard
+import cards.nine.domain.application.{ FullCard, Package }
 import cards.nine.googleplay.service.free.algebra.Cache._
 import cards.nine.googleplay.util.{ ScalaCheck ⇒ CustomArbitrary }
 import com.redis.RedisClient

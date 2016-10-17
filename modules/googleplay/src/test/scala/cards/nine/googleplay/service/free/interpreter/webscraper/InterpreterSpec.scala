@@ -1,8 +1,7 @@
 package cards.nine.googleplay.service.free.interpreter.webscrapper
 
 import cats.data.Xor
-import cards.nine.domain.application.Package
-import cards.nine.googleplay.domain.FullCard
+import cards.nine.domain.application.{ FullCard, Package }
 import cards.nine.googleplay.domain.webscrapper._
 import cards.nine.googleplay.service.free.algebra.WebScraper._
 import cards.nine.googleplay.service.util.MockServer

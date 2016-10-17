@@ -1,7 +1,6 @@
 package cards.nine.googleplay.service.free.interpreter.webscrapper
 
-import cards.nine.domain.application.Package
-import cards.nine.googleplay.domain._
+import cards.nine.domain.application.{ FullCard, Package }
 import org.ccil.cowan.tagsoup.jaxp.SAXFactoryImpl
 import org.xml.sax.InputSource
 import scala.xml.Node
