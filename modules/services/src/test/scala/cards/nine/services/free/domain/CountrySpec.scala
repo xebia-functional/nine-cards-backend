@@ -1,5 +1,6 @@
 package cards.nine.services.free.domain
 
+import cards.nine.domain.analytics.{ Country ⇒ ACountry, _ }
 import org.specs2.mutable.Specification
 
 class CountrySpec extends Specification {
@@ -15,7 +16,7 @@ class CountrySpec extends Specification {
 
       val geoScope = unitedStates.toGeoScope
 
-      geoScope must_== rankings.CountryScope(rankings.Country.United_States)
+      geoScope must_== CountryScope(ACountry.United_States)
     }
 
     "it should return a ContinentScope value if there isn't an EnumEntry for the country, but " +
@@ -23,14 +24,14 @@ class CountrySpec extends Specification {
 
         val geoScope = italy.toGeoScope
 
-        geoScope must_== rankings.ContinentScope(rankings.Continent.Europe)
+        geoScope must_== ContinentScope(Continent.Europe)
       }
 
     "return a WorldScope value if there aren't EnumEntry for the country neither the continent" in {
 
       val geoScope = antarctica.toGeoScope
 
-      geoScope must_== rankings.WorldScope
+      geoScope must_== WorldScope
     }
   }
 }

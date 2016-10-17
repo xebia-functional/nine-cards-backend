@@ -6,6 +6,7 @@ import cards.nine.api.NineCardsHeaders._
 import cards.nine.api.TestData.Exceptions._
 import cards.nine.api.TestData._
 import cards.nine.commons.NineCardsService
+import cards.nine.domain.analytics.{ Continent, Country }
 import cards.nine.processes.NineCardsServices._
 import cards.nine.processes._
 import cards.nine.processes.messages.UserMessages._
@@ -557,7 +558,6 @@ class NineCardsApiSpec
   }
 
   val rankingPaths: List[String] = {
-    import cards.nine.services.free.domain.rankings.{ Continent, Country }
     val countries = Country.values.map(c ⇒ s"countries/$c").toList
     val continents = Continent.values.map(c ⇒ s"continents/$c").toList
     "world" :: (continents ++ countries)

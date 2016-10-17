@@ -2,6 +2,7 @@ package cards.nine.services.free.algebra
 
 import cards.nine.commons.NineCardsService
 import cards.nine.commons.NineCardsService.{ NineCardsService, Result }
+import cards.nine.domain.analytics.GeoScope
 import cards.nine.services.free.domain.rankings._
 import cats.free.{ :<:, Free }
 

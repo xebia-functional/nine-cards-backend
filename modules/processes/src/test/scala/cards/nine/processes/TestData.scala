@@ -1,10 +1,8 @@
 package cards.nine.processes
 
-import java.sql.Timestamp
-import java.time.Instant
-
 import cards.nine.commons.NineCardsErrors.CountryNotFound
 import cards.nine.domain.account.AndroidId
+import cards.nine.domain.analytics.{ AnalyticsToken, Country ⇒ CountryEnum, CountryScope, DateRange }
 import cards.nine.domain.application.Category
 import cards.nine.domain.market.{ Localization, MarketCredentials, MarketToken }
 import cards.nine.processes.ProcessesExceptions.SharedCollectionNotFoundException
@@ -13,8 +11,9 @@ import cards.nine.processes.messages.rankings.GetRankedDeviceApps.DeviceApp
 import cards.nine.services.free.domain.{ SharedCollection ⇒ SharedCollectionServices, _ }
 import cards.nine.services.free.domain.Firebase.{ NotificationIndividualResult, NotificationResponse }
 import cards.nine.services.free.domain.GooglePlay.{ AppsInfo, AppInfo ⇒ AppInfoServices }
-import cards.nine.services.free.domain.rankings.{ Country ⇒ CountryEnum }
 import cards.nine.services.free.interpreter.collection.Services.{ SharedCollectionData ⇒ SharedCollectionDataServices }
+import java.sql.Timestamp
+import java.time.Instant
 import org.joda.time.{ DateTime, DateTimeZone }
 
 object TestData {
@@ -308,13 +307,13 @@ object TestData {
   }
 
   object rankings {
-    import cards.nine.services.free.domain.rankings.{ AuthParams ⇒ AuthRanking, _ }
+    import cards.nine.services.free.domain.rankings._
 
     lazy val scope = CountryScope(CountryEnum.Spain)
     lazy val location = Option("US")
     lazy val startDate = new DateTime(2016, 1, 1, 0, 0, DateTimeZone.UTC)
     lazy val endDate = new DateTime(2016, 2, 1, 0, 0, DateTimeZone.UTC)
-    lazy val params = RankingParams(DateRange(startDate, endDate), 5, AuthRanking("auth_token"))
+    lazy val params = RankingParams(DateRange(startDate, endDate), 5, AnalyticsToken("auth_token"))
     lazy val error = RankingError(401, "Unauthorized", "Unauthorized")
     lazy val ranking = Ranking(Map(Category.SOCIAL →
       CategoryRanking(List(PackageName("socialite"), PackageName("socialist")))))

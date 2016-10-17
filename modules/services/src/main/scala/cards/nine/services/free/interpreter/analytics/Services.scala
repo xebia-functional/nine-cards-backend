@@ -1,5 +1,6 @@
 package cards.nine.services.free.interpreter.analytics
 
+import cards.nine.domain.analytics.GeoScope
 import cards.nine.services.free.algebra.GoogleAnalytics._
 import cards.nine.services.free.domain.rankings._
 import cats.data.Xor
@@ -32,7 +33,7 @@ class Services(config: Configuration) extends (Ops ~> Task) {
 
   def getRanking(scope: GeoScope, params: RankingParams): Task[TryRanking] = {
     val httpRequest: Task[Request] = {
-      val header: Header = Header("Authorization", s"Bearer ${params.auth.access_token}")
+      val header: Header = Header("Authorization", s"Bearer ${params.auth.value}")
       val body: RequestBody = Converters.buildRequest(scope, config.viewId, params.dateRange)
       Request(method = Method.POST, uri = uri, headers = Headers(header))
         .withBody[RequestBody](body)

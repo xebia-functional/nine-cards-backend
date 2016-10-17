@@ -1,13 +1,14 @@
 package cards.nine.api.converters
 
 import cards.nine.api.messages.{ rankings ⇒ Api }
+import cards.nine.domain.analytics.{ AnalyticsToken, DateRange }
 import cards.nine.domain.application.Category
 import cards.nine.processes.messages.{ rankings ⇒ Proc }
 import cards.nine.services.free.domain.{ rankings ⇒ Domain }
 
 object rankings {
 
-  import Domain.{ AuthParams, DateRange, RankingParams }
+  import Domain.RankingParams
 
   def toApiRanking(resp: Proc.Get.Response): Api.Ranking = {
 
@@ -22,7 +23,7 @@ object rankings {
     def toRankingParams(token: String, request: Api.Reload.Request): RankingParams = {
       val length = request.rankingLength
       val dateRange = DateRange(request.startDate, request.endDate)
-      RankingParams(dateRange, length, AuthParams(token))
+      RankingParams(dateRange, length, AnalyticsToken(token))
     }
 
     def toXorResponse(proc: Proc.Reload.XorResponse): Api.Reload.XorResponse =

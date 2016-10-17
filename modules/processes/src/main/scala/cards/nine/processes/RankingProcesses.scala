@@ -3,6 +3,7 @@ package cards.nine.processes
 import cards.nine.commons.NineCardsErrors.CountryNotFound
 import cards.nine.commons.NineCardsService
 import cards.nine.commons.NineCardsService._
+import cards.nine.domain.analytics._
 import cards.nine.processes.converters.Converters._
 import cards.nine.processes.messages.rankings.GetRankedDeviceApps.{ DeviceApp, RankedDeviceApp }
 import cards.nine.processes.messages.rankings._
