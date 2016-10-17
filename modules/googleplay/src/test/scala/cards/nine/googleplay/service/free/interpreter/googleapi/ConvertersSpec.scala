@@ -69,7 +69,7 @@ class ConvertersSpec extends Specification {
         "com.okcupid.okcupid",
         "com.myyearbook.m",
         "com.jaumo"
-      ).map(Package.apply)
+      ) map Package
 
       ids must containTheSameElementsAs(expected)
     }

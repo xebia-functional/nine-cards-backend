@@ -55,7 +55,7 @@ object TestData {
       "com.noctuasoftware.retrocosmos2",
       "hr.artplus.homagecosmos.app",
       "com.cosmos.paw.patrol.slasher.free"
-    ).map(Package.apply)
+    ) map Package
 
   }
 

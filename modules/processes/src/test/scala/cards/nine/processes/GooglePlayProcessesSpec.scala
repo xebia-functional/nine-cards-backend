@@ -41,7 +41,7 @@ trait GooglePlayProcessesContext {
     "earth.europe.france",
     "earth.europe.portugal",
     "earth.europe.spain"
-  ).map(Package.apply)
+  ) map Package
 
   val (missing, foundPackageNames) = packageNames.partition(_.value.length < 20)
 

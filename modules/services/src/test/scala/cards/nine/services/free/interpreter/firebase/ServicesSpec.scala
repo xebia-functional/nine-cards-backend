@@ -97,7 +97,7 @@ class ServicesSpec
       val info = UpdatedCollectionNotificationInfo(
         deviceTokens     = List(auth.registrationId1, auth.registrationId2),
         publicIdentifier = content.collectionPublicIdentifier,
-        packagesName     = List(packages.package1, packages.package2, packages.package3).map(Package.apply)
+        packagesName     = List(packages.package1, packages.package2, packages.package3) map Package
       )
 
       val response = services.sendUpdatedCollectionNotification(info)
@@ -116,7 +116,7 @@ class ServicesSpec
         val info = UpdatedCollectionNotificationInfo(
           deviceTokens     = List(auth.registrationId1, auth.registrationId2, auth.registrationId3),
           publicIdentifier = content.collectionPublicIdentifier,
-          packagesName     = List(packages.package1, packages.package2, packages.package3).map(Package.apply)
+          packagesName     = List(packages.package1, packages.package2, packages.package3) map Package
         )
 
         val response = services.sendUpdatedCollectionNotification(info)
@@ -139,7 +139,7 @@ class ServicesSpec
       val info = UpdatedCollectionNotificationInfo(
         deviceTokens     = List(auth.registrationId1, auth.registrationId2),
         publicIdentifier = content.collectionPublicIdentifier,
-        packagesName     = List(packages.package1, packages.package2, packages.package3).map(Package.apply)
+        packagesName     = List(packages.package1, packages.package2, packages.package3) map Package
       )
 
       val response = services.sendUpdatedCollectionNotification(info)
@@ -153,7 +153,7 @@ class ServicesSpec
       val info = UpdatedCollectionNotificationInfo(
         deviceTokens     = List.empty,
         publicIdentifier = content.collectionPublicIdentifier,
-        packagesName     = List(packages.package1, packages.package2, packages.package3).map(Package.apply)
+        packagesName     = List(packages.package1, packages.package2, packages.package3) map Package
       )
 
       val response = services.sendUpdatedCollectionNotification(info)

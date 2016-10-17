@@ -65,7 +65,7 @@ trait RecommendationsProcessesContext {
     "earth.europe.france",
     "earth.europe.portugal",
     "earth.europe.spain"
-  ).map(Package.apply)
+  ) map Package
 
   val excludePackages = packagesName.filter(_.value.length > 20)
 

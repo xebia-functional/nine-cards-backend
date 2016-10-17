@@ -68,7 +68,7 @@ object TestData {
     "earth.europe.france",
     "earth.europe.portugal",
     "earth.europe.spain"
-  ).map(Package.apply)
+  ) map Package
 
   val deviceApps = Map("countries" → packagesName)
 
@@ -150,7 +150,7 @@ object TestData {
       appsInfo   = List.empty
     )
 
-    val apiGetAppsInfoRequest = ApiGetAppsInfoRequest(items = List("", "", "").map(Package.apply))
+    val apiGetAppsInfoRequest = ApiGetAppsInfoRequest(items = List("", "", "") map Package)
 
     val apiGetRecommendationsByCategoryRequest = ApiGetRecommendationsByCategoryRequest(
       excludePackages = excludePackages,
@@ -231,8 +231,8 @@ object TestData {
       val getResponse = Proc.Get.Response(ranking)
 
       val apiRanking = Api.Ranking(List(
-        Api.CategoryRanking(Category.SOCIAL, List("socialite", "socialist").map(Package)),
-        Api.CategoryRanking(Category.COMMUNICATION, List("es.elpais", "es.elmundo", "uk.theguardian").map(Package.apply))
+        Api.CategoryRanking(Category.SOCIAL, List("socialite", "socialist") map Package),
+        Api.CategoryRanking(Category.COMMUNICATION, List("es.elpais", "es.elmundo", "uk.theguardian") map Package)
       ))
 
       val reloadResponse = Proc.Reload.Response()

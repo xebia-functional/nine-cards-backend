@@ -10,7 +10,7 @@ import org.http4s.circe._
 
 object Decoders {
 
-  implicit val packageD: Decoder[Package] = Decoder.decodeString.map(Package.apply)
+  implicit val packageD: Decoder[Package] = Decoder.decodeString map Package
 
   implicit val firebaseErrorDecoder: Decoder[FirebaseError] =
     deriveDecoder[FirebaseError]

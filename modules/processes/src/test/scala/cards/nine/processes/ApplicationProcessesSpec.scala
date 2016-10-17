@@ -44,7 +44,7 @@ trait ApplicationProcessesContext {
     "earth.europe.france",
     "earth.europe.portugal",
     "earth.europe.spain"
-  ).map(Package.apply)
+  ) map Package
 
   val title = "Title of the app"
 

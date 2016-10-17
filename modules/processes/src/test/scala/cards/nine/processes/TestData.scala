@@ -99,27 +99,27 @@ object TestData {
     "earth.europe.france",
     "earth.europe.portugal",
     "earth.europe.spain"
-  ).map(Package.apply)
+  ) map Package
 
   val missing = List(
     "earth.europe.italy",
     "earth.europe.unitedKingdom"
-  ).map(Package.apply)
+  ) map Package
 
   val updatePackagesName = List(
     "earth.europe.italy",
     "earth.europe.unitedKingdom",
     "earth.europe.germany"
-  ).map(Package.apply)
+  ) map Package
 
   val addedPackages = List(
     "earth.europe.italy",
     "earth.europe.unitedKingdom"
-  ).map(Package.apply)
+  ) map Package
 
   val removedPackages = List(
     "earth.europe.germany"
-  ).map(Package.apply)
+  ) map Package
 
   val updatedPackages = (addedPackages, removedPackages)
 
@@ -330,13 +330,13 @@ object TestData {
       "earth.europe.france",
       "earth.europe.germany",
       "earth.europe.italy"
-    ).map(Package.apply)
+    ) map Package
 
     val countriesNZList = List(
       "earth.europe.portugal",
       "earth.europe.spain",
       "earth.europe.unitedKingdom"
-    ).map(Package.apply)
+    ) map Package
 
     val deviceAppsMap = Map(
       countriesAMCategory → countriesAMList.map(DeviceApp.apply),
