@@ -2,6 +2,7 @@ package cards.nine.processes
 
 import cats.data.Xor
 import cats.free.Free
+import cards.nine.domain.account._
 import cards.nine.processes.NineCardsServices._
 import cards.nine.services.free.algebra.GoogleApi.Services
 import cards.nine.services.free.domain.{ TokenInfo, WrongTokenInfo }
@@ -27,13 +28,13 @@ trait GoogleApiProcessesSpecification
 
   trait SuccessfulScope extends BasicScope {
 
-    googleApiServices.getTokenInfo(tokenId) returns Free.pure(Xor.right(tokenInfo))
+    googleApiServices.getTokenInfo(GoogleIdToken(any[String])) returns Free.pure(Xor.right(tokenInfo))
 
   }
 
   trait UnsuccessfulScope extends BasicScope {
 
-    googleApiServices.getTokenInfo(tokenId) returns Free.pure(Xor.left(wrongTokenInfo))
+    googleApiServices.getTokenInfo(GoogleIdToken(any[String])) returns Free.pure(Xor.left(wrongTokenInfo))
 
   }
 
@@ -41,15 +42,15 @@ trait GoogleApiProcessesSpecification
 
 trait GoogleApiProcessesContext {
 
-  val email = "valid.email@test.com"
+  val email = Email("valid.email@test.com")
 
-  val wrongEmail = "wrong.email@test.com"
+  val wrongEmail = Email("wrong.email@test.com")
 
-  val tokenId = "eyJhbGciOiJSUzI1NiIsImtpZCI6IjcxMjI3MjFlZWQwYjQ1YmUxNWUzMGI2YThhOThjOTM3ZTJlNmQxN"
+  val tokenId = GoogleIdToken("eyJhbGciOiJSUzI1NiIsImtpZCI6IjcxMjI3MjFlZWQwYjQ1YmUxNWUzMGI2YThhOThjOTM3ZTJlNmQxN")
 
   val tokenInfo = TokenInfo(
     email_verified = "true",
-    email          = email
+    email          = email.value
   )
 
   val wrongTokenInfo = WrongTokenInfo(error_description = "Invalid Value")

@@ -1,11 +1,12 @@
 package cards.nine.processes
 
+import cards.nine.commons.FreeUtils._
 import cards.nine.commons.NineCardsConfig
+import cards.nine.domain.account._
 import cards.nine.processes.converters.Converters._
 import cards.nine.processes.messages.InstallationsMessages._
 import cards.nine.processes.messages.UserMessages._
 import cards.nine.processes.utils.HashUtils
-import cards.nine.commons.FreeUtils._
 import cards.nine.services.free.algebra
 import cards.nine.services.free.domain._
 import cats.free.Free
@@ -24,7 +25,7 @@ class UserProcesses[F[_]](
       case Some(user) ⇒
         signUpInstallation(loginRequest.androidId, user)
       case None ⇒
-        val apiKey = hashUtils.hashValue(loginRequest.sessionToken)
+        val apiKey = ApiKey(hashUtils.hashValue(loginRequest.sessionToken.value))
 
         for {
           newUser ← userServices.add(
@@ -40,7 +41,7 @@ class UserProcesses[F[_]](
         } yield (newUser, installation)
     } map toLoginResponse
 
-  private def signUpInstallation(androidId: String, user: User) =
+  private def signUpInstallation(androidId: AndroidId, user: User) =
     userServices.getInstallationByUserAndAndroidId(user.id, androidId) flatMap {
       case Some(installation) ⇒
         (user, installation).toFree
@@ -58,8 +59,8 @@ class UserProcesses[F[_]](
     ) map toUpdateInstallationResponse
 
   def checkAuthToken(
-    sessionToken: String,
-    androidId: String,
+    sessionToken: SessionToken,
+    androidId: AndroidId,
     authToken: String,
     requestUri: String
   ): Free[F, Option[Long]] =
@@ -74,13 +75,13 @@ class UserProcesses[F[_]](
 
   private[this] def validateAuthToken(
     user: User,
-    androidId: String,
+    androidId: AndroidId,
     authToken: String,
     requestUri: String
   ) = {
     val expectedAuthToken = hashUtils.hashValue(
       text      = requestUri,
-      secretKey = user.apiKey,
+      secretKey = user.apiKey.value,
       salt      = None
     )
 

@@ -1,5 +1,6 @@
 package cards.nine.services.persistence
 
+import cards.nine.domain.account._
 import cards.nine.domain.analytics._
 import cards.nine.domain.application.Category
 import cards.nine.services.free.domain.rankings._
@@ -15,16 +16,6 @@ import java.time.Instant
 import org.scalacheck.{ Arbitrary, Gen }
 
 object NineCardsGenEntities {
-
-  case class ApiKey(value: String) extends AnyVal
-
-  case class DeviceToken(value: String) extends AnyVal
-
-  case class Email(value: String) extends AnyVal
-
-  case class SessionToken(value: String) extends AnyVal
-
-  case class AndroidId(value: String) extends AnyVal
 
   case class PublicIdentifier(value: String) extends AnyVal
 
@@ -45,11 +36,11 @@ trait NineCardsScalacheckGen {
 
   val stringGenerator = Arbitrary.arbitrary[String]
 
-  val emailGenerator: Gen[String] = for {
+  val emailGenerator: Gen[Email] = for {
     mailbox ← nonEmptyString(50)
     topLevelDomain ← nonEmptyString(45)
     domain ← fixedLengthString(3)
-  } yield s"$mailbox@$topLevelDomain.$domain"
+  } yield Email(s"$mailbox@$topLevelDomain.$domain")
 
   val timestampGenerator: Gen[Timestamp] = Gen.choose(0l, 253402300799l) map { seconds ⇒
     Timestamp.from(Instant.ofEpochSecond(seconds))
@@ -82,7 +73,7 @@ trait NineCardsScalacheckGen {
     email ← emailGenerator
     apiKey ← Gen.uuid
     sessionToken ← Gen.uuid
-  } yield UserData(email, apiKey.toString, sessionToken.toString)
+  } yield UserData(email.value, apiKey.toString, sessionToken.toString)
 
   implicit val abAndroidId: Arbitrary[AndroidId] = Arbitrary(Gen.uuid.map(u ⇒ AndroidId(u.toString)))
 
@@ -90,7 +81,7 @@ trait NineCardsScalacheckGen {
 
   implicit val abDeviceToken: Arbitrary[DeviceToken] = Arbitrary(Gen.uuid.map(u ⇒ DeviceToken(u.toString)))
 
-  implicit val abEmail: Arbitrary[Email] = Arbitrary(emailGenerator.map(Email.apply))
+  implicit val abEmail: Arbitrary[Email] = Arbitrary(emailGenerator)
 
   implicit val abPublicIdentifier: Arbitrary[PublicIdentifier] = Arbitrary(Gen.uuid.map(u ⇒ PublicIdentifier(u.toString)))
 

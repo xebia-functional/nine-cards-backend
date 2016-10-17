@@ -1,7 +1,7 @@
 package cards.nine.processes
 
 import cards.nine.commons.NineCardsErrors.CountryNotFound
-import cards.nine.domain.account.AndroidId
+import cards.nine.domain.account.{ AndroidId, DeviceToken }
 import cards.nine.domain.analytics.{ AnalyticsToken, Country ⇒ CountryEnum, CountryScope, DateRange }
 import cards.nine.domain.application.{ Category, FullCard, FullCardList, Package }
 import cards.nine.domain.market.{ Localization, MarketCredentials, MarketToken }
@@ -19,7 +19,7 @@ object TestData {
 
   val addedPackagesCount = 2
 
-  val androidId = "50a4dbf7-85a2-4875-8c75-7232c237808c"
+  val androidId = AndroidId("50a4dbf7-85a2-4875-8c75-7232c237808c")
 
   val appCategory = "COUNTRY"
 
@@ -41,7 +41,7 @@ object TestData {
 
   val countryName = "United States"
 
-  val deviceToken = "5d56922c-5257-4392-817e-503166cd7afd"
+  val deviceToken = DeviceToken("5d56922c-5257-4392-817e-503166cd7afd")
 
   val failure = 0
 
@@ -140,7 +140,7 @@ object TestData {
     val appsInfo = FullCardList(missing, apps)
 
     val marketAuth = MarketCredentials(
-      androidId    = AndroidId(androidId),
+      androidId    = androidId,
       localization = Some(localization),
       token        = MarketToken(token)
     )

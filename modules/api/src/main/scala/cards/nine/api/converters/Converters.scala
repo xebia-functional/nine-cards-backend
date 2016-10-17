@@ -6,6 +6,7 @@ import cards.nine.api.messages.InstallationsMessages._
 import cards.nine.api.messages.SharedCollectionMessages._
 import cards.nine.api.messages.UserMessages._
 import cards.nine.commons.NineCardsService.Result
+import cards.nine.domain.account._
 import cards.nine.domain.application.{ FullCard, FullCardList, Package }
 import cards.nine.domain.market.MarketCredentials
 import cards.nine.processes.messages.InstallationsMessages._
@@ -20,7 +21,7 @@ object Converters {
     LoginRequest(
       email        = request.email,
       androidId    = request.androidId,
-      sessionToken = sessionToken.value,
+      sessionToken = sessionToken,
       tokenId      = request.tokenId
     )
 
@@ -97,7 +98,7 @@ object Converters {
   ): UpdateInstallationRequest =
     UpdateInstallationRequest(
       userId      = userContext.userId.value,
-      androidId   = userContext.androidId.value,
+      androidId   = userContext.androidId,
       deviceToken = request.deviceToken
     )
 
