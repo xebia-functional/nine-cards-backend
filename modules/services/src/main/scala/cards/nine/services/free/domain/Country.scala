@@ -13,7 +13,7 @@ object Country {
 
   implicit class CountryOps(country: Country) {
     def toGeoScope: GeoScope =
-      CountryScope.lookup(country.name.replace(" ", "_"))
+      CountryScope.lookup(country.name)
         .orElse(ContinentScope.lookup(country.continent))
         .getOrElse(WorldScope)
   }

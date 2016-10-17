@@ -31,7 +31,7 @@ case object WorldScope extends GeoScope
 object CountryScope {
   def lookup(name: String): Option[CountryScope] =
     Country
-      .withNameOption(name)
+      .withNameOption(name.replace(" ", "_"))
       .map(CountryScope.apply)
 }
 
