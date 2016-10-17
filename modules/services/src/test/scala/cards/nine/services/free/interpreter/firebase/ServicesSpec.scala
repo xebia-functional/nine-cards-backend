@@ -1,6 +1,7 @@
 package cards.nine.services.free.interpreter.firebase
 
 import cats.data.Xor
+import cards.nine.domain.account.DeviceToken
 import cards.nine.domain.application.Package
 import cards.nine.services.free.domain.Firebase._
 import cards.nine.services.utils.MockServerService
@@ -95,7 +96,7 @@ class ServicesSpec
 
     "respond 200 OK and return a NotificationResponse object if a valid info is provided" in {
       val info = UpdatedCollectionNotificationInfo(
-        deviceTokens     = List(auth.registrationId1, auth.registrationId2),
+        deviceTokens     = List(auth.registrationId1, auth.registrationId2) map DeviceToken,
         publicIdentifier = content.collectionPublicIdentifier,
         packagesName     = List(packages.package1, packages.package2, packages.package3) map Package
       )
@@ -114,7 +115,7 @@ class ServicesSpec
     "respond 200 OK and return a NotificationResponse object with errors if an invalid device " +
       "token is provided" in {
         val info = UpdatedCollectionNotificationInfo(
-          deviceTokens     = List(auth.registrationId1, auth.registrationId2, auth.registrationId3),
+          deviceTokens     = List(auth.registrationId1, auth.registrationId2, auth.registrationId3) map DeviceToken,
           publicIdentifier = content.collectionPublicIdentifier,
           packagesName     = List(packages.package1, packages.package2, packages.package3) map Package
         )
@@ -137,7 +138,7 @@ class ServicesSpec
       val services = Services.services(badConfiguration)
 
       val info = UpdatedCollectionNotificationInfo(
-        deviceTokens     = List(auth.registrationId1, auth.registrationId2),
+        deviceTokens     = List(auth.registrationId1, auth.registrationId2) map DeviceToken,
         publicIdentifier = content.collectionPublicIdentifier,
         packagesName     = List(packages.package1, packages.package2, packages.package3) map Package
       )

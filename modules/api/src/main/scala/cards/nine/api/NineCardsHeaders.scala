@@ -28,8 +28,6 @@ object NineCardsHeaders {
 
     case class PublicIdentifier(value: String) extends AnyVal
 
-    case class SessionToken(value: String) extends AnyVal
-
     case class UserId(value: Long) extends AnyVal
 
     case class UserContext(userId: UserId, androidId: AndroidId)

@@ -1,5 +1,6 @@
 package cards.nine.services.free.interpreter.googleapi
 
+import cards.nine.domain.account.GoogleIdToken
 import cards.nine.services.free.algebra.GoogleApi._
 import cats.data.Xor
 import cards.nine.services.free.domain.{ TokenInfo, WrongTokenInfo }
@@ -16,18 +17,18 @@ class Services(config: Configuration) extends (Ops ~> Task) {
 
   val client = org.http4s.client.blaze.PooledHttp1Client()
 
-  def getTokenInfo(tokenId: String): Task[WrongTokenInfo Xor TokenInfo] = {
+  def getTokenInfo(tokenId: GoogleIdToken): Task[WrongTokenInfo Xor TokenInfo] = {
     val authority = Authority(host = RegName(config.host), port = config.port)
 
     val getTokenInfoUri = Uri(scheme = Option(config.protocol.ci), authority = Option(authority))
       .withPath(config.tokenInfoUri)
-      .withQueryParam(config.tokenIdQueryParameter, tokenId)
+      .withQueryParam(config.tokenIdQueryParameter, tokenId.value)
 
     client.expect[WrongTokenInfo Xor TokenInfo](getTokenInfoUri)
   }
 
   def apply[A](fa: Ops[A]): Task[A] = fa match {
-    case GetTokenInfo(tokenId: String) ⇒ getTokenInfo(tokenId)
+    case GetTokenInfo(tokenId: GoogleIdToken) ⇒ getTokenInfo(tokenId)
   }
 }
 

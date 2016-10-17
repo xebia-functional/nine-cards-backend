@@ -1,5 +1,6 @@
 package cards.nine.services.free.interpreter.user
 
+import cards.nine.domain.account._
 import cards.nine.services.free.domain.{ Installation, SharedCollection, SharedCollectionSubscription, User }
 import cards.nine.services.free.interpreter.collection.Services.SharedCollectionData
 import cards.nine.services.free.interpreter.user.Services.UserData
@@ -47,15 +48,15 @@ class ServicesSpec
     "new users can be created" in {
       prop { (apiKey: ApiKey, email: Email, sessionToken: SessionToken) ⇒
         val id: Long = userPersistenceServices.addUser[Long](
-          email        = email.value,
-          apiKey       = apiKey.value,
-          sessionToken = sessionToken.value
+          email        = email,
+          apiKey       = apiKey,
+          sessionToken = sessionToken
         ).transactAndRun
 
-        val storeUser = userPersistenceServices.getUserByEmail(email.value).transactAndRun
+        val storeUser = userPersistenceServices.getUserByEmail(email).transactAndRun
 
         storeUser should beSome[User].which {
-          user ⇒ user.email shouldEqual email.value
+          user ⇒ user.email shouldEqual email
         }
       }
     }
@@ -64,26 +65,26 @@ class ServicesSpec
   "getUserByEmail" should {
     "return None if the table is empty" in {
       prop { (email: Email) ⇒
-        val storeUser = userPersistenceServices.getUserByEmail(email.value).transactAndRun
+        val storeUser = userPersistenceServices.getUserByEmail(email).transactAndRun
         storeUser should beNone
       }
     }
     "return an user if there is an user with the given email in the database" in {
       prop { (apiKey: ApiKey, email: Email, sessionToken: SessionToken) ⇒
         val id: Long = userPersistenceServices.addUser[Long](
-          email        = email.value,
-          apiKey       = apiKey.value,
-          sessionToken = sessionToken.value
+          email        = email,
+          apiKey       = apiKey,
+          sessionToken = sessionToken
         ).transactAndRun
-        val storeUser = userPersistenceServices.getUserByEmail(email.value).transactAndRun
+        val storeUser = userPersistenceServices.getUserByEmail(email).transactAndRun
 
         storeUser should beSome[User].which {
           user ⇒
             val expectedUser = User(
               id           = id,
-              email        = email.value,
-              apiKey       = apiKey.value,
-              sessionToken = sessionToken.value,
+              email        = email,
+              apiKey       = apiKey,
+              sessionToken = sessionToken,
               banned       = false
             )
 
@@ -94,11 +95,11 @@ class ServicesSpec
     "return None if there isn't any user with the given email in the database" in {
       prop { (email: Email, sessionToken: SessionToken, apiKey: ApiKey) ⇒
         val id: Long = userPersistenceServices.addUser[Long](
-          email        = email.value,
-          apiKey       = apiKey.value,
-          sessionToken = sessionToken.value
+          email        = email,
+          apiKey       = apiKey,
+          sessionToken = sessionToken
         ).transactAndRun
-        val storeUser = userPersistenceServices.getUserByEmail(email.value.reverse).transactAndRun
+        val storeUser = userPersistenceServices.getUserByEmail(Email(email.value.reverse)).transactAndRun
 
         storeUser should beNone
       }
@@ -110,7 +111,7 @@ class ServicesSpec
       prop { (email: Email, sessionToken: SessionToken) ⇒
 
         val user = userPersistenceServices.getUserBySessionToken(
-          sessionToken = sessionToken.value
+          sessionToken = sessionToken
         ).transactAndRun
 
         user should beNone
@@ -124,7 +125,7 @@ class ServicesSpec
         ).transactAndRun
 
         val user = userPersistenceServices.getUserBySessionToken(
-          sessionToken = sessionToken.value
+          sessionToken = sessionToken
         ).transactAndRun
 
         user should beSome[User]
@@ -138,7 +139,7 @@ class ServicesSpec
         ).transactAndRun
 
         val user = userPersistenceServices.getUserBySessionToken(
-          sessionToken = sessionToken.value.reverse
+          sessionToken = SessionToken(sessionToken.value.reverse)
         ).transactAndRun
 
         user should beNone
@@ -157,18 +158,18 @@ class ServicesSpec
         userPersistenceServices.createInstallation[Long](
           userId      = userId,
           deviceToken = None,
-          androidId   = androidId.value
+          androidId   = androidId
         ).transactAndRun
 
         val storeInstallation = userPersistenceServices.getInstallationByUserAndAndroidId(
           userId    = userId,
-          androidId = androidId.value
+          androidId = androidId
         ).transactAndRun
 
         storeInstallation should beSome[Installation].which { install ⇒
           install.userId must_== userId
           install.deviceToken must_== None
-          install.androidId must_== androidId.value
+          install.androidId must_== androidId
         }
       }
     }
@@ -179,7 +180,7 @@ class ServicesSpec
       prop { (androidId: AndroidId, userId: Long) ⇒
         val storeInstallation = userPersistenceServices.getInstallationByUserAndAndroidId(
           userId    = userId,
-          androidId = androidId.value
+          androidId = androidId
         ).transactAndRun
 
         storeInstallation should beNone
@@ -199,7 +200,7 @@ class ServicesSpec
 
         val storeInstallation = userPersistenceServices.getInstallationByUserAndAndroidId(
           userId    = userId,
-          androidId = androidId.value
+          androidId = androidId
         ).transactAndRun
 
         storeInstallation should beSome[Installation].which {
@@ -220,7 +221,7 @@ class ServicesSpec
 
         val storeInstallation = userPersistenceServices.getInstallationByUserAndAndroidId(
           userId    = userId,
-          androidId = androidId.value.reverse
+          androidId = AndroidId(androidId.value.reverse)
         ).transactAndRun
 
         storeInstallation should beNone

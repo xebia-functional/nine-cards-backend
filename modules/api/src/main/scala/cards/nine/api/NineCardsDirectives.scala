@@ -8,7 +8,7 @@ import cards.nine.api.messages.PathEnumerations.PriceFilter
 import cards.nine.api.messages.UserMessages.ApiLoginRequest
 import cards.nine.api.utils.SprayMatchers.PriceFilterSegment
 import cards.nine.api.utils.TaskDirectives._
-import cards.nine.domain.account.AndroidId
+import cards.nine.domain.account._
 import cards.nine.domain.market.{ MarketToken, Localization }
 import cards.nine.processes.NineCardsServices._
 import cards.nine.processes._
@@ -50,9 +50,9 @@ class NineCardsDirectives(
     sessionToken ← generateSessionToken
   } yield sessionToken
 
-  def validateLoginRequest(email: String, tokenId: String): Task[Authentication[Unit]] =
+  def validateLoginRequest(email: Email, tokenId: GoogleIdToken): Task[Authentication[Unit]] =
     (email, tokenId) match {
-      case (e, o) if e.isEmpty || o.isEmpty ⇒
+      case (e, o) if e.value.isEmpty || o.value.isEmpty ⇒
         Task.now(Left(rejectionByCredentialsRejected))
       case _ ⇒
         googleApiProcesses.checkGoogleTokenId(email, tokenId).foldMap(prodInterpreters) map {
@@ -67,11 +67,11 @@ class NineCardsDirectives(
     uri ← requestUri
     herokuForwardedProtocol ← optionalHeaderValueByName(headerHerokuForwardedProto)
     herokuUri = herokuForwardedProtocol.filterNot(_.isEmpty).fold(uri)(uri.withScheme)
-    sessionToken ← headerValueByName(headerSessionToken)
-    androidId ← headerValueByName(headerAndroidId)
+    sessionToken ← headerValueByName(headerSessionToken).map(SessionToken)
+    androidId ← headerValueByName(headerAndroidId).map(AndroidId)
     authToken ← headerValueByName(headerAuthToken)
     userId ← authenticate(validateUser(sessionToken, androidId, authToken, herokuUri))
-  } yield UserContext(UserId(userId), AndroidId(androidId)) :: HNil
+  } yield UserContext(UserId(userId), androidId) :: HNil
 
   val googlePlayInfo: Directive1[GooglePlayContext] = for {
     googlePlayToken ← headerValueByName(headerGooglePlayToken)
@@ -82,8 +82,8 @@ class NineCardsDirectives(
   )
 
   def validateUser(
-    sessionToken: String,
-    androidId: String,
+    sessionToken: SessionToken,
+    androidId: AndroidId,
     authToken: String,
     requestUri: Uri
   ): Task[Authentication[Long]] =

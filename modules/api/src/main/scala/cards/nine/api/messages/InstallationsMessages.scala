@@ -1,8 +1,10 @@
 package cards.nine.api.messages
 
+import cards.nine.domain.account.{ AndroidId, DeviceToken }
+
 object InstallationsMessages {
 
-  case class ApiUpdateInstallationRequest(deviceToken: Option[String])
+  case class ApiUpdateInstallationRequest(deviceToken: Option[DeviceToken])
 
-  case class ApiUpdateInstallationResponse(androidId: String, deviceToken: Option[String])
+  case class ApiUpdateInstallationResponse(androidId: AndroidId, deviceToken: Option[DeviceToken])
 }

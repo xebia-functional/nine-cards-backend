@@ -1,6 +1,7 @@
 package cards.nine.processes
 
 import cards.nine.commons.FreeUtils._
+import cards.nine.domain.account.DeviceToken
 import cards.nine.domain.application.{ FullCardList, Package }
 import cards.nine.domain.market.MarketCredentials
 import cards.nine.processes.ProcessesExceptions.SharedCollectionNotFoundException
@@ -122,7 +123,7 @@ class SharedCollectionProcesses[F[_]](
       publicIdentifier: String,
       packagesName: List[Package]
     )(
-      deviceTokens: List[String]
+      deviceTokens: List[DeviceToken]
     ) =
       firebaseNotificationsServices.sendUpdatedCollectionNotification(
         UpdatedCollectionNotificationInfo(deviceTokens, publicIdentifier, packagesName)

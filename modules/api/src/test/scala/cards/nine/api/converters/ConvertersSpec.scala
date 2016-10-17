@@ -3,7 +3,7 @@ package cards.nine.api.converters
 import cards.nine.api.NineCardsHeaders.Domain._
 import cards.nine.api.messages.InstallationsMessages._
 import cards.nine.api.messages.UserMessages._
-import cards.nine.domain.account.AndroidId
+import cards.nine.domain.account.{ AndroidId, SessionToken }
 import cards.nine.domain.application.{ FullCardList }
 import cards.nine.domain.market.{ MarketToken, Localization }
 import cards.nine.processes.messages.InstallationsMessages._
@@ -29,7 +29,7 @@ class ConvertersSpec
 
         request.androidId shouldEqual apiRequest.androidId
         request.email shouldEqual apiRequest.email
-        request.sessionToken shouldEqual sessionToken.value
+        request.sessionToken shouldEqual sessionToken
         request.tokenId shouldEqual apiRequest.tokenId
       }
     }
@@ -54,7 +54,7 @@ class ConvertersSpec
 
         val request = Converters.toUpdateInstallationRequest(apiRequest, userContext)
 
-        request.androidId shouldEqual androidId.value
+        request.androidId shouldEqual androidId
         request.deviceToken shouldEqual apiRequest.deviceToken
         request.userId shouldEqual userId.value
       }

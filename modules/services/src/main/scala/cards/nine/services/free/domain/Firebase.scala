@@ -1,5 +1,6 @@
 package cards.nine.services.free.domain
 
+import cards.nine.domain.account.DeviceToken
 import cards.nine.domain.application.Package
 
 object Firebase {
@@ -13,13 +14,13 @@ object Firebase {
   case object FirebaseUnauthorized extends FirebaseError
 
   case class UpdatedCollectionNotificationInfo(
-    deviceTokens: List[String],
+    deviceTokens: List[DeviceToken],
     publicIdentifier: String,
     packagesName: List[Package]
   )
 
   case class SendNotificationRequest[T](
-    registration_ids: List[String],
+    registration_ids: List[DeviceToken],
     data: SendNotificationPayload[T]
   )
 

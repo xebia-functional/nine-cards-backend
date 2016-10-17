@@ -6,6 +6,7 @@ import cards.nine.api.NineCardsHeaders._
 import cards.nine.api.TestData.Exceptions._
 import cards.nine.api.TestData._
 import cards.nine.commons.NineCardsService
+import cards.nine.domain.account._
 import cards.nine.domain.analytics.{ Continent, Country }
 import cards.nine.processes.NineCardsServices._
 import cards.nine.processes._
@@ -55,8 +56,8 @@ trait NineCardsApiSpecification
     val nineCardsApi = new NineCardsRoutes().nineCardsRoutes
 
     userProcesses.checkAuthToken(
-      sessionToken = mockEq(sessionToken),
-      androidId    = mockEq(androidId),
+      sessionToken = SessionToken(mockEq(sessionToken.value)),
+      androidId    = AndroidId(mockEq(androidId.value)),
       authToken    = mockEq(authToken),
       requestUri   = any[String]
     ) returns Free.pure(Option(userId))
@@ -66,9 +67,7 @@ trait NineCardsApiSpecification
 
     googleApiProcesses.checkGoogleTokenId(email, tokenId) returns Free.pure(true)
 
-    userProcesses.signUpUser(
-      LoginRequest(email, androidId, any, tokenId)
-    ) returns Free.pure(Messages.loginResponse)
+    userProcesses.signUpUser(any[LoginRequest]) returns Free.pure(Messages.loginResponse)
 
     userProcesses.updateInstallation(mockEq(Messages.updateInstallationRequest)) returns
       Free.pure(Messages.updateInstallationResponse)
@@ -123,8 +122,8 @@ trait NineCardsApiSpecification
     googleApiProcesses.checkGoogleTokenId(email, tokenId) returns Free.pure(false)
 
     userProcesses.checkAuthToken(
-      sessionToken = mockEq(sessionToken),
-      androidId    = mockEq(androidId),
+      sessionToken = SessionToken(mockEq(sessionToken.value)),
+      androidId    = AndroidId(mockEq(androidId.value)),
       authToken    = mockEq(failingAuthToken),
       requestUri   = any[String]
     ) returns Free.pure(None)
@@ -147,15 +146,13 @@ trait NineCardsApiSpecification
     googleApiProcesses.checkGoogleTokenId(email, tokenId) returns Free.pure(true)
 
     userProcesses.checkAuthToken(
-      sessionToken = mockEq(sessionToken),
-      androidId    = mockEq(androidId),
+      sessionToken = SessionToken(mockEq(sessionToken.value)),
+      androidId    = AndroidId(mockEq(androidId.value)),
       authToken    = mockEq(failingAuthToken),
       requestUri   = any[String]
     ) returns Free.pure[NineCardsServices, Option[Long]](Option(userId))
 
-    userProcesses.signUpUser(
-      LoginRequest(email, androidId, any, tokenId)
-    ) returns Free.pure(Messages.loginResponse)
+    userProcesses.signUpUser(any[LoginRequest]) returns Free.pure(Messages.loginResponse)
 
     userProcesses.updateInstallation(mockEq(Messages.updateInstallationRequest)) returns
       Free.pure(Messages.updateInstallationResponse)
@@ -210,7 +207,7 @@ class NineCardsApiSpec
     }
 
     "return a 401 Unauthorized status code if some of the headers aren't provided" in new BasicScope {
-      request ~> addHeader(RawHeader(headerAndroidId, androidId)) ~> sealRoute(nineCardsApi) ~> check {
+      request ~> addHeader(RawHeader(headerAndroidId, androidId.value)) ~> sealRoute(nineCardsApi) ~> check {
         status.intValue shouldEqual StatusCodes.Unauthorized.intValue
       }
     }
@@ -287,14 +284,13 @@ class NineCardsApiSpec
     }
 
   }
-
   "POST /login" should {
 
     val request = Post(Paths.login, Messages.apiLoginRequest)
 
     "return a 401 Unauthorized status code if the given email is empty" in new BasicScope {
 
-      Post(Paths.login, Messages.apiLoginRequest.copy(email = "")) ~>
+      Post(Paths.login, Messages.apiLoginRequest.copy(email = Email(""))) ~>
         sealRoute(nineCardsApi) ~>
         check {
           status.intValue shouldEqual StatusCodes.Unauthorized.intValue
@@ -303,7 +299,7 @@ class NineCardsApiSpec
 
     "return a 401 Unauthorized status code if the given tokenId is empty" in new BasicScope {
 
-      Post(Paths.login, Messages.apiLoginRequest.copy(tokenId = "")) ~>
+      Post(Paths.login, Messages.apiLoginRequest.copy(tokenId = GoogleIdToken(""))) ~>
         sealRoute(nineCardsApi) ~>
         check {
           status.intValue shouldEqual StatusCodes.Unauthorized.intValue
@@ -346,7 +342,6 @@ class NineCardsApiSpec
 
     successOk(request)
   }
-
   "POST /collections" should {
 
     val request = Post(Paths.collections, Messages.apiCreateCollectionRequest)
@@ -580,4 +575,5 @@ class NineCardsApiSpec
 
     successOk(request)
   }
+
 }
