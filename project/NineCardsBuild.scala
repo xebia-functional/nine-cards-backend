@@ -21,12 +21,12 @@ object NineCardsBuild extends Build with ApiSettings {
   lazy val googleplay = project.in(file("modules/googleplay"))
     .disablePlugins(FlywayPlugin)
     .settings(googleplaySettings ++ googleplayDeps)
-    .dependsOn(commons)
+    .dependsOn(commons % "compile -> compile; test -> test" )
 
   lazy val services = project.in(file("modules/services"))
     .disablePlugins(FlywayPlugin)
     .settings(serviceSettings ++ servicesDeps)
-    .dependsOn(googleplay, commons)
+    .dependsOn(googleplay, commons % "compile -> compile; test -> test" )
 
   lazy val processes = project.in(file("modules/processes"))
     .disablePlugins(FlywayPlugin)

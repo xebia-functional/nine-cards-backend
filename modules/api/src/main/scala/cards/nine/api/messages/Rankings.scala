@@ -1,14 +1,14 @@
 package cards.nine.api.messages
 
 import cats.data.Xor
-import cards.nine.services.free.domain.Category
+import cards.nine.domain.application.{ Category, Package }
 
 import org.joda.time.{ DateTime, DateTimeZone }
 import org.joda.time.format.DateTimeFormat
 
 object rankings {
 
-  case class CategoryRanking(category: Category, apps: List[String])
+  case class CategoryRanking(category: Category, apps: List[Package])
 
   case class Ranking(categories: List[CategoryRanking])
 

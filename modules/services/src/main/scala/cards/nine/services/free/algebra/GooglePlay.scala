@@ -1,77 +1,79 @@
 package cards.nine.services.free.algebra
 
+import cards.nine.domain.application.{ FullCard, FullCardList, Package, PriceFilter }
+import cards.nine.domain.market.MarketCredentials
 import cats.data.Xor
 import cats.free.{ Free, Inject }
-import cards.nine.services.free.domain.GooglePlay._
 
 object GooglePlay {
 
   sealed trait Ops[A]
 
-  case class Resolve(packageName: String, auth: AuthParams)
-    extends Ops[String Xor AppInfo]
+  case class Resolve(packageName: Package, auth: MarketCredentials)
+    extends Ops[String Xor FullCard]
 
-  case class ResolveMany(packageNames: List[String], auth: AuthParams, extendedInfo: Boolean)
-    extends Ops[AppsInfo]
+  case class ResolveMany(packageNames: List[Package], auth: MarketCredentials, extendedInfo: Boolean)
+    extends Ops[FullCardList]
 
   case class RecommendationsByCategory(
     category: String,
-    priceFilter: String,
-    excludesPackages: List[String],
-    limit: Int, auth: AuthParams
-  ) extends Ops[Recommendations]
+    priceFilter: PriceFilter,
+    excludesPackages: List[Package],
+    limit: Int,
+    auth: MarketCredentials
+  ) extends Ops[FullCardList]
 
   case class RecommendationsForApps(
-    packagesName: List[String],
-    excludesPackages: List[String],
+    packagesName: List[Package],
+    excludesPackages: List[Package],
     limitPerApp: Int,
     limit: Int,
-    auth: AuthParams
-  ) extends Ops[Recommendations]
+    auth: MarketCredentials
+  ) extends Ops[FullCardList]
 
   case class SearchApps(
     query: String,
-    excludePackages: List[String],
+    excludePackages: List[Package],
     limit: Int,
-    auth: AuthParams
-  ) extends Ops[Recommendations]
+    auth: MarketCredentials
+  ) extends Ops[FullCardList]
 
   class Services[F[_]](implicit I: Inject[Ops, F]) {
 
-    def resolve(packageName: String, auth: AuthParams): Free[F, String Xor AppInfo] =
+    def resolve(packageName: Package, auth: MarketCredentials): Free[F, String Xor FullCard] =
       Free.inject[Ops, F](Resolve(packageName, auth))
 
     def resolveMany(
-      packageNames: List[String],
-      auth: AuthParams,
+      packageNames: List[Package],
+      auth: MarketCredentials,
       extendedInfo: Boolean
-    ): Free[F, AppsInfo] =
+    ): Free[F, FullCardList] =
       Free.inject[Ops, F](ResolveMany(packageNames, auth, extendedInfo))
 
     def recommendByCategory(
       category: String,
-      priceFilter: String,
-      excludesPackages: List[String],
+      priceFilter: PriceFilter,
+      excludesPackages: List[Package],
       limit: Int,
-      auth: AuthParams
-    ): Free[F, Recommendations] =
+      auth: MarketCredentials
+    ): Free[F, FullCardList] =
       Free.inject[Ops, F](RecommendationsByCategory(category, priceFilter, excludesPackages, limit, auth))
 
     def recommendationsForApps(
-      packagesName: List[String],
-      excludesPackages: List[String],
+      packagesName: List[Package],
+      excludesPackages: List[Package],
       limitPerApp: Int,
       limit: Int,
-      auth: AuthParams
-    ): Free[F, Recommendations] =
+      auth: MarketCredentials
+    ): Free[F, FullCardList] =
       Free.inject[Ops, F](RecommendationsForApps(packagesName, excludesPackages, limitPerApp, limit, auth))
 
     def searchApps(
       query: String,
-      excludesPackages: List[String],
+      excludesPackages: List[Package],
       limit: Int,
-      auth: AuthParams
-    ): Free[F, Recommendations] =
+      auth: MarketCredentials
+    ): Free[F, FullCardList] =
       Free.inject[Ops, F](SearchApps(query, excludesPackages, limit, auth))
 
   }

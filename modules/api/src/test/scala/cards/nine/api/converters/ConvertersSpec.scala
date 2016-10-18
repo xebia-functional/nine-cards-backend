@@ -3,7 +3,9 @@ package cards.nine.api.converters
 import cards.nine.api.NineCardsHeaders.Domain._
 import cards.nine.api.messages.InstallationsMessages._
 import cards.nine.api.messages.UserMessages._
-import cards.nine.processes.messages.ApplicationMessages._
+import cards.nine.domain.account.{ AndroidId, SessionToken }
+import cards.nine.domain.application.{ FullCardList }
+import cards.nine.domain.market.{ MarketToken, Localization }
 import cards.nine.processes.messages.InstallationsMessages._
 import cards.nine.processes.messages.SharedCollectionMessages._
 import cards.nine.processes.messages.UserMessages._
@@ -27,7 +29,7 @@ class ConvertersSpec
 
         request.androidId shouldEqual apiRequest.androidId
         request.email shouldEqual apiRequest.email
-        request.sessionToken shouldEqual sessionToken.value
+        request.sessionToken shouldEqual sessionToken
         request.tokenId shouldEqual apiRequest.tokenId
       }
     }
@@ -52,7 +54,7 @@ class ConvertersSpec
 
         val request = Converters.toUpdateInstallationRequest(apiRequest, userContext)
 
-        request.androidId shouldEqual androidId.value
+        request.androidId shouldEqual androidId
         request.deviceToken shouldEqual apiRequest.deviceToken
         request.userId shouldEqual userId.value
       }
@@ -73,13 +75,13 @@ class ConvertersSpec
 
   "toApiCategorizeAppsResponse" should {
     "convert an GetAppsInfoResponse to an ApiCategorizeAppsResponse object" in {
-      prop { (response: GetAppsInfoResponse) ⇒
+      prop { (response: FullCardList) ⇒
 
         val apiResponse = Converters.toApiCategorizeAppsResponse(response)
 
-        apiResponse.errors shouldEqual response.errors
+        apiResponse.errors shouldEqual response.missing
         forall(apiResponse.items) { item ⇒
-          response.items.exists(appInfo ⇒
+          response.cards.exists(appInfo ⇒
             appInfo.packageName == item.packageName &&
               (
                 (appInfo.categories.nonEmpty && appInfo.categories.contains(item.category)) ||
@@ -92,28 +94,28 @@ class ConvertersSpec
 
   "toApiDetailAppsResponse" should {
     "convert an GetAppsInfoResponse to an ApiDetailAppsResponse object" in {
-      prop { (response: GetAppsInfoResponse) ⇒
+      prop { (response: FullCardList) ⇒
 
         val apiResponse = Converters.toApiDetailAppsResponse(response)
 
-        apiResponse.errors shouldEqual response.errors
-        apiResponse.items shouldEqual response.items
+        apiResponse.errors shouldEqual response.missing
+        apiResponse.items shouldEqual (response.cards map Converters.toApiDetailsApp)
       }
     }
   }
 
-  "toAuthParams" should {
+  "toMarketAuth" should {
     "convert UserContext and GooglePlayContext objects to an AuthParams object" in {
-      prop { (userId: UserId, androidId: AndroidId, token: GooglePlayToken, localization: Option[MarketLocalization]) ⇒
+      prop { (userId: UserId, androidId: AndroidId, token: MarketToken, localization: Option[Localization]) ⇒
 
         val userContext = UserContext(userId, androidId)
         val googlePlayContext = GooglePlayContext(token, localization)
 
-        val authParams = Converters.toAuthParams(googlePlayContext, userContext)
+        val marketAuth = Converters.toMarketAuth(googlePlayContext, userContext)
 
-        authParams.token shouldEqual googlePlayContext.googlePlayToken.value
-        authParams.localization shouldEqual googlePlayContext.marketLocalization.map(_.value)
-        authParams.androidId shouldEqual userContext.androidId.value
+        marketAuth.token shouldEqual token
+        marketAuth.localization shouldEqual localization
+        marketAuth.androidId shouldEqual androidId
       }
     }
   }

@@ -2,7 +2,8 @@ package cards.nine.googleplay.processes
 
 import cats.data.Xor
 import cats.{ ~>, Id }
-import cards.nine.googleplay.domain._
+import cards.nine.domain.application.{ FullCard, Package }
+import cards.nine.domain.market.MarketCredentials
 import cards.nine.googleplay.domain.{ apigoogle ⇒ ApiDom, webscrapper ⇒ WebDom }
 import cards.nine.googleplay.service.free.algebra.{ GoogleApi ⇒ ApiAlg, Cache ⇒ CacheAlg, WebScraper ⇒ WebAlg }
 import cards.nine.googleplay.service.free.interpreter.{ googleapi ⇒ ApiInt, cache ⇒ CacheInt, webscrapper ⇒ WebInt }
@@ -21,6 +22,7 @@ class CardsProcessesSpec
   with Mockito {
 
   import cards.nine.googleplay.util.ScalaCheck._
+  import cards.nine.domain.application.ScalaCheck._
 
   val apiGoogleIntServer: ApiInt.InterpreterServer[Id] = mock[ApiInt.InterpreterServer[Id]]
   val apiGoogleInt: ApiAlg.Ops ~> Id = ApiInt.MockInterpreter(apiGoogleIntServer)
@@ -48,19 +50,19 @@ class CardsProcessesSpec
 
   "getCard" >> {
 
-    def runGetCard(pack: Package, auth: GoogleAuthParams): getcard.Response =
+    def runGetCard(pack: Package, auth: MarketCredentials): getcard.Response =
       processes.getCard(pack, auth).foldMap(interpreter)
 
     "if the Package is already resolved" >> {
 
-      def setup(pack: Package, card: FullCard, auth: GoogleAuthParams) = {
+      def setup(pack: Package, card: FullCard, auth: MarketCredentials) = {
         clear()
         cacheIntServer.getValid(pack) returns Some(card)
       }
 
       "give back the card in the cache" >>
-        prop { (card: FullCard, auth: GoogleAuthParams) ⇒
-          val pack = Package(card.packageName)
+        prop { (card: FullCard, auth: MarketCredentials) ⇒
+          val pack = card.packageName
           setup(pack, card, auth)
           runGetCard(pack, auth) must_== Xor.Right(card)
         }
@@ -68,7 +70,7 @@ class CardsProcessesSpec
 
     "The package is not resolved in cache, but is available in Google API" >> {
 
-      def setup(pack: Package, card: FullCard, auth: GoogleAuthParams) = {
+      def setup(pack: Package, card: FullCard, auth: MarketCredentials) = {
         clear()
         cacheIntServer.getValid(pack) returns None
         apiGoogleIntServer.getDetails(pack, auth) returns Xor.Right(card)
@@ -76,16 +78,16 @@ class CardsProcessesSpec
       }
 
       "return the card given by the Google API and store it in the cache" >> {
-        prop { (card: FullCard, auth: GoogleAuthParams) ⇒
-          val pack = Package(card.packageName)
+        prop { (card: FullCard, auth: MarketCredentials) ⇒
+          val pack = card.packageName
           setup(pack, card, auth)
           runGetCard(pack, auth) must_== Xor.Right(card)
         }
       }
 
       "store the card given by the Google API in the cache" >> {
-        prop { (card: FullCard, auth: GoogleAuthParams) ⇒
-          val pack = Package(card.packageName)
+        prop { (card: FullCard, auth: MarketCredentials) ⇒
+          val pack = card.packageName
           setup(pack, card, auth)
           runGetCard(pack, auth)
           there was one(cacheIntServer).putResolved(card)
@@ -97,7 +99,7 @@ class CardsProcessesSpec
 
       "If the package appears in the Web Page" >> {
 
-        def setup(pack: Package, card: FullCard, auth: GoogleAuthParams) = {
+        def setup(pack: Package, card: FullCard, auth: MarketCredentials) = {
           clear()
           cacheIntServer.getValid(pack) returns None
           apiGoogleIntServer.getDetails(pack, auth) returns Xor.Left(ApiDom.PackageNotFound(pack))
@@ -106,15 +108,15 @@ class CardsProcessesSpec
         }
 
         "Return the package as PendingResolution" >>
-          prop { (card: FullCard, auth: GoogleAuthParams) ⇒
-            val pack = Package(card.packageName)
+          prop { (card: FullCard, auth: MarketCredentials) ⇒
+            val pack = card.packageName
             setup(pack, card, auth)
             runGetCard(pack, auth) must_== Xor.Left(getcard.PendingResolution(pack))
           }
 
         "Stores the package as Pending in the cache " >>
-          prop { (card: FullCard, auth: GoogleAuthParams) ⇒
-            val pack = Package(card.packageName)
+          prop { (card: FullCard, auth: MarketCredentials) ⇒
+            val pack = card.packageName
             setup(pack, card, auth)
             runGetCard(pack, auth)
             there was one(cacheIntServer).markPending(pack)
@@ -125,7 +127,7 @@ class CardsProcessesSpec
 
     "The package is not in the cache, the API, nor the WebPage" >> {
 
-      def setup(pack: Package, card: FullCard, auth: GoogleAuthParams) = {
+      def setup(pack: Package, card: FullCard, auth: MarketCredentials) = {
         clear()
         cacheIntServer.getValid(pack) returns None
         apiGoogleIntServer.getDetails(pack, auth) returns Xor.Left(ApiDom.PackageNotFound(pack))
@@ -134,15 +136,15 @@ class CardsProcessesSpec
       }
 
       "Return the package as Unresolved" >>
-        prop { (card: FullCard, auth: GoogleAuthParams) ⇒
-          val pack = Package(card.packageName)
+        prop { (card: FullCard, auth: MarketCredentials) ⇒
+          val pack = card.packageName
           setup(pack, card, auth)
           runGetCard(pack, auth) must_== Xor.Left(getcard.UnknownPackage(pack))
         }
 
       "Store it in the cache as Error" >>
-        prop { (card: FullCard, auth: GoogleAuthParams) ⇒
-          val pack = Package(card.packageName)
+        prop { (card: FullCard, auth: MarketCredentials) ⇒
+          val pack = card.packageName
           setup(pack, card, auth)
           runGetCard(pack, auth)
           there was one(cacheIntServer).markError(pack)
@@ -166,14 +168,14 @@ class CardsProcessesSpec
 
       "report the package as Resolved and store it in the cache" >>
         prop { card: FullCard ⇒
-          val pack = Package(card.packageName)
+          val pack = card.packageName
           setup(pack, card)
           runResolvePending(pack, testDate) must_=== ResolvePending.Resolved
         }
 
       "store the result of the web scrape in the cache" >>
         prop { card: FullCard ⇒
-          val pack = Package(card.packageName)
+          val pack = card.packageName
           setup(pack, card)
           runResolvePending(pack, testDate)
           there was one(cacheIntServer).putResolved(card)

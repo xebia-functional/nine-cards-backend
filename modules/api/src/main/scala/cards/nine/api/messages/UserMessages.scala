@@ -1,15 +1,17 @@
 package cards.nine.api.messages
 
+import cards.nine.domain.account._
+
 object UserMessages {
 
   case class ApiLoginRequest(
-    email: String,
-    androidId: String,
-    tokenId: String
+    email: Email,
+    androidId: AndroidId,
+    tokenId: GoogleIdToken
   )
 
   case class ApiLoginResponse(
-    apiKey: String,
-    sessionToken: String
+    apiKey: ApiKey,
+    sessionToken: SessionToken
   )
 }

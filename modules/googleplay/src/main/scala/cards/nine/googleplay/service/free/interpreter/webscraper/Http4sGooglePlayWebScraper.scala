@@ -2,6 +2,7 @@ package cards.nine.googleplay.service.free.interpreter.webscrapper
 
 import cats.data.Xor
 import cats.syntax.xor._
+import cards.nine.domain.application.FullCard
 import cards.nine.googleplay.domain._
 import org.http4s.{ Method, Request, Uri }
 import org.http4s.Status.ResponseClass.Successful
@@ -13,7 +14,7 @@ class Http4sGooglePlayWebScraper(serverUrl: String, client: Client) {
 
   private[this] def buildRequest(appRequest: AppRequest): Option[Request] = {
     val packageName: String = appRequest.packageName.value
-    val locale = appRequest.authParams.localization.fold("")(l ⇒ s"&hl=${l.value}")
+    val locale = appRequest.marketAuth.localization.fold("")(l ⇒ s"&hl=${l.value}")
     val uriString = s"${serverUrl}?id=${packageName}${locale}"
 
     for /*Option*/ {

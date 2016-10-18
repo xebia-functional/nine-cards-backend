@@ -1,10 +1,12 @@
 package cards.nine.services.free.interpreter.googleplay
 
+import cards.nine.domain.account.AndroidId
+import cards.nine.domain.application.{ Category, FullCard, FullCardList, Package, PriceFilter }
+import cards.nine.domain.market.{ Localization, MarketCredentials, MarketToken }
 import cards.nine.googleplay.domain._
 import cards.nine.googleplay.processes.getcard.{ FailedResponse, UnknownPackage }
 import cards.nine.googleplay.processes.{ CardsProcesses, Wiring }
 import cats.data.Xor
-import cards.nine.services.free.domain.GooglePlay.{ AppInfo, AppsInfo, AuthParams, Recommendation, Recommendations }
 import cats.free.Free
 import org.specs2.matcher.{ DisjunctionMatchers, Matcher, Matchers, XorMatchers }
 import org.specs2.mock.Mockito
@@ -20,40 +22,20 @@ class GooglePlayServicesSpec
 
   import TestData._
 
-  def recommendationIsFreeMatcher(isFree: Boolean): Matcher[Recommendation] = { rec: Recommendation ⇒
+  def recommendationIsFreeMatcher(isFree: Boolean): Matcher[FullCard] = { rec: FullCard ⇒
     rec.free must_== isFree
   }
 
   object TestData {
 
-    def appInfoFor(packageName: String) = AppInfo(
-      packageName = packageName,
-      title       = s"Title of $packageName",
-      free        = false,
-      icon        = s"Icon of $packageName",
-      stars       = 5.0,
-      downloads   = s"Downloads of $packageName",
-      categories  = List(s"Category 1 of $packageName", s"Category 2 of $packageName")
-    )
-
     def fullCardFor(packageName: String) = FullCard(
-      packageName = packageName,
+      packageName = Package(packageName),
       title       = s"Title of $packageName",
       free        = false,
       icon        = s"Icon of $packageName",
       stars       = 5.0,
       downloads   = s"Downloads of $packageName",
       categories  = List(s"Category 1 of $packageName", s"Category 2 of $packageName"),
-      screenshots = List(s"Screenshot 1 of $packageName", s"Screenshot 2 of $packageName")
-    )
-
-    def recommendationFor(packageName: String) = Recommendation(
-      packageName = packageName,
-      title       = s"Title of $packageName",
-      free        = false,
-      icon        = s"Icon of $packageName",
-      stars       = 5.0,
-      downloads   = s"Downloads of $packageName",
       screenshots = List(s"Screenshot 1 of $packageName", s"Screenshot 2 of $packageName")
     )
 
@@ -68,9 +50,7 @@ class GooglePlayServicesSpec
     val validPackages = validPackagesName map Package
     val wrongPackages = wrongPackagesName map Package
 
-    val appInfoList = validPackagesName map appInfoFor
-
-    val recommendations = validPackagesName map recommendationFor
+    val fullCards = validPackagesName map fullCardFor
 
     val category = "SHOPPING"
 
@@ -78,19 +58,19 @@ class GooglePlayServicesSpec
 
     val numPerApp = 25
 
-    val priceFilter = "FREE"
+    val priceFilter = PriceFilter.FREE
 
     object AuthData {
       val androidId = "12345"
       val localization = "en_GB"
       val token = "m52_9876"
-      val params = AuthParams(androidId, Some(localization), token)
 
-      val googleAuthParams = GoogleAuthParams(
+      val marketAuth = MarketCredentials(
         AndroidId(androidId),
-        Token(token),
-        Option(Localization(localization))
+        MarketToken(token),
+        Some(Localization(localization))
       )
+
     }
 
     object Requests {
@@ -119,7 +99,7 @@ class GooglePlayServicesSpec
       val recommendationsInfoError = InfoError("Something went wrong!")
 
       val fullCardList = FullCardList(
-        missing = wrongPackagesName,
+        missing = wrongPackages,
         cards   = fullCards
       )
 
@@ -136,24 +116,24 @@ class GooglePlayServicesSpec
   "resolveOne" should {
     "return the App object when a valid package name is provided" in new BasicScope {
 
-      googlePlayProcesses.getCard(onePackage, AuthData.googleAuthParams) returns
+      googlePlayProcesses.getCard(onePackage, AuthData.marketAuth) returns
         Free.pure(Xor.right(GooglePlayResponses.fullCard))
 
-      val response = services.resolveOne(onePackageName, AuthData.params)
+      val response = services.resolveOne(onePackage, AuthData.marketAuth)
 
-      response.unsafePerformSyncAttempt must be_\/-[String Xor AppInfo].which {
-        content ⇒ content must beXorRight[AppInfo]
+      response.unsafePerformSyncAttempt must be_\/-[String Xor FullCard].which {
+        content ⇒ content must beXorRight[FullCard]
       }
     }
 
     "return an error message when a wrong package name is provided" in new BasicScope {
 
-      googlePlayProcesses.getCard(onePackage, AuthData.googleAuthParams) returns
+      googlePlayProcesses.getCard(onePackage, AuthData.marketAuth) returns
         Free.pure(Xor.left(GooglePlayResponses.unknwonPackageError))
 
-      val response = services.resolveOne(onePackageName, AuthData.params)
+      val response = services.resolveOne(onePackage, AuthData.marketAuth)
 
-      response.unsafePerformSyncAttempt must be_\/-[String Xor AppInfo].which {
+      response.unsafePerformSyncAttempt must be_\/-[String Xor FullCard].which {
         content ⇒ content must beXorLeft[String](onePackageName)
       }
     }
@@ -162,14 +142,14 @@ class GooglePlayServicesSpec
   "resolveMany" should {
     "return the list of apps that are valid and those that are wrong" in new BasicScope {
 
-      googlePlayProcesses.getCards(packages, AuthData.googleAuthParams) returns
+      googlePlayProcesses.getCards(packages, AuthData.marketAuth) returns
         Free.pure(GooglePlayResponses.getCardsResponse)
 
-      val response = services.resolveMany(packagesName, AuthData.params, true)
+      val response = services.resolveMany(packages, AuthData.marketAuth, true)
 
-      response.unsafePerformSyncAttempt must be_\/-[AppsInfo].which { appsInfo ⇒
-        appsInfo.missing must containTheSameElementsAs(wrongPackagesName)
-        appsInfo.apps must containTheSameElementsAs(appInfoList)
+      response.unsafePerformSyncAttempt must be_\/-[FullCardList].which { appsInfo ⇒
+        appsInfo.missing must containTheSameElementsAs(wrongPackages)
+        appsInfo.cards must containTheSameElementsAs(fullCards)
       }
     }
   }
@@ -179,19 +159,19 @@ class GooglePlayServicesSpec
 
       googlePlayProcesses.recommendationsByCategory(
         Requests.recommendByCategoryRequest,
-        AuthData.googleAuthParams
+        AuthData.marketAuth
       ) returns Free.pure(Xor.right(GooglePlayResponses.fullCardList))
 
       val response = services.recommendByCategory(
         category         = category,
         filter           = priceFilter,
-        excludedPackages = wrongPackagesName,
+        excludedPackages = wrongPackages,
         limit            = limit,
-        auth             = AuthData.params
+        auth             = AuthData.marketAuth
       )
 
-      response.unsafePerformSyncAttempt must be_\/-[Recommendations].which { rec ⇒
-        rec.apps must containTheSameElementsAs(recommendations)
+      response.unsafePerformSyncAttempt must be_\/-[FullCardList].which { rec ⇒
+        rec.cards must containTheSameElementsAs(fullCards)
       }
     }
 
@@ -199,15 +179,15 @@ class GooglePlayServicesSpec
 
       googlePlayProcesses.recommendationsByCategory(
         Requests.recommendByCategoryRequest,
-        AuthData.googleAuthParams
+        AuthData.marketAuth
       ) returns Free.pure(Xor.left(GooglePlayResponses.recommendationsInfoError))
 
       val response = services.recommendByCategory(
         category         = category,
         filter           = priceFilter,
-        excludedPackages = wrongPackagesName,
+        excludedPackages = wrongPackages,
         limit            = limit,
-        auth             = AuthData.params
+        auth             = AuthData.marketAuth
       )
 
       // TODO: We shouldn't use Throwable to model this error
@@ -220,19 +200,19 @@ class GooglePlayServicesSpec
     "return a list of recommended apps for the given list of packages" in new BasicScope {
       googlePlayProcesses.recommendationsByApps(
         Requests.recommendByAppsRequest,
-        AuthData.googleAuthParams
+        AuthData.marketAuth
       ) returns Free.pure(GooglePlayResponses.fullCardList)
 
       val response = services.recommendationsForApps(
-        packageNames     = packagesName,
-        excludedPackages = wrongPackagesName,
+        packageNames     = packages,
+        excludedPackages = wrongPackages,
         limitByApp       = numPerApp,
         limit            = limit,
-        auth             = AuthData.params
+        auth             = AuthData.marketAuth
       )
 
-      response.unsafePerformSyncAttempt must be_\/-[Recommendations].which { rec ⇒
-        rec.apps must containTheSameElementsAs(recommendations)
+      response.unsafePerformSyncAttempt must be_\/-[FullCardList].which { rec ⇒
+        rec.cards must containTheSameElementsAs(fullCards)
       }
     }
   }

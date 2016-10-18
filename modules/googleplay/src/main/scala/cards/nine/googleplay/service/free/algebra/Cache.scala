@@ -1,7 +1,7 @@
 package cards.nine.googleplay.service.free.algebra
 
 import cats.free.{ Free, Inject }
-import cards.nine.googleplay.domain.{ Package, FullCard }
+import cards.nine.domain.application.{ FullCard, Package }
 
 object Cache {
 

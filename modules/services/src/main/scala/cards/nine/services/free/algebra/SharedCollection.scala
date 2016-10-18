@@ -1,6 +1,7 @@
 package cards.nine.services.free.algebra
 
 import cats.free.{ Free, Inject }
+import cards.nine.domain.application.Package
 import cards.nine.services.free.domain
 import cards.nine.services.free.interpreter.collection.Services.SharedCollectionData
 
@@ -10,7 +11,7 @@ object SharedCollection {
 
   case class Add(collection: SharedCollectionData) extends Ops[domain.SharedCollection]
 
-  case class AddPackages(collection: Long, packages: List[String]) extends Ops[Int]
+  case class AddPackages(collection: Long, packages: List[Package]) extends Ops[Int]
 
   case class GetById(id: Long) extends Ops[Option[domain.SharedCollection]]
 
@@ -26,14 +27,14 @@ object SharedCollection {
 
   case class Update(id: Long, title: String) extends Ops[Int]
 
-  case class UpdatePackages(collection: Long, packages: List[String]) extends Ops[(List[String], List[String])]
+  case class UpdatePackages(collection: Long, packages: List[Package]) extends Ops[(List[Package], List[Package])]
 
   class Services[F[_]](implicit I: Inject[Ops, F]) {
 
     def add(collection: SharedCollectionData): Free[F, domain.SharedCollection] =
       Free.inject[Ops, F](Add(collection))
 
-    def addPackages(collection: Long, packages: List[String]): Free[F, Int] =
+    def addPackages(collection: Long, packages: List[Package]): Free[F, Int] =
       Free.inject[Ops, F](AddPackages(collection, packages))
 
     def getById(id: Long): Free[F, Option[domain.SharedCollection]] = Free.inject[Ops, F](GetById(id))
@@ -55,7 +56,7 @@ object SharedCollection {
 
     def update(id: Long, title: String): Free[F, Int] = Free.inject[Ops, F](Update(id, title))
 
-    def updatePackages(collection: Long, packages: List[String]): Free[F, (List[String], List[String])] =
+    def updatePackages(collection: Long, packages: List[Package]): Free[F, (List[Package], List[Package])] =
       Free.inject[Ops, F](UpdatePackages(collection, packages))
   }
 

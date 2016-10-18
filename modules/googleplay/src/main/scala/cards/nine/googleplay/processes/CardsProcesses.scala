@@ -6,6 +6,8 @@ import cats.instances.list._
 import cats.syntax.monadCombine._
 import cats.syntax.traverse._
 import cats.syntax.xor._
+import cards.nine.domain.application.{ FullCard, FullCardList, Package }
+import cards.nine.domain.market.MarketCredentials
 import cards.nine.googleplay.domain._
 import cards.nine.googleplay.domain.apigoogle.{ Failure ⇒ ApiFailure }
 import cards.nine.googleplay.domain.webscrapper._
@@ -22,7 +24,7 @@ class CardsProcesses[F[_]](
     def storeAsResolved(card: FullCard): Free[F, Unit] =
       for {
         _ ← cacheService.putResolved(card)
-        _ ← cacheService.clearInvalid(Package(card.packageName))
+        _ ← cacheService.clearInvalid(card.packageName)
       } yield Unit
 
     def storeAsPending(pack: Package): Free[F, Unit] =
@@ -45,7 +47,7 @@ class CardsProcesses[F[_]](
 
   def getBasicCards(
     packages: List[Package],
-    auth: GoogleAuthParams
+    auth: MarketCredentials
   ): Free[F, ResolveMany.Response] =
     for {
       cacheResult ← checkValidPackagesInCache(packages)
@@ -53,18 +55,18 @@ class CardsProcesses[F[_]](
       response ← getPackagesInfoInGooglePlay(uncached, auth)
     } yield ResolveMany.Response(response.notFound, response.pending, cached ++ response.apps)
 
-  def getCard(pack: Package, auth: GoogleAuthParams): Free[F, getcard.Response] =
+  def getCard(pack: Package, auth: MarketCredentials): Free[F, getcard.Response] =
     resolveNewPackage(pack, auth)
 
   def getCards(
     packages: List[Package],
-    auth: GoogleAuthParams
+    auth: MarketCredentials
   ): Free[F, List[getcard.Response]] =
     packages.traverse[Free[F, ?], getcard.Response](pack ⇒ resolveNewPackage(pack, auth))
 
   def recommendationsByCategory(
     request: RecommendByCategoryRequest,
-    auth: GoogleAuthParams
+    auth: MarketCredentials
   ): Free[F, InfoError Xor FullCardList] =
     googleApi.recommendationsByCategory(request, auth) flatMap {
       case ll @ Xor.Left(_) ⇒ Free.pure(ll)
@@ -75,7 +77,7 @@ class CardsProcesses[F[_]](
 
   def recommendationsByApps(
     request: RecommendByAppsRequest,
-    auth: GoogleAuthParams
+    auth: MarketCredentials
   ): Free[F, FullCardList] =
     for /*Free[F,?]*/ {
       recommendations ← googleApi.recommendationsByApps(request, auth)
@@ -83,7 +85,7 @@ class CardsProcesses[F[_]](
       resolvedPackages ← resolveNewPackageList(packages, auth)
     } yield resolvedPackages
 
-  def searchApps(request: SearchAppsRequest, auth: GoogleAuthParams): Free[F, FullCardList] =
+  def searchApps(request: SearchAppsRequest, auth: MarketCredentials): Free[F, FullCardList] =
     googleApi.searchApps(request, auth) flatMap {
       case Xor.Left(_) ⇒ Free.pure(FullCardList(Nil, Nil))
       case Xor.Right(packs) ⇒ resolveNewPackageList(packs, auth)
@@ -94,12 +96,12 @@ class CardsProcesses[F[_]](
       cacheService.getValid(p) map (card ⇒ Xor.fromOption(card, p))
     } map (_.separate)
 
-  private[this] def getPackagesInfoInGooglePlay(packages: List[Package], auth: GoogleAuthParams) =
+  private[this] def getPackagesInfoInGooglePlay(packages: List[Package], auth: MarketCredentials) =
     googleApi.getBulkDetails(packages, auth) map {
       case Xor.Left(_) ⇒
         ResolveMany.Response(Nil, packages, Nil)
       case Xor.Right(apps) ⇒
-        val notFound = packages.diff(apps.map(c ⇒ Package(c.packageName)))
+        val notFound = packages.diff(apps.map(_.packageName))
         ResolveMany.Response(notFound, Nil, apps)
     }
 
@@ -122,13 +124,13 @@ class CardsProcesses[F[_]](
 
   }
 
-  def resolveNewPackageList(packs: List[Package], auth: GoogleAuthParams): Free[F, FullCardList] =
+  def resolveNewPackageList(packs: List[Package], auth: MarketCredentials): Free[F, FullCardList] =
     for {
       xors ← packs.traverse[Free[F, ?], getcard.Response](p ⇒ resolveNewPackage(p, auth))
       (fails, apps) = xors.separate
-    } yield FullCardList(fails.map(e ⇒ e.packageName.value), apps)
+    } yield FullCardList(fails.map(e ⇒ e.packageName), apps)
 
-  def resolveNewPackage(pack: Package, auth: GoogleAuthParams): Free[F, getcard.Response] = {
+  def resolveNewPackage(pack: Package, auth: MarketCredentials): Free[F, getcard.Response] = {
 
     import getcard._
 

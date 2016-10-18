@@ -1,5 +1,6 @@
 package cards.nine.services.free.interpreter.user
 
+import cards.nine.domain.account._
 import cards.nine.services.free.algebra.User._
 import cards.nine.services.free.domain.Installation.{ Queries ⇒ InstallationQueries }
 import cards.nine.services.free.domain.User.{ Queries ⇒ UserQueries }
@@ -13,23 +14,23 @@ class Services(
   installationPersistence: Persistence[Installation]
 ) extends (Ops ~> ConnectionIO) {
 
-  def addUser[K: Composite](email: String, apiKey: String, sessionToken: String): ConnectionIO[K] =
+  def addUser[K: Composite](email: Email, apiKey: ApiKey, sessionToken: SessionToken): ConnectionIO[K] =
     userPersistence.updateWithGeneratedKeys[K](
       sql    = UserQueries.insert,
       fields = User.allFields,
       values = (email, sessionToken, apiKey)
     )
 
-  def getUserByEmail(email: String): ConnectionIO[Option[User]] =
+  def getUserByEmail(email: Email): ConnectionIO[Option[User]] =
     userPersistence.fetchOption(UserQueries.getByEmail, email)
 
-  def getUserBySessionToken(sessionToken: String): ConnectionIO[Option[User]] =
+  def getUserBySessionToken(sessionToken: SessionToken): ConnectionIO[Option[User]] =
     userPersistence.fetchOption(UserQueries.getBySessionToken, sessionToken)
 
   def createInstallation[K: Composite](
     userId: Long,
-    deviceToken: Option[String],
-    androidId: String
+    deviceToken: Option[DeviceToken],
+    androidId: AndroidId
   ): ConnectionIO[K] =
     userPersistence.updateWithGeneratedKeys[K](
       sql    = InstallationQueries.insert,
@@ -39,7 +40,7 @@ class Services(
 
   def getInstallationByUserAndAndroidId(
     userId: Long,
-    androidId: String
+    androidId: AndroidId
   ): ConnectionIO[Option[Installation]] =
     installationPersistence.fetchOption(
       sql    = InstallationQueries.getByUserAndAndroidId,
@@ -49,7 +50,7 @@ class Services(
   def getSubscribedInstallationByCollection(publicIdentifier: String): ConnectionIO[List[Installation]] =
     installationPersistence.fetchList(InstallationQueries.getSubscribedByCollection, publicIdentifier)
 
-  def updateInstallation[K: Composite](userId: Long, deviceToken: Option[String], androidId: String): ConnectionIO[K] =
+  def updateInstallation[K: Composite](userId: Long, deviceToken: Option[DeviceToken], androidId: AndroidId): ConnectionIO[K] =
     userPersistence.updateWithGeneratedKeys[K](
       sql    = InstallationQueries.updateDeviceToken,
       fields = Installation.allFields,

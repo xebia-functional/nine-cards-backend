@@ -1,18 +1,20 @@
 package cards.nine.services.free.domain
 
+import cards.nine.domain.account._
+
 case class User(
   id: Long,
-  email: String,
-  sessionToken: String,
-  apiKey: String,
+  email: Email,
+  sessionToken: SessionToken,
+  apiKey: ApiKey,
   banned: Boolean
 )
 
 case class Installation(
   id: Long,
   userId: Long,
-  deviceToken: Option[String] = None,
-  androidId: String
+  deviceToken: Option[DeviceToken] = None,
+  androidId: AndroidId
 )
 
 object User {

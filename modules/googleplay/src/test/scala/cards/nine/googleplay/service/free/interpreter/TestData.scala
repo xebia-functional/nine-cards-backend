@@ -1,6 +1,7 @@
 package cards.nine.googleplay.service.free.interpreter
 
 import cards.nine.commons.NineCardsConfig._
+import cards.nine.domain.application.{ FullCard, Package }
 import cards.nine.googleplay.domain._
 
 object TestData {
@@ -19,7 +20,7 @@ object TestData {
     val packageObj = Package(packageName)
 
     val card = FullCard(
-      packageName = packageName,
+      packageName = packageObj,
       title       = "Shapes & Colors Music Show",
       free        = true,
       icon        = "http://lh4.ggpht.com/Pb8iLNmi9vHOwB-39TKe-kn4b_uU-E6rn7zSiFz6jC0RlaEQeNCcBh2MueyslcQ3mj2H",
@@ -35,7 +36,7 @@ object TestData {
     val packageObj = Package(packageName)
 
     val card = FullCard(
-      packageName = packageName,
+      packageName = packageObj,
       title       = "Minecraft: Pocket Edition",
       free        = false,
       icon        = "http://lh3.googleusercontent.com/30koN0eGl-LHqvUZrCj9HT4qVPQdvN508p2wuhaWUnqKeCp6nrs9QW8v6IVGvGNauA",
@@ -52,7 +53,7 @@ object TestData {
     val packageObj = Package(packageName)
 
     val card = FullCard(
-      packageName = packageName,
+      packageName = packageObj,
       title       = "Forty Seven Degrees",
       free        = false,
       icon        = "http://icon",

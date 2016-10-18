@@ -1,27 +1,26 @@
 package cards.nine.api
 
 import akka.actor.{ Actor, ActorRefFactory }
-import cats.data.Xor
 import cards.nine.api.NineCardsDirectives._
 import cards.nine.api.NineCardsHeaders.Domain._
 import cards.nine.api.converters.Converters._
 import cards.nine.api.messages.GooglePlayMessages._
 import cards.nine.api.messages.InstallationsMessages._
-import cards.nine.api.messages.PathEnumerations.PriceFilter
 import cards.nine.api.messages.SharedCollectionMessages._
 import cards.nine.api.messages.UserMessages._
 import cards.nine.api.utils.SprayMarshallers._
 import cards.nine.api.utils.SprayMatchers._
+import cards.nine.domain.account.SessionToken
+import cards.nine.domain.analytics.{ ContinentScope, CountryScope, GeoScope, WorldScope }
+import cards.nine.domain.application.{ FullCardList, Category, PriceFilter }
 import cards.nine.commons.NineCardsService.Result
 import cards.nine.processes.NineCardsServices._
 import cards.nine.processes._
-import cards.nine.processes.messages.ApplicationMessages.GetAppsInfoResponse
-import cards.nine.services.free.domain.Category
 import cards.nine.services.free.domain.rankings._
+import cats.data.Xor
+import scala.concurrent.ExecutionContext
 import spray.http.StatusCodes.NotFound
 import spray.routing._
-
-import scala.concurrent.ExecutionContext
 
 class NineCardsApiActor
   extends Actor
@@ -248,7 +247,7 @@ class NineCardsRoutes(
       .getCollectionByPublicIdentifier(
         userId           = userContext.userId.value,
         publicIdentifier = publicId.value,
-        authParams       = toAuthParams(googlePlayContext, userContext)
+        marketAuth       = toMarketAuth(googlePlayContext, userContext)
       )
       .map(_.map(r ⇒ toApiSharedCollection(r.data)))
 
@@ -296,7 +295,7 @@ class NineCardsRoutes(
       .getLatestCollectionsByCategory(
         userId     = userContext.userId.value,
         category   = category.entryName,
-        authParams = toAuthParams(googlePlayContext, userContext),
+        marketAuth = toMarketAuth(googlePlayContext, userContext),
         pageNumber = pageNumber.value,
         pageSize   = pageSize.value
       )
@@ -307,7 +306,7 @@ class NineCardsRoutes(
     userContext: UserContext
   ): NineCardsServed[ApiSharedCollectionList] =
     sharedCollectionProcesses
-      .getPublishedCollections(userContext.userId.value, toAuthParams(googlePlayContext, userContext))
+      .getPublishedCollections(userContext.userId.value, toMarketAuth(googlePlayContext, userContext))
       .map(toApiSharedCollectionList)
 
   private[this] def getSubscriptionsByUser(
@@ -328,7 +327,7 @@ class NineCardsRoutes(
       .getTopCollectionsByCategory(
         userId     = userContext.userId.value,
         category   = category.entryName,
-        authParams = toAuthParams(googlePlayContext, userContext),
+        marketAuth = toMarketAuth(googlePlayContext, userContext),
         pageNumber = pageNumber.value,
         pageSize   = pageSize.value
       )
@@ -338,9 +337,9 @@ class NineCardsRoutes(
     request: ApiGetAppsInfoRequest,
     googlePlayContext: GooglePlayContext,
     userContext: UserContext
-  )(converter: GetAppsInfoResponse ⇒ T): NineCardsServed[T] =
+  )(converter: FullCardList ⇒ T): NineCardsServed[T] =
     applicationProcesses
-      .getAppsInfo(request.items, toAuthParams(googlePlayContext, userContext))
+      .getAppsInfo(request.items, toMarketAuth(googlePlayContext, userContext))
       .map(converter)
 
   private[this] def getRecommendationsByCategory(
@@ -353,10 +352,10 @@ class NineCardsRoutes(
     recommendationsProcesses
       .getRecommendationsByCategory(
         category.entryName,
-        priceFilter.entryName,
+        priceFilter,
         request.excludePackages,
         request.limit,
-        toAuthParams(googlePlayContext, userContext)
+        toMarketAuth(googlePlayContext, userContext)
       )
       .map(toApiGetRecommendationsResponse)
 
@@ -371,7 +370,7 @@ class NineCardsRoutes(
         request.excludePackages,
         request.limitPerApp.getOrElse(Int.MaxValue),
         request.limit,
-        toAuthParams(googlePlayContext, userContext)
+        toMarketAuth(googlePlayContext, userContext)
       )
       .map(toApiGetRecommendationsResponse)
 
@@ -385,7 +384,7 @@ class NineCardsRoutes(
         request.query,
         request.excludePackages,
         request.limit,
-        toAuthParams(googlePlayContext, userContext)
+        toMarketAuth(googlePlayContext, userContext)
       )
       .map(toApiSearchAppsResponse)
 

@@ -1,6 +1,6 @@
 package cards.nine.googleplay.service.free.interpreter.cache
 
-import cards.nine.googleplay.domain.{ FullCard, Package }
+import cards.nine.domain.application.{ FullCard, Package }
 import cards.nine.googleplay.service.free.algebra.Cache._
 import cards.nine.googleplay.util.{ ScalaCheck ⇒ CustomArbitrary }
 import com.redis.RedisClient
@@ -23,6 +23,7 @@ class InterpreterSpec
   import CustomArbitrary._
   import KeyType._
   import io.circe.syntax._
+  import cards.nine.domain.application.ScalaCheck._
 
   private[this] object setup {
     val redisServer: RedisServer = new RedisServer()
@@ -42,7 +43,7 @@ class InterpreterSpec
 
     def writeKey(t: KeyType, p: String, d: String) = keyPattern(p, t.entryName, d)
 
-    def resolvedKey(p: String): String = keyPattern(p, Resolved.entryName, "null")
+    def resolvedKey(p: Package): String = keyPattern(p.value, Resolved.entryName, "null")
     def pendingKey(p: String): String = keyPattern(p, Pending.entryName, "null")
     def errorKey(p: String, d: String) = keyPattern(p, Error.entryName, d)
 
@@ -84,13 +85,13 @@ class InterpreterSpec
     "return Some(e) if the cache contains a Resolved entry" >>
       prop { card: FullCard ⇒
         putEntry(CacheEntry.resolved(card))
-        eval(GetValid(Package(card.packageName))) must beSome(card)
+        eval(GetValid(card.packageName)) must beSome(card)
       }
 
     "return Some(e) if the cache contains a Permanent entry" >>
       prop { card: FullCard ⇒
-        putEntry(CacheEntry.permanent(Package(card.packageName), card))
-        eval(GetValid(Package(card.packageName))) must beSome(card)
+        putEntry(CacheEntry.permanent(card.packageName, card))
+        eval(GetValid(card.packageName)) must beSome(card)
       }
 
   }
@@ -109,7 +110,7 @@ class InterpreterSpec
       prop { (card: FullCard, pack: Package) ⇒
         flush
         eval(PutResolved(card))
-        val actual = redisClient.get(resolvedKey(pack.value))
+        val actual = redisClient.get(resolvedKey(pack))
         if (card.packageName == pack.value) actual must beSome else actual must beNone
       }
 
@@ -206,7 +207,7 @@ class InterpreterSpec
 
     "leave resolved entries" >>
       prop { card: FullCard ⇒
-        val pack = Package(card.packageName)
+        val pack = card.packageName
         flush
         putEntry(CacheEntry.resolved(card))
         eval(ClearInvalid(pack))
@@ -229,7 +230,7 @@ class InterpreterSpec
     case class ListPendingTest(allPending: List[Package], num: Int)
 
     val listPendingGen: Gen[ListPendingTest] = for /*Gen*/ {
-      allPending ← Gen.listOf(CustomArbitrary.arbPackage.arbitrary)
+      allPending ← Gen.listOf(arbPackage.arbitrary)
       num ← Gen.Choose.chooseInt.choose(0, allPending.length)
     } yield ListPendingTest(allPending, num)
 

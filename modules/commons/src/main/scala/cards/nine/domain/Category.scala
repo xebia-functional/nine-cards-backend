@@ -1,4 +1,4 @@
-package cards.nine.googleplay.domain
+package cards.nine.domain.application
 
 import enumeratum.{ Enum, EnumEntry }
 
@@ -59,6 +59,22 @@ object Category extends Enum[Category] {
   case object GAME_SIMULATION extends Category
   case object GAME_WIDGETS extends Category
 
+  case object FREE extends Category
+
+  /* These Are NineCards MOMENTS, not CategorieS*/
+  case object HOME extends Category
+  case object WIDGET_HOME extends Category
+  case object WORK extends Category
+  case object WIDGET_WORK extends Category
+  case object NIGHT extends Category
+  case object WIDGET_NIGHT extends Category
+  case object TRANSIT extends Category
+  case object WIDGET_TRANSIT extends Category
+
   val values = super.findValues
 }
 
+object Moments {
+  import Category.{ HOME, WORK, NIGHT, TRANSIT }
+  val all = List(HOME, WORK, NIGHT, TRANSIT)
+}

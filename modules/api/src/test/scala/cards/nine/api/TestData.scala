@@ -5,10 +5,10 @@ import cards.nine.api.messages.GooglePlayMessages._
 import cards.nine.api.messages.InstallationsMessages.ApiUpdateInstallationRequest
 import cards.nine.api.messages.SharedCollectionMessages._
 import cards.nine.api.messages.UserMessages.ApiLoginRequest
+import cards.nine.domain.account._
+import cards.nine.domain.application.{ Category, FullCardList, Package }
 import cards.nine.processes.ProcessesExceptions.SharedCollectionNotFoundException
-import cards.nine.processes.messages.ApplicationMessages.GetAppsInfoResponse
 import cards.nine.processes.messages.InstallationsMessages._
-import cards.nine.processes.messages.RecommendationsMessages._
 import cards.nine.processes.messages.SharedCollectionMessages._
 import cards.nine.processes.messages.UserMessages.{ LoginRequest, LoginResponse }
 import cards.nine.processes.messages.rankings.GetRankedDeviceApps.RankedDeviceApp
@@ -20,9 +20,9 @@ object TestData {
 
   val addedPackages = 5
 
-  val androidId = "f07a13984f6d116a"
+  val androidId = AndroidId("f07a13984f6d116a")
 
-  val apiToken = "a7db875d-f11e-4b0c-8d7a-db210fd93e1b"
+  val apiToken = ApiKey("a7db875d-f11e-4b0c-8d7a-db210fd93e1b")
 
   val author = "John Doe"
 
@@ -32,13 +32,13 @@ object TestData {
 
   val community = true
 
-  val deviceToken = Option("d897b6f1-c6a9-42bd-bf42-c787883c7d3e")
+  val deviceToken = Option(DeviceToken("d897b6f1-c6a9-42bd-bf42-c787883c7d3e"))
 
-  val email = "valid.email@test.com"
+  val email = Email("valid.email@test.com")
 
-  val failingAuthToken = "a439c00e-9a01-4b0e-a446-1d8410229072"
+  val failingAuthToken = "a439c00e"
 
-  val googlePlayToken = "8d8f9814-d5cc-4e69-9225-517a5257e5b7"
+  val googlePlayToken = "8d8f9814"
 
   val googleAnalyticsToken = "yada-yada-yada"
 
@@ -67,19 +67,19 @@ object TestData {
     "earth.europe.france",
     "earth.europe.portugal",
     "earth.europe.spain"
-  )
+  ) map Package
 
   val deviceApps = Map("countries" → packagesName)
 
-  val excludePackages = packagesName.filter(_.length > 18)
+  val excludePackages = packagesName.filter(_.value.length > 18)
 
   val publicIdentifier = "40daf308-fecf-4228-9262-a712d783cf49"
 
   val removedPackages = None
 
-  val sessionToken = "1d1afeea-c7ec-45d8-a6f8-825b836f2785"
+  val sessionToken = SessionToken("1d1afeea-c7ec-45d8-a6f8-825b836f2785")
 
-  val tokenId = "6c7b303e-585e-4fe8-8b6f-586547317331-7f9b12dd-8946-4285-a72a-746e482834dd"
+  val tokenId = GoogleIdToken("6c7b303e-585e-4fe8-8b6f-586547317331-7f9b12dd-8946-4285-a72a-746e482834dd")
 
   val userId = 1l
 
@@ -103,8 +103,8 @@ object TestData {
   object Headers {
 
     val userInfoHeaders = List(
-      RawHeader(headerAndroidId, androidId),
-      RawHeader(headerSessionToken, sessionToken),
+      RawHeader(headerAndroidId, androidId.value),
+      RawHeader(headerSessionToken, sessionToken.value),
       RawHeader(headerAuthToken, authToken)
     )
 
@@ -114,8 +114,8 @@ object TestData {
     )
 
     val failingUserInfoHeaders = List(
-      RawHeader(headerAndroidId, androidId),
-      RawHeader(headerSessionToken, sessionToken),
+      RawHeader(headerAndroidId, androidId.value),
+      RawHeader(headerSessionToken, sessionToken.value),
       RawHeader(headerAuthToken, failingAuthToken)
     )
 
@@ -149,7 +149,7 @@ object TestData {
       appsInfo   = List.empty
     )
 
-    val apiGetAppsInfoRequest = ApiGetAppsInfoRequest(items = List("", "", ""))
+    val apiGetAppsInfoRequest = ApiGetAppsInfoRequest(items = List("", "", "") map Package)
 
     val apiGetRecommendationsByCategoryRequest = ApiGetRecommendationsByCategoryRequest(
       excludePackages = excludePackages,
@@ -170,7 +170,7 @@ object TestData {
 
     val getRankedAppsResponse = Map.empty[String, List[RankedDeviceApp]]
 
-    val getRecommendationsByCategoryResponse = GetRecommendationsResponse(Nil)
+    val getRecommendationsByCategoryResponse = FullCardList(Nil, Nil)
 
     val apiCreateCollectionRequest = ApiCreateCollectionRequest(
       author        = author,
@@ -192,7 +192,7 @@ object TestData {
 
     val apiUpdateInstallationRequest = ApiUpdateInstallationRequest(deviceToken)
 
-    val getAppsInfoResponse = GetAppsInfoResponse(Nil, Nil)
+    val getAppsInfoResponse = FullCardList(Nil, Nil)
 
     val createOrUpdateCollectionResponse = CreateOrUpdateCollectionResponse(
       publicIdentifier = publicIdentifier,
@@ -222,16 +222,16 @@ object TestData {
     object rankings {
       import cards.nine.api.messages.{ rankings ⇒ Api }
       import cards.nine.processes.messages.{ rankings ⇒ Proc }
-      import cards.nine.services.free.domain.{ Category, PackageName, rankings ⇒ Domain }
+      import cards.nine.services.free.domain.{ rankings ⇒ Domain }
 
       val ranking = Domain.Ranking(Map(
-        Category.SOCIAL → Domain.CategoryRanking(List(PackageName("testApp")))
+        Category.SOCIAL → Domain.CategoryRanking(List(Package("testApp")))
       ))
       val getResponse = Proc.Get.Response(ranking)
 
       val apiRanking = Api.Ranking(List(
-        Api.CategoryRanking(Category.SOCIAL, List("socialite", "socialist")),
-        Api.CategoryRanking(Category.COMMUNICATION, List("es.elpais", "es.elmundo", "uk.theguardian"))
+        Api.CategoryRanking(Category.SOCIAL, List("socialite", "socialist") map Package),
+        Api.CategoryRanking(Category.COMMUNICATION, List("es.elpais", "es.elmundo", "uk.theguardian") map Package)
       ))
 
       val reloadResponse = Proc.Reload.Response()

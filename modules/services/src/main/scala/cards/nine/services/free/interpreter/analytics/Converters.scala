@@ -1,17 +1,16 @@
 package cards.nine.services.free.interpreter.analytics
 
-import cards.nine.services.free.domain.{ Category, PackageName }
-import cards.nine.services.free.domain.rankings.{ GeoScope ⇒ DomainScope, _ }
+import cards.nine.domain.analytics.{ GeoScope ⇒ DomainScope, _ }
+import cards.nine.domain.application.{ Category, Package }
+import cards.nine.services.free.domain.rankings._
 
 object Converters {
 
   import model._
 
-  type Cell = (Category, PackageName)
+  type Cell = (Category, Package)
 
   def parseRanking(response: ResponseBody, rankingSize: Int, geoScope: DomainScope): Ranking = {
-    val scope = GeoScope(geoScope)
-
     def buildScore(cells: List[Cell]): CategoryRanking = CategoryRanking(
       cells.map(_._2).take(rankingSize)
     )
@@ -21,71 +20,51 @@ object Converters {
     }
     val scores: Map[Category, CategoryRanking] =
       rows
-        .map(scope.parseCell)
+        .map(parseCellFor(geoScope, _))
         .groupBy(_._1)
         .mapValues(buildScore)
     Ranking(scores)
   }
 
-  def buildRequest(geoScope: DomainScope, viewId: String, dateRange: DateRange): RequestBody = {
-    val scope = Converters.GeoScope(geoScope)
-
+  def buildRequest(geoScope: DomainScope, viewId: String, dateRange: DateRange): RequestBody =
     RequestBody(ReportRequest(
       viewId                 = viewId,
-      dimensions             = scope.dimensions,
+      dimensions             = dimensionsFor(geoScope),
       metrics                = List(Metric.eventValue),
       dateRanges             = List(dateRange),
-      dimensionFilterClauses = scope.dimensionFilters,
+      dimensionFilterClauses = dimensionFiltersFor(geoScope),
       orderBys               = {
         import order.OrderBy.{ category, eventValue }
         List(category, eventValue)
       }
     ))
-  }
 
-  private[Converters] sealed trait GeoScope {
-    def dimensions: List[Dimension]
-    def dimensionFilters: DimensionFilter.Clauses
-    def parseCell(row: ReportRow): Cell
-  }
-
-  private[Converters] object GeoScope {
-    def apply(scope: DomainScope): GeoScope = scope match {
-      case CountryScope(country) ⇒ new Converters.GeoCountry(country)
-      case ContinentScope(continent) ⇒ new Converters.GeoContinent(continent)
-      case WorldScope ⇒ Converters.GeoWorld
+  private[Converters] def dimensionsFor(scope: DomainScope): List[Dimension] = {
+    val tailDimensions = List(Dimension.category, Dimension.packageName)
+    scope match {
+      case CountryScope(_) ⇒ Dimension.country :: tailDimensions
+      case ContinentScope(_) ⇒ Dimension.continent :: tailDimensions
+      case WorldScope ⇒ tailDimensions
     }
   }
 
-  private[Converters] class GeoCountry(country: Country) extends GeoScope {
-    override val dimensions = List(Dimension.country, Dimension.category, Dimension.packageName)
-    override val dimensionFilters = DimensionFilter.singleClause(DimensionFilter.Filter.isCountry(country))
-    def parseCell(row: ReportRow): Cell = {
-      val List(_country, categoryStr, packageStr) = row.dimensions
-      makeCell(categoryStr, packageStr)
+  private[Converters] def dimensionFiltersFor(scope: DomainScope): DimensionFilter.Clauses = {
+    import DimensionFilter._
+    scope match {
+      case CountryScope(country) ⇒ singleClause(Filter.isCountry(country))
+      case ContinentScope(continent) ⇒ singleClause(Filter.isContinent(continent))
+      case WorldScope ⇒ Nil
     }
   }
 
-  private[Converters] class GeoContinent(continent: Continent) extends GeoScope {
-    override val dimensions = List(Dimension.continent, Dimension.category, Dimension.packageName)
-    override val dimensionFilters =
-      DimensionFilter.singleClause(DimensionFilter.Filter.isContinent(continent))
-    def parseCell(row: ReportRow): Cell = {
-      val List(_continent, categoryStr, packageStr) = row.dimensions
-      makeCell(categoryStr, packageStr)
+  private[Converters] def parseCellFor(scope: DomainScope, row: ReportRow): Cell = {
+    val tailDimensions: List[String] = scope match {
+      case CountryScope(_) ⇒ row.dimensions.drop(1) // drop first dimension: country
+      case ContinentScope(_) ⇒ row.dimensions.drop(1) // drop first dimension: continent
+      case WorldScope ⇒ row.dimensions
     }
+    val List(categoryStr, packageStr) = tailDimensions
+    (Category.withName(categoryStr), Package(packageStr))
   }
-
-  private[Converters] object GeoWorld extends GeoScope {
-    override val dimensions = List(Dimension.category, Dimension.packageName)
-    override val dimensionFilters = List()
-    def parseCell(row: ReportRow): Cell = {
-      val List(categoryStr, packageStr) = row.dimensions
-      makeCell(categoryStr, packageStr)
-    }
-  }
-
-  private[this] def makeCell(categoryStr: String, packageStr: String): Cell =
-    Category.withName(categoryStr) → PackageName(packageStr)
 
 }

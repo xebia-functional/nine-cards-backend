@@ -1,77 +1,37 @@
 package cards.nine.services.free.domain
 
+import cards.nine.domain.application.{ Category, Package }
+import cards.nine.domain.analytics.{ Country ⇒ ACountry, _ }
 import cats.data.Xor
-import org.joda.time.DateTime
 
 object rankings {
-
-  import enumeratum._
-
-  case class AuthParams(access_token: String) extends AnyVal
-
-  /* A date range specifies a contiguous set of days: startDate, startDate + 1 day, ..., endDate.
-   https://developers.google.com/analytics/devguides/reporting/core/v4/rest/v4/reports/batchGet#DateRange */
-  case class DateRange(startDate: DateTime, endDate: DateTime)
 
   case class RankingParams(
     dateRange: DateRange,
     rankingLength: Int,
-    auth: AuthParams
+    auth: AnalyticsToken
   )
-
-  sealed trait Continent extends EnumEntry
-  object Continent extends Enum[Continent] {
-    case object Americas extends Continent
-    case object Africa extends Continent
-    case object Asia extends Continent
-    case object Europe extends Continent
-    case object Oceania extends Continent
-
-    val values = super.findValues
-  }
-
-  sealed trait Country extends EnumEntry
-  object Country extends Enum[Country] {
-    case object Spain extends Country
-    case object United_Kingdom extends Country
-    case object United_States extends Country
-
-    val values = super.findValues
-  }
-
-  sealed abstract class GeoScope extends Serializable with Product
-  case class CountryScope(country: Country) extends GeoScope
-  case class ContinentScope(continent: Continent) extends GeoScope
-  case object WorldScope extends GeoScope
-
-  implicit class GeoScopeStringOps(s: String) {
-    def toOptionalContinent(implicit enum: Enum[Continent]): Option[ContinentScope] =
-      enum.withNameOption(s.replace(" ", "_")) map ContinentScope
-
-    def toOptionalCountry(implicit enum: Enum[Country]): Option[CountryScope] =
-      enum.withNameOption(s) map CountryScope
-  }
 
   case class Ranking(categories: Map[Category, CategoryRanking]) extends AnyVal
 
   case class UpdateRankingSummary(created: Int, deleted: Int)
 
   /*A CategoryRanking contains a list of application's package names */
-  case class CategoryRanking(ranking: List[PackageName]) extends AnyVal
+  case class CategoryRanking(ranking: List[Package]) extends AnyVal
 
   case class RankingError(code: Int, message: String, status: String)
 
   type TryRanking = RankingError Xor Ranking
 
   case class Entry(
-    packageName: PackageName,
+    packageName: Package,
     category: Category,
     ranking: Int
   )
 
-  case class UnrankedApp(packageName: String, category: String)
+  case class UnrankedApp(packageName: Package, category: String)
 
-  case class RankedApp(packageName: String, category: String, ranking: Option[Int])
+  case class RankedApp(packageName: Package, category: String, ranking: Option[Int])
 
   object Queries {
 
@@ -81,7 +41,7 @@ object rankings {
     private def tableOf(scope: GeoScope): String = {
       val suffix = scope match {
         case CountryScope(country) ⇒
-          import Country._
+          import ACountry._
           val acron = country match {
             case Spain ⇒ "es"
             case United_Kingdom ⇒ "gb"

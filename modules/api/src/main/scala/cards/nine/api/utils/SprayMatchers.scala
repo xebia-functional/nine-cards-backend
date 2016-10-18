@@ -1,8 +1,7 @@
 package cards.nine.api.utils
 
-import cards.nine.api.messages.PathEnumerations.PriceFilter
-import cards.nine.services.free.domain.Category
-import cards.nine.services.free.domain.rankings.{ Continent, Country }
+import cards.nine.domain.analytics.{ Continent, Country }
+import cards.nine.domain.application.{ Category, PriceFilter }
 import enumeratum.{ Enum, EnumEntry }
 import shapeless._
 import spray.http.Uri.Path

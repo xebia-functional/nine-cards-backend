@@ -1,7 +1,8 @@
 package cards.nine.services.free.interpreter.ranking
 
-import cards.nine.services.free.domain.Category
-import cards.nine.services.free.domain.rankings.{ CategoryRanking, Entry, GeoScope, Queries, RankedApp, Ranking, UnrankedApp }
+import cards.nine.domain.analytics.GeoScope
+import cards.nine.domain.application.Category
+import cards.nine.services.free.domain.rankings.{ CategoryRanking, Entry, Queries, RankedApp, Ranking, UnrankedApp }
 import cards.nine.services.persistence.{ CustomComposite, DomainDatabaseContext, NineCardsScalacheckGen }
 import org.specs2.ScalaCheck
 import org.specs2.matcher.DisjunctionMatchers
@@ -124,7 +125,7 @@ class ServicesSpec
         val deviceApps = ranking.categories.flatMap {
           case (cat, ranks) ⇒
             ranks.ranking.collect {
-              case p if p.name.length > 10 ⇒ UnrankedApp(p.name, cat.entryName)
+              case p if p.value.length > 10 ⇒ UnrankedApp(p, cat.entryName)
             }
         }.toSet
 

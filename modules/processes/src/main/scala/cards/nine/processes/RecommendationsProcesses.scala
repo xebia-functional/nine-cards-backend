@@ -1,8 +1,7 @@
 package cards.nine.processes
 
-import cards.nine.processes.converters.Converters._
-import cards.nine.processes.messages.GooglePlayAuthMessages._
-import cards.nine.processes.messages.RecommendationsMessages._
+import cards.nine.domain.application.{ FullCardList, Package, PriceFilter }
+import cards.nine.domain.market.MarketCredentials
 import cards.nine.services.free.algebra.GooglePlay
 import cats.free.Free
 
@@ -10,49 +9,49 @@ class RecommendationsProcesses[F[_]](implicit services: GooglePlay.Services[F]) 
 
   def getRecommendationsByCategory(
     category: String,
-    filter: String,
-    excludePackages: List[String],
+    filter: PriceFilter,
+    excludePackages: List[Package],
     limit: Int,
-    authParams: AuthParams
-  ): Free[F, GetRecommendationsResponse] =
+    marketAuth: MarketCredentials
+  ): Free[F, FullCardList] =
     services.recommendByCategory(
       category         = category,
       priceFilter      = filter,
       excludesPackages = excludePackages,
       limit            = limit,
-      auth             = toAuthParamsServices(authParams)
-    ) map toGetRecommendationsResponse
+      auth             = marketAuth
+    )
 
   def getRecommendationsForApps(
-    packagesName: List[String],
-    excludedPackages: List[String],
+    packagesName: List[Package],
+    excludedPackages: List[Package],
     limitPerApp: Int,
     limit: Int,
-    authParams: AuthParams
-  ): Free[F, GetRecommendationsResponse] =
+    marketAuth: MarketCredentials
+  ): Free[F, FullCardList] =
     if (packagesName.isEmpty)
-      Free.pure(GetRecommendationsResponse(Nil))
+      Free.pure(FullCardList(Nil, Nil))
     else
       services.recommendationsForApps(
         packagesName     = packagesName,
         excludesPackages = excludedPackages,
         limitPerApp      = limitPerApp,
         limit            = limit,
-        auth             = toAuthParamsServices(authParams)
-      ) map toGetRecommendationsResponse
+        auth             = marketAuth
+      )
 
   def searchApps(
     query: String,
-    excludePackages: List[String],
+    excludePackages: List[Package],
     limit: Int,
-    authParams: AuthParams
-  ): Free[F, SearchAppsResponse] =
+    marketAuth: MarketCredentials
+  ): Free[F, FullCardList] =
     services.searchApps(
       query            = query,
       excludesPackages = excludePackages,
       limit            = limit,
-      auth             = toAuthParamsServices(authParams)
-    ) map toSearchAppsResponse
+      auth             = marketAuth
+    )
 
 }
 

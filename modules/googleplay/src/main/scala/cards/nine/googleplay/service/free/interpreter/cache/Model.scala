@@ -1,6 +1,6 @@
 package cards.nine.googleplay.service.free.interpreter.cache
 
-import cards.nine.googleplay.domain.{ FullCard, Package }
+import cards.nine.domain.application.{ FullCard, Package }
 import enumeratum.{ Enum, EnumEntry }
 import org.joda.time.DateTime
 
@@ -34,7 +34,7 @@ case class CacheVal(card: Option[FullCard])
 object CacheEntry {
 
   def resolved(card: FullCard): CacheEntry =
-    (CacheKey.resolved(Package(card.packageName)), CacheVal(Some(card)))
+    (CacheKey.resolved(card.packageName), CacheVal(Some(card)))
 
   def pending(name: Package): CacheEntry =
     (CacheKey.pending(name), CacheVal(None))
