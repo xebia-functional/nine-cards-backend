@@ -53,7 +53,7 @@ trait RedisScope extends RedisTestDomain {
 
   lazy val redisServer: RedisServer = new RedisServer()
   lazy val redisClient: RedisClient = new RedisClient(host = "localhost", port = redisServer.getPort)
-  lazy val wrapper = CacheWrapper.cacheWrapper[TestCacheKey, TestCacheVal](redisClient)
+  lazy val wrapper = CacheWrapper[TestCacheKey, TestCacheVal](redisClient)
 
   def findEntry(key: TestCacheKey): Option[TestCacheVal] = redisClient.get[Option[TestCacheVal]](key).flatten
 

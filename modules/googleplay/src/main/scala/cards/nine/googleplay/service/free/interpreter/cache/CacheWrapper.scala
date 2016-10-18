@@ -67,9 +67,7 @@ object CacheWrapper {
       case value: CacheVal ⇒ ev(value).noSpaces
     }
 
-  def cacheWrapper[Key, Val](
-    client: RedisClient
-  )(
+  def apply[Key, Val](client: RedisClient)(
     implicit
     format: Format,
     keyParse: Parse[Option[Key]],
