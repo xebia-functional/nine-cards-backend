@@ -1,8 +1,7 @@
 package cards.nine.googleplay.service.free.interpreter.cache
 
 import cats.data.Xor
-import cards.nine.domain.application.Package
-import cards.nine.googleplay.domain.FullCard
+import cards.nine.domain.application.{ FullCard, Package }
 import org.specs2.mutable.Specification
 import org.joda.time.{ DateTime, DateTimeZone }
 import io.circe.{ Decoder, Encoder }

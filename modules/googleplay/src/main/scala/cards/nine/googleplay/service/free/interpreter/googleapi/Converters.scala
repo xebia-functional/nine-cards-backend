@@ -1,7 +1,6 @@
 package cards.nine.googleplay.service.free.interpreter.googleapi
 
-import cards.nine.domain.application.Package
-import cards.nine.googleplay.domain._
+import cards.nine.domain.application.{ FullCard, FullCardList, Package }
 import cards.nine.googleplay.proto.GooglePlay.{ ListResponse, DocV2, SearchResponse }
 import scala.collection.JavaConversions._
 

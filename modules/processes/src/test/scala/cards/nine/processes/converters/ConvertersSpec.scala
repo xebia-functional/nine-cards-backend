@@ -1,6 +1,6 @@
 package cards.nine.processes.converters
 
-import cards.nine.services.free.domain.GooglePlay.AppsInfo
+import cards.nine.domain.application.{ FullCardList }
 import cards.nine.services.free.domain._
 import org.scalacheck.Shapeless._
 import org.specs2.ScalaCheck
@@ -31,21 +31,21 @@ class ConvertersSpec
     }
   }
 
-  "toGetAppsInfoResponse" should {
+  "filterCategorized" should {
     "convert an AppsInfo to a GetAppsInfoResponse object" in {
-      prop { appsInfo: AppsInfo ⇒
+      prop { appsInfo: FullCardList ⇒
 
-        val (appsWithoutCategories, _) = appsInfo.apps.partition(app ⇒ app.categories.isEmpty)
+        val appsWithoutCategories = appsInfo.cards.filter(app ⇒ app.categories.isEmpty)
 
-        val categorizeAppsResponse = Converters.toGetAppsInfoResponse(appsInfo)
+        val categorizeAppsResponse = Converters.filterCategorized(appsInfo)
 
-        categorizeAppsResponse.errors shouldEqual appsInfo.missing ++ appsWithoutCategories.map(_.packageName)
+        categorizeAppsResponse.missing shouldEqual appsInfo.missing ++ appsWithoutCategories.map(_.packageName)
 
-        forall(categorizeAppsResponse.items) { item ⇒
-          appsInfo.apps.exists { app ⇒
+        forall(categorizeAppsResponse.cards) { item ⇒
+          appsInfo.cards.exists { app ⇒
             app.packageName == item.packageName &&
-              app.categories.nonEmpty &&
-              app.categories == item.categories
+              app.categories == item.categories &&
+              app.categories.nonEmpty
           } should beTrue
         }
       }

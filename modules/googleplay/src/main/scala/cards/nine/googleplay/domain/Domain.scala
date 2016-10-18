@@ -23,22 +23,6 @@ object PriceFilter extends Enum[PriceFilter] {
   val values = super.findValues
 }
 
-case class FullCard(
-  packageName: Package,
-  title: String,
-  categories: List[String],
-  downloads: String,
-  free: Boolean,
-  icon: String,
-  screenshots: List[String],
-  stars: Double
-)
-
-case class FullCardList(
-  missing: List[Package],
-  cards: List[FullCard]
-)
-
 case class RecommendByAppsRequest(
   searchByApps: List[Package],
   numPerApp: Int,
@@ -58,4 +42,3 @@ case class SearchAppsRequest(
   excludedApps: List[Package],
   maxTotal: Int
 )
-

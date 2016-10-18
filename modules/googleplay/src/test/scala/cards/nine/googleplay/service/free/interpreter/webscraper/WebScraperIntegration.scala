@@ -2,6 +2,7 @@ package cards.nine.googleplay.service.free.interpreter.webscrapper
 
 import cats.data.Xor
 import cards.nine.domain.account.AndroidId
+import cards.nine.domain.application.FullCard
 import cards.nine.domain.market.{ MarketCredentials, MarketToken }
 import cards.nine.googleplay.config.TestConfig._
 import cards.nine.googleplay.domain._

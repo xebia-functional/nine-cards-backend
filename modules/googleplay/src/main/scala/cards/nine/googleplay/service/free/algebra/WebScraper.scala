@@ -2,8 +2,7 @@ package cards.nine.googleplay.service.free.algebra
 
 import cats.data.Xor
 import cats.free.{ Free, Inject }
-import cards.nine.domain.application.Package
-import cards.nine.googleplay.domain.FullCard
+import cards.nine.domain.application.{ FullCard, Package }
 import cards.nine.googleplay.domain.webscrapper._
 
 object WebScraper {

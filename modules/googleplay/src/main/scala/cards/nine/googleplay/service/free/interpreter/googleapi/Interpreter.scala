@@ -1,7 +1,7 @@
 package cards.nine.googleplay.service.free.interpreter.googleapi
 
 import cards.nine.commons.TaskInstances._
-import cards.nine.domain.application.Package
+import cards.nine.domain.application.{ FullCard, Package }
 import cards.nine.domain.market.MarketCredentials
 import cards.nine.googleplay.domain._
 import cards.nine.googleplay.domain.apigoogle._

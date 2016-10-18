@@ -1,12 +1,11 @@
 package cards.nine.services.free.interpreter.googleplay
 
 import cards.nine.commons.TaskInstances._
-import cards.nine.domain.application.Package
+import cards.nine.domain.application.{ FullCard, FullCardList, Package }
 import cards.nine.domain.market.MarketCredentials
 import cards.nine.googleplay.processes.Wiring.GooglePlayApp
 import cards.nine.googleplay.processes.{ CardsProcesses, Wiring }
 import cards.nine.services.free.algebra.GooglePlay._
-import cards.nine.services.free.domain.GooglePlay._
 import cats.data.Xor
 import cats.~>
 
@@ -14,10 +13,10 @@ import scalaz.concurrent.Task
 
 class Services(implicit googlePlayProcesses: CardsProcesses[GooglePlayApp]) extends (Ops ~> Task) {
 
-  def resolveOne(packageName: Package, auth: MarketCredentials): Task[String Xor AppInfo] = {
+  def resolveOne(packageName: Package, auth: MarketCredentials): Task[String Xor FullCard] = {
     googlePlayProcesses.getCard(packageName, auth)
       .foldMap(Wiring.interpreters).map {
-        _.bimap(e ⇒ e.packageName.value, c ⇒ Converters.toAppInfo(c))
+        _.bimap(e ⇒ e.packageName.value, c ⇒ c)
       }
   }
 
@@ -25,15 +24,15 @@ class Services(implicit googlePlayProcesses: CardsProcesses[GooglePlayApp]) exte
     packages: List[Package],
     auth: MarketCredentials,
     extendedInfo: Boolean
-  ): Task[AppsInfo] = {
+  ): Task[FullCardList] = {
     if (extendedInfo)
       googlePlayProcesses.getCards(packages, auth)
         .foldMap(Wiring.interpreters)
-        .map(Converters.toAppsInfo)
+        .map(Converters.toFullCardList)
     else
       googlePlayProcesses.getBasicCards(packages, auth)
         .foldMap(Wiring.interpreters)
-        .map(Converters.toAppsInfo)
+        .map(Converters.toFullCardList)
   }
 
   def recommendByCategory(
@@ -42,7 +41,7 @@ class Services(implicit googlePlayProcesses: CardsProcesses[GooglePlayApp]) exte
     excludedPackages: List[Package],
     limit: Int,
     auth: MarketCredentials
-  ): Task[Recommendations] =
+  ): Task[FullCardList] =
     googlePlayProcesses.recommendationsByCategory(
       Converters.toRecommendByCategoryRequest(category, filter, excludedPackages, limit),
       auth
@@ -57,7 +56,7 @@ class Services(implicit googlePlayProcesses: CardsProcesses[GooglePlayApp]) exte
     limitByApp: Int,
     limit: Int,
     auth: MarketCredentials
-  ): Task[Recommendations] =
+  ): Task[FullCardList] =
     googlePlayProcesses.recommendationsByApps(
       Converters.toRecommendByAppsRequest(packageNames, limitByApp, excludedPackages, limit),
       auth
@@ -68,7 +67,7 @@ class Services(implicit googlePlayProcesses: CardsProcesses[GooglePlayApp]) exte
     excludePackages: List[Package],
     limit: Int,
     auth: MarketCredentials
-  ): Task[Recommendations] =
+  ): Task[FullCardList] =
     googlePlayProcesses.searchApps(
       Converters.toSearchAppsRequest(query, excludePackages, limit),
       auth

@@ -1,9 +1,7 @@
 package cards.nine.processes
 
-import cards.nine.domain.application.Package
+import cards.nine.domain.application.{ FullCardList, Package }
 import cards.nine.domain.market.MarketCredentials
-import cards.nine.processes.converters.Converters._
-import cards.nine.processes.messages.RecommendationsMessages._
 import cards.nine.services.free.algebra.GooglePlay
 import cats.free.Free
 
@@ -15,14 +13,14 @@ class RecommendationsProcesses[F[_]](implicit services: GooglePlay.Services[F]) 
     excludePackages: List[Package],
     limit: Int,
     marketAuth: MarketCredentials
-  ): Free[F, GetRecommendationsResponse] =
+  ): Free[F, FullCardList] =
     services.recommendByCategory(
       category         = category,
       priceFilter      = filter,
       excludesPackages = excludePackages,
       limit            = limit,
       auth             = marketAuth
-    ) map toGetRecommendationsResponse
+    )
 
   def getRecommendationsForApps(
     packagesName: List[Package],
@@ -30,9 +28,9 @@ class RecommendationsProcesses[F[_]](implicit services: GooglePlay.Services[F]) 
     limitPerApp: Int,
     limit: Int,
     marketAuth: MarketCredentials
-  ): Free[F, GetRecommendationsResponse] =
+  ): Free[F, FullCardList] =
     if (packagesName.isEmpty)
-      Free.pure(GetRecommendationsResponse(Nil))
+      Free.pure(FullCardList(Nil, Nil))
     else
       services.recommendationsForApps(
         packagesName     = packagesName,
@@ -40,20 +38,20 @@ class RecommendationsProcesses[F[_]](implicit services: GooglePlay.Services[F]) 
         limitPerApp      = limitPerApp,
         limit            = limit,
         auth             = marketAuth
-      ) map toGetRecommendationsResponse
+      )
 
   def searchApps(
     query: String,
     excludePackages: List[Package],
     limit: Int,
     marketAuth: MarketCredentials
-  ): Free[F, SearchAppsResponse] =
+  ): Free[F, FullCardList] =
     services.searchApps(
       query            = query,
       excludesPackages = excludePackages,
       limit            = limit,
       auth             = marketAuth
-    ) map toSearchAppsResponse
+    )
 
 }
 

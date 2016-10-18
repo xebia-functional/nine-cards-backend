@@ -6,7 +6,7 @@ import cats.instances.list._
 import cats.syntax.monadCombine._
 import cats.syntax.traverse._
 import cats.syntax.xor._
-import cards.nine.domain.application.Package
+import cards.nine.domain.application.{ FullCard, FullCardList, Package }
 import cards.nine.domain.market.MarketCredentials
 import cards.nine.googleplay.domain._
 import cards.nine.googleplay.domain.apigoogle.{ Failure ⇒ ApiFailure }

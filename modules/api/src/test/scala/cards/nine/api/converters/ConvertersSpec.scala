@@ -4,8 +4,8 @@ import cards.nine.api.NineCardsHeaders.Domain._
 import cards.nine.api.messages.InstallationsMessages._
 import cards.nine.api.messages.UserMessages._
 import cards.nine.domain.account.AndroidId
+import cards.nine.domain.application.{ FullCardList }
 import cards.nine.domain.market.{ MarketToken, Localization }
-import cards.nine.processes.messages.ApplicationMessages._
 import cards.nine.processes.messages.InstallationsMessages._
 import cards.nine.processes.messages.SharedCollectionMessages._
 import cards.nine.processes.messages.UserMessages._
@@ -75,13 +75,13 @@ class ConvertersSpec
 
   "toApiCategorizeAppsResponse" should {
     "convert an GetAppsInfoResponse to an ApiCategorizeAppsResponse object" in {
-      prop { (response: GetAppsInfoResponse) ⇒
+      prop { (response: FullCardList) ⇒
 
         val apiResponse = Converters.toApiCategorizeAppsResponse(response)
 
-        apiResponse.errors shouldEqual response.errors
+        apiResponse.errors shouldEqual response.missing
         forall(apiResponse.items) { item ⇒
-          response.items.exists(appInfo ⇒
+          response.cards.exists(appInfo ⇒
             appInfo.packageName == item.packageName &&
               (
                 (appInfo.categories.nonEmpty && appInfo.categories.contains(item.category)) ||
@@ -94,12 +94,12 @@ class ConvertersSpec
 
   "toApiDetailAppsResponse" should {
     "convert an GetAppsInfoResponse to an ApiDetailAppsResponse object" in {
-      prop { (response: GetAppsInfoResponse) ⇒
+      prop { (response: FullCardList) ⇒
 
         val apiResponse = Converters.toApiDetailAppsResponse(response)
 
-        apiResponse.errors shouldEqual response.errors
-        apiResponse.items shouldEqual response.items
+        apiResponse.errors shouldEqual response.missing
+        apiResponse.items shouldEqual (response.cards map Converters.toApiDetailsApp)
       }
     }
   }
