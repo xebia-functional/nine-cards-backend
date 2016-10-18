@@ -2,6 +2,7 @@ package cards.nine.googleplay.service.free.interpreter.googleapi
 
 import cats.~>
 import cats.data.Xor
+import cards.nine.domain.application.Package
 import cards.nine.domain.market.MarketCredentials
 import cards.nine.googleplay.domain._
 import cards.nine.googleplay.domain.apigoogle.{ Failure }

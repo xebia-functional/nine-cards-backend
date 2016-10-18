@@ -1,18 +1,16 @@
 package cards.nine.googleplay.domain
 
-import cards.nine.domain.application.Category
+import cards.nine.domain.application.{ Category, Package }
 import cards.nine.domain.market.MarketCredentials
 
 import enumeratum.{ Enum, EnumEntry }
-
-case class Package(value: String) extends AnyVal
 
 case class AppRequest(
   packageName: Package,
   marketAuth: MarketCredentials
 )
 
-case class PackageList(items: List[String]) extends AnyVal
+case class PackageList(items: List[Package]) extends AnyVal
 
 case class InfoError(message: String) extends AnyVal
 
@@ -26,7 +24,7 @@ object PriceFilter extends Enum[PriceFilter] {
 }
 
 case class FullCard(
-  packageName: String,
+  packageName: Package,
   title: String,
   categories: List[String],
   downloads: String,
@@ -37,7 +35,7 @@ case class FullCard(
 )
 
 case class FullCardList(
-  missing: List[String],
+  missing: List[Package],
   cards: List[FullCard]
 )
 
@@ -57,7 +55,7 @@ case class RecommendByCategoryRequest(
 
 case class SearchAppsRequest(
   word: String,
-  excludedApps: List[String],
+  excludedApps: List[Package],
   maxTotal: Int
 )
 

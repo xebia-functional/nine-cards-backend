@@ -3,7 +3,6 @@ package cards.nine.services.persistence
 import cards.nine.domain.analytics._
 import cards.nine.domain.application.Category
 import cards.nine.services.free.domain.rankings._
-import cards.nine.services.free.domain.PackageName
 import cards.nine.services.free.interpreter.collection.Services.SharedCollectionData
 import cards.nine.services.free.interpreter.user.Services.UserData
 import cards.nine.services.persistence.NineCardsGenEntities._
@@ -108,9 +107,6 @@ trait NineCardsScalacheckGen {
 
   def abEnumeratum[C <: EnumEntry](e: Enum[C]): Arbitrary[C] = Arbitrary(genEnumeratum(e))
 
-  val genPackage: Gen[PackageName] =
-    Gen.nonEmptyListOf(Gen.alphaNumChar).map(chars ⇒ PackageName(chars.mkString))
-
   implicit val abCategory: Arbitrary[Category] = abEnumeratum[Category](Category)
 
   implicit val abCountry: Arbitrary[Country] = abEnumeratum[Country](Country)
@@ -140,6 +136,8 @@ trait NineCardsScalacheckGen {
       num ← Gen.choose(min, max)
       elems ← Gen.listOfN(num, gen)
     } yield elems.distinct
+
+  import cards.nine.domain.application.ScalaCheck.genPackage
 
   val genRankingEntries: Gen[List[Entry]] = {
 
@@ -175,7 +173,7 @@ trait NineCardsScalacheckGen {
   val genDeviceApp: Gen[UnrankedApp] = for {
     p ← genPackage
     c ← abCategory.arbitrary
-  } yield UnrankedApp(p.name, c.entryName)
+  } yield UnrankedApp(p, c.entryName)
 
   implicit val abDeviceApp: Arbitrary[UnrankedApp] = Arbitrary(genDeviceApp)
 

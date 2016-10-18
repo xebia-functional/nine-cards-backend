@@ -1,8 +1,7 @@
 package cards.nine.services.free.domain.queries
 
 import cards.nine.domain.analytics._
-import cards.nine.domain.application.Category
-import cards.nine.services.free.domain.PackageName
+import cards.nine.domain.application.{ Category, Package }
 import cards.nine.services.free.domain.rankings._
 import cards.nine.services.persistence.DomainDatabaseContext
 import doobie.contrib.specs2.analysisspec.AnalysisSpec
@@ -16,9 +15,9 @@ class RankingQueriesSpec
 
   import cards.nine.services.persistence.CustomComposite._
 
-  val data: Entry = Entry(PackageName("hammer"), Category.TOOLS, 17)
+  val data: Entry = Entry(Package("hammer"), Category.TOOLS, 17)
 
-  val deviceAppData: UnrankedApp = UnrankedApp("com.package.name", "SOCIAL")
+  val deviceAppData: UnrankedApp = UnrankedApp(Package("com.package.name"), "SOCIAL")
 
   val temporaryTableName = "device_apps"
 

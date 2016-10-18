@@ -1,5 +1,6 @@
 package cards.nine.processes
 
+import cards.nine.domain.application.Package
 import cards.nine.domain.market.MarketCredentials
 import cards.nine.processes.converters.Converters._
 import cards.nine.processes.messages.ApplicationMessages._
@@ -10,7 +11,7 @@ import cats.free.Free
 class ApplicationProcesses[F[_]](implicit services: GooglePlay.Services[F]) {
 
   def getAppsInfo(
-    packagesName: List[String],
+    packagesName: List[Package],
     marketAuth: MarketCredentials
   ): Free[F, GetAppsInfoResponse] =
     if (packagesName.isEmpty)

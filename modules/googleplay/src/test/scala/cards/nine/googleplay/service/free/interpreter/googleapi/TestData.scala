@@ -1,6 +1,7 @@
 package cards.nine.googleplay.service.free.interpreter.googleapi
 
-import cards.nine.googleplay.domain.{ FullCard, Package }
+import cards.nine.domain.application.Package
+import cards.nine.googleplay.domain.FullCard
 
 object TestData {
 
@@ -12,7 +13,7 @@ object TestData {
     lazy val htmlFile = getClass.getClassLoader.getResource(packageName + ".html")
 
     val card = FullCard(
-      packageName = packageName,
+      packageName = packageObj,
       title       = "Shapes & Colors Music Show",
       free        = true,
       icon        = "http://lh4.ggpht.com/Pb8iLNmi9vHOwB-39TKe-kn4b_uU-E6rn7zSiFz6jC0RlaEQeNCcBh2MueyslcQ3mj2H",
@@ -54,7 +55,7 @@ object TestData {
       "com.noctuasoftware.retrocosmos2",
       "hr.artplus.homagecosmos.app",
       "com.cosmos.paw.patrol.slasher.free"
-    ).map(Package.apply)
+    ) map Package
 
   }
 

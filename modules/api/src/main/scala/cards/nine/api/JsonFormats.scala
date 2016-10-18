@@ -5,6 +5,7 @@ import cards.nine.api.messages.GooglePlayMessages._
 import cards.nine.api.messages.InstallationsMessages._
 import cards.nine.api.messages.SharedCollectionMessages._
 import cards.nine.api.messages.UserMessages._
+import cards.nine.domain.application.Package
 import cards.nine.processes.messages.ApplicationMessages._
 import cards.nine.processes.messages.RecommendationsMessages._
 import cards.nine.processes.messages.SharedCollectionMessages._
@@ -46,6 +47,11 @@ trait JsonFormats
       case _ ⇒ error(json.toString)
     }
 
+  }
+
+  implicit object PackageJsonFormat extends JsonFormat[Package] {
+    def read(json: JsValue): Package = Package(StringJsonFormat.read(json))
+    def write(pack: Package): JsValue = StringJsonFormat.write(pack.value)
   }
 
   implicit val apiLoginRequestFormat = jsonFormat3(ApiLoginRequest)

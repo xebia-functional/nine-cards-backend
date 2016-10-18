@@ -1,5 +1,6 @@
 package cards.nine.processes
 
+import cards.nine.domain.application.Package
 import cards.nine.domain.market.MarketCredentials
 import cards.nine.processes.converters.Converters._
 import cards.nine.processes.messages.RecommendationsMessages._
@@ -11,7 +12,7 @@ class RecommendationsProcesses[F[_]](implicit services: GooglePlay.Services[F]) 
   def getRecommendationsByCategory(
     category: String,
     filter: String,
-    excludePackages: List[String],
+    excludePackages: List[Package],
     limit: Int,
     marketAuth: MarketCredentials
   ): Free[F, GetRecommendationsResponse] =
@@ -24,8 +25,8 @@ class RecommendationsProcesses[F[_]](implicit services: GooglePlay.Services[F]) 
     ) map toGetRecommendationsResponse
 
   def getRecommendationsForApps(
-    packagesName: List[String],
-    excludedPackages: List[String],
+    packagesName: List[Package],
+    excludedPackages: List[Package],
     limitPerApp: Int,
     limit: Int,
     marketAuth: MarketCredentials
@@ -43,7 +44,7 @@ class RecommendationsProcesses[F[_]](implicit services: GooglePlay.Services[F]) 
 
   def searchApps(
     query: String,
-    excludePackages: List[String],
+    excludePackages: List[Package],
     limit: Int,
     marketAuth: MarketCredentials
   ): Free[F, SearchAppsResponse] =

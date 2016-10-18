@@ -1,6 +1,7 @@
 package cards.nine.googleplay.service.free.interpreter.googleapi
 
-import cards.nine.googleplay.domain.{ FullCard, Package }
+import cards.nine.domain.application.Package
+import cards.nine.googleplay.domain.FullCard
 import cards.nine.googleplay.proto.GooglePlay.{ ResponseWrapper, DocV2, ListResponse, SearchResponse }
 import cards.nine.googleplay.service.free.interpreter.TestData.{ fisherPrice, minecraft }
 import java.nio.file.{ Files, Paths }
@@ -27,7 +28,7 @@ class ConvertersSpec extends Specification {
     "result in a Card to send to the client" in {
       val docV2: DocV2 = getDetailsResponse(readProtobufFile(fisherPrice.packageName))
       val card: FullCard = toFullCard(docV2)
-      card.packageName must_=== fisherPrice.packageName
+      card.packageName must_=== fisherPrice.packageObj
       card.free must_=== fisherPrice.card.free
       card.icon must_=== fisherPrice.card.icon
     }
@@ -42,7 +43,7 @@ class ConvertersSpec extends Specification {
     "get a full card with some screenshots" in {
       val docV2: DocV2 = getDetailsResponse(readProtobufFile(fisherPrice.packageName))
       val rec: FullCard = toFullCard(docV2)
-      rec.packageName must_=== fisherPrice.packageName
+      rec.packageName must_=== fisherPrice.packageObj
       rec.screenshots.length must beGreaterThan(0)
     }
   }
@@ -68,7 +69,7 @@ class ConvertersSpec extends Specification {
         "com.okcupid.okcupid",
         "com.myyearbook.m",
         "com.jaumo"
-      ).map(Package.apply)
+      ) map Package
 
       ids must containTheSameElementsAs(expected)
     }

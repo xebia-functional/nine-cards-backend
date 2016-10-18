@@ -6,6 +6,7 @@ import cards.nine.api.messages.InstallationsMessages._
 import cards.nine.api.messages.SharedCollectionMessages._
 import cards.nine.api.messages.UserMessages._
 import cards.nine.commons.NineCardsService.Result
+import cards.nine.domain.application.Package
 import cards.nine.domain.market.MarketCredentials
 import cards.nine.processes.messages.ApplicationMessages._
 import cards.nine.processes.messages.InstallationsMessages._
@@ -149,5 +150,5 @@ object Converters {
         ApiRankAppsResponse(items.mapValues(apps ⇒ apps.map(_.packageName)))
     }
 
-  def toDeviceAppList(items: List[String]) = items map DeviceApp.apply
+  def toDeviceAppList(items: List[Package]) = items map DeviceApp.apply
 }

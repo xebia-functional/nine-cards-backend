@@ -1,6 +1,6 @@
 package cards.nine.services.free.interpreter.googleplay
 
-import cards.nine.domain.application.Category
+import cards.nine.domain.application.{ Category, Package }
 import cards.nine.googleplay.domain._
 import cards.nine.googleplay.processes.{ getcard, ResolveMany }
 import cards.nine.services.free.domain.GooglePlay.{ RecommendByCategoryRequest ⇒ _, _ }
@@ -27,39 +27,39 @@ object Converters {
 
   def toSearchAppsRequest(
     query: String,
-    excludePackages: List[String],
+    excludePackages: List[Package],
     limit: Int
   ): SearchAppsRequest = SearchAppsRequest(query, excludePackages, limit)
 
   def toRecommendByAppsRequest(
-    packages: List[String],
+    packages: List[Package],
     limitByApp: Int,
-    excludedPackages: List[String],
+    excludedPackages: List[Package],
     limit: Int
   ): RecommendByAppsRequest =
     RecommendByAppsRequest(
-      packages map Package,
+      packages,
       limitByApp,
-      excludedPackages map Package,
+      excludedPackages,
       limit
     )
 
   def toRecommendByCategoryRequest(
     category: String,
     filter: String,
-    excludedPackages: List[String],
+    excludedPackages: List[Package],
     limit: Int
   ): RecommendByCategoryRequest =
     RecommendByCategoryRequest(
       Category.withName(category),
       PriceFilter.withName(filter),
-      excludedPackages map Package,
+      excludedPackages,
       limit
     )
 
   def toAppsInfo(response: ResolveMany.Response): AppsInfo =
     AppsInfo(
-      (response.pending ++ response.notFound) map (_.value),
+      response.pending ++ response.notFound,
       response.apps map toAppInfo
     )
 
@@ -67,7 +67,7 @@ object Converters {
     val (errors, resolved) = response.separate
 
     AppsInfo(
-      errors map (_.packageName.value),
+      errors map (_.packageName),
       resolved map toAppInfo
     )
   }

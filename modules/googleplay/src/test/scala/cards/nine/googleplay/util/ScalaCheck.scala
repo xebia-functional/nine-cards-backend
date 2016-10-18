@@ -1,6 +1,6 @@
 package cards.nine.googleplay.util
 
-import cards.nine.domain.application.Category
+import cards.nine.domain.application.{ Category, Package }
 import cards.nine.domain.market.MarketCredentials
 import cards.nine.googleplay.domain._
 import cats.data.Xor
@@ -18,9 +18,6 @@ object ScalaCheck {
 
   implicit val arbPathSegment: Arbitrary[PathSegment] =
     Arbitrary(ScalaCheck_Aux.genUriPathString.map(PathSegment.apply))
-
-  implicit val arbPackage: Arbitrary[Package] =
-    Arbitrary(nonEmptyListOf(alphaNumChar).map(chars ⇒ Package(chars.mkString)))
 
   implicit val arbAuth: Arbitrary[MarketCredentials] =
     ScalaCheck_Aux.arbAuth
@@ -84,7 +81,7 @@ object ScalaCheck_Aux {
       docid ← identifier
       appDetails ← listOf(identifier)
     } yield FullCard(
-      packageName = docid,
+      packageName = Package(docid),
       title       = title,
       free        = false,
       icon        = "",

@@ -1,8 +1,8 @@
 package cards.nine.services.free.interpreter.googleplay
 
 import cards.nine.commons.TaskInstances._
+import cards.nine.domain.application.Package
 import cards.nine.domain.market.MarketCredentials
-import cards.nine.googleplay.domain.Package
 import cards.nine.googleplay.processes.Wiring.GooglePlayApp
 import cards.nine.googleplay.processes.{ CardsProcesses, Wiring }
 import cards.nine.services.free.algebra.GooglePlay._
@@ -14,22 +14,18 @@ import scalaz.concurrent.Task
 
 class Services(implicit googlePlayProcesses: CardsProcesses[GooglePlayApp]) extends (Ops ~> Task) {
 
-  def resolveOne(packageName: String, auth: MarketCredentials): Task[String Xor AppInfo] = {
-    googlePlayProcesses.getCard(
-      pack = Package(packageName),
-      auth = auth
-    ).foldMap(Wiring.interpreters).map {
+  def resolveOne(packageName: Package, auth: MarketCredentials): Task[String Xor AppInfo] = {
+    googlePlayProcesses.getCard(packageName, auth)
+      .foldMap(Wiring.interpreters).map {
         _.bimap(e ⇒ e.packageName.value, c ⇒ Converters.toAppInfo(c))
       }
   }
 
   def resolveMany(
-    packageNames: List[String],
+    packages: List[Package],
     auth: MarketCredentials,
     extendedInfo: Boolean
   ): Task[AppsInfo] = {
-    val packages = packageNames map Package
-
     if (extendedInfo)
       googlePlayProcesses.getCards(packages, auth)
         .foldMap(Wiring.interpreters)
@@ -43,7 +39,7 @@ class Services(implicit googlePlayProcesses: CardsProcesses[GooglePlayApp]) exte
   def recommendByCategory(
     category: String,
     filter: String,
-    excludedPackages: List[String],
+    excludedPackages: List[Package],
     limit: Int,
     auth: MarketCredentials
   ): Task[Recommendations] =
@@ -56,8 +52,8 @@ class Services(implicit googlePlayProcesses: CardsProcesses[GooglePlayApp]) exte
       }
 
   def recommendationsForApps(
-    packageNames: List[String],
-    excludedPackages: List[String],
+    packageNames: List[Package],
+    excludedPackages: List[Package],
     limitByApp: Int,
     limit: Int,
     auth: MarketCredentials
@@ -69,7 +65,7 @@ class Services(implicit googlePlayProcesses: CardsProcesses[GooglePlayApp]) exte
 
   def searchApps(
     query: String,
-    excludePackages: List[String],
+    excludePackages: List[Package],
     limit: Int,
     auth: MarketCredentials
   ): Task[Recommendations] =

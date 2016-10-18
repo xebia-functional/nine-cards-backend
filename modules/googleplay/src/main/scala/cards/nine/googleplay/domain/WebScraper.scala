@@ -1,5 +1,7 @@
 package cards.nine.googleplay.domain
 
+import cards.nine.domain.application.Package
+
 package webscrapper {
 
   sealed trait Failure

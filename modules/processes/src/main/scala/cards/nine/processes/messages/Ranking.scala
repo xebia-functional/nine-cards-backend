@@ -1,6 +1,7 @@
 package cards.nine.processes.messages
 
 import cards.nine.domain.analytics.GeoScope
+import cards.nine.domain.application.Package
 import cards.nine.services.free.domain.rankings._
 import cats.data.Xor
 
@@ -27,9 +28,9 @@ object rankings {
 
   object GetRankedDeviceApps {
 
-    case class DeviceApp(packageName: String)
+    case class DeviceApp(packageName: Package)
 
-    case class RankedDeviceApp(packageName: String, ranking: Option[Int])
+    case class RankedDeviceApp(packageName: Package, ranking: Option[Int])
   }
 
 }

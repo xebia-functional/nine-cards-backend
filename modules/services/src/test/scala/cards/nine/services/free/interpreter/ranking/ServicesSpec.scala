@@ -125,7 +125,7 @@ class ServicesSpec
         val deviceApps = ranking.categories.flatMap {
           case (cat, ranks) ⇒
             ranks.ranking.collect {
-              case p if p.name.length > 10 ⇒ UnrankedApp(p.name, cat.entryName)
+              case p if p.value.length > 10 ⇒ UnrankedApp(p, cat.entryName)
             }
         }.toSet
 

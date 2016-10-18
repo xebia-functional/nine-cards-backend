@@ -1,11 +1,13 @@
 package cards.nine.processes.messages
 
+import cards.nine.domain.application.Package
+
 object ApplicationMessages {
 
-  case class GetAppsInfoResponse(errors: List[String], items: List[AppGooglePlayInfo])
+  case class GetAppsInfoResponse(errors: List[Package], items: List[AppGooglePlayInfo])
 
   case class AppGooglePlayInfo(
-    packageName: String,
+    packageName: Package,
     title: String,
     free: Boolean,
     icon: String,

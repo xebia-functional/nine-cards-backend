@@ -1,5 +1,6 @@
 package cards.nine.googleplay.service.free.interpreter.cache
 
+import cards.nine.domain.application.Package
 import cards.nine.googleplay.domain._
 import cards.nine.googleplay.service.free.algebra.Cache._
 import cats.~>

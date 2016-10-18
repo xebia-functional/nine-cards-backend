@@ -13,7 +13,7 @@ object rankings {
   def toApiRanking(resp: Proc.Get.Response): Api.Ranking = {
 
     def toApiCatRanking(cat: Category, rank: Domain.CategoryRanking): Api.CategoryRanking =
-      Api.CategoryRanking(cat, rank.ranking map (_.name))
+      Api.CategoryRanking(cat, rank.ranking)
 
     Api.Ranking(resp.ranking.categories.toList map (toApiCatRanking _).tupled)
   }
