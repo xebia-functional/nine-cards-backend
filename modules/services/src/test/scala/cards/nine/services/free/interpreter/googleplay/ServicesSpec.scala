@@ -4,8 +4,8 @@ import cards.nine.domain.account.AndroidId
 import cards.nine.domain.application.{ Category, FullCard, FullCardList, Package, PriceFilter }
 import cards.nine.domain.market.{ Localization, MarketCredentials, MarketToken }
 import cards.nine.googleplay.domain._
-import cards.nine.googleplay.processes.getcard.{ FailedResponse, UnknownPackage }
-import cards.nine.googleplay.processes.{ CardsProcesses, Wiring }
+import cards.nine.googleplay.processes.getcard.UnknownPackage
+import cards.nine.googleplay.processes.{ CardsProcesses, ResolveMany, Wiring }
 import cats.data.Xor
 import cats.free.Free
 import org.specs2.matcher.{ DisjunctionMatchers, Matcher, Matchers, XorMatchers }
@@ -103,8 +103,7 @@ class GooglePlayServicesSpec
         cards   = fullCards
       )
 
-      val getCardsResponse: List[Xor[FailedResponse, FullCard]] =
-        (fullCards map Xor.right) ++ (unknownPackageErrors map Xor.left)
+      val resolveManyResponse = ResolveMany.Response(wrongPackages, Nil, fullCards)
     }
   }
 
@@ -143,7 +142,7 @@ class GooglePlayServicesSpec
     "return the list of apps that are valid and those that are wrong" in new BasicScope {
 
       googlePlayProcesses.getCards(packages, AuthData.marketAuth) returns
-        Free.pure(GooglePlayResponses.getCardsResponse)
+        Free.pure(GooglePlayResponses.resolveManyResponse)
 
       val response = services.resolveMany(packages, AuthData.marketAuth, true)
 
