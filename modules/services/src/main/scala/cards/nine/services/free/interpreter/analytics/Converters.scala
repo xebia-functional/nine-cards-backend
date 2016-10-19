@@ -21,6 +21,7 @@ object Converters {
     val scores: Map[Category, CategoryRanking] =
       rows
         .map(parseCellFor(geoScope, _))
+        .collect { case (Some(cat), pack) ⇒ (cat, pack) }
         .groupBy(_._1)
         .mapValues(buildScore)
     Ranking(scores)
@@ -57,14 +58,14 @@ object Converters {
     }
   }
 
-  private[Converters] def parseCellFor(scope: DomainScope, row: ReportRow): Cell = {
+  private[Converters] def parseCellFor(scope: DomainScope, row: ReportRow) = {
     val tailDimensions: List[String] = scope match {
       case CountryScope(_) ⇒ row.dimensions.drop(1) // drop first dimension: country
       case ContinentScope(_) ⇒ row.dimensions.drop(1) // drop first dimension: continent
       case WorldScope ⇒ row.dimensions
     }
     val List(categoryStr, packageStr) = tailDimensions
-    (Category.withName(categoryStr), Package(packageStr))
+    (Category.withNameOption(categoryStr), Package(packageStr))
   }
 
 }
