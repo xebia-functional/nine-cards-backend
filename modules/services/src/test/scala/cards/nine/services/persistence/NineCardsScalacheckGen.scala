@@ -128,13 +128,13 @@ trait NineCardsScalacheckGen {
       elems ← Gen.listOfN(num, gen)
     } yield elems.distinct
 
-  import cards.nine.domain.application.ScalaCheck.genPackage
+  import cards.nine.domain.application.ScalaCheck.arbPackage
 
   val genRankingEntries: Gen[List[Entry]] = {
 
     def genCatEntries(cat: Category): Gen[List[Entry]] =
       for /*Gen*/ {
-        packs ← listOfDistinctN(0, 10, genPackage)
+        packs ← listOfDistinctN(0, 10, arbPackage.arbitrary)
         entries = packs.zipWithIndex map {
           case (pack, ind) ⇒ Entry(pack, cat, ind + 1)
         }
@@ -149,7 +149,7 @@ trait NineCardsScalacheckGen {
   implicit val abRankingEntries: Arbitrary[List[Entry]] = Arbitrary(genRankingEntries)
 
   def genCatRanking(maxSize: Int): Gen[CategoryRanking] =
-    listOfDistinctN(0, maxSize, genPackage).map(CategoryRanking.apply)
+    listOfDistinctN(0, maxSize, arbPackage.arbitrary).map(CategoryRanking.apply)
 
   val genRanking: Gen[Ranking] =
     for {
@@ -162,7 +162,7 @@ trait NineCardsScalacheckGen {
   implicit val abRanking: Arbitrary[Ranking] = Arbitrary(genRanking)
 
   val genDeviceApp: Gen[UnrankedApp] = for {
-    p ← genPackage
+    p ← arbPackage.arbitrary
     c ← abCategory.arbitrary
   } yield UnrankedApp(p, c.entryName)
 
