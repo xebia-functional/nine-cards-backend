@@ -1,10 +1,13 @@
 package cards.nine.googleplay.service.free.interpreter.cache
 
+import cards.nine.commons._
 import cards.nine.domain.application.Package
 import cards.nine.googleplay.service.free.algebra.Cache._
-import cards.nine.googleplay.service.free.interpreter.cache.CacheWrapper._
 import cats.~>
 import com.redis.RedisClient
+import com.redis.serialization.{ Format, Parse }
+import io.circe.Encoder
+import io.circe.parser._
 import org.joda.time.{ DateTime, DateTimeZone }
 
 import scalaz.concurrent.Task
@@ -12,6 +15,18 @@ import scalaz.concurrent.Task
 object CacheInterpreter extends (Ops ~> WithRedisClient) {
 
   import CirceCoders._
+
+  implicit val keyParse: Parse[Option[CacheKey]] =
+    Parse(bv ⇒ decode[CacheKey](Parse.Implicits.parseString(bv)).toOption)
+
+  implicit val valParse: Parse[Option[CacheVal]] =
+    Parse(bv ⇒ decode[CacheVal](Parse.Implicits.parseString(bv)).toOption)
+
+  implicit def keyAndValFormat(implicit ek: Encoder[CacheKey], ev: Encoder[CacheVal]): Format =
+    Format {
+      case key: CacheKey ⇒ ek(key).noSpaces
+      case value: CacheVal ⇒ ev(value).noSpaces
+    }
 
   def getDefinedFullCardsFor(wrap: CacheWrapper[CacheKey, CacheVal], keys: List[CacheKey]) =
     wrap.mget(keys).collect { case CacheVal(Some(card)) ⇒ card }
