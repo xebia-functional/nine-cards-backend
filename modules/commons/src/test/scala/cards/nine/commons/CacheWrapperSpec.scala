@@ -1,8 +1,8 @@
-package cards.nine.googleplay.service.free.interpreter.cache
+package cards.nine.commons
 
 import com.redis.RedisClient
 import com.redis.serialization.{ Format, Parse }
-import io.circe._
+import io.circe.{ Decoder, Encoder }
 import io.circe.generic.semiauto._
 import io.circe.parser._
 import org.scalacheck.{ Arbitrary, Gen }

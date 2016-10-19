@@ -1,9 +1,7 @@
-package cards.nine.googleplay.service.free.interpreter.cache
+package cards.nine.commons
 
-import com.redis._
+import com.redis.RedisClient
 import com.redis.serialization.{ Format, Parse }
-import io.circe._
-import io.circe.parser._
 
 import scala.annotation.tailrec
 
@@ -54,18 +52,6 @@ class CacheWrapper[Key, Val](client: RedisClient)(implicit f: Format, pk: Parse[
 }
 
 object CacheWrapper {
-
-  implicit def keyParse(implicit dv: Decoder[CacheKey]): Parse[Option[CacheKey]] =
-    Parse(bv ⇒ decode[CacheKey](Parse.Implicits.parseString(bv)).toOption)
-
-  implicit def valParse(implicit dv: Decoder[CacheVal]): Parse[Option[CacheVal]] =
-    Parse(bv ⇒ decode[CacheVal](Parse.Implicits.parseString(bv)).toOption)
-
-  implicit def keyAndValFormat(implicit ek: Encoder[CacheKey], ev: Encoder[CacheVal]): Format =
-    Format {
-      case key: CacheKey ⇒ ek(key).noSpaces
-      case value: CacheVal ⇒ ev(value).noSpaces
-    }
 
   def apply[Key, Val](client: RedisClient)(
     implicit
