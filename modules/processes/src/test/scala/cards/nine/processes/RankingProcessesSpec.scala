@@ -6,8 +6,8 @@ import cards.nine.processes.NineCardsServices._
 import cards.nine.processes.TestData.Values._
 import cards.nine.processes.TestData.rankings._
 import cards.nine.processes.messages.rankings._
-import cards.nine.services.free.algebra.{ Country, GoogleAnalytics, Ranking }
-import cards.nine.services.free.domain.rankings.UpdateRankingSummary
+import cards.nine.services.free.algebra.{ Country, GoogleAnalytics, RedisRanking }
+import cards.nine.services.free.domain.RedisRanking.UpdateRankingSummary
 import cats.data.Xor
 import cats.free.Free
 import org.mockito.Matchers.{ eq ⇒ mockEq }
@@ -29,8 +29,8 @@ trait RankingsProcessesSpecification
       mock[GoogleAnalytics.Services[NineCardsServices]]
     implicit val countryServices: Country.Services[NineCardsServices] =
       mock[Country.Services[NineCardsServices]]
-    implicit val rankingServices: Ranking.Services[NineCardsServices] =
-      mock[Ranking.Services[NineCardsServices]]
+    implicit val rankingServices: RedisRanking.Services[NineCardsServices] =
+      mock[RedisRanking.Services[NineCardsServices]]
 
     val rankingProcesses = RankingProcesses.processes[NineCardsServices]
 
@@ -49,9 +49,9 @@ trait RankingsProcessesSpecification
 
     countryServices.getCountryByIsoCode2("US") returns NineCardsService.right(country)
 
-    rankingServices.getRanking(any) returns Free.pure(ranking)
+    rankingServices.getRanking(any) returns Free.pure(googleAnalyticsRanking)
 
-    rankingServices.updateRanking(scope, ranking) returns Free.pure(UpdateRankingSummary(0, 0))
+    rankingServices.updateRanking(redisScope, googleAnalyticsRanking) returns Free.pure(UpdateRankingSummary(0, 0))
 
     rankingServices.getRankingForApps(any, any) returns NineCardsService.right(rankedAppsList)
   }
@@ -62,7 +62,7 @@ trait RankingsProcessesSpecification
 
     countryServices.getCountryByIsoCode2("US") returns NineCardsService.left(countryNotFoundError)
 
-    rankingServices.getRanking(any) returns Free.pure(ranking)
+    rankingServices.getRanking(any) returns Free.pure(googleAnalyticsRanking)
 
     rankingServices.getRankingForApps(any, any) returns NineCardsService.right(emptyRankedAppsList)
   }
