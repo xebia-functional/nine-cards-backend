@@ -86,7 +86,7 @@ object Converters {
       icon        = card.icon,
       stars       = card.stars,
       downloads   = card.downloads,
-      category    = toMainCategory(card.categories)
+      categories  = card.categories
     )
 
   def toApiSharedCollectionList(response: GetCollectionsResponse): ApiSharedCollectionList =
@@ -127,7 +127,7 @@ object Converters {
     def toCategorizedApp(appInfo: FullCard): CategorizedApp =
       CategorizedApp(
         packageName = appInfo.packageName,
-        category    = toMainCategory(appInfo.categories)
+        categories  = appInfo.categories
       )
     ApiCategorizeAppsResponse(
       items  = response.cards map toCategorizedApp,
@@ -183,7 +183,5 @@ object Converters {
     }
 
   def toDeviceAppList(items: List[Package]) = items map DeviceApp.apply
-
-  def toMainCategory(categories: List[String]): String = categories.headOption.getOrElse("")
 
 }
