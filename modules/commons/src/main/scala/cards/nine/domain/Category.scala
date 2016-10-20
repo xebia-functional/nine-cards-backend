@@ -76,5 +76,9 @@ object Category extends Enum[Category] {
 
 object Moments {
   import Category.{ HOME, WORK, NIGHT, TRANSIT }
-  val all = List(HOME, WORK, NIGHT, TRANSIT)
+
+  val all: List[Category] = List(HOME, WORK, NIGHT, TRANSIT)
+
+  def isMoment(categoryName: String): Boolean =
+    Category.withNameOption(categoryName).fold(false)(all.contains)
 }

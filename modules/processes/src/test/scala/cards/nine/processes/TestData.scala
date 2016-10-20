@@ -11,6 +11,7 @@ import cards.nine.domain.market.{ Localization, MarketCredentials, MarketToken }
 import cards.nine.processes.ProcessesExceptions.SharedCollectionNotFoundException
 import cards.nine.processes.messages.SharedCollectionMessages._
 import cards.nine.services.free.domain.Firebase.{ NotificationIndividualResult, NotificationResponse }
+import cards.nine.services.free.domain.RedisRanking.{ GoogleAnalyticsRanking, CountryScope ⇒ RedisCountryScope }
 import cards.nine.services.free.domain.{ SharedCollection ⇒ SharedCollectionServices, _ }
 import cards.nine.services.free.interpreter.collection.Services.{ SharedCollectionData ⇒ SharedCollectionDataServices }
 import org.joda.time.{ DateTime, DateTimeZone }
@@ -319,6 +320,7 @@ object TestData {
     import cards.nine.services.free.domain.rankings._
 
     lazy val scope = CountryScope(CountryEnum.Spain)
+    lazy val redisScope = RedisCountryScope("Spain")
     lazy val location = Option("US")
     lazy val startDate = new DateTime(2016, 1, 1, 0, 0, DateTimeZone.UTC)
     lazy val endDate = new DateTime(2016, 2, 1, 0, 0, DateTimeZone.UTC)
@@ -326,6 +328,8 @@ object TestData {
     lazy val error = RankingError(401, "Unauthorized", "Unauthorized")
     lazy val ranking = Ranking(Map(Category.SOCIAL →
       CategoryRanking(List(Package("socialite"), Package("socialist")))))
+    lazy val googleAnalyticsRanking = GoogleAnalyticsRanking(Map("SOCIAL" →
+      List(Package("socialite"), Package("socialist"))))
 
     val emptyDeviceAppsMap = Map.empty[String, List[Package]]
 
