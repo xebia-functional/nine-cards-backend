@@ -1,7 +1,7 @@
 package cards.nine.services.free.interpreter.analytics
 
 import cards.nine.domain.analytics._
-import cards.nine.services.free.domain.rankings._
+import cards.nine.services.free.domain.Ranking.{ Rankings, RankingError, RankingParams, TryRanking }
 import cards.nine.services.utils.MockServerService
 import org.joda.time.{ DateTime, DateTimeZone }
 import org.mockserver.model.HttpRequest.{ request ⇒ mockRequest }
@@ -77,7 +77,7 @@ class ServicesSpec
       val params = RankingParams(dateRange, 5, AnalyticsToken(auth.valid_token))
       val response = services.getRanking(CountryScope(Country.Spain), params)
       response.unsafePerformSyncAttempt should be_\/-[TryRanking].which {
-        content ⇒ content should beXorRight[Ranking]
+        content ⇒ content should beXorRight[Rankings]
       }
     }
 

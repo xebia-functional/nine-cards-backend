@@ -2,7 +2,7 @@ package cards.nine.services.free.interpreter.analytics
 
 import cards.nine.domain.analytics.{ GeoScope ⇒ DomainScope, _ }
 import cards.nine.domain.application.{ Category, Package }
-import cards.nine.services.free.domain.rankings._
+import cards.nine.services.free.domain.Ranking.{ CategoryRanking, Rankings }
 
 object Converters {
 
@@ -10,7 +10,7 @@ object Converters {
 
   type Cell = (Category, Package)
 
-  def parseRanking(response: ResponseBody, rankingSize: Int, geoScope: DomainScope): Ranking = {
+  def parseRanking(response: ResponseBody, rankingSize: Int, geoScope: DomainScope): Rankings = {
     def buildScore(cells: List[Cell]): CategoryRanking = CategoryRanking(
       cells.map(_._2).take(rankingSize)
     )
@@ -24,7 +24,7 @@ object Converters {
         .collect { case (Some(cat), pack) ⇒ (cat, pack) }
         .groupBy(_._1)
         .mapValues(buildScore)
-    Ranking(scores)
+    Rankings(scores)
   }
 
   def buildRequest(geoScope: DomainScope, viewId: String, dateRange: DateRange): RequestBody =

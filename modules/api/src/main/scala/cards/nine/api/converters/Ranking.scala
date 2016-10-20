@@ -4,7 +4,7 @@ import cards.nine.api.messages.{ rankings ⇒ Api }
 import cards.nine.domain.analytics.{ AnalyticsToken, DateRange }
 import cards.nine.domain.application.Category
 import cards.nine.processes.messages.{ rankings ⇒ Proc }
-import cards.nine.services.free.domain.{ rankings ⇒ Domain }
+import cards.nine.services.free.domain.{ Ranking ⇒ Domain }
 
 object rankings {
 

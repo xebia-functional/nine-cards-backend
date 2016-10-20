@@ -222,9 +222,9 @@ object TestData {
     object rankings {
       import cards.nine.api.messages.{ rankings ⇒ Api }
       import cards.nine.processes.messages.{ rankings ⇒ Proc }
-      import cards.nine.services.free.domain.{ rankings ⇒ Domain }
+      import cards.nine.services.free.domain.{ Ranking ⇒ Domain }
 
-      val ranking = Domain.Ranking(Map(
+      val ranking = Domain.Rankings(Map(
         Category.SOCIAL → Domain.CategoryRanking(List(Package("testApp")))
       ))
       val getResponse = Proc.Get.Response(ranking)

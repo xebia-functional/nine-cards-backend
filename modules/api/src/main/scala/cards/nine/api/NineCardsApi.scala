@@ -16,7 +16,7 @@ import cards.nine.domain.application.{ FullCardList, Category, PriceFilter }
 import cards.nine.commons.NineCardsService.Result
 import cards.nine.processes.NineCardsServices._
 import cards.nine.processes._
-import cards.nine.services.free.domain.rankings._
+import cards.nine.services.free.domain.Ranking._
 import cats.data.Xor
 import scala.concurrent.ExecutionContext
 import spray.http.StatusCodes.NotFound

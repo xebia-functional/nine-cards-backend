@@ -12,11 +12,9 @@ import cards.nine.services.free.interpreter.firebase.{ Services ⇒ FirebaseServ
 import cards.nine.services.free.interpreter.googleapi.{ Services ⇒ GoogleApiServices }
 import cards.nine.services.free.interpreter.googleplay.{ Services ⇒ GooglePlayServices }
 import cards.nine.services.free.interpreter.ranking.{ Services ⇒ RankingServices }
-import cards.nine.services.free.interpreter.redisranking.{ Services ⇒ RedisRankingServices }
-import cards.nine.services.free.interpreter.redisranking.Services._
+import cards.nine.services.free.interpreter.ranking.Services._
 import cards.nine.services.free.interpreter.subscription.{ Services ⇒ SubscriptionServices }
 import cards.nine.services.free.interpreter.user.{ Services ⇒ UserServices }
-import cards.nine.services.persistence.CustomComposite._
 import cards.nine.services.persistence.DatabaseTransactor._
 import com.redis.RedisClientPool
 import doobie.imports._
@@ -57,9 +55,7 @@ abstract class Interpreters[M[_]](implicit A: ApplicativeError[M, Throwable], T:
 
   lazy val googlePlayInterpreter: (GooglePlay.Ops ~> M) = GooglePlayServices.services.andThen(task2M)
 
-  val rankingInterpreter: (Ranking.Ops ~> M) = RankingServices.services.andThen(connectionIO2M)
-
-  lazy val redisRankingInterpreter: (RedisRanking.Ops ~> M) = RedisRankingServices.services.andThen(toTask).andThen(task2M)
+  lazy val rankingInterpreter: (Ranking.Ops ~> M) = RankingServices.services.andThen(toTask).andThen(task2M)
 
   val subscriptionInterpreter: (Subscription.Ops ~> M) = SubscriptionServices.services.andThen(connectionIO2M)
 

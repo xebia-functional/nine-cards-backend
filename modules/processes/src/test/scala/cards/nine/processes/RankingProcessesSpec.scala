@@ -6,8 +6,8 @@ import cards.nine.processes.NineCardsServices._
 import cards.nine.processes.TestData.Values._
 import cards.nine.processes.TestData.rankings._
 import cards.nine.processes.messages.rankings._
-import cards.nine.services.free.algebra.{ Country, GoogleAnalytics, RedisRanking }
-import cards.nine.services.free.domain.RedisRanking.UpdateRankingSummary
+import cards.nine.services.free.algebra.{ Country, GoogleAnalytics, Ranking }
+import cards.nine.services.free.domain.Ranking.UpdateRankingSummary
 import cats.data.Xor
 import cats.free.Free
 import org.mockito.Matchers.{ eq ⇒ mockEq }
@@ -29,8 +29,8 @@ trait RankingsProcessesSpecification
       mock[GoogleAnalytics.Services[NineCardsServices]]
     implicit val countryServices: Country.Services[NineCardsServices] =
       mock[Country.Services[NineCardsServices]]
-    implicit val rankingServices: RedisRanking.Services[NineCardsServices] =
-      mock[RedisRanking.Services[NineCardsServices]]
+    implicit val rankingServices: Ranking.Services[NineCardsServices] =
+      mock[Ranking.Services[NineCardsServices]]
 
     val rankingProcesses = RankingProcesses.processes[NineCardsServices]
 
