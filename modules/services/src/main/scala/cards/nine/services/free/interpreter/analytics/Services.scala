@@ -2,7 +2,7 @@ package cards.nine.services.free.interpreter.analytics
 
 import cards.nine.domain.analytics.GeoScope
 import cards.nine.services.free.algebra.GoogleAnalytics._
-import cards.nine.services.free.domain.rankings._
+import cards.nine.services.free.domain.Ranking._
 import cats.data.Xor
 import cats.~>
 import org.http4s.Http4s._

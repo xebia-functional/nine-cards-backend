@@ -3,7 +3,6 @@ package cards.nine.services.persistence
 import cards.nine.domain.account._
 import cards.nine.domain.analytics._
 import cards.nine.domain.application.Category
-import cards.nine.services.free.domain.rankings._
 import cards.nine.services.free.interpreter.collection.Services.SharedCollectionData
 import cards.nine.services.free.interpreter.user.Services.UserData
 import cards.nine.services.persistence.NineCardsGenEntities._
@@ -13,6 +12,8 @@ import cats.instances.list._
 import enumeratum.{ Enum, EnumEntry }
 import java.sql.Timestamp
 import java.time.Instant
+
+import cards.nine.services.free.domain.Ranking.{ CategoryRanking, Rankings }
 import org.scalacheck.{ Arbitrary, Gen }
 
 object NineCardsGenEntities {
@@ -130,36 +131,18 @@ trait NineCardsScalacheckGen {
 
   import cards.nine.domain.application.ScalaCheck.arbPackage
 
-  val genRankingEntries: Gen[List[Entry]] = {
-
-    def genCatEntries(cat: Category): Gen[List[Entry]] =
-      for /*Gen*/ {
-        packs ← listOfDistinctN(0, 10, arbPackage.arbitrary)
-        entries = packs.zipWithIndex map {
-          case (pack, ind) ⇒ Entry(pack, cat, ind + 1)
-        }
-      } yield entries
-
-    for /*Gen */ {
-      cats ← listOfDistinctN(0, 10, genEnumeratum[Category](Category))
-      entries ← cats.traverse(genCatEntries)(genMonad)
-    } yield entries.flatten
-  }
-
-  implicit val abRankingEntries: Arbitrary[List[Entry]] = Arbitrary(genRankingEntries)
-
   def genCatRanking(maxSize: Int): Gen[CategoryRanking] =
     listOfDistinctN(0, maxSize, arbPackage.arbitrary).map(CategoryRanking.apply)
 
-  val genRanking: Gen[Ranking] =
+  val genRanking: Gen[Rankings] =
     for {
       cats ← listOfDistinctN(0, 10, genEnumeratum[Category](Category))
       pairs ← cats.traverse({ cat ⇒
         for (r ← genCatRanking(10)) yield (cat, r)
       })(genMonad)
-    } yield Ranking(pairs.toMap)
+    } yield Rankings(pairs.toMap)
 
-  implicit val abRanking: Arbitrary[Ranking] = Arbitrary(genRanking)
+  implicit val abRanking: Arbitrary[Rankings] = Arbitrary(genRanking)
 
   val genDeviceApp: Gen[UnrankedApp] = for {
     p ← arbPackage.arbitrary

@@ -9,8 +9,8 @@ import cards.nine.processes.converters.Converters._
 import cards.nine.processes.messages.rankings._
 import cards.nine.services.free.algebra
 import cards.nine.services.free.algebra.GoogleAnalytics
-import cards.nine.services.free.domain.RedisRanking
-import cards.nine.services.free.domain.rankings._
+import cards.nine.services.free.domain.{ Ranking ⇒ RankingDomain }
+import cards.nine.services.free.domain.Ranking.{ CategoryRanking, GoogleAnalyticsRanking, Rankings, RankingParams }
 import cats.data.Xor
 import cats.syntax.xor._
 import cats.free.Free
@@ -22,19 +22,19 @@ class RankingProcesses[F[_]](
   implicit
   analytics: GoogleAnalytics.Services[F],
   countryPersistence: algebra.Country.Services[F],
-  rankingServices: algebra.RedisRanking.Services[F]
+  rankingServices: algebra.Ranking.Services[F]
 ) {
 
   def getRedisScope(scope: GeoScope) = scope match {
-    case WorldScope ⇒ RedisRanking.WorldScope
-    case ContinentScope(_) ⇒ RedisRanking.WorldScope
-    case CountryScope(country) ⇒ RedisRanking.CountryScope(country.entryName)
+    case WorldScope ⇒ RankingDomain.WorldScope
+    case ContinentScope(_) ⇒ RankingDomain.WorldScope
+    case CountryScope(country) ⇒ RankingDomain.CountryScope(country.entryName)
   }
 
   def getRanking(scope: GeoScope): Free[F, Get.Response] = {
 
     rankingServices.getRanking(getRedisScope(scope)) map { rankings ⇒
-      Get.Response(Ranking(rankings.categories map {
+      Get.Response(Rankings(rankings.categories map {
         case (category, list) ⇒ (Category.withName(category), CategoryRanking(list))
       }))
     }
@@ -48,8 +48,10 @@ class RankingProcesses[F[_]](
           Reload.Error(error.code, error.message, error.status).left
         }
         case Xor.Right(ranking) ⇒
-          val redisRankings = RedisRanking.GoogleAnalyticsRanking(ranking.categories.map { case (category, rank) ⇒ (category.entryName, rank.ranking) })
-          rankingServices.updateRanking(getRedisScope(scope), redisRankings).map(_ ⇒ Reload.Response().right)
+          val Rankings = GoogleAnalyticsRanking(ranking.categories.map {
+            case (category, rank) ⇒ (category.entryName, rank.ranking)
+          })
+          rankingServices.updateRanking(getRedisScope(scope), Rankings).map(_ ⇒ Reload.Response().right)
       }
     } yield res
 
@@ -107,7 +109,7 @@ object RankingProcesses {
     implicit
     analytics: GoogleAnalytics.Services[F],
     countryPersistence: algebra.Country.Services[F],
-    rankingServices: algebra.RedisRanking.Services[F]
+    rankingServices: algebra.Ranking.Services[F]
   ) = new RankingProcesses
 
 }

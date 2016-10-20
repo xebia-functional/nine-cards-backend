@@ -2,7 +2,7 @@ package cards.nine.services.free.algebra
 
 import cats.free.{ Free, Inject }
 import cards.nine.domain.analytics.GeoScope
-import cards.nine.services.free.domain.rankings.{ RankingParams, TryRanking }
+import cards.nine.services.free.domain.Ranking.{ RankingParams, TryRanking }
 
 object GoogleAnalytics {
 
