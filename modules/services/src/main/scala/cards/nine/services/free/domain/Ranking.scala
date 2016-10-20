@@ -29,10 +29,6 @@ object rankings {
     ranking: Int
   )
 
-  case class UnrankedApp(packageName: Package, category: String)
-
-  case class RankedApp(packageName: Package, category: String, ranking: Option[Int])
-
   object Queries {
 
     val allFields = List("packageName", "category", "ranking")

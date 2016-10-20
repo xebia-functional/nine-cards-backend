@@ -27,10 +27,7 @@ object rankings {
   }
 
   object GetRankedDeviceApps {
-
     case class DeviceApp(packageName: Package)
-
-    case class RankedDeviceApp(packageName: Package, ranking: Option[Int])
   }
 
 }
