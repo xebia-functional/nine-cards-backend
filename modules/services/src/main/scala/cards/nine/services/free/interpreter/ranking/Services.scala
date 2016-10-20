@@ -5,7 +5,7 @@ import java.util.UUID
 
 import cards.nine.commons.NineCardsService.Result
 import cards.nine.domain.application.{ Category, Moments }
-import cards.nine.domain.analytics.GeoScope
+import cards.nine.domain.analytics.{ GeoScope, RankedApp, UnrankedApp }
 import cards.nine.services.free.algebra.Ranking._
 import cards.nine.services.free.domain.rankings._
 import cards.nine.services.persistence.{ CustomComposite, Persistence }

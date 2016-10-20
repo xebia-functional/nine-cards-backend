@@ -1,8 +1,8 @@
 package cards.nine.services.free.interpreter.ranking
 
-import cards.nine.domain.analytics.GeoScope
+import cards.nine.domain.analytics.{ GeoScope, RankedApp, UnrankedApp }
 import cards.nine.domain.application.Category
-import cards.nine.services.free.domain.rankings.{ CategoryRanking, Entry, Queries, RankedApp, Ranking, UnrankedApp }
+import cards.nine.services.free.domain.rankings.{ CategoryRanking, Entry, Queries, Ranking }
 import cards.nine.services.persistence.{ CustomComposite, DomainDatabaseContext, NineCardsScalacheckGen }
 import org.specs2.ScalaCheck
 import org.specs2.matcher.DisjunctionMatchers

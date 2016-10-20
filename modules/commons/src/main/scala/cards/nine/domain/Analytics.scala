@@ -1,5 +1,6 @@
 package cards.nine.domain.analytics
 
+import cards.nine.domain.application.Package
 import enumeratum.{ Enum, EnumEntry }
 import org.joda.time.DateTime
 
@@ -47,4 +48,8 @@ object ContinentScope {
 case class DateRange(startDate: DateTime, endDate: DateTime)
 
 case class AnalyticsToken(value: String) extends AnyVal
+
+case class UnrankedApp(packageName: Package, category: String)
+
+case class RankedApp(packageName: Package, category: String, position: Option[Int])
 

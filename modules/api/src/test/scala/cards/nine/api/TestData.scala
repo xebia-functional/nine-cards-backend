@@ -6,12 +6,12 @@ import cards.nine.api.messages.InstallationsMessages.ApiUpdateInstallationReques
 import cards.nine.api.messages.SharedCollectionMessages._
 import cards.nine.api.messages.UserMessages.ApiLoginRequest
 import cards.nine.domain.account._
+import cards.nine.domain.analytics.RankedApp
 import cards.nine.domain.application.{ Category, FullCardList, Package }
 import cards.nine.processes.ProcessesExceptions.SharedCollectionNotFoundException
 import cards.nine.processes.messages.InstallationsMessages._
 import cards.nine.processes.messages.SharedCollectionMessages._
 import cards.nine.processes.messages.UserMessages.{ LoginRequest, LoginResponse }
-import cards.nine.processes.messages.rankings.GetRankedDeviceApps.RankedDeviceApp
 import cards.nine.services.persistence.PersistenceExceptions.PersistenceException
 import org.joda.time.{ DateTime, DateTimeZone }
 import spray.http.HttpHeaders.RawHeader
@@ -168,7 +168,7 @@ object TestData {
       items    = deviceApps
     )
 
-    val getRankedAppsResponse = Map.empty[String, List[RankedDeviceApp]]
+    val getRankedAppsResponse = Map.empty[String, List[RankedApp]]
 
     val getRecommendationsByCategoryResponse = FullCardList(Nil, Nil)
 

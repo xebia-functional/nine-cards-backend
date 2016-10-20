@@ -1,10 +1,10 @@
 package cards.nine.processes
 
 import cards.nine.commons.NineCardsService
+import cards.nine.domain.analytics.RankedApp
 import cards.nine.processes.NineCardsServices._
 import cards.nine.processes.TestData.Values._
 import cards.nine.processes.TestData.rankings._
-import cards.nine.processes.messages.rankings.GetRankedDeviceApps.RankedDeviceApp
 import cards.nine.processes.messages.rankings._
 import cards.nine.services.free.algebra.{ Country, GoogleAnalytics, Ranking }
 import cards.nine.services.free.domain.rankings.UpdateRankingSummary
@@ -34,9 +34,9 @@ trait RankingsProcessesSpecification
 
     val rankingProcesses = RankingProcesses.processes[NineCardsServices]
 
-    def hasRankingInfo(hasRanking: Boolean): Matcher[RankedDeviceApp] = {
-      app: RankedDeviceApp ⇒
-        app.ranking.isDefined must_== hasRanking
+    def hasRankingInfo(hasRanking: Boolean): Matcher[RankedApp] = {
+      app: RankedApp ⇒
+        app.position.isDefined must_== hasRanking
     }
   }
 
@@ -92,19 +92,19 @@ class RankingsProcessesSpec extends RankingsProcessesSpecification {
     "return an empty response if no device apps are given" in new SuccessfulScope {
       val response = rankingProcesses.getRankedDeviceApps(location, emptyDeviceAppsMap)
 
-      response.foldMap(testInterpreters) must beRight[Map[String, List[RankedDeviceApp]]](Map.empty[String, List[RankedDeviceApp]])
+      response.foldMap(testInterpreters) must beRight[Map[String, List[RankedApp]]](Map.empty[String, List[RankedApp]])
     }
     "return all the device apps as ranked if there is ranking info for them" in new SuccessfulScope {
-      val response = rankingProcesses.getRankedDeviceApps(location, deviceAppsMap)
+      val response = rankingProcesses.getRankedDeviceApps(location, unrankedAppsMap)
 
-      response.foldMap(testInterpreters) must beRight[Map[String, List[RankedDeviceApp]]].which { r ⇒
+      response.foldMap(testInterpreters) must beRight[Map[String, List[RankedApp]]].which { r ⇒
         r.values.flatten must contain(hasRankingInfo(true)).forall
       }
     }
     "return all the device apps as unranked if there is no ranking info for them" in new UnsuccessfulScope {
-      val response = rankingProcesses.getRankedDeviceApps(location, deviceAppsMap)
+      val response = rankingProcesses.getRankedDeviceApps(location, unrankedAppsMap)
 
-      response.foldMap(testInterpreters) must beRight[Map[String, List[RankedDeviceApp]]].which { r ⇒
+      response.foldMap(testInterpreters) must beRight[Map[String, List[RankedApp]]].which { r ⇒
         r.values.flatten must contain(hasRankingInfo(false)).forall
       }
     }

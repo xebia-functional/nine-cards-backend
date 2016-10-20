@@ -4,8 +4,8 @@ import cards.nine.commons.NineCardsErrors.CountryNotFound
 import cards.nine.commons.NineCardsService
 import cards.nine.commons.NineCardsService._
 import cards.nine.domain.analytics._
+import cards.nine.domain.application.Package
 import cards.nine.processes.converters.Converters._
-import cards.nine.processes.messages.rankings.GetRankedDeviceApps.{ DeviceApp, RankedDeviceApp }
 import cards.nine.processes.messages.rankings._
 import cards.nine.services.free.algebra
 import cards.nine.services.free.algebra.GoogleAnalytics
@@ -37,13 +37,13 @@ class RankingProcesses[F[_]](
 
   def getRankedDeviceApps(
     location: Option[String],
-    deviceApps: Map[String, List[DeviceApp]]
-  ): Free[F, Result[Map[String, List[RankedDeviceApp]]]] = {
+    deviceApps: Map[String, List[Package]]
+  ): Free[F, Result[Map[String, List[RankedApp]]]] = {
 
-    def findAppsWithoutRanking(apps: List[DeviceApp], rankings: List[RankedDeviceApp]) =
+    def findAppsWithoutRanking(apps: List[Package], rankings: List[RankedApp], category: String) =
       apps.collect {
-        case app if !rankings.exists(_.packageName == app.packageName) ⇒
-          RankedDeviceApp(app.packageName, None)
+        case app if !rankings.exists(_.packageName == app) ⇒
+          RankedApp(app, category, None)
 
       }
 
@@ -52,7 +52,7 @@ class RankingProcesses[F[_]](
         .map(_.toGeoScope)
         .recover { case _: CountryNotFound ⇒ WorldScope }
 
-    def unifyDeviceApps(deviceApps: Map[String, List[DeviceApp]]) = {
+    def unifyDeviceApps(deviceApps: Map[String, List[Package]]) = {
       val (games, otherApps) = deviceApps.partition { case (cat, apps) ⇒ cat.matches("GAME\\_.*") }
 
       if (games.isEmpty)
@@ -62,7 +62,7 @@ class RankingProcesses[F[_]](
     }
 
     if (deviceApps.isEmpty)
-      NineCardsService.right(Map.empty[String, List[RankedDeviceApp]]).value
+      NineCardsService.right(Map.empty[String, List[RankedApp]]).value
     else {
       val unifiedDeviceApps = unifyDeviceApps(deviceApps)
       val unrankedApps = unifiedDeviceApps.flatMap {
@@ -72,12 +72,12 @@ class RankingProcesses[F[_]](
       for {
         geoScope ← location.fold(NineCardsService.right[F, GeoScope](WorldScope))(geoScopeFromLocation)
         rankedApps ← rankingPersistence.getRankingForApps(geoScope, unrankedApps)
-        rankedAppsByCategory = rankedApps.groupBy(_.category).mapValues(_.map(toRankedDeviceApp))
+        rankedAppsByCategory = rankedApps.groupBy(_.category)
         unrankedDeviceApps = unifiedDeviceApps map {
           case (category, apps) ⇒
-            (category, findAppsWithoutRanking(apps, rankedAppsByCategory.getOrElse(category, Nil)))
+            (category, findAppsWithoutRanking(apps, rankedAppsByCategory.getOrElse(category, Nil), category))
         }
-      } yield rankedAppsByCategory.combine(unrankedDeviceApps)
+      } yield rankedAppsByCategory combine unrankedDeviceApps
     }.value
   }
 
