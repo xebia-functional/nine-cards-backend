@@ -84,7 +84,7 @@ object rankings {
       s"""
          |SELECT A.packagename, R.category, R.ranking
          |FROM ${tableOf(scope)} as R INNER JOIN $tableName as A ON R.packagename=A.packagename
-         |WHERE R.category=A.category OR R.category IN (${moments.map(m ⇒ s"'$m'").mkString(",")})
+         |WHERE R.category=A.category
          |ORDER BY R.category, R.ranking
        """.stripMargin
   }
