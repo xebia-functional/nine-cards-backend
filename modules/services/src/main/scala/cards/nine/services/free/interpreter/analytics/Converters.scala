@@ -1,30 +1,29 @@
 package cards.nine.services.free.interpreter.analytics
 
 import cards.nine.domain.analytics.{ GeoScope ⇒ DomainScope, _ }
-import cards.nine.domain.application.{ Category, Package }
-import cards.nine.services.free.domain.Ranking.{ CategoryRanking, Rankings }
+import cards.nine.domain.application.Package
+import cards.nine.services.free.domain.Ranking.GoogleAnalyticsRanking
 
 object Converters {
 
   import model._
 
-  type Cell = (Category, Package)
+  type Cell = (String, Package)
 
-  def parseRanking(response: ResponseBody, rankingSize: Int, geoScope: DomainScope): Rankings = {
-    def buildScore(cells: List[Cell]): CategoryRanking = CategoryRanking(
-      cells.map(_._2).take(rankingSize)
-    )
+  def parseRanking(response: ResponseBody, rankingSize: Int, geoScope: DomainScope): GoogleAnalyticsRanking = {
+    def buildScore(cells: List[Cell]): List[Package] = cells.map(_._2).take(rankingSize)
+
     val rows: List[ReportRow] = response.reports.headOption match {
       case Some(report) ⇒ report.data.rows
       case None ⇒ throw new RuntimeException("Response from Google API contained no report")
     }
-    val scores: Map[Category, CategoryRanking] =
+    val scores: Map[String, List[Package]] =
       rows
         .map(parseCellFor(geoScope, _))
         .collect { case (Some(cat), pack) ⇒ (cat, pack) }
         .groupBy(_._1)
         .mapValues(buildScore)
-    Rankings(scores)
+    GoogleAnalyticsRanking(scores)
   }
 
   def buildRequest(geoScope: DomainScope, viewId: String, dateRange: DateRange): RequestBody =
@@ -44,7 +43,6 @@ object Converters {
     val tailDimensions = List(Dimension.category, Dimension.packageName)
     scope match {
       case CountryScope(_) ⇒ Dimension.country :: tailDimensions
-      case ContinentScope(_) ⇒ Dimension.continent :: tailDimensions
       case WorldScope ⇒ tailDimensions
     }
   }
@@ -53,7 +51,6 @@ object Converters {
     import DimensionFilter._
     scope match {
       case CountryScope(country) ⇒ singleClause(Filter.isCountry(country))
-      case ContinentScope(continent) ⇒ singleClause(Filter.isContinent(continent))
       case WorldScope ⇒ Nil
     }
   }
@@ -61,11 +58,10 @@ object Converters {
   private[Converters] def parseCellFor(scope: DomainScope, row: ReportRow) = {
     val tailDimensions: List[String] = scope match {
       case CountryScope(_) ⇒ row.dimensions.drop(1) // drop first dimension: country
-      case ContinentScope(_) ⇒ row.dimensions.drop(1) // drop first dimension: continent
       case WorldScope ⇒ row.dimensions
     }
-    val List(categoryStr, packageStr) = tailDimensions
-    (Category.withNameOption(categoryStr), Package(packageStr))
+    val List(category, packageStr) = tailDimensions
+    (category, Package(packageStr))
   }
 
 }

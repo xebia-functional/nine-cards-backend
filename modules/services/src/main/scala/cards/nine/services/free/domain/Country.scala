@@ -1,6 +1,6 @@
 package cards.nine.services.free.domain
 
-import cards.nine.domain.analytics.{ CountryScope, ContinentScope, GeoScope, WorldScope }
+import cards.nine.domain.analytics.{ CountryScope, GeoScope, WorldScope }
 
 case class Country(
   isoCode2: String,
@@ -14,7 +14,6 @@ object Country {
   implicit class CountryOps(country: Country) {
     def toGeoScope: GeoScope =
       CountryScope.lookup(country.name)
-        .orElse(ContinentScope.lookup(country.continent))
         .getOrElse(WorldScope)
   }
 

@@ -1,6 +1,6 @@
 package cards.nine.api.utils
 
-import cards.nine.domain.analytics.{ Continent, Country }
+import cards.nine.domain.analytics.Country
 import cards.nine.domain.application.{ Category, PriceFilter }
 import enumeratum.{ Enum, EnumEntry }
 import shapeless._
@@ -22,7 +22,6 @@ object SprayMatchers {
   }
 
   val CategorySegment: PathMatcher1[Category] = new EnumSegment[Category]
-  val ContinentSegment: PathMatcher1[Continent] = new EnumSegment[Continent]
   val CountrySegment: PathMatcher1[Country] = new EnumSegment[Country]
   val PriceFilterSegment: PathMatcher1[PriceFilter] = new EnumSegment[PriceFilter]
 
