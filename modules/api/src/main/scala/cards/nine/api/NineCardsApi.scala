@@ -11,13 +11,14 @@ import cards.nine.api.messages.UserMessages._
 import cards.nine.api.utils.SprayMarshallers._
 import cards.nine.api.utils.SprayMatchers._
 import cards.nine.domain.account.SessionToken
-import cards.nine.domain.analytics.{ ContinentScope, CountryScope, GeoScope, WorldScope }
-import cards.nine.domain.application.{ FullCardList, Category, PriceFilter }
+import cards.nine.domain.analytics.{ CountryScope, GeoScope, RankingParams, WorldScope }
+import cards.nine.domain.application.{ Category, FullCardList, PriceFilter }
 import cards.nine.commons.NineCardsService.Result
 import cards.nine.processes.NineCardsServices._
 import cards.nine.processes._
 import cards.nine.services.free.domain.Ranking._
 import cats.data.Xor
+
 import scala.concurrent.ExecutionContext
 import spray.http.StatusCodes.NotFound
 import spray.routing._
@@ -413,15 +414,12 @@ class NineCardsRoutes(
       }
 
     private[this] lazy val geographicScope: Directive1[GeoScope] = {
-      val continent: Directive1[GeoScope] =
-        path("continents" / ContinentSegment)
-          .map(c ⇒ ContinentScope(c): GeoScope)
       val country: Directive1[GeoScope] =
         path("countries" / CountrySegment)
           .map(c ⇒ CountryScope(c): GeoScope)
       val world = path("world") & provide(WorldScope: GeoScope)
 
-      world | continent | country
+      world | country
     }
 
     private[this] lazy val reloadParams: Directive1[RankingParams] =

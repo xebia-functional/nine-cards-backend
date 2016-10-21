@@ -45,7 +45,7 @@ trait RankingsProcessesSpecification
     analyticsServices.getRanking(
       scope  = any,
       params = mockEq(params)
-    ) returns Free.pure(Xor.right(ranking))
+    ) returns Free.pure(Xor.right(googleAnalyticsRanking))
 
     countryServices.getCountryByIsoCode2("US") returns NineCardsService.right(country)
 
@@ -76,7 +76,7 @@ class RankingsProcessesSpec extends RankingsProcessesSpecification {
   "getRanking" should {
     "give the valid ranking" in new SuccessfulScope {
       val response = rankingProcesses.getRanking(scope)
-      response.foldMap(testInterpreters) mustEqual Get.Response(ranking)
+      response.foldMap(testInterpreters) mustEqual Get.Response(googleAnalyticsRanking)
     }
   }
 

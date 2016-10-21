@@ -5,13 +5,13 @@ import java.time.Instant
 
 import cards.nine.commons.NineCardsErrors.CountryNotFound
 import cards.nine.domain.account.{ AndroidId, DeviceToken }
-import cards.nine.domain.analytics.{ AnalyticsToken, CountryScope, DateRange, RankedApp, Country ⇒ CountryEnum }
+import cards.nine.domain.analytics.{ AnalyticsToken, CountryScope, DateRange, RankedApp, RankingParams, Country ⇒ CountryEnum }
 import cards.nine.domain.application.{ Category, FullCard, FullCardList, Package }
 import cards.nine.domain.market.{ Localization, MarketCredentials, MarketToken }
 import cards.nine.processes.ProcessesExceptions.SharedCollectionNotFoundException
 import cards.nine.processes.messages.SharedCollectionMessages._
 import cards.nine.services.free.domain.Firebase.{ NotificationIndividualResult, NotificationResponse }
-import cards.nine.services.free.domain.Ranking.{ CategoryRanking, GoogleAnalyticsRanking, RankingError, RankingParams, Rankings, CountryScope ⇒ RedisCountryScope }
+import cards.nine.services.free.domain.Ranking.{ GoogleAnalyticsRanking, RankingError, CountryScope ⇒ RedisCountryScope }
 import cards.nine.services.free.domain.{ SharedCollection ⇒ SharedCollectionServices, _ }
 import cards.nine.services.free.interpreter.collection.Services.{ SharedCollectionData ⇒ SharedCollectionDataServices }
 import org.joda.time.{ DateTime, DateTimeZone }
@@ -324,8 +324,6 @@ object TestData {
     lazy val endDate = new DateTime(2016, 2, 1, 0, 0, DateTimeZone.UTC)
     lazy val params = RankingParams(DateRange(startDate, endDate), 5, AnalyticsToken("auth_token"))
     lazy val error = RankingError(401, "Unauthorized", "Unauthorized")
-    lazy val ranking = Rankings(Map(Category.SOCIAL →
-      CategoryRanking(List(Package("socialite"), Package("socialist")))))
     lazy val googleAnalyticsRanking = GoogleAnalyticsRanking(Map("SOCIAL" →
       List(Package("socialite"), Package("socialist"))))
 

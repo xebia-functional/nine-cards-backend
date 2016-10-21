@@ -4,13 +4,13 @@ import cards.nine.commons.NineCardsErrors.CountryNotFound
 import cards.nine.commons.NineCardsService
 import cards.nine.commons.NineCardsService._
 import cards.nine.domain.analytics._
-import cards.nine.domain.application.{ Category, Package }
+import cards.nine.domain.application.Package
 import cards.nine.processes.converters.Converters._
 import cards.nine.processes.messages.rankings._
 import cards.nine.services.free.algebra
 import cards.nine.services.free.algebra.GoogleAnalytics
 import cards.nine.services.free.domain.{ Ranking ⇒ RankingDomain }
-import cards.nine.services.free.domain.Ranking.{ CategoryRanking, GoogleAnalyticsRanking, Rankings, RankingParams }
+import cards.nine.services.free.domain.Ranking.GoogleAnalyticsRanking
 import cats.data.Xor
 import cats.syntax.xor._
 import cats.free.Free
@@ -27,16 +27,13 @@ class RankingProcesses[F[_]](
 
   def getRedisScope(scope: GeoScope) = scope match {
     case WorldScope ⇒ RankingDomain.WorldScope
-    case ContinentScope(_) ⇒ RankingDomain.WorldScope
     case CountryScope(country) ⇒ RankingDomain.CountryScope(country.entryName)
   }
 
   def getRanking(scope: GeoScope): Free[F, Get.Response] = {
 
     rankingServices.getRanking(getRedisScope(scope)) map { rankings ⇒
-      Get.Response(Rankings(rankings.categories map {
-        case (category, list) ⇒ (Category.withName(category), CategoryRanking(list))
-      }))
+      Get.Response(GoogleAnalyticsRanking(rankings.categories))
     }
   }
 
@@ -48,10 +45,7 @@ class RankingProcesses[F[_]](
           Reload.Error(error.code, error.message, error.status).left
         }
         case Xor.Right(ranking) ⇒
-          val Rankings = GoogleAnalyticsRanking(ranking.categories.map {
-            case (category, rank) ⇒ (category.entryName, rank.ranking)
-          })
-          rankingServices.updateRanking(getRedisScope(scope), Rankings).map(_ ⇒ Reload.Response().right)
+          rankingServices.updateRanking(getRedisScope(scope), ranking).map(_ ⇒ Reload.Response().right)
       }
     } yield res
 
