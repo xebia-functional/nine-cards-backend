@@ -39,7 +39,7 @@ object SharedCollectionMessages {
     subscriptions: Option[Long] = None
   )
 
-  // AppCollectionApp: FullCard without Screenshots, and only one category
+  // AppCollectionApp: FullCard without Screenshots
   case class ApiCollectionApp(
     packageName: Package,
     title: String,
@@ -47,7 +47,7 @@ object SharedCollectionMessages {
     icon: String,
     stars: Double,
     downloads: String,
-    category: String
+    categories: List[String]
   )
 
   case class ApiSharedCollectionList(collections: List[ApiSharedCollection])

@@ -27,10 +27,10 @@ class ConvertersSpec
 
         val request = Converters.toLoginRequest(apiRequest, sessionToken)
 
-        request.androidId shouldEqual apiRequest.androidId
-        request.email shouldEqual apiRequest.email
-        request.sessionToken shouldEqual sessionToken
-        request.tokenId shouldEqual apiRequest.tokenId
+        request.androidId must_== apiRequest.androidId
+        request.email must_== apiRequest.email
+        request.sessionToken must_== sessionToken
+        request.tokenId must_== apiRequest.tokenId
       }
     }
   }
@@ -41,7 +41,7 @@ class ConvertersSpec
 
         val apiLoginResponse = Converters.toApiLoginResponse(response)
 
-        apiLoginResponse.sessionToken shouldEqual response.sessionToken
+        apiLoginResponse.sessionToken must_== response.sessionToken
       }
     }
   }
@@ -54,9 +54,9 @@ class ConvertersSpec
 
         val request = Converters.toUpdateInstallationRequest(apiRequest, userContext)
 
-        request.androidId shouldEqual androidId
-        request.deviceToken shouldEqual apiRequest.deviceToken
-        request.userId shouldEqual userId.value
+        request.androidId must_== androidId
+        request.deviceToken must_== apiRequest.deviceToken
+        request.userId must_== userId.value
       }
     }
   }
@@ -67,8 +67,8 @@ class ConvertersSpec
 
         val apiResponse = Converters.toApiUpdateInstallationResponse(response)
 
-        apiResponse.androidId shouldEqual response.androidId
-        apiResponse.deviceToken shouldEqual response.deviceToken
+        apiResponse.androidId must_== response.androidId
+        apiResponse.deviceToken must_== response.deviceToken
       }
     }
   }
@@ -79,14 +79,12 @@ class ConvertersSpec
 
         val apiResponse = Converters.toApiCategorizeAppsResponse(response)
 
-        apiResponse.errors shouldEqual response.missing
+        apiResponse.errors must containTheSameElementsAs(response.missing)
+
         forall(apiResponse.items) { item ⇒
           response.cards.exists(appInfo ⇒
             appInfo.packageName == item.packageName &&
-              (
-                (appInfo.categories.nonEmpty && appInfo.categories.contains(item.category)) ||
-                (appInfo.categories.isEmpty && item.category.isEmpty)
-              ))
+              appInfo.categories == item.categories)
         }
       }
     }
@@ -98,8 +96,8 @@ class ConvertersSpec
 
         val apiResponse = Converters.toApiDetailAppsResponse(response)
 
-        apiResponse.errors shouldEqual response.missing
-        apiResponse.items shouldEqual (response.cards map Converters.toApiDetailsApp)
+        apiResponse.errors must_== response.missing
+        apiResponse.items must_== (response.cards map Converters.toApiDetailsApp)
       }
     }
   }
@@ -113,9 +111,9 @@ class ConvertersSpec
 
         val marketAuth = Converters.toMarketAuth(googlePlayContext, userContext)
 
-        marketAuth.token shouldEqual token
-        marketAuth.localization shouldEqual localization
-        marketAuth.androidId shouldEqual androidId
+        marketAuth.token must_== token
+        marketAuth.localization must_== localization
+        marketAuth.androidId must_== androidId
       }
     }
   }
@@ -126,8 +124,8 @@ class ConvertersSpec
 
         val apiResponse = Converters.toApiCreateOrUpdateCollectionResponse(response)
 
-        apiResponse.packagesStats shouldEqual response.packagesStats
-        apiResponse.publicIdentifier shouldEqual response.publicIdentifier
+        apiResponse.packagesStats must_== response.packagesStats
+        apiResponse.publicIdentifier must_== response.publicIdentifier
       }
     }
   }
@@ -138,7 +136,7 @@ class ConvertersSpec
 
         val apiResponse = Converters.toApiGetSubscriptionsByUser(response)
 
-        apiResponse.subscriptions shouldEqual response.subscriptions
+        apiResponse.subscriptions must_== response.subscriptions
       }
     }
   }
