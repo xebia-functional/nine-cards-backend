@@ -7,8 +7,6 @@ import cards.nine.services.free.interpreter.collection.Services.SharedCollection
 import cards.nine.services.free.interpreter.user.Services.UserData
 import cards.nine.services.persistence.NineCardsGenEntities._
 import cats.Monad
-import cats.syntax.traverse._
-import cats.instances.list._
 import enumeratum.{ Enum, EnumEntry }
 import java.sql.Timestamp
 import java.time.Instant
@@ -99,15 +97,6 @@ trait NineCardsScalacheckGen {
   def abEnumeratum[C <: EnumEntry](e: Enum[C]): Arbitrary[C] = Arbitrary(genEnumeratum(e))
 
   implicit val abCategory: Arbitrary[Category] = abEnumeratum[Category](Category)
-
-  implicit val abCountry: Arbitrary[Country] = abEnumeratum[Country](Country)
-
-  val genGeoScope: Gen[GeoScope] = {
-    val countries = Country.values.toSeq map CountryScope.apply
-    Gen.oneOf(countries ++ Seq(WorldScope))
-  }
-
-  implicit val abGeoScope: Arbitrary[GeoScope] = Arbitrary(genGeoScope)
 
   private[this] val genMonad: Monad[Gen] = new Monad[Gen] {
     def pure[A](a: A): Gen[A] = Gen.const(a)

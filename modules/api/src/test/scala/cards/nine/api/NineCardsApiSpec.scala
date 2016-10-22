@@ -7,11 +7,11 @@ import cards.nine.api.TestData.Exceptions._
 import cards.nine.api.TestData._
 import cards.nine.commons.NineCardsService
 import cards.nine.domain.account._
-import cards.nine.domain.analytics.Country
 import cards.nine.processes.NineCardsServices._
 import cards.nine.processes._
 import cards.nine.processes.messages.UserMessages._
 import cats.free.Free
+import cats.syntax.either._
 import cats.syntax.xor._
 import org.mockito.Matchers.{ eq ⇒ mockEq }
 import org.specs2.matcher.Matchers
@@ -105,7 +105,7 @@ trait NineCardsApiSpecification
     rankingProcesses.getRanking(any) returns Free.pure(Messages.rankings.getResponse)
 
     rankingProcesses.reloadRanking(any, any) returns
-      Free.pure(Messages.rankings.reloadResponse.right)
+      Free.pure(Either.right(Messages.rankings.reloadResponse))
 
     recommendationsProcesses.getRecommendationsByCategory(any, any, any, any, any) returns
       Free.pure(Messages.getRecommendationsByCategoryResponse)
@@ -187,7 +187,7 @@ trait NineCardsApiSpecification
     rankingProcesses.getRanking(any) returns Free.pure(Messages.rankings.getResponse)
 
     rankingProcesses.reloadRanking(any, any) returns
-      Free.pure(Messages.rankings.reloadResponse.right)
+      Free.pure(Either.right(Messages.rankings.reloadResponse))
 
     rankingProcesses.getRankedDeviceApps(any, any) returns
       NineCardsService.right(Messages.getRankedAppsResponse).value
@@ -553,7 +553,7 @@ class NineCardsApiSpec
   }
 
   val rankingPaths: List[String] = {
-    val countries = Country.values.map(c ⇒ s"countries/$c").toList
+    val countries = List("countries/es", "countries/ES", "countries/gb", "countries/us", "countries/it")
     "world" :: countries
   }
 
