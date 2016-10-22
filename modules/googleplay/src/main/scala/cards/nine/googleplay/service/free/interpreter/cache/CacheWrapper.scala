@@ -23,21 +23,7 @@ class CacheWrapper[Key, Val](client: RedisClient)(implicit f: Format, pk: Parse[
     case _ ⇒ client.mset(entries: _*)
   }
 
-  def findFirst(keys: List[Key]): Option[Val] = {
-    loopTryKeys(keys)
-
-    @tailrec
-    def loopTryKeys(keys: List[Key]): Option[Val] = keys match {
-      case Nil ⇒ None
-      case key :: rkeys ⇒
-        get(key) match {
-          case oval @ Some(_) ⇒ oval
-          case None ⇒ loopTryKeys(rkeys)
-        }
-    }
-
-    loopTryKeys(keys)
-  }
+  def findFirst(keys: List[Key]): Option[Val] = keys.toStream.map(get).find(_.isDefined).flatten
 
   def matchKeys(pattern: JsonPattern): List[Key] =
     client
