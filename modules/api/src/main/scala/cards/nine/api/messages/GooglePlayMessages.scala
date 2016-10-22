@@ -4,7 +4,7 @@ import cards.nine.domain.application.Package
 
 object GooglePlayMessages {
 
-  case class CategorizedApp(packageName: Package, category: String)
+  case class CategorizedApp(packageName: Package, categories: List[String])
 
   case class ApiGetAppsInfoRequest(items: List[Package])
 
