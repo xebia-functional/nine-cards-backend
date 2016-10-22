@@ -1,6 +1,7 @@
 package cards.nine.googleplay.util
 
-import cards.nine.domain.application.{ Category, FullCard, Package, PriceFilter }
+import cards.nine.domain.application.{ Category, FullCard, PriceFilter }
+import cards.nine.domain.application.ScalaCheck.arbPackage
 import cards.nine.domain.market.MarketCredentials
 import cards.nine.googleplay.domain._
 import cats.data.Xor
@@ -78,10 +79,10 @@ object ScalaCheck_Aux {
   val genFullCard: Gen[FullCard] =
     for /*ScalaCheck.Gen*/ {
       title ← identifier
-      docid ← identifier
+      packageName ← arbPackage.arbitrary
       appDetails ← listOf(identifier)
     } yield FullCard(
-      packageName = Package(docid),
+      packageName = packageName,
       title       = title,
       free        = false,
       icon        = "",
