@@ -1,5 +1,6 @@
 package cards.nine.processes
 
+import cards.nine.commons.NineCardsErrors.ReportNotFound
 import cards.nine.commons.NineCardsService
 import cards.nine.domain.analytics.RankedApp
 import cards.nine.processes.NineCardsServices._
@@ -43,24 +44,25 @@ trait RankingsProcessesSpecification
   trait SuccessfulScope extends BasicScope {
 
     analyticsServices.getRanking(
-      scope  = any,
+      name   = any,
       params = mockEq(params)
-    ) returns Free.pure(Xor.right(googleAnalyticsRanking))
+    ) returns NineCardsService.right(googleAnalyticsRanking)
 
-    countryServices.getCountryByIsoCode2("US") returns NineCardsService.right(country)
+    countryServices.getCountryByIsoCode2(any) returns NineCardsService.right(country)
 
     rankingServices.getRanking(any) returns Free.pure(googleAnalyticsRanking)
 
-    rankingServices.updateRanking(redisScope, googleAnalyticsRanking) returns Free.pure(UpdateRankingSummary(0, 0))
+    rankingServices.updateRanking(scope, googleAnalyticsRanking) returns
+      NineCardsService.right(UpdateRankingSummary(0, 0))
 
     rankingServices.getRankingForApps(any, any) returns NineCardsService.right(rankedAppsList)
   }
 
   trait UnsuccessfulScope extends BasicScope {
 
-    analyticsServices.getRanking(any, any) returns Free.pure(Xor.left(TestData.rankings.error))
+    analyticsServices.getRanking(any, any) returns NineCardsService.left(ReportNotFound("Report not found"))
 
-    countryServices.getCountryByIsoCode2("US") returns NineCardsService.left(countryNotFoundError)
+    countryServices.getCountryByIsoCode2(any) returns NineCardsService.left(countryNotFoundError)
 
     rankingServices.getRanking(any) returns Free.pure(googleAnalyticsRanking)
 
@@ -83,7 +85,7 @@ class RankingsProcessesSpec extends RankingsProcessesSpecification {
   "reloadRanking" should {
     "give a good answer" in new SuccessfulScope {
       val response = rankingProcesses.reloadRanking(scope, params)
-      response.foldMap(testInterpreters) mustEqual Xor.Right(Reload.Response())
+      response.foldMap(testInterpreters) must beRight(Reload.Response())
     }
 
   }

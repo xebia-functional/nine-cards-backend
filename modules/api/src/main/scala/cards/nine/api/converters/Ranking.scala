@@ -1,8 +1,10 @@
 package cards.nine.api.converters
 
 import cards.nine.api.messages.{ rankings ⇒ Api }
+import cards.nine.commons.NineCardsService.Result
 import cards.nine.domain.analytics.{ AnalyticsToken, DateRange, RankingParams }
 import cards.nine.processes.messages.rankings.{ Get, Reload }
+import cats.syntax.either._
 
 object rankings {
 
@@ -16,11 +18,8 @@ object rankings {
       RankingParams(dateRange, length, AnalyticsToken(token))
     }
 
-    def toXorResponse(proc: Reload.XorResponse): Api.Reload.XorResponse =
-      proc.bimap(
-        err ⇒ Api.Reload.Error(err.code, err.message, err.status),
-        res ⇒ Api.Reload.Response()
-      )
+    def toApiResponse(response: Result[Reload.Response]): Result[Api.Reload.Response] =
+      response map (_ ⇒ Api.Reload.Response())
   }
 
 }

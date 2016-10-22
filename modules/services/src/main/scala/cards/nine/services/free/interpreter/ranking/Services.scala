@@ -1,7 +1,7 @@
 package cards.nine.services.free.interpreter.ranking
 
 import cards.nine.commons.CacheWrapper
-import cards.nine.domain.analytics.RankedApp
+import cards.nine.domain.analytics.{ CountryScope, GeoScope, RankedApp, WorldScope }
 import cards.nine.domain.application.{ Category, Moments, Package }
 import cards.nine.googleplay.processes.withTypes.WithRedisClient
 import cards.nine.services.free.algebra.Ranking._
@@ -25,7 +25,7 @@ class Services(implicit
 
   private[this] def generateCacheKey(scope: GeoScope) = scope match {
     case WorldScope ⇒ CacheKey.worldScope
-    case CountryScope(code) ⇒ CacheKey.countryScope(code)
+    case CountryScope(code) ⇒ CacheKey.countryScope(code.value)
   }
 
   def apply[A](fa: Ops[A]): WithRedisClient[A] = fa match {
@@ -78,13 +78,13 @@ class Services(implicit
 
         val key = scope match {
           case WorldScope ⇒ CacheKey.worldScope
-          case CountryScope(code) ⇒ CacheKey.countryScope(code)
+          case CountryScope(code) ⇒ CacheKey.countryScope(code.value)
         }
 
         val value = CacheVal(Option(ranking))
 
         wrap.put((key, value))
-        UpdateRankingSummary(ranking.categories.values.size, 0)
+        Either.right(UpdateRankingSummary(ranking.categories.values.size, 0))
       }
   }
 }
