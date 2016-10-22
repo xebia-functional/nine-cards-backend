@@ -2,8 +2,10 @@ package cards.nine.api
 
 import cards.nine.api.messages._
 import cards.nine.api.utils.SprayMarshallers._
+import cards.nine.commons.NineCardsService.Result
 import cards.nine.processes.NineCardsServices._
-import io.circe.spray.{ RootDecoder, JsonSupport }
+import io.circe.spray.{ JsonSupport, RootDecoder }
+
 import scalaz.concurrent.Task
 import spray.httpx.marshalling.{ Marshaller, ToResponseMarshaller }
 import spray.httpx.unmarshalling.Unmarshaller
@@ -18,12 +20,12 @@ object NineCardsMarshallers {
     freeTaskMarshaller[rankings.Ranking](taskM)
   }
 
-  implicit lazy val reloadResponse: ToResponseMarshaller[NineCardsServed[rankings.Reload.XorResponse]] = {
+  implicit lazy val reloadResponse: ToResponseMarshaller[NineCardsServed[Result[rankings.Reload.Response]]] = {
     import rankings.Reload._
-    val resM: ToResponseMarshaller[Response] = JsonSupport.circeJsonMarshaller(Encoders.reloadRankingResponse)
-    val xorM: ToResponseMarshaller[XorResponse] = catsXorMarshaller[Error, Response](resM)
-    val taskM: ToResponseMarshaller[Task[XorResponse]] = tasksMarshaller(xorM)
-    freeTaskMarshaller[XorResponse](taskM)
+    implicit val resM: ToResponseMarshaller[Response] = JsonSupport.circeJsonMarshaller(Encoders.reloadRankingResponse)
+    val resultM: ToResponseMarshaller[Result[Response]] = ninecardsResultMarshaller[Response]
+    val taskM: ToResponseMarshaller[Task[Result[Response]]] = tasksMarshaller(resultM)
+    freeTaskMarshaller[Result[Response]](taskM)
   }
 
   implicit lazy val reloadRequestU: Unmarshaller[rankings.Reload.Request] = {

@@ -1,6 +1,6 @@
 package cards.nine.services.free.interpreter.analytics
 
-import cards.nine.domain.analytics.{ Country, DateRange }
+import cards.nine.domain.analytics.{ CountryName, DateRange }
 import enumeratum._
 
 object model {
@@ -99,13 +99,11 @@ object model {
     )
     object Filter {
 
-      def isCountry(country: Country) = isEntry(Dimension.country, country)
-
-      private def isEntry(dimension: Dimension, entry: EnumEntry): Filter = Filter(
-        dimensionName = dimension.name,
+      def isCountry(name: CountryName): Filter = Filter(
+        dimensionName = Dimension.country.name,
         not           = false,
         operator      = Operator.EXACT,
-        expressions   = List(entry.entryName.replace('_', ' ')),
+        expressions   = List(name.value),
         caseSensitive = false
       )
 

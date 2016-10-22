@@ -1,6 +1,6 @@
 package cards.nine.services.free.domain
 
-import cards.nine.domain.analytics.ReportType
+import cards.nine.domain.analytics._
 import cards.nine.domain.analytics.ReportType.AppsRankingByCategory
 import cards.nine.domain.application.Package
 import cats.data.Xor
@@ -17,12 +17,6 @@ object Ranking {
 
   case class AppRankingInfo(packageName: Package, position: Int)
 
-  sealed abstract class GeoScope extends Product with Serializable
-
-  case class CountryScope(code: String) extends GeoScope
-
-  case object WorldScope extends GeoScope
-
   case class CacheKey(scope: GeoScope, reportType: ReportType)
 
   case class CacheVal(ranking: Option[GoogleAnalyticsRanking])
@@ -31,7 +25,7 @@ object Ranking {
 
     def worldScope: CacheKey = CacheKey(WorldScope, AppsRankingByCategory)
 
-    def countryScope(code: String): CacheKey = CacheKey(CountryScope(code), AppsRankingByCategory)
+    def countryScope(code: String): CacheKey = CacheKey(CountryScope(CountryIsoCode(code)), AppsRankingByCategory)
 
   }
 }

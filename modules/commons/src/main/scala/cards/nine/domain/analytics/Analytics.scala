@@ -6,31 +6,15 @@ import org.joda.time.DateTime
 
 package analytics {
 
-  sealed trait Country extends EnumEntry
+  case class CountryIsoCode(value: String) extends AnyVal
 
-  object Country extends Enum[Country] {
+  case class CountryName(value: String) extends AnyVal
 
-    case object Spain extends Country
+  sealed abstract class GeoScope extends Product with Serializable
 
-    case object United_Kingdom extends Country
-
-    case object United_States extends Country
-
-    val values = super.findValues
-  }
-
-  sealed trait GeoScope
-
-  case class CountryScope(country: Country) extends GeoScope
+  case class CountryScope(code: CountryIsoCode) extends GeoScope
 
   case object WorldScope extends GeoScope
-
-  object CountryScope {
-    def lookup(name: String): Option[CountryScope] =
-      Country
-        .withNameOption(name.replace(" ", "_"))
-        .map(CountryScope.apply)
-  }
 
   sealed abstract class ReportType extends EnumEntry
 

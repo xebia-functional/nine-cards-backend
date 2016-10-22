@@ -1,9 +1,8 @@
 package cards.nine.services.free.interpreter.analytics
 
-import cats.data.Xor
 import cards.nine.domain.analytics.DateRange
 import cards.nine.services.free.domain.Ranking.RankingError
-import cards.nine.services.common.XorDecoder
+import cards.nine.services.common.EitherDecoder
 import enumeratum.{ Circe ⇒ CirceEnum }
 import io.circe.generic.auto._
 import io.circe.generic.semiauto._
@@ -46,7 +45,7 @@ object Decoders {
 
   implicit val responseBody: Decoder[ResponseBody] = deriveDecoder[ResponseBody]
 
-  implicit val responseBodyError: Decoder[RankingError Xor ResponseBody] =
-    XorDecoder.xorDecoder[RankingError, ResponseBody]
+  implicit val responseBodyError: Decoder[RankingError Either ResponseBody] =
+    EitherDecoder.eitherDecoder[RankingError, ResponseBody]
 
 }
