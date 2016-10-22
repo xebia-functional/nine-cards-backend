@@ -1,70 +1,65 @@
 package cards.nine.services.free.interpreter.analytics
 
-import cards.nine.domain.analytics.{ GeoScope ⇒ DomainScope, _ }
-import cards.nine.domain.application.{ Category, Package }
-import cards.nine.services.free.domain.Ranking.{ CategoryRanking, Rankings }
+import cards.nine.commons.NineCardsErrors.ReportNotFound
+import cards.nine.commons.NineCardsService.Result
+import cards.nine.domain.analytics._
+import cards.nine.domain.application.Package
+import cards.nine.services.free.domain.Ranking.GoogleAnalyticsRanking
+import cards.nine.services.free.interpreter.analytics.model.DimensionFilter._
+import cats.syntax.either._
 
 object Converters {
 
   import model._
 
-  type Cell = (Category, Package)
+  type Cell = (String, Package)
 
-  def parseRanking(response: ResponseBody, rankingSize: Int, geoScope: DomainScope): Rankings = {
-    def buildScore(cells: List[Cell]): CategoryRanking = CategoryRanking(
-      cells.map(_._2).take(rankingSize)
-    )
-    val rows: List[ReportRow] = response.reports.headOption match {
-      case Some(report) ⇒ report.data.rows
-      case None ⇒ throw new RuntimeException("Response from Google API contained no report")
+  def parseRanking(
+    response: ResponseBody,
+    rankingSize: Int,
+    name: Option[CountryName]
+  ): Result[GoogleAnalyticsRanking] = {
+    def buildScore(cells: List[Cell]): List[Package] = cells.map(_._2).take(rankingSize)
+
+    Either.fromOption(response.reports.headOption, ReportNotFound("Report not found")) map {
+      report ⇒
+        GoogleAnalyticsRanking(
+          report.data.rows
+            .map(parseCellFor(name, _))
+            .groupBy(_._1)
+            .mapValues(buildScore)
+        )
     }
-    val scores: Map[Category, CategoryRanking] =
-      rows
-        .map(parseCellFor(geoScope, _))
-        .groupBy(_._1)
-        .mapValues(buildScore)
-    Rankings(scores)
   }
 
-  def buildRequest(geoScope: DomainScope, viewId: String, dateRange: DateRange): RequestBody =
+  def buildRequest(name: Option[CountryName], viewId: String, dateRange: DateRange): RequestBody =
     RequestBody(ReportRequest(
       viewId                 = viewId,
-      dimensions             = dimensionsFor(geoScope),
+      dimensions             = dimensionsFor(name),
       metrics                = List(Metric.eventValue),
       dateRanges             = List(dateRange),
-      dimensionFilterClauses = dimensionFiltersFor(geoScope),
+      dimensionFilterClauses = dimensionFiltersFor(name),
       orderBys               = {
         import order.OrderBy.{ category, eventValue }
         List(category, eventValue)
       }
     ))
 
-  private[Converters] def dimensionsFor(scope: DomainScope): List[Dimension] = {
+  private[Converters] def dimensionsFor(code: Option[CountryName]): List[Dimension] = {
     val tailDimensions = List(Dimension.category, Dimension.packageName)
-    scope match {
-      case CountryScope(_) ⇒ Dimension.country :: tailDimensions
-      case ContinentScope(_) ⇒ Dimension.continent :: tailDimensions
-      case WorldScope ⇒ tailDimensions
-    }
+    code.fold(tailDimensions)(_ ⇒ Dimension.country :: tailDimensions)
   }
 
-  private[Converters] def dimensionFiltersFor(scope: DomainScope): DimensionFilter.Clauses = {
-    import DimensionFilter._
-    scope match {
-      case CountryScope(country) ⇒ singleClause(Filter.isCountry(country))
-      case ContinentScope(continent) ⇒ singleClause(Filter.isContinent(continent))
-      case WorldScope ⇒ Nil
-    }
-  }
+  private[Converters] def dimensionFiltersFor(code: Option[CountryName]): DimensionFilter.Clauses =
+    code
+      .map(name ⇒ singleClause(Filter.isCountry(name)))
+      .getOrElse(Nil)
 
-  private[Converters] def parseCellFor(scope: DomainScope, row: ReportRow): Cell = {
-    val tailDimensions: List[String] = scope match {
-      case CountryScope(_) ⇒ row.dimensions.drop(1) // drop first dimension: country
-      case ContinentScope(_) ⇒ row.dimensions.drop(1) // drop first dimension: continent
-      case WorldScope ⇒ row.dimensions
-    }
-    val List(categoryStr, packageStr) = tailDimensions
-    (Category.withName(categoryStr), Package(packageStr))
+  private[Converters] def parseCellFor(name: Option[CountryName], row: ReportRow): Cell = {
+    val tailDimensions: List[String] = name.fold(row.dimensions)(_ ⇒ row.dimensions.drop(1)) // drop first dimension: country
+
+    val List(category, packageStr) = tailDimensions
+    (category, Package(packageStr))
   }
 
 }
