@@ -1,18 +1,19 @@
 package cards.nine.processes
 
+import java.sql.Timestamp
+import java.time.Instant
+
 import cards.nine.commons.NineCardsErrors.CountryNotFound
 import cards.nine.domain.account.{ AndroidId, DeviceToken }
-import cards.nine.domain.analytics.{ AnalyticsToken, Country ⇒ CountryEnum, CountryScope, DateRange }
-import cards.nine.domain.application.{ Category, FullCard, FullCardList, Package }
+import cards.nine.domain.analytics._
+import cards.nine.domain.application.{ FullCard, FullCardList, Package }
 import cards.nine.domain.market.{ Localization, MarketCredentials, MarketToken }
 import cards.nine.processes.ProcessesExceptions.SharedCollectionNotFoundException
 import cards.nine.processes.messages.SharedCollectionMessages._
-import cards.nine.processes.messages.rankings.GetRankedDeviceApps.DeviceApp
-import cards.nine.services.free.domain.{ SharedCollection ⇒ SharedCollectionServices, _ }
 import cards.nine.services.free.domain.Firebase.{ NotificationIndividualResult, NotificationResponse }
+import cards.nine.services.free.domain.Ranking.{ GoogleAnalyticsRanking, RankingError }
+import cards.nine.services.free.domain.{ SharedCollection ⇒ SharedCollectionServices, _ }
 import cards.nine.services.free.interpreter.collection.Services.{ SharedCollectionData ⇒ SharedCollectionDataServices }
-import java.sql.Timestamp
-import java.time.Instant
 import org.joda.time.{ DateTime, DateTimeZone }
 
 object TestData {
@@ -315,18 +316,17 @@ object TestData {
   }
 
   object rankings {
-    import cards.nine.services.free.domain.rankings._
 
-    lazy val scope = CountryScope(CountryEnum.Spain)
+    lazy val scope = CountryScope(CountryIsoCode("ES"))
     lazy val location = Option("US")
     lazy val startDate = new DateTime(2016, 1, 1, 0, 0, DateTimeZone.UTC)
     lazy val endDate = new DateTime(2016, 2, 1, 0, 0, DateTimeZone.UTC)
     lazy val params = RankingParams(DateRange(startDate, endDate), 5, AnalyticsToken("auth_token"))
     lazy val error = RankingError(401, "Unauthorized", "Unauthorized")
-    lazy val ranking = Ranking(Map(Category.SOCIAL →
-      CategoryRanking(List(Package("socialite"), Package("socialist")))))
+    lazy val googleAnalyticsRanking = GoogleAnalyticsRanking(Map("SOCIAL" →
+      List(Package("socialite"), Package("socialist"))))
 
-    val emptyDeviceAppsMap = Map.empty[String, List[DeviceApp]]
+    val emptyDeviceAppsMap = Map.empty[String, List[Package]]
 
     val emptyRankedAppsList = List.empty[RankedApp]
 
@@ -346,9 +346,9 @@ object TestData {
       "earth.europe.unitedKingdom"
     ) map Package
 
-    val deviceAppsMap = Map(
-      countriesAMCategory → countriesAMList.map(DeviceApp.apply),
-      countriesNZCategory → countriesNZList.map(DeviceApp.apply)
+    val unrankedAppsMap = Map(
+      countriesAMCategory → countriesAMList,
+      countriesNZCategory → countriesNZList
     )
 
     def appsWithRanking(apps: List[Package], category: String) =
@@ -361,4 +361,5 @@ object TestData {
       appsWithRanking(countriesAMList, countriesAMCategory) ++
         appsWithRanking(countriesNZList, countriesNZCategory)
   }
+
 }

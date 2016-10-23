@@ -4,13 +4,11 @@ import cards.nine.commons.NineCardsErrors.CountryNotFound
 import cards.nine.commons.NineCardsService
 import cards.nine.commons.NineCardsService._
 import cards.nine.domain.analytics._
+import cards.nine.domain.application.Package
 import cards.nine.processes.converters.Converters._
-import cards.nine.processes.messages.rankings.GetRankedDeviceApps.{ DeviceApp, RankedDeviceApp }
 import cards.nine.processes.messages.rankings._
 import cards.nine.services.free.algebra
 import cards.nine.services.free.algebra.GoogleAnalytics
-import cards.nine.services.free.domain.rankings._
-import cats.data.Xor
 import cats.free.Free
 import cats.instances.list._
 import cats.instances.map._
@@ -20,39 +18,41 @@ class RankingProcesses[F[_]](
   implicit
   analytics: GoogleAnalytics.Services[F],
   countryPersistence: algebra.Country.Services[F],
-  rankingPersistence: algebra.Ranking.Services[F]
+  rankingServices: algebra.Ranking.Services[F]
 ) {
 
   def getRanking(scope: GeoScope): Free[F, Get.Response] =
-    rankingPersistence.getRanking(scope).map(Get.Response.apply)
+    rankingServices.getRanking(scope) map Get.Response
 
-  def reloadRanking(scope: GeoScope, params: RankingParams): Free[F, Reload.XorResponse] =
+  def reloadRanking(scope: GeoScope, params: RankingParams): Free[F, Result[Reload.Response]] = {
+
+    def getCountryName(scope: GeoScope): NineCardsService[F, Option[CountryName]] = scope match {
+      case WorldScope ⇒ NineCardsService.right[F, Option[CountryName]](None)
+      case CountryScope(code) ⇒
+        countryPersistence.getCountryByIsoCode2(code.value.toUpperCase).map(c ⇒ Option(CountryName(c.name)))
+    }
+
     for {
-      rankingTry ← analytics.getRanking(scope, params)
-      res ← rankingTry match {
-        case Xor.Left(error) ⇒ errorAux(error)
-        case Xor.Right(ranking) ⇒ setAux(scope, ranking)
-      }
-    } yield res
+      countryName ← getCountryName(scope)
+      ranking ← analytics.getRanking(countryName, params)
+      _ ← rankingServices.updateRanking(scope, ranking)
+    } yield Reload.Response()
+  }.value
 
   def getRankedDeviceApps(
     location: Option[String],
-    deviceApps: Map[String, List[DeviceApp]]
-  ): Free[F, Result[Map[String, List[RankedDeviceApp]]]] = {
-
-    def findAppsWithoutRanking(apps: List[DeviceApp], rankings: List[RankedDeviceApp]) =
-      apps.collect {
-        case app if !rankings.exists(_.packageName == app.packageName) ⇒
-          RankedDeviceApp(app.packageName, None)
-
-      }
+    deviceApps: Map[String, List[Package]]
+  ): Free[F, Result[Map[String, List[RankedApp]]]] = {
 
     def geoScopeFromLocation(isoCode: String): NineCardsService[F, GeoScope] =
       countryPersistence.getCountryByIsoCode2(isoCode.toUpperCase)
-        .map(_.toGeoScope)
+        .map { country ⇒
+          val scope: GeoScope = CountryScope(CountryIsoCode(country.isoCode2))
+          scope
+        }
         .recover { case _: CountryNotFound ⇒ WorldScope }
 
-    def unifyDeviceApps(deviceApps: Map[String, List[DeviceApp]]) = {
+    def unifyDeviceApps(deviceApps: Map[String, List[Package]]) = {
       val (games, otherApps) = deviceApps.partition { case (cat, apps) ⇒ cat.matches("GAME\\_.*") }
 
       if (games.isEmpty)
@@ -62,7 +62,7 @@ class RankingProcesses[F[_]](
     }
 
     if (deviceApps.isEmpty)
-      NineCardsService.right(Map.empty[String, List[RankedDeviceApp]]).value
+      NineCardsService.right(Map.empty[String, List[RankedApp]]).value
     else {
       val unifiedDeviceApps = unifyDeviceApps(deviceApps)
       val unrankedApps = unifiedDeviceApps.flatMap {
@@ -71,22 +71,17 @@ class RankingProcesses[F[_]](
 
       for {
         geoScope ← location.fold(NineCardsService.right[F, GeoScope](WorldScope))(geoScopeFromLocation)
-        rankedApps ← rankingPersistence.getRankingForApps(geoScope, unrankedApps)
-        rankedAppsByCategory = rankedApps.groupBy(_.category).mapValues(_.map(toRankedDeviceApp))
+        rankedApps ← rankingServices.getRankingForApps(geoScope, unrankedApps)
+        rankedAppsByCategory = rankedApps.groupBy(_.category)
         unrankedDeviceApps = unifiedDeviceApps map {
           case (category, apps) ⇒
-            (category, findAppsWithoutRanking(apps, rankedAppsByCategory.getOrElse(category, Nil)))
+            val appWithoutRanking = apps
+              .diff(rankedAppsByCategory.getOrElse(category, Nil).map(_.packageName))
+              .map(RankedApp(_, category, None))
+            (category, appWithoutRanking)
         }
-      } yield rankedAppsByCategory.combine(unrankedDeviceApps)
+      } yield rankedAppsByCategory combine unrankedDeviceApps
     }.value
-  }
-
-  private[this] def setAux(scope: GeoScope, ranking: Ranking): Free[F, Reload.XorResponse] =
-    rankingPersistence.updateRanking(scope, ranking).map(_ ⇒ Xor.Right(Reload.Response()))
-
-  private[this] def errorAux(error: RankingError): Free[F, Reload.XorResponse] = {
-    val procError = Reload.Error(error.code, error.message, error.status)
-    Free.pure[F, Reload.XorResponse](Xor.Left(procError))
   }
 
 }
@@ -97,7 +92,7 @@ object RankingProcesses {
     implicit
     analytics: GoogleAnalytics.Services[F],
     countryPersistence: algebra.Country.Services[F],
-    rankingPersistence: algebra.Ranking.Services[F]
+    rankingServices: algebra.Ranking.Services[F]
   ) = new RankingProcesses
 
 }

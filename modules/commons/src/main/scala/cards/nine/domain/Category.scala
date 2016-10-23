@@ -83,6 +83,10 @@ object Category extends Enum[Category] {
 }
 
 object Moments {
-  import cards.nine.domain.application.Category.{ HOME, NIGHT, TRANSIT, WORK }
-  val all = List(HOME, WORK, NIGHT, TRANSIT)
+  import Category.{ HOME, WORK, NIGHT, TRANSIT }
+
+  val all: List[Category] = List(HOME, WORK, NIGHT, TRANSIT)
+
+  def isMoment(categoryName: String): Boolean =
+    Category.withNameOption(categoryName).fold(false)(all.contains)
 }

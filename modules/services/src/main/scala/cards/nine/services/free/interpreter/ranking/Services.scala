@@ -1,87 +1,122 @@
 package cards.nine.services.free.interpreter.ranking
 
-import java.security.MessageDigest
-import java.util.UUID
-
-import cards.nine.commons.NineCardsService.Result
-import cards.nine.domain.application.{ Category, Moments }
-import cards.nine.domain.analytics.GeoScope
+import cards.nine.commons.CacheWrapper
+import cards.nine.domain.analytics.{ CountryScope, GeoScope, RankedApp, WorldScope }
+import cards.nine.domain.application.{ Category, Moments, Package }
+import cards.nine.googleplay.processes.withTypes.WithRedisClient
 import cards.nine.services.free.algebra.Ranking._
-import cards.nine.services.free.domain.rankings._
-import cards.nine.services.persistence.{ CustomComposite, Persistence }
-import cats.syntax.either._
+import cards.nine.services.free.domain.Ranking._
 import cats.~>
-import doobie.imports._
+import cats.syntax.either._
+import com.redis.RedisClient
+import com.redis.serialization.{ Format, Parse }
+import enumeratum.{ Circe ⇒ CirceEnum }
+import io.circe.{ Decoder, Encoder }
+import io.circe.generic.auto._
+import io.circe.generic.semiauto._
+import io.circe.parser._
 
-import scalaz.std.list._
-import scalaz.std.set._
+import scalaz.concurrent.Task
 
-class Services(persistence: Persistence[Entry]) extends (Ops ~> ConnectionIO) {
+class Services(implicit
+  format: Format,
+  keyParse: Parse[Option[CacheKey]],
+  valParse: Parse[Option[CacheVal]]) extends (Ops ~> WithRedisClient) {
 
-  import CustomComposite._
-
-  val digest = MessageDigest.getInstance("MD5")
-
-  def getRanking(scope: GeoScope): ConnectionIO[Ranking] = {
-    def fromEntries(entries: List[Entry]): Ranking = {
-      def toCategoryRanking(catEntries: List[Entry]): CategoryRanking =
-        CategoryRanking(catEntries.sortBy(_.ranking).map(_.packageName))
-
-      Ranking(entries.groupBy(_.category).mapValues(toCategoryRanking))
-    }
-
-    persistence.fetchList(Queries.getBy(scope)).map(fromEntries)
+  private[this] def generateCacheKey(scope: GeoScope) = scope match {
+    case WorldScope ⇒ CacheKey.worldScope
+    case CountryScope(code) ⇒ CacheKey.countryScope(code.value)
   }
 
-  def updateRanking(scope: GeoScope, ranking: Ranking): ConnectionIO[UpdateRankingSummary] = {
-    def toEntries(ranking: Ranking): List[Entry] = {
-      def toEntries(category: Category, catrank: CategoryRanking): List[Entry] =
-        catrank.ranking.zipWithIndex.map {
-          case (packageName, index0) ⇒ Entry(packageName, category, index0 + 1)
+  def apply[A](fa: Ops[A]): WithRedisClient[A] = fa match {
+    case GetRanking(scope) ⇒ client: RedisClient ⇒
+      Task.delay {
+        val wrap = CacheWrapper[CacheKey, CacheVal](client)
+
+        val value = wrap.get(generateCacheKey(scope))
+
+        value.flatMap(_.ranking).getOrElse(GoogleAnalyticsRanking(Map.empty))
+      }
+
+    case GetRankingForApps(scope, apps) ⇒ client: RedisClient ⇒
+      Task.delay {
+        val wrap = CacheWrapper[CacheKey, CacheVal](client)
+
+        val rankings = wrap.get(generateCacheKey(scope))
+          .flatMap(_.ranking)
+          .getOrElse(GoogleAnalyticsRanking(Map.empty))
+
+        val (rankingsByMoment, rankingsByCategory) = rankings.categories.partition {
+          case (category, ranking) ⇒ Moments.isMoment(category)
         }
 
-      ranking.categories.toList.flatMap((toEntries _).tupled)
-    }
+        val allPackages = apps.map(_.packageName).toList
+        val packagesByCategory = apps.toList.groupBy(_.category).mapValues(_.map(_.packageName))
 
-    for {
-      del ← persistence update Queries.deleteBy(scope)
-      ins ← persistence updateMany (Queries.insertBy(scope), toEntries(ranking))
-    } yield UpdateRankingSummary(ins, del)
-  }
+        val rankedByCategory = rankingsByCategory flatMap {
+          case (category, ranking) ⇒
+            ranking
+              .intersect(packagesByCategory.getOrElse(category, Nil))
+              .zipWithIndex
+              .map { case (pack, position) ⇒ RankedApp(pack, category, Option(position)) }
+        }
 
-  def getRankingForApps(
-    scope: GeoScope,
-    unrankedApps: Set[UnrankedApp]
-  ): ConnectionIO[Result[List[RankedApp]]] = {
-    val deviceAppTableName = generateTableName
-    val moments = Moments.all map (_.entryName)
-    val query = Queries.getRankedApps(scope, deviceAppTableName, moments)
+        val rankedByMoment = rankingsByMoment flatMap {
+          case (category, ranking) ⇒
+            ranking
+              .intersect(allPackages)
+              .zipWithIndex
+              .map { case (pack, position) ⇒ RankedApp(pack, category, Option(position)) }
+        }
 
-    for {
-      _ ← persistence.update(Queries.createDeviceAppsTemporaryTableSql(deviceAppTableName))
-      _ ← persistence.updateMany(Queries.insertDeviceApps(deviceAppTableName), unrankedApps)
-      rankedApps ← persistence.fetchListAs[RankedApp](query)
-      _ ← persistence.update(Queries.dropDeviceAppsTemporaryTableSql(deviceAppTableName))
-    } yield Either.right(rankedApps)
-  }
+        Either.right((rankedByCategory ++ rankedByMoment).toList)
+      }
 
-  private[this] def generateTableName = {
-    val text = UUID.randomUUID().toString
-    val hash = digest.digest(text.getBytes).map("%02x".format(_)).mkString
-    s"device_apps_$hash"
-  }
+    case UpdateRanking(scope, ranking) ⇒ client: RedisClient ⇒
+      Task.delay {
+        val wrap = CacheWrapper[CacheKey, CacheVal](client)
 
-  def apply[A](fa: Ops[A]): ConnectionIO[A] = fa match {
-    case GetRankingForApps(scope, apps) ⇒
-      getRankingForApps(scope, apps)
-    case GetRanking(scope) ⇒
-      getRanking(scope)
-    case UpdateRanking(scope, ranking) ⇒
-      updateRanking(scope, ranking)
+        val key = scope match {
+          case WorldScope ⇒ CacheKey.worldScope
+          case CountryScope(code) ⇒ CacheKey.countryScope(code.value)
+        }
+
+        val value = CacheVal(Option(ranking))
+
+        wrap.put((key, value))
+        Either.right(UpdateRankingSummary(ranking.categories.values.size, 0))
+      }
   }
 }
 
 object Services {
 
-  def services(implicit persistence: Persistence[Entry]) = new Services(persistence)
+  implicit lazy val categoryD: Decoder[Category] = CirceEnum.decoder(Category)
+  implicit lazy val categoryE: Encoder[Category] = CirceEnum.encoder(Category)
+
+  implicit lazy val packageD: Decoder[Package] = Decoder.decodeString map Package
+  implicit lazy val packageE: Encoder[Package] = Encoder.encodeString.contramap(_.value)
+
+  implicit lazy val appRankingInfoD: Decoder[AppRankingInfo] = deriveDecoder[AppRankingInfo]
+  implicit lazy val appRankingInfoE: Encoder[AppRankingInfo] = deriveEncoder[AppRankingInfo]
+
+  implicit lazy val rankingD: Decoder[GoogleAnalyticsRanking] = deriveDecoder[GoogleAnalyticsRanking]
+  implicit lazy val rankingE: Encoder[GoogleAnalyticsRanking] = deriveEncoder[GoogleAnalyticsRanking]
+
+  implicit val keyParse: Parse[Option[CacheKey]] =
+    Parse(bv ⇒ decode[CacheKey](Parse.Implicits.parseString(bv)).toOption)
+
+  implicit val valParse: Parse[Option[CacheVal]] =
+    Parse(bv ⇒ decode[CacheVal](Parse.Implicits.parseString(bv)).toOption)
+
+  implicit def keyAndValFormat(implicit ek: Encoder[CacheKey], ev: Encoder[CacheVal]): Format =
+    Format {
+      case key: CacheKey ⇒ ek(key).noSpaces
+      case value: CacheVal ⇒ ev(value).noSpaces
+    }
+
+  def services(implicit
+    format: Format,
+    keyParse: Parse[Option[CacheKey]],
+    valParse: Parse[Option[CacheVal]]) = new Services()(keyAndValFormat, keyParse, valParse)
 }
