@@ -46,11 +46,10 @@ class Services(implicit
           .flatMap(_.ranking)
           .getOrElse(GoogleAnalyticsRanking(Map.empty))
 
-        val (rankingsByMoment, rankingsByCategory) = rankings.categories.partition {
-          case (category, ranking) ⇒ Moments.isMoment(category)
+        val rankingsByCategory = rankings.categories.filterNot {
+          case (category, _) ⇒ Moments.isMoment(category)
         }
 
-        val allPackages = apps.map(_.packageName).toList
         val packagesByCategory = apps.toList.groupBy(_.category).mapValues(_.map(_.packageName))
 
         val rankedByCategory = rankingsByCategory flatMap {
@@ -61,15 +60,7 @@ class Services(implicit
               .map { case (pack, position) ⇒ RankedApp(pack, category, Option(position)) }
         }
 
-        val rankedByMoment = rankingsByMoment flatMap {
-          case (category, ranking) ⇒
-            ranking
-              .intersect(allPackages)
-              .zipWithIndex
-              .map { case (pack, position) ⇒ RankedApp(pack, category, Option(position)) }
-        }
-
-        Either.right((rankedByCategory ++ rankedByMoment).toList)
+        Either.right(rankedByCategory.toList)
       }
 
     case UpdateRanking(scope, ranking) ⇒ client: RedisClient ⇒

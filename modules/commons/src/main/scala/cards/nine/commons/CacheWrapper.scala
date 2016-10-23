@@ -3,8 +3,6 @@ package cards.nine.commons
 import com.redis.RedisClient
 import com.redis.serialization.{ Format, Parse }
 
-import scala.annotation.tailrec
-
 class CacheWrapper[Key, Val](client: RedisClient)(implicit f: Format, pk: Parse[Option[Key]], pv: Parse[Option[Val]]) {
 
   def get(key: Key): Option[Val] = client.get[Option[Val]](key).flatten
