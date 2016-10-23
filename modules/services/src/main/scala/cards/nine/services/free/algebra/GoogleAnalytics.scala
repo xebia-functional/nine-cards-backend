@@ -1,23 +1,24 @@
 package cards.nine.services.free.algebra
 
+import cards.nine.commons.NineCardsService
+import cards.nine.commons.NineCardsService._
+import cards.nine.domain.analytics.{ CountryName, RankingParams }
+import cards.nine.services.free.domain.Ranking.GoogleAnalyticsRanking
 import cats.free.{ Free, Inject }
-import cards.nine.domain.analytics.GeoScope
-import cards.nine.services.free.domain.rankings.{ RankingParams, TryRanking }
 
 object GoogleAnalytics {
 
   sealed trait Ops[A]
 
   case class GetRanking(
-    geoScope: GeoScope,
+    name: Option[CountryName],
     rankingParams: RankingParams
-  ) extends Ops[TryRanking]
+  ) extends Ops[Result[GoogleAnalyticsRanking]]
 
   class Services[F[_]](implicit I: Inject[Ops, F]) {
 
-    def getRanking(scope: GeoScope, params: RankingParams): Free[F, TryRanking] =
-      Free.inject[Ops, F](GetRanking(scope, params))
-
+    def getRanking(name: Option[CountryName], params: RankingParams): NineCardsService[F, GoogleAnalyticsRanking] =
+      NineCardsService(Free.inject[Ops, F](GetRanking(name, params)))
   }
 
   object Services {

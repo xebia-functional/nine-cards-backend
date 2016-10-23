@@ -3,11 +3,9 @@ package cards.nine.services.persistence
 import java.sql.Connection
 
 import cards.nine.commons.NineCardsConfig
-import cards.nine.services.free.domain
 import cards.nine.services.free.domain._
 import cards.nine.services.free.interpreter.collection.{ Services ⇒ CollectionServices }
 import cards.nine.services.free.interpreter.country.{ Services ⇒ CountryServices }
-import cards.nine.services.free.interpreter.ranking.{ Services ⇒ RankingServices }
 import cards.nine.services.free.interpreter.subscription.{ Services ⇒ SubscriptionServices }
 import cards.nine.services.free.interpreter.user.{ Services ⇒ UserServices }
 import cards.nine.services.utils.DummyNineCardsConfig
@@ -75,8 +73,6 @@ trait PersistenceDatabaseContext extends BasicDatabaseContext {
 
 trait DomainDatabaseContext extends BasicDatabaseContext {
 
-  import CustomComposite._
-
   val deviceToken: Option[String] = Option("d9f48907-0374-4b3a-89ec-433bd64de2e5")
   val emptyDeviceToken: Option[String] = None
 
@@ -109,12 +105,9 @@ trait DomainDatabaseContext extends BasicDatabaseContext {
     new Persistence[SharedCollectionSubscription](supportsSelectForUpdate = false)
   implicit val countryPersistence =
     new Persistence[Country](supportsSelectForUpdate = false)
-  implicit val rankingPersistence: Persistence[domain.rankings.Entry] =
-    new Persistence[domain.rankings.Entry](supportsSelectForUpdate = false)
 
   val collectionPersistenceServices = CollectionServices.services
   val countryPersistenceServices = CountryServices.services
-  val rankingPersistenceServices = RankingServices.services
   val subscriptionPersistenceServices = SubscriptionServices.services
   val userPersistenceServices = UserServices.services
 }

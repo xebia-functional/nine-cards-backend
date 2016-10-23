@@ -2,12 +2,11 @@ package cards.nine.processes.converters
 
 import java.sql.Timestamp
 
+import cards.nine.domain.analytics.{ RankedApp, UnrankedApp }
 import cards.nine.domain.application.{ FullCard, FullCardList, Package }
 import cards.nine.processes.messages.InstallationsMessages._
-import cards.nine.processes.messages.rankings.GetRankedDeviceApps._
 import cards.nine.processes.messages.SharedCollectionMessages._
 import cards.nine.processes.messages.UserMessages.LoginResponse
-import cards.nine.services.free.domain.rankings.{ RankedApp, UnrankedApp }
 import cards.nine.services.free.domain.{
   BaseSharedCollection,
   Installation ⇒ InstallationServices,
@@ -108,7 +107,7 @@ object Converters {
       subscriptions map (_.sharedCollectionPublicId)
     )
 
-  def toUnrankedApp(category: String)(app: DeviceApp) = UnrankedApp(app.packageName, category)
+  def toUnrankedApp(category: String)(pack: Package) = UnrankedApp(pack, category)
 
-  def toRankedDeviceApp(app: RankedApp) = RankedDeviceApp(app.packageName, app.ranking)
+  def toRankedApp(app: UnrankedApp) = RankedApp(app.packageName, app.category, None)
 }
