@@ -1,13 +1,14 @@
 package cards.nine.processes
 
+import cards.nine.commons.NineCardsErrors.ReportNotFound
 import cards.nine.commons.NineCardsService
 import cards.nine.domain.analytics.RankedApp
 import cards.nine.processes.NineCardsServices._
 import cards.nine.processes.TestData.Values._
 import cards.nine.processes.TestData.rankings._
 import cards.nine.processes.messages.rankings._
-import cards.nine.services.free.algebra.{ Country, GoogleAnalytics, RedisRanking }
-import cards.nine.services.free.domain.RedisRanking.UpdateRankingSummary
+import cards.nine.services.free.algebra.{ Country, GoogleAnalytics, Ranking }
+import cards.nine.services.free.domain.Ranking.UpdateRankingSummary
 import cats.data.Xor
 import cats.free.Free
 import org.mockito.Matchers.{ eq ⇒ mockEq }
@@ -29,8 +30,8 @@ trait RankingsProcessesSpecification
       mock[GoogleAnalytics.Services[NineCardsServices]]
     implicit val countryServices: Country.Services[NineCardsServices] =
       mock[Country.Services[NineCardsServices]]
-    implicit val rankingServices: RedisRanking.Services[NineCardsServices] =
-      mock[RedisRanking.Services[NineCardsServices]]
+    implicit val rankingServices: Ranking.Services[NineCardsServices] =
+      mock[Ranking.Services[NineCardsServices]]
 
     val rankingProcesses = RankingProcesses.processes[NineCardsServices]
 
@@ -43,24 +44,25 @@ trait RankingsProcessesSpecification
   trait SuccessfulScope extends BasicScope {
 
     analyticsServices.getRanking(
-      scope  = any,
+      name   = any,
       params = mockEq(params)
-    ) returns Free.pure(Xor.right(ranking))
+    ) returns NineCardsService.right(googleAnalyticsRanking)
 
-    countryServices.getCountryByIsoCode2("US") returns NineCardsService.right(country)
+    countryServices.getCountryByIsoCode2(any) returns NineCardsService.right(country)
 
     rankingServices.getRanking(any) returns Free.pure(googleAnalyticsRanking)
 
-    rankingServices.updateRanking(redisScope, googleAnalyticsRanking) returns Free.pure(UpdateRankingSummary(0, 0))
+    rankingServices.updateRanking(scope, googleAnalyticsRanking) returns
+      NineCardsService.right(UpdateRankingSummary(0, 0))
 
     rankingServices.getRankingForApps(any, any) returns NineCardsService.right(rankedAppsList)
   }
 
   trait UnsuccessfulScope extends BasicScope {
 
-    analyticsServices.getRanking(any, any) returns Free.pure(Xor.left(TestData.rankings.error))
+    analyticsServices.getRanking(any, any) returns NineCardsService.left(ReportNotFound("Report not found"))
 
-    countryServices.getCountryByIsoCode2("US") returns NineCardsService.left(countryNotFoundError)
+    countryServices.getCountryByIsoCode2(any) returns NineCardsService.left(countryNotFoundError)
 
     rankingServices.getRanking(any) returns Free.pure(googleAnalyticsRanking)
 
@@ -76,14 +78,14 @@ class RankingsProcessesSpec extends RankingsProcessesSpecification {
   "getRanking" should {
     "give the valid ranking" in new SuccessfulScope {
       val response = rankingProcesses.getRanking(scope)
-      response.foldMap(testInterpreters) mustEqual Get.Response(ranking)
+      response.foldMap(testInterpreters) mustEqual Get.Response(googleAnalyticsRanking)
     }
   }
 
   "reloadRanking" should {
     "give a good answer" in new SuccessfulScope {
       val response = rankingProcesses.reloadRanking(scope, params)
-      response.foldMap(testInterpreters) mustEqual Xor.Right(Reload.Response())
+      response.foldMap(testInterpreters) must beRight(Reload.Response())
     }
 
   }

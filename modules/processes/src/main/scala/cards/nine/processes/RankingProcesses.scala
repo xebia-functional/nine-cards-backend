@@ -4,15 +4,11 @@ import cards.nine.commons.NineCardsErrors.CountryNotFound
 import cards.nine.commons.NineCardsService
 import cards.nine.commons.NineCardsService._
 import cards.nine.domain.analytics._
-import cards.nine.domain.application.{ Category, Package }
+import cards.nine.domain.application.Package
 import cards.nine.processes.converters.Converters._
 import cards.nine.processes.messages.rankings._
 import cards.nine.services.free.algebra
 import cards.nine.services.free.algebra.GoogleAnalytics
-import cards.nine.services.free.domain.RedisRanking
-import cards.nine.services.free.domain.rankings._
-import cats.data.Xor
-import cats.syntax.xor._
 import cats.free.Free
 import cats.instances.list._
 import cats.instances.map._
@@ -22,52 +18,38 @@ class RankingProcesses[F[_]](
   implicit
   analytics: GoogleAnalytics.Services[F],
   countryPersistence: algebra.Country.Services[F],
-  rankingServices: algebra.RedisRanking.Services[F]
+  rankingServices: algebra.Ranking.Services[F]
 ) {
 
-  def getRedisScope(scope: GeoScope) = scope match {
-    case WorldScope ⇒ RedisRanking.WorldScope
-    case ContinentScope(_) ⇒ RedisRanking.WorldScope
-    case CountryScope(country) ⇒ RedisRanking.CountryScope(country.entryName)
-  }
+  def getRanking(scope: GeoScope): Free[F, Get.Response] =
+    rankingServices.getRanking(scope) map Get.Response
 
-  def getRanking(scope: GeoScope): Free[F, Get.Response] = {
+  def reloadRanking(scope: GeoScope, params: RankingParams): Free[F, Result[Reload.Response]] = {
 
-    rankingServices.getRanking(getRedisScope(scope)) map { rankings ⇒
-      Get.Response(Ranking(rankings.categories map {
-        case (category, list) ⇒ (Category.withName(category), CategoryRanking(list))
-      }))
+    def getCountryName(scope: GeoScope): NineCardsService[F, Option[CountryName]] = scope match {
+      case WorldScope ⇒ NineCardsService.right[F, Option[CountryName]](None)
+      case CountryScope(code) ⇒
+        countryPersistence.getCountryByIsoCode2(code.value.toUpperCase).map(c ⇒ Option(CountryName(c.name)))
     }
-  }
 
-  def reloadRanking(scope: GeoScope, params: RankingParams): Free[F, Reload.XorResponse] =
     for {
-      rankingTry ← analytics.getRanking(scope, params)
-      res ← rankingTry match {
-        case Xor.Left(error) ⇒ Free.pure[F, Reload.XorResponse] {
-          Reload.Error(error.code, error.message, error.status).left
-        }
-        case Xor.Right(ranking) ⇒
-          val redisRankings = RedisRanking.GoogleAnalyticsRanking(ranking.categories.map { case (category, rank) ⇒ (category.entryName, rank.ranking) })
-          rankingServices.updateRanking(getRedisScope(scope), redisRankings).map(_ ⇒ Reload.Response().right)
-      }
-    } yield res
+      countryName ← getCountryName(scope)
+      ranking ← analytics.getRanking(countryName, params)
+      _ ← rankingServices.updateRanking(scope, ranking)
+    } yield Reload.Response()
+  }.value
 
   def getRankedDeviceApps(
     location: Option[String],
     deviceApps: Map[String, List[Package]]
   ): Free[F, Result[Map[String, List[RankedApp]]]] = {
 
-    def findAppsWithoutRanking(apps: List[Package], rankings: List[RankedApp], category: String) =
-      apps.collect {
-        case app if !rankings.exists(_.packageName == app) ⇒
-          RankedApp(app, category, None)
-
-      }
-
     def geoScopeFromLocation(isoCode: String): NineCardsService[F, GeoScope] =
       countryPersistence.getCountryByIsoCode2(isoCode.toUpperCase)
-        .map(_.toGeoScope)
+        .map { country ⇒
+          val scope: GeoScope = CountryScope(CountryIsoCode(country.isoCode2))
+          scope
+        }
         .recover { case _: CountryNotFound ⇒ WorldScope }
 
     def unifyDeviceApps(deviceApps: Map[String, List[Package]]) = {
@@ -89,11 +71,14 @@ class RankingProcesses[F[_]](
 
       for {
         geoScope ← location.fold(NineCardsService.right[F, GeoScope](WorldScope))(geoScopeFromLocation)
-        rankedApps ← rankingServices.getRankingForApps(getRedisScope(geoScope), unrankedApps)
+        rankedApps ← rankingServices.getRankingForApps(geoScope, unrankedApps)
         rankedAppsByCategory = rankedApps.groupBy(_.category)
         unrankedDeviceApps = unifiedDeviceApps map {
           case (category, apps) ⇒
-            (category, findAppsWithoutRanking(apps, rankedAppsByCategory.getOrElse(category, Nil), category))
+            val appWithoutRanking = apps
+              .diff(rankedAppsByCategory.getOrElse(category, Nil).map(_.packageName))
+              .map(RankedApp(_, category, None))
+            (category, appWithoutRanking)
         }
       } yield rankedAppsByCategory combine unrankedDeviceApps
     }.value
@@ -107,7 +92,7 @@ object RankingProcesses {
     implicit
     analytics: GoogleAnalytics.Services[F],
     countryPersistence: algebra.Country.Services[F],
-    rankingServices: algebra.RedisRanking.Services[F]
+    rankingServices: algebra.Ranking.Services[F]
   ) = new RankingProcesses
 
 }
