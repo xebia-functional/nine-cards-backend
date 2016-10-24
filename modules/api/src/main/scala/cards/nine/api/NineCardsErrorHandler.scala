@@ -12,6 +12,7 @@ class NineCardsErrorHandler {
     case HttpBadRequest(_) ⇒ ctx.marshalTo(HttpResponse(status = StatusCodes.BadRequest))
     case HttpNotFound(_) ⇒ ctx.marshalTo(HttpResponse(status = StatusCodes.NotFound))
     case HttpUnauthorized(_) ⇒ ctx.marshalTo(HttpResponse(status = StatusCodes.Unauthorized))
+    case RankingNotFound(_) ⇒ ctx.marshalTo(HttpResponse(status = StatusCodes.NotFound))
     case ReportNotFound(_) ⇒ ctx.marshalTo(HttpResponse(status = StatusCodes.NotFound))
   }
 }

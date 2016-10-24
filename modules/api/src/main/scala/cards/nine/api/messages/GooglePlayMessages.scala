@@ -47,6 +47,12 @@ object GooglePlayMessages {
 
   case class ApiRankAppsRequest(location: Option[String], items: Map[String, List[Package]])
 
+  case class ApiRankAppsByMomentsRequest(
+    location: Option[String],
+    items: List[Package],
+    moments: List[String]
+  )
+
   case class ApiRankAppsResponse(items: Map[String, List[Package]])
 
   case class ApiSearchAppsRequest(

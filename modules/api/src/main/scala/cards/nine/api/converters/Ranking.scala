@@ -8,7 +8,8 @@ import cats.syntax.either._
 
 object rankings {
 
-  def toApiRanking(resp: Get.Response): Api.Ranking = Api.Ranking(resp.ranking.categories)
+  def toApiRanking(response: Result[Get.Response]): Result[Api.Ranking] =
+    response map (r ⇒ Api.Ranking(r.ranking.categories))
 
   object reload {
 

@@ -102,7 +102,7 @@ trait NineCardsApiSpecification
     applicationProcesses.getAppsInfo(any, any) returns
       Free.pure(Messages.getAppsInfoResponse)
 
-    rankingProcesses.getRanking(any) returns Free.pure(Messages.rankings.getResponse)
+    rankingProcesses.getRanking(any) returns Free.pure(Either.right(Messages.rankings.getResponse))
 
     rankingProcesses.reloadRanking(any, any) returns
       Free.pure(Either.right(Messages.rankings.reloadResponse))
@@ -114,6 +114,9 @@ trait NineCardsApiSpecification
       Free.pure(Messages.getRecommendationsByCategoryResponse)
 
     rankingProcesses.getRankedDeviceApps(any, any) returns
+      NineCardsService.right(Messages.getRankedAppsResponse).value
+
+    rankingProcesses.getRankedAppsByMoment(any, any, any) returns
       NineCardsService.right(Messages.getRankedAppsResponse).value
   }
 
@@ -184,7 +187,7 @@ trait NineCardsApiSpecification
     sharedCollectionProcesses.updateCollection(any, any, any) returns
       Free.pure(Messages.createOrUpdateCollectionResponse.right)
 
-    rankingProcesses.getRanking(any) returns Free.pure(Messages.rankings.getResponse)
+    rankingProcesses.getRanking(any) returns Free.pure(Either.right(Messages.rankings.getResponse))
 
     rankingProcesses.reloadRanking(any, any) returns
       Free.pure(Either.right(Messages.rankings.reloadResponse))
@@ -493,6 +496,36 @@ class NineCardsApiSpec
     successOk(request)
   }
 
+  "POST /applications/rank" should {
+
+    val request = Post(
+      uri     = Paths.rankApps,
+      content = Messages.apiRankAppsRequest
+    )
+
+    authenticatedBadRequestEmptyBody(Post(Paths.rankApps))
+
+    unauthorizedNoHeaders(request)
+
+    internalServerError(request)
+
+    successOk(request)
+  }
+
+  "POST /applications/rank-by-moment" should {
+
+    val request = Post(
+      uri     = Paths.rankAppsByMoments,
+      content = Messages.apiRankAppsByMomentsRequest
+    )
+
+    authenticatedBadRequestEmptyBody(Post(Paths.rankApps))
+
+    unauthorizedNoHeaders(request)
+
+    successOk(request)
+  }
+
   "POST /recommendations" should {
 
     val request = Post(
@@ -558,21 +591,5 @@ class NineCardsApiSpec
   }
 
   rankingPaths foreach testRanking
-
-  "POST /applications/rank" should {
-
-    val request = Post(
-      uri     = Paths.rankApps,
-      content = Messages.apiRankAppsRequest
-    )
-
-    authenticatedBadRequestEmptyBody(Post(Paths.rankApps))
-
-    unauthorizedNoHeaders(request)
-
-    internalServerError(request)
-
-    successOk(request)
-  }
 
 }

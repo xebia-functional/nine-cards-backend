@@ -1,8 +1,9 @@
 package cards.nine.services.free.interpreter.ranking
 
 import cards.nine.commons.CacheWrapper
+import cards.nine.commons.NineCardsErrors.RankingNotFound
 import cards.nine.domain.analytics.{ CountryScope, GeoScope, RankedApp, WorldScope }
-import cards.nine.domain.application.{ Category, Moments, Package }
+import cards.nine.domain.application.{ Category, Moment, Package }
 import cards.nine.googleplay.processes.withTypes.WithRedisClient
 import cards.nine.services.free.algebra.Ranking._
 import cards.nine.services.free.domain.Ranking._
@@ -35,7 +36,7 @@ class Services(implicit
 
         val value = wrap.get(generateCacheKey(scope))
 
-        value.flatMap(_.ranking).getOrElse(GoogleAnalyticsRanking(Map.empty))
+        Either.fromOption(value.flatMap(_.ranking), RankingNotFound(s"Ranking not found for $scope"))
       }
 
     case GetRankingForApps(scope, apps) ⇒ client: RedisClient ⇒
@@ -47,7 +48,7 @@ class Services(implicit
           .getOrElse(GoogleAnalyticsRanking(Map.empty))
 
         val rankingsByCategory = rankings.categories.filterNot {
-          case (category, _) ⇒ Moments.isMoment(category)
+          case (category, _) ⇒ Moment.isMoment(category)
         }
 
         val packagesByCategory = apps.toList.groupBy(_.category).mapValues(_.map(_.packageName))
@@ -61,6 +62,27 @@ class Services(implicit
         }
 
         Either.right(rankedByCategory.toList)
+      }
+
+    case GetRankingForAppsWithinMoments(scope, apps, moments) ⇒ client: RedisClient ⇒
+      Task.delay {
+        val wrap = CacheWrapper[CacheKey, CacheVal](client)
+
+        val rankings = wrap.get(generateCacheKey(scope))
+          .flatMap(_.ranking)
+          .getOrElse(GoogleAnalyticsRanking(Map.empty))
+
+        val rankingsByMoment = rankings.categories.filter { case (moment, _) ⇒ moments.contains(moment) }
+
+        val rankedByMoment = rankingsByMoment flatMap {
+          case (category, ranking) ⇒
+            ranking
+              .intersect(apps)
+              .zipWithIndex
+              .map { case (pack, position) ⇒ RankedApp(pack, category, Option(position)) }
+        }
+
+        Either.right(rankedByMoment.toList)
       }
 
     case UpdateRanking(scope, ranking) ⇒ client: RedisClient ⇒
