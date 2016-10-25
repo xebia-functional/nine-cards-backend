@@ -1,6 +1,7 @@
 package cards.nine.services.free.interpreter.collection
 
 import cards.nine.domain.application.Package
+import cards.nine.domain.ScalaCheck.arbPackage
 import cards.nine.services.free.domain.{ SharedCollection, SharedCollectionPackage, SharedCollectionWithAggregatedInfo, User }
 import cards.nine.services.free.interpreter.collection.Services.SharedCollectionData
 import cards.nine.services.free.interpreter.user.Services.UserData
@@ -93,8 +94,6 @@ class ServicesSpec
     flywaydb.clean()
     flywaydb.migrate()
   }
-
-  import cards.nine.domain.application.ScalaCheck.arbPackage
 
   "addCollection" should {
     "create a new shared collection when an existing user id is given" in {

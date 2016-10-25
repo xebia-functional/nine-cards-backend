@@ -73,7 +73,7 @@ class RankingProcesses[F[_]](
             (category, appWithoutRanking)
         }
       } yield (rankedAppsByCategory combine unrankedDeviceApps)
-        .map { case (category, apps) ⇒ RankedAppsByCategory(category, apps) }
+        .map(toRankedAppsByCategory(limit = None))
         .toList
         .sortBy(r ⇒ Category.sortedValues.indexOf(r.category))
     }.value
@@ -82,7 +82,8 @@ class RankingProcesses[F[_]](
   def getRankedAppsByMoment(
     location: Option[String],
     deviceApps: List[Package],
-    moments: List[String]
+    moments: List[String],
+    limit: Int
   ): Free[F, Result[List[RankedAppsByCategory]]] = {
     if (deviceApps.isEmpty)
       NineCardsService.right(List.empty[RankedAppsByCategory]).value
@@ -92,7 +93,26 @@ class RankingProcesses[F[_]](
         rankedApps ← rankingServices.getRankingForAppsWithinMoments(geoScope, deviceApps, moments)
       } yield rankedApps
         .groupBy(_.category)
-        .map { case (category, apps) ⇒ RankedAppsByCategory(category, apps) }
+        .map(toRankedAppsByCategory(limit = Option(limit)))
+        .toList
+    }.value
+  }
+
+  def getRankedWidgets(
+    location: Option[String],
+    apps: List[Package],
+    moments: List[String],
+    limit: Int
+  ): Free[F, Result[List[RankedWidgetsByMoment]]] = {
+    if (apps.isEmpty)
+      NineCardsService.right(List.empty[RankedWidgetsByMoment]).value
+    else {
+      for {
+        geoScope ← location.fold(NineCardsService.right[F, GeoScope](WorldScope))(geoScopeFromLocation)
+        rankedWidgets ← rankingServices.getRankingForWidgets(geoScope, apps, moments map toWidgetMoment)
+      } yield rankedWidgets
+        .groupBy(_.moment)
+        .map(toRankedWidgetsByMoment(limit))
         .toList
     }.value
   }

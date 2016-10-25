@@ -5,7 +5,7 @@ import cards.nine.api.messages.GooglePlayMessages._
 import cards.nine.api.messages.InstallationsMessages._
 import cards.nine.api.messages.SharedCollectionMessages._
 import cards.nine.api.messages.UserMessages._
-import cards.nine.domain.application.Package
+import cards.nine.domain.application.{ Package, Widget }
 import cards.nine.domain.account._
 import cards.nine.processes.messages.SharedCollectionMessages._
 import io.circe.{ Decoder, Encoder, Json }
@@ -133,11 +133,17 @@ trait JsonFormats
 
   implicit val apiRankAppsRequestFormat = jsonFormat2(ApiRankAppsRequest)
 
-  implicit val apiRankAppsByMomentsRequestFormat = jsonFormat3(ApiRankAppsByMomentsRequest)
+  implicit val apiRankAppsByMomentsRequestFormat = jsonFormat4(ApiRankByMomentsRequest)
 
   implicit val apiRankedAppsByCategoryFormat = jsonFormat2(ApiRankedAppsByCategory)
 
   implicit val apiRankAppsResponseFormat = jsonFormat1(ApiRankAppsResponse)
+
+  implicit val widgetFormat = jsonFormat2(Widget.apply)
+
+  implicit val apiRankedWidgetsByMomentFormat = jsonFormat2(ApiRankedWidgetsByMoment)
+
+  implicit val apiRankWidgetsResponseFormat = jsonFormat1(ApiRankWidgetsResponse)
 
   implicit val apiSearchAppsRequest = jsonFormat3(ApiSearchAppsRequest)
 

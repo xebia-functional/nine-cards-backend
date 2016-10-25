@@ -2,23 +2,13 @@ package cards.nine.processes.converters
 
 import java.sql.Timestamp
 
-import cards.nine.domain.analytics.{ RankedApp, UnrankedApp }
-import cards.nine.domain.application.{ FullCard, FullCardList, Package }
+import cards.nine.domain.analytics._
+import cards.nine.domain.application.{FullCard, FullCardList, Moment, Package}
 import cards.nine.processes.messages.InstallationsMessages._
 import cards.nine.processes.messages.SharedCollectionMessages._
 import cards.nine.processes.messages.UserMessages.LoginResponse
-import cards.nine.services.free.domain.{
-  BaseSharedCollection,
-  Installation ⇒ InstallationServices,
-  SharedCollection ⇒ SharedCollectionServices,
-  SharedCollectionSubscription ⇒ SharedCollectionSubscriptionServices,
-  SharedCollectionWithAggregatedInfo,
-  User ⇒ UserAppServices
-}
-import cards.nine.services.free.interpreter.collection.Services.{
-  SharedCollectionData ⇒ SharedCollectionDataServices
-}
-
+import cards.nine.services.free.domain.{BaseSharedCollection, SharedCollectionWithAggregatedInfo, Installation => InstallationServices, SharedCollection => SharedCollectionServices, SharedCollectionSubscription => SharedCollectionSubscriptionServices, User => UserAppServices}
+import cards.nine.services.free.interpreter.collection.Services.{SharedCollectionData => SharedCollectionDataServices}
 import org.joda.time.DateTime
 
 object Converters {
@@ -109,5 +99,19 @@ object Converters {
 
   def toUnrankedApp(category: String)(pack: Package) = UnrankedApp(pack, category)
 
-  def toRankedApp(app: UnrankedApp) = RankedApp(app.packageName, app.category, None)
+  def toMoment(widgetMoment: String) = widgetMoment.replace(Moment.widgetMomentPrefix, "")
+
+  def toWidgetMoment(moment: String) = s"${Moment.widgetMomentPrefix}$moment"
+
+  def toRankedAppsByCategory(limit: Option[Int] = None)(ranking: (String, List[RankedApp])) = {
+    val (category, apps) = ranking
+
+    RankedAppsByCategory(category, limit.fold(apps)(apps.take))
+  }
+
+  def toRankedWidgetsByMoment(limit: Int)(ranking: (String, List[RankedWidget])) = {
+    val (moment, widgets) = ranking
+
+    RankedWidgetsByMoment(toMoment(moment), widgets.take(limit))
+  }
 }

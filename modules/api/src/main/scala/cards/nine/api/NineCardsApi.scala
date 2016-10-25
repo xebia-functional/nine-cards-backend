@@ -59,6 +59,7 @@ class NineCardsRoutes(
     case "installations" ⇒ installationsRoute
     case "login" ⇒ userRoute
     case "rankings" ⇒ rankings.route
+    case "widgets" ⇒ widgetRoute
     case _ ⇒ complete(NotFound)
   }
 
@@ -104,7 +105,7 @@ class NineCardsRoutes(
         } ~
         path("rank-by-moments") {
           post {
-            entity(as[ApiRankAppsByMomentsRequest]) { request ⇒
+            entity(as[ApiRankByMomentsRequest]) { request ⇒
               complete(rankAppsByMoments(request, userContext))
             }
           }
@@ -233,6 +234,17 @@ class NineCardsRoutes(
       getFromResource("apiDocs/index.html")
     } ~ {
       getFromResourceDirectory("apiDocs")
+    }
+
+  private[this] lazy val widgetRoute: Route =
+    nineCardsDirectives.authenticateUser { userContext ⇒
+      path("rank") {
+        post {
+          entity(as[ApiRankByMomentsRequest]) { request ⇒
+            complete(rankWidgets(request, userContext))
+          }
+        }
+      }
     }
 
   private type NineCardsServed[A] = cats.free.Free[NineCardsServices, A]
@@ -403,11 +415,18 @@ class NineCardsRoutes(
       .map(toApiRankAppsResponse)
 
   private[this] def rankAppsByMoments(
-    request: ApiRankAppsByMomentsRequest,
+    request: ApiRankByMomentsRequest,
     userContext: UserContext
   ): NineCardsServed[Result[ApiRankAppsResponse]] =
-    rankingProcesses.getRankedAppsByMoment(request.location, request.items, request.moments)
+    rankingProcesses.getRankedAppsByMoment(request.location, request.items, request.moments, request.limit)
       .map(toApiRankAppsResponse)
+
+  private[this] def rankWidgets(
+    request: ApiRankByMomentsRequest,
+    userContext: UserContext
+  ): NineCardsServed[Result[ApiRankWidgetsResponse]] =
+    rankingProcesses.getRankedWidgets(request.location, request.items, request.moments, request.limit)
+      .map(toApiRankWidgetsResponse)
 
   private[this] object rankings {
 

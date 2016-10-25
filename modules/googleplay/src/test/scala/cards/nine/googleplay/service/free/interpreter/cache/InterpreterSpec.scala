@@ -1,6 +1,7 @@
 package cards.nine.googleplay.service.free.interpreter.cache
 
 import cards.nine.domain.application.{ FullCard, Package }
+import cards.nine.domain.ScalaCheck._
 import cards.nine.googleplay.service.free.algebra.Cache._
 import cards.nine.googleplay.util.{ ScalaCheck ⇒ CustomArbitrary }
 import com.redis.RedisClient
@@ -25,7 +26,6 @@ class InterpreterSpec
   import CustomArbitrary._
   import KeyType._
   import io.circe.syntax._
-  import cards.nine.domain.application.ScalaCheck._
 
   private[this] object setup {
     lazy val redisServer: RedisServer = new RedisServer()
