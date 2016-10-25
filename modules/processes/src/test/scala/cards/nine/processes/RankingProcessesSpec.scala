@@ -2,7 +2,7 @@ package cards.nine.processes
 
 import cards.nine.commons.NineCardsErrors.NineCardsError
 import cards.nine.commons.NineCardsService
-import cards.nine.domain.analytics.{ RankedApp, WorldScope }
+import cards.nine.domain.analytics.{ RankedApp, RankedAppsByCategory, WorldScope }
 import cards.nine.processes.NineCardsServices._
 import cards.nine.processes.TestData.Values._
 import cards.nine.processes.TestData.rankings._
@@ -35,6 +35,10 @@ trait RankingsProcessesSpecification
 
     def hasRankingInfo(hasRanking: Boolean): Matcher[RankedApp] = {
       app: RankedApp ⇒ app.position.isDefined must_== hasRanking
+    }
+
+    def hasRankingInfoForAll(hasRanking: Boolean): Matcher[RankedAppsByCategory] = {
+      ranking: RankedAppsByCategory ⇒ ranking.packages must contain(hasRankingInfo(hasRanking)).forall
     }
   }
 }
@@ -77,7 +81,7 @@ class RankingsProcessesSpec extends RankingsProcessesSpecification {
     "return an empty response if no device apps are given" in new BasicScope {
       val response = rankingProcesses.getRankedDeviceApps(location, emptyUnrankedAppsMap)
 
-      response.foldMap(testInterpreters) must beRight[Map[String, List[RankedApp]]](emptyRankedAppsMap)
+      response.foldMap(testInterpreters) must beRight[List[RankedAppsByCategory]](Nil)
     }
     "return all the device apps as ranked if there is ranking info for them" in new BasicScope {
       countryServices.getCountryByIsoCode2("US") returns NineCardsService.right(country)
@@ -85,8 +89,8 @@ class RankingsProcessesSpec extends RankingsProcessesSpecification {
 
       val response = rankingProcesses.getRankedDeviceApps(location, unrankedAppsMap)
 
-      response.foldMap(testInterpreters) must beRight[Map[String, List[RankedApp]]].which { r ⇒
-        r.values.flatten must contain(hasRankingInfo(true)).forall
+      response.foldMap(testInterpreters) must beRight[List[RankedAppsByCategory]].which { r ⇒
+        r must contain(hasRankingInfoForAll(true)).forall
       }
     }
     "return all the device apps as ranked by using world ranking if an unknown country is given" in new BasicScope {
@@ -95,8 +99,8 @@ class RankingsProcessesSpec extends RankingsProcessesSpecification {
 
       val response = rankingProcesses.getRankedDeviceApps(location, unrankedAppsMap)
 
-      response.foldMap(testInterpreters) must beRight[Map[String, List[RankedApp]]].which { r ⇒
-        r.values.flatten must contain(hasRankingInfo(true)).forall
+      response.foldMap(testInterpreters) must beRight[List[RankedAppsByCategory]].which { r ⇒
+        r must contain(hasRankingInfoForAll(true)).forall
       }
     }
     "return all the device apps as unranked if there is no ranking info for them" in new BasicScope {
@@ -105,8 +109,8 @@ class RankingsProcessesSpec extends RankingsProcessesSpecification {
 
       val response = rankingProcesses.getRankedDeviceApps(location, unrankedAppsMap)
 
-      response.foldMap(testInterpreters) must beRight[Map[String, List[RankedApp]]].which { r ⇒
-        r.values.flatten must contain(hasRankingInfo(false)).forall
+      response.foldMap(testInterpreters) must beRight[List[RankedAppsByCategory]].which { r ⇒
+        r must contain(hasRankingInfoForAll(false)).forall
       }
     }
 
@@ -116,7 +120,7 @@ class RankingsProcessesSpec extends RankingsProcessesSpecification {
     "return an empty response if no device apps are given" in new BasicScope {
       val response = rankingProcesses.getRankedAppsByMoment(location, emptyUnrankedAppsList, moments)
 
-      response.foldMap(testInterpreters) must beRight[Map[String, List[RankedApp]]](emptyRankedAppsMap)
+      response.foldMap(testInterpreters) must beRight[List[RankedAppsByCategory]](Nil)
     }
     "return all the apps as ranked if there is ranking info for them" in new BasicScope {
       countryServices.getCountryByIsoCode2("US") returns NineCardsService.right(country)
@@ -125,8 +129,8 @@ class RankingsProcessesSpec extends RankingsProcessesSpecification {
 
       val response = rankingProcesses.getRankedAppsByMoment(location, unrankedAppsList, moments)
 
-      response.foldMap(testInterpreters) must beRight[Map[String, List[RankedApp]]].which { r ⇒
-        r.values.flatten must contain(hasRankingInfo(true)).forall
+      response.foldMap(testInterpreters) must beRight[List[RankedAppsByCategory]].which { r ⇒
+        r must contain(hasRankingInfoForAll(true)).forall
       }
     }
     "return all the  apps as ranked by using world ranking if an unknown country is given" in new BasicScope {
@@ -136,18 +140,18 @@ class RankingsProcessesSpec extends RankingsProcessesSpecification {
 
       val response = rankingProcesses.getRankedAppsByMoment(location, unrankedAppsList, moments)
 
-      response.foldMap(testInterpreters) must beRight[Map[String, List[RankedApp]]].which { r ⇒
-        r.values.flatten must contain(hasRankingInfo(true)).forall
+      response.foldMap(testInterpreters) must beRight[List[RankedAppsByCategory]].which { r ⇒
+        r must contain(hasRankingInfoForAll(true)).forall
       }
     }
-    "return all the device apps as unranked if there is no ranking info for them" in new BasicScope {
+    "return an empty response if there is no ranking info for them" in new BasicScope {
       countryServices.getCountryByIsoCode2("US") returns NineCardsService.right(country)
       rankingServices.getRankingForAppsWithinMoments(mockEq(usaScope), any, mockEq(moments)) returns
         rankingForAppsEmptyResponse
 
       val response = rankingProcesses.getRankedAppsByMoment(location, unrankedAppsList, moments)
 
-      response.foldMap(testInterpreters) must beRight[Map[String, List[RankedApp]]](emptyRankedAppsMap)
+      response.foldMap(testInterpreters) must beRight[List[RankedAppsByCategory]](Nil)
     }
 
   }

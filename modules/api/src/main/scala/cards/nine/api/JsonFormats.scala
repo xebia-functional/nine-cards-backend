@@ -135,9 +135,12 @@ trait JsonFormats
 
   implicit val apiRankAppsByMomentsRequestFormat = jsonFormat3(ApiRankAppsByMomentsRequest)
 
+  implicit val apiRankedAppsByCategoryFormat = jsonFormat2(ApiRankedAppsByCategory)
+
   implicit val apiRankAppsResponseFormat = jsonFormat1(ApiRankAppsResponse)
 
   implicit val apiSearchAppsRequest = jsonFormat3(ApiSearchAppsRequest)
+
   implicit val apiSearchAppsResponse = jsonFormat1(ApiSearchAppsResponse)
 }
 
