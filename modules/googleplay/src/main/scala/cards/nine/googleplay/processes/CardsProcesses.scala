@@ -9,7 +9,7 @@ import cats.syntax.xor._
 import cards.nine.domain.application.{ FullCard, FullCardList, Package }
 import cards.nine.domain.market.MarketCredentials
 import cards.nine.googleplay.domain._
-import cards.nine.googleplay.domain.apigoogle.{ Failure ⇒ ApiFailure }
+import cards.nine.googleplay.domain.apigoogle.{ ResolvePackagesResult, Failure ⇒ ApiFailure, PackageNotFound ⇒ ApiNotFound }
 import cards.nine.googleplay.domain.webscrapper._
 import cards.nine.googleplay.service.free.algebra.{ Cache, GoogleApi, WebScraper }
 import org.joda.time.DateTime
@@ -27,6 +27,12 @@ class CardsProcesses[F[_]](
         _ ← cacheService.clearInvalid(card.packageName)
       } yield Unit
 
+    def storeAsResolvedMany(cards: List[FullCard]): Free[F, Unit] =
+      for {
+        _ ← cacheService.putResolvedMany(cards)
+        _ ← cacheService.clearInvalidMany(cards.map(_.packageName))
+      } yield Unit
+
     def storeAsPending(pack: Package): Free[F, Unit] =
       cacheService.isPending(pack) flatMap {
         case true ⇒ Free.pure(Unit)
@@ -37,12 +43,23 @@ class CardsProcesses[F[_]](
           } yield Unit
       }
 
+    def storeAsPendingMany(packages: List[Package]): Free[F, Unit] =
+      for {
+        _ ← cacheService.clearInvalidMany(packages)
+        _ ← cacheService.markPendingMany(packages)
+      } yield Unit
+
     def storeAsError(pack: Package): Free[F, Unit] =
       for {
         _ ← cacheService.unmarkPending(pack)
         _ ← cacheService.markError(pack)
       } yield Unit
 
+    def storeAsErrorMany(packages: List[Package]): Free[F, Unit] =
+      for {
+        _ ← cacheService.unmarkPendingMany(packages)
+        _ ← cacheService.markErrorMany(packages)
+      } yield Unit
   }
 
   def getBasicCards(
@@ -50,8 +67,8 @@ class CardsProcesses[F[_]](
     auth: MarketCredentials
   ): Free[F, ResolveMany.Response] =
     for {
-      cacheResult ← checkValidPackagesInCache(packages)
-      (uncached, cached) = cacheResult
+      cached ← cacheService.getValidMany(packages)
+      uncached = packages diff (cached map (_.packageName))
       response ← getPackagesInfoInGooglePlay(uncached, auth)
     } yield ResolveMany.Response(response.notFound, response.pending, cached ++ response.apps)
 
@@ -61,8 +78,15 @@ class CardsProcesses[F[_]](
   def getCards(
     packages: List[Package],
     auth: MarketCredentials
-  ): Free[F, List[getcard.Response]] =
-    packages.traverse[Free[F, ?], getcard.Response](pack ⇒ resolveNewPackage(pack, auth))
+  ): Free[F, ResolveMany.Response] =
+    for {
+      result ← resolvePackageList(packages, auth)
+      _ ← storeResolvePackagesResultInCache(result)
+    } yield ResolveMany.Response(
+      notFound = result.notFoundPackages,
+      pending  = result.pendingPackages,
+      apps     = result.resolvedPackages ++ result.cachedPackages
+    )
 
   def recommendationsByCategory(
     request: RecommendByCategoryRequest,
@@ -72,29 +96,40 @@ class CardsProcesses[F[_]](
       case ll @ Xor.Left(_) ⇒ Free.pure(ll)
       case Xor.Right(recommendations) ⇒
         val packages = recommendations.diff(request.excludedApps).take(request.maxTotal)
-        resolveNewPackageList(packages, auth).map(_.right[InfoError])
+        for {
+          result ← resolvePackageList(packages, auth)
+          _ ← storeResolvePackagesResultInCache(result)
+        } yield FullCardList(
+          missing = result.notFoundPackages ++ result.pendingPackages,
+          cards   = result.cachedPackages ++ result.resolvedPackages
+        ).right[InfoError]
     }
 
   def recommendationsByApps(
     request: RecommendByAppsRequest,
     auth: MarketCredentials
   ): Free[F, FullCardList] =
-    for /*Free[F,?]*/ {
+    for {
       recommendations ← googleApi.recommendationsByApps(request, auth)
       packages = recommendations.diff(request.excludedApps).take(request.maxTotal)
-      resolvedPackages ← resolveNewPackageList(packages, auth)
-    } yield resolvedPackages
+      result ← resolvePackageList(packages, auth)
+      _ ← storeResolvePackagesResultInCache(result)
+    } yield FullCardList(
+      missing = result.notFoundPackages ++ result.pendingPackages,
+      cards   = result.cachedPackages ++ result.resolvedPackages
+    )
 
   def searchApps(request: SearchAppsRequest, auth: MarketCredentials): Free[F, FullCardList] =
     googleApi.searchApps(request, auth) flatMap {
       case Xor.Left(_) ⇒ Free.pure(FullCardList(Nil, Nil))
-      case Xor.Right(packs) ⇒ resolveNewPackageList(packs, auth)
+      case Xor.Right(packs) ⇒
+        getBasicCards(packs, auth) map { r ⇒
+          FullCardList(
+            missing = r.notFound ++ r.pending,
+            cards   = r.apps
+          )
+        }
     }
-
-  private[this] def checkValidPackagesInCache(packages: List[Package]) =
-    packages.traverse[Free[F, ?], Package Xor FullCard] { p ⇒
-      cacheService.getValid(p) map (card ⇒ Xor.fromOption(card, p))
-    } map (_.separate)
 
   private[this] def getPackagesInfoInGooglePlay(packages: List[Package], auth: MarketCredentials) =
     googleApi.getBulkDetails(packages, auth) map {
@@ -104,6 +139,13 @@ class CardsProcesses[F[_]](
         val notFound = packages.diff(apps.map(_.packageName))
         ResolveMany.Response(notFound, Nil, apps)
     }
+
+  private[this] def storeResolvePackagesResultInCache(result: ResolvePackagesResult) =
+    for {
+      _ ← InCache.storeAsResolvedMany(result.resolvedPackages)
+      _ ← InCache.storeAsErrorMany(result.notFoundPackages)
+      _ ← InCache.storeAsPendingMany(result.pendingPackages)
+    } yield Unit
 
   def searchAndResolvePending(numApps: Int, date: DateTime): Free[F, ResolvePending.Response] = {
     import ResolvePending._
@@ -124,11 +166,26 @@ class CardsProcesses[F[_]](
 
   }
 
-  def resolveNewPackageList(packs: List[Package], auth: MarketCredentials): Free[F, FullCardList] =
+  def resolvePackageList(
+    packages: List[Package],
+    auth: MarketCredentials
+  ): Free[F, ResolvePackagesResult] = {
+
+    def findNotFound(packages: List[Package], failures: List[ApiFailure]) = {
+      val notFoundList = failures.collect { case notFound: ApiNotFound ⇒ notFound.pack }
+      val errorList = packages diff notFoundList
+
+      (notFoundList, errorList)
+    }
+
     for {
-      xors ← packs.traverse[Free[F, ?], getcard.Response](p ⇒ resolveNewPackage(p, auth))
-      (fails, apps) = xors.separate
-    } yield FullCardList(fails.map(e ⇒ e.packageName), apps)
+      cachedPackages ← cacheService.getValidMany(packages)
+      uncachedPackages = packages diff cachedPackages.map(_.packageName)
+      detailedPackages ← uncachedPackages.traverse[Free[F, ?], ApiFailure Xor FullCard](p ⇒ googleApi.getDetails(p, auth))
+      (failures, cards) = detailedPackages.separate
+      (notFound, error) = findNotFound(uncachedPackages.diff(cards.map(_.packageName)), failures)
+    } yield ResolvePackagesResult(cachedPackages, cards, notFound, error)
+  }
 
   def resolveNewPackage(pack: Package, auth: MarketCredentials): Free[F, getcard.Response] = {
 

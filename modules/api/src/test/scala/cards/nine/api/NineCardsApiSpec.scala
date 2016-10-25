@@ -7,11 +7,11 @@ import cards.nine.api.TestData.Exceptions._
 import cards.nine.api.TestData._
 import cards.nine.commons.NineCardsService
 import cards.nine.domain.account._
-import cards.nine.domain.analytics.{ Continent, Country }
 import cards.nine.processes.NineCardsServices._
 import cards.nine.processes._
 import cards.nine.processes.messages.UserMessages._
 import cats.free.Free
+import cats.syntax.either._
 import cats.syntax.xor._
 import org.mockito.Matchers.{ eq ⇒ mockEq }
 import org.specs2.matcher.Matchers
@@ -102,10 +102,10 @@ trait NineCardsApiSpecification
     applicationProcesses.getAppsInfo(any, any) returns
       Free.pure(Messages.getAppsInfoResponse)
 
-    rankingProcesses.getRanking(any) returns Free.pure(Messages.rankings.getResponse)
+    rankingProcesses.getRanking(any) returns Free.pure(Either.right(Messages.rankings.getResponse))
 
     rankingProcesses.reloadRanking(any, any) returns
-      Free.pure(Messages.rankings.reloadResponse.right)
+      Free.pure(Either.right(Messages.rankings.reloadResponse))
 
     recommendationsProcesses.getRecommendationsByCategory(any, any, any, any, any) returns
       Free.pure(Messages.getRecommendationsByCategoryResponse)
@@ -114,6 +114,9 @@ trait NineCardsApiSpecification
       Free.pure(Messages.getRecommendationsByCategoryResponse)
 
     rankingProcesses.getRankedDeviceApps(any, any) returns
+      NineCardsService.right(Messages.getRankedAppsResponse).value
+
+    rankingProcesses.getRankedAppsByMoment(any, any, any) returns
       NineCardsService.right(Messages.getRankedAppsResponse).value
   }
 
@@ -184,10 +187,10 @@ trait NineCardsApiSpecification
     sharedCollectionProcesses.updateCollection(any, any, any) returns
       Free.pure(Messages.createOrUpdateCollectionResponse.right)
 
-    rankingProcesses.getRanking(any) returns Free.pure(Messages.rankings.getResponse)
+    rankingProcesses.getRanking(any) returns Free.pure(Either.right(Messages.rankings.getResponse))
 
     rankingProcesses.reloadRanking(any, any) returns
-      Free.pure(Messages.rankings.reloadResponse.right)
+      Free.pure(Either.right(Messages.rankings.reloadResponse))
 
     rankingProcesses.getRankedDeviceApps(any, any) returns
       NineCardsService.right(Messages.getRankedAppsResponse).value
@@ -493,6 +496,36 @@ class NineCardsApiSpec
     successOk(request)
   }
 
+  "POST /applications/rank" should {
+
+    val request = Post(
+      uri     = Paths.rankApps,
+      content = Messages.apiRankAppsRequest
+    )
+
+    authenticatedBadRequestEmptyBody(Post(Paths.rankApps))
+
+    unauthorizedNoHeaders(request)
+
+    internalServerError(request)
+
+    successOk(request)
+  }
+
+  "POST /applications/rank-by-moment" should {
+
+    val request = Post(
+      uri     = Paths.rankAppsByMoments,
+      content = Messages.apiRankAppsByMomentsRequest
+    )
+
+    authenticatedBadRequestEmptyBody(Post(Paths.rankApps))
+
+    unauthorizedNoHeaders(request)
+
+    successOk(request)
+  }
+
   "POST /recommendations" should {
 
     val request = Post(
@@ -553,27 +586,10 @@ class NineCardsApiSpec
   }
 
   val rankingPaths: List[String] = {
-    val countries = Country.values.map(c ⇒ s"countries/$c").toList
-    val continents = Continent.values.map(c ⇒ s"continents/$c").toList
-    "world" :: (continents ++ countries)
+    val countries = List("countries/es", "countries/ES", "countries/gb", "countries/us", "countries/it")
+    "world" :: countries
   }
 
   rankingPaths foreach testRanking
-
-  "POST /applications/rank" should {
-
-    val request = Post(
-      uri     = Paths.rankApps,
-      content = Messages.apiRankAppsRequest
-    )
-
-    authenticatedBadRequestEmptyBody(Post(Paths.rankApps))
-
-    unauthorizedNoHeaders(request)
-
-    internalServerError(request)
-
-    successOk(request)
-  }
 
 }

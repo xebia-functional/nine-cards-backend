@@ -5,13 +5,16 @@ import cards.nine.api.messages.GooglePlayMessages._
 import cards.nine.api.messages.InstallationsMessages.ApiUpdateInstallationRequest
 import cards.nine.api.messages.SharedCollectionMessages._
 import cards.nine.api.messages.UserMessages.ApiLoginRequest
+import cards.nine.api.messages.{ rankings ⇒ Api }
 import cards.nine.domain.account._
+import cards.nine.domain.analytics.RankedAppsByCategory
 import cards.nine.domain.application.{ Category, FullCardList, Package }
 import cards.nine.processes.ProcessesExceptions.SharedCollectionNotFoundException
 import cards.nine.processes.messages.InstallationsMessages._
 import cards.nine.processes.messages.SharedCollectionMessages._
 import cards.nine.processes.messages.UserMessages.{ LoginRequest, LoginResponse }
-import cards.nine.processes.messages.rankings.GetRankedDeviceApps.RankedDeviceApp
+import cards.nine.processes.messages.rankings.{ Get, Reload }
+import cards.nine.services.free.domain.Ranking.GoogleAnalyticsRanking
 import cards.nine.services.persistence.PersistenceExceptions.PersistenceException
 import org.joda.time.{ DateTime, DateTimeZone }
 import spray.http.HttpHeaders.RawHeader
@@ -72,6 +75,8 @@ object TestData {
   val deviceApps = Map("countries" → packagesName)
 
   val excludePackages = packagesName.filter(_.value.length > 18)
+
+  val moments = List("HOME", "NIGHT")
 
   val publicIdentifier = "40daf308-fecf-4228-9262-a712d783cf49"
 
@@ -168,7 +173,13 @@ object TestData {
       items    = deviceApps
     )
 
-    val getRankedAppsResponse = Map.empty[String, List[RankedDeviceApp]]
+    val apiRankAppsByMomentsRequest = ApiRankAppsByMomentsRequest(
+      location = location,
+      items    = packagesName,
+      moments  = moments
+    )
+
+    val getRankedAppsResponse = List.empty[RankedAppsByCategory]
 
     val getRecommendationsByCategoryResponse = FullCardList(Nil, Nil)
 
@@ -220,21 +231,20 @@ object TestData {
     val updateInstallationResponse = UpdateInstallationResponse(androidId, deviceToken)
 
     object rankings {
-      import cards.nine.api.messages.{ rankings ⇒ Api }
-      import cards.nine.processes.messages.{ rankings ⇒ Proc }
-      import cards.nine.services.free.domain.{ rankings ⇒ Domain }
 
-      val ranking = Domain.Ranking(Map(
-        Category.SOCIAL → Domain.CategoryRanking(List(Package("testApp")))
+      val ranking = GoogleAnalyticsRanking(Map(
+        Category.SOCIAL.entryName → List(Package("testApp"))
       ))
-      val getResponse = Proc.Get.Response(ranking)
+      val getResponse = Get.Response(ranking)
 
-      val apiRanking = Api.Ranking(List(
-        Api.CategoryRanking(Category.SOCIAL, List("socialite", "socialist") map Package),
-        Api.CategoryRanking(Category.COMMUNICATION, List("es.elpais", "es.elmundo", "uk.theguardian") map Package)
-      ))
+      val apiRanking = Api.Ranking(
+        Map(
+          Category.SOCIAL.entryName → List("socialite", "socialist").map(Package),
+          Category.COMMUNICATION.entryName → List("es.elpais", "es.elmundo", "uk.theguardian").map(Package)
+        )
+      )
 
-      val reloadResponse = Proc.Reload.Response()
+      val reloadResponse = Reload.Response()
       val startDate: DateTime = new DateTime(2016, 7, 15, 0, 0, DateTimeZone.UTC)
       val endDate: DateTime = new DateTime(2016, 8, 21, 0, 0, DateTimeZone.UTC)
       val reloadApiRequest = Api.Reload.Request(startDate, endDate, 5)
@@ -264,6 +274,8 @@ object TestData {
     val login = "/login"
 
     val rankApps = "/applications/rank"
+
+    val rankAppsByMoments = "/applications/rank-by-moments"
 
     val recommendationsByCategory = "/recommendations/SOCIAL"
 

@@ -3,16 +3,14 @@ package cards.nine.services.persistence
 import cards.nine.domain.account._
 import cards.nine.domain.analytics._
 import cards.nine.domain.application.Category
-import cards.nine.services.free.domain.rankings._
 import cards.nine.services.free.interpreter.collection.Services.SharedCollectionData
 import cards.nine.services.free.interpreter.user.Services.UserData
 import cards.nine.services.persistence.NineCardsGenEntities._
 import cats.Monad
-import cats.syntax.traverse._
-import cats.instances.list._
 import enumeratum.{ Enum, EnumEntry }
 import java.sql.Timestamp
 import java.time.Instant
+
 import org.scalacheck.{ Arbitrary, Gen }
 
 object NineCardsGenEntities {
@@ -100,18 +98,6 @@ trait NineCardsScalacheckGen {
 
   implicit val abCategory: Arbitrary[Category] = abEnumeratum[Category](Category)
 
-  implicit val abCountry: Arbitrary[Country] = abEnumeratum[Country](Country)
-
-  implicit val abContinent: Arbitrary[Continent] = abEnumeratum[Continent](Continent)
-
-  val genGeoScope: Gen[GeoScope] = {
-    val countries = Country.values.toSeq map CountryScope.apply
-    val continents = Continent.values.toSeq map ContinentScope.apply
-    Gen.oneOf(countries ++ continents ++ Seq(WorldScope))
-  }
-
-  implicit val abGeoScope: Arbitrary[GeoScope] = Arbitrary(genGeoScope)
-
   private[this] val genMonad: Monad[Gen] = new Monad[Gen] {
     def pure[A](a: A): Gen[A] = Gen.const(a)
     def flatMap[A, B](fa: Gen[A])(f: A ⇒ Gen[B]): Gen[B] = fa flatMap f
@@ -128,41 +114,10 @@ trait NineCardsScalacheckGen {
       elems ← Gen.listOfN(num, gen)
     } yield elems.distinct
 
-  import cards.nine.domain.application.ScalaCheck.genPackage
-
-  val genRankingEntries: Gen[List[Entry]] = {
-
-    def genCatEntries(cat: Category): Gen[List[Entry]] =
-      for /*Gen*/ {
-        packs ← listOfDistinctN(0, 10, genPackage)
-        entries = packs.zipWithIndex map {
-          case (pack, ind) ⇒ Entry(pack, cat, ind + 1)
-        }
-      } yield entries
-
-    for /*Gen */ {
-      cats ← listOfDistinctN(0, 10, genEnumeratum[Category](Category))
-      entries ← cats.traverse(genCatEntries)(genMonad)
-    } yield entries.flatten
-  }
-
-  implicit val abRankingEntries: Arbitrary[List[Entry]] = Arbitrary(genRankingEntries)
-
-  def genCatRanking(maxSize: Int): Gen[CategoryRanking] =
-    listOfDistinctN(0, maxSize, genPackage).map(CategoryRanking.apply)
-
-  val genRanking: Gen[Ranking] =
-    for {
-      cats ← listOfDistinctN(0, 10, genEnumeratum[Category](Category))
-      pairs ← cats.traverse({ cat ⇒
-        for (r ← genCatRanking(10)) yield (cat, r)
-      })(genMonad)
-    } yield Ranking(pairs.toMap)
-
-  implicit val abRanking: Arbitrary[Ranking] = Arbitrary(genRanking)
+  import cards.nine.domain.application.ScalaCheck.arbPackage
 
   val genDeviceApp: Gen[UnrankedApp] = for {
-    p ← genPackage
+    p ← arbPackage.arbitrary
     c ← abCategory.arbitrary
   } yield UnrankedApp(p, c.entryName)
 

@@ -4,7 +4,7 @@ import cards.nine.domain.application.Package
 
 object GooglePlayMessages {
 
-  case class CategorizedApp(packageName: Package, category: String)
+  case class CategorizedApp(packageName: Package, categories: List[String])
 
   case class ApiGetAppsInfoRequest(items: List[Package])
 
@@ -47,7 +47,15 @@ object GooglePlayMessages {
 
   case class ApiRankAppsRequest(location: Option[String], items: Map[String, List[Package]])
 
-  case class ApiRankAppsResponse(items: Map[String, List[Package]])
+  case class ApiRankAppsByMomentsRequest(
+    location: Option[String],
+    items: List[Package],
+    moments: List[String]
+  )
+
+  case class ApiRankedAppsByCategory(category: String, packages: List[Package])
+
+  case class ApiRankAppsResponse(items: List[ApiRankedAppsByCategory])
 
   case class ApiSearchAppsRequest(
     query: String,
