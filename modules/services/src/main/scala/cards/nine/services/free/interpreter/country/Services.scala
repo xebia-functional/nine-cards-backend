@@ -13,7 +13,7 @@ import doobie.imports._
 class Services(persistence: Persistence[Country]) extends (Ops ~> ConnectionIO) {
 
   def getCountryByIsoCode2(isoCode: String): ConnectionIO[Result[Country]] =
-    persistence.fetchOption(Queries.getByIsoCode2Sql, isoCode) map {
+    persistence.fetchOption(Queries.getByIsoCode2Sql, isoCode.toUpperCase) map {
       Either.fromOption(_, CountryNotFound(s"Country with ISO code2 $isoCode doesn't exist"))
     }
 

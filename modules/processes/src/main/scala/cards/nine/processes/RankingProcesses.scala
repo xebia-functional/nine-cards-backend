@@ -29,7 +29,7 @@ class RankingProcesses[F[_]](
     def getCountryName(scope: GeoScope): NineCardsService[F, Option[CountryName]] = scope match {
       case WorldScope ⇒ NineCardsService.right[F, Option[CountryName]](None)
       case CountryScope(code) ⇒
-        countryPersistence.getCountryByIsoCode2(code.value.toUpperCase).map(c ⇒ Option(CountryName(c.name)))
+        countryPersistence.getCountryByIsoCode2(code.value).map(c ⇒ Option(CountryName(c.name)))
     }
 
     for {
