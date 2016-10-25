@@ -58,4 +58,40 @@ object Category extends Enum[Category] {
   case object GAME_WORD extends Category
 
   val values = super.findValues
+
+  val sortedValues = List(
+    COMMUNICATION,
+    SOCIAL,
+    PRODUCTIVITY,
+    PHOTOGRAPHY,
+    ENTERTAINMENT,
+    GAME,
+    VIDEO_PLAYERS,
+    MAPS_AND_NAVIGATION,
+    MUSIC_AND_AUDIO,
+    NEWS_AND_MAGAZINES,
+    LIFESTYLE,
+    HEALTH_AND_FITNESS,
+    SPORTS,
+    SHOPPING,
+    TRAVEL_AND_LOCAL,
+    FINANCE,
+    BOOKS_AND_REFERENCE,
+    EDUCATION,
+    ART_AND_DESIGN,
+    FOOD_AND_DRINK,
+    AUTO_AND_VEHICLES,
+    BEAUTY,
+    BUSINESS,
+    COMICS,
+    DATING,
+    EVENTS,
+    HOUSE_AND_HOME,
+    LIBRARIES_AND_DEMO,
+    MEDICAL,
+    PARENTING,
+    PERSONALIZATION,
+    TOOLS,
+    WEATHER
+  ) map (_.entryName)
 }

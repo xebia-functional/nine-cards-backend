@@ -7,7 +7,7 @@ import cards.nine.api.messages.SharedCollectionMessages._
 import cards.nine.api.messages.UserMessages.ApiLoginRequest
 import cards.nine.api.messages.{ rankings ⇒ Api }
 import cards.nine.domain.account._
-import cards.nine.domain.analytics.RankedApp
+import cards.nine.domain.analytics.RankedAppsByCategory
 import cards.nine.domain.application.{ Category, FullCardList, Package }
 import cards.nine.processes.ProcessesExceptions.SharedCollectionNotFoundException
 import cards.nine.processes.messages.InstallationsMessages._
@@ -179,7 +179,7 @@ object TestData {
       moments  = moments
     )
 
-    val getRankedAppsResponse = Map.empty[String, List[RankedApp]]
+    val getRankedAppsResponse = List.empty[RankedAppsByCategory]
 
     val getRecommendationsByCategoryResponse = FullCardList(Nil, Nil)
 

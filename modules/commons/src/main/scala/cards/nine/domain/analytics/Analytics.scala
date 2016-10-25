@@ -35,4 +35,5 @@ package analytics {
 
   case class RankedApp(packageName: Package, category: String, position: Option[Int])
 
+  case class RankedAppsByCategory(category: String, packages: List[RankedApp])
 }

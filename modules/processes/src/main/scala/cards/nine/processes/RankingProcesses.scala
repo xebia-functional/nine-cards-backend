@@ -4,7 +4,7 @@ import cards.nine.commons.NineCardsErrors.CountryNotFound
 import cards.nine.commons.NineCardsService
 import cards.nine.commons.NineCardsService._
 import cards.nine.domain.analytics._
-import cards.nine.domain.application.Package
+import cards.nine.domain.application.{ Category, Package }
 import cards.nine.processes.converters.Converters._
 import cards.nine.processes.messages.rankings._
 import cards.nine.services.free.algebra
@@ -42,7 +42,7 @@ class RankingProcesses[F[_]](
   def getRankedDeviceApps(
     location: Option[String],
     deviceApps: Map[String, List[Package]]
-  ): Free[F, Result[Map[String, List[RankedApp]]]] = {
+  ): Free[F, Result[List[RankedAppsByCategory]]] = {
 
     def unifyDeviceApps(deviceApps: Map[String, List[Package]]) = {
       val (games, otherApps) = deviceApps.partition { case (cat, _) ⇒ cat.matches("GAME\\_.*") }
@@ -54,7 +54,7 @@ class RankingProcesses[F[_]](
     }
 
     if (deviceApps.isEmpty)
-      NineCardsService.right(Map.empty[String, List[RankedApp]]).value
+      NineCardsService.right(List.empty[RankedAppsByCategory]).value
     else {
       val unifiedDeviceApps = unifyDeviceApps(deviceApps)
       val unrankedApps = unifiedDeviceApps.flatMap {
@@ -72,22 +72,28 @@ class RankingProcesses[F[_]](
               .map(RankedApp(_, category, None))
             (category, appWithoutRanking)
         }
-      } yield rankedAppsByCategory combine unrankedDeviceApps
+      } yield (rankedAppsByCategory combine unrankedDeviceApps)
+        .map { case (category, apps) ⇒ RankedAppsByCategory(category, apps) }
+        .toList
+        .sortBy(r ⇒ Category.sortedValues.indexOf(r.category))
     }.value
   }
 
   def getRankedAppsByMoment(
     location: Option[String],
-    apps: List[Package],
+    deviceApps: List[Package],
     moments: List[String]
-  ): Free[F, Result[Map[String, List[RankedApp]]]] = {
-    if (apps.isEmpty)
-      NineCardsService.right(Map.empty[String, List[RankedApp]]).value
+  ): Free[F, Result[List[RankedAppsByCategory]]] = {
+    if (deviceApps.isEmpty)
+      NineCardsService.right(List.empty[RankedAppsByCategory]).value
     else {
       for {
         geoScope ← location.fold(NineCardsService.right[F, GeoScope](WorldScope))(geoScopeFromLocation)
-        rankedApps ← rankingServices.getRankingForAppsWithinMoments(geoScope, apps, moments)
-      } yield rankedApps.groupBy(_.category)
+        rankedApps ← rankingServices.getRankingForAppsWithinMoments(geoScope, deviceApps, moments)
+      } yield rankedApps
+        .groupBy(_.category)
+        .map { case (category, apps) ⇒ RankedAppsByCategory(category, apps) }
+        .toList
     }.value
   }
 

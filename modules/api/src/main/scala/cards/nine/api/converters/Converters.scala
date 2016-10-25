@@ -7,7 +7,7 @@ import cards.nine.api.messages.SharedCollectionMessages._
 import cards.nine.api.messages.UserMessages._
 import cards.nine.commons.NineCardsService.Result
 import cards.nine.domain.account._
-import cards.nine.domain.analytics.RankedApp
+import cards.nine.domain.analytics.RankedAppsByCategory
 import cards.nine.domain.application.{ FullCard, FullCardList, Package }
 import cards.nine.domain.market.MarketCredentials
 import cards.nine.processes.messages.InstallationsMessages._
@@ -177,10 +177,13 @@ object Converters {
   def toApiSearchAppsResponse(response: FullCardList): ApiSearchAppsResponse =
     ApiSearchAppsResponse(response.cards map toApiRecommendation)
 
-  def toApiRankAppsResponse(result: Result[Map[String, List[RankedApp]]]) =
+  def toApiRankedAppsByCategory(ranking: RankedAppsByCategory) =
+    ApiRankedAppsByCategory(ranking.category, ranking.packages map (_.packageName))
+
+  def toApiRankAppsResponse(result: Result[List[RankedAppsByCategory]]) =
     result.map {
       items ⇒
-        ApiRankAppsResponse(items.mapValues(apps ⇒ apps.map(_.packageName)))
+        ApiRankAppsResponse(items map toApiRankedAppsByCategory)
     }
 
   def toDeviceAppList(items: List[Package]) = items map DeviceApp.apply
