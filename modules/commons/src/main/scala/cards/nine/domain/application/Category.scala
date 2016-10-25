@@ -5,7 +5,6 @@ import enumeratum.{ Enum, EnumEntry }
 sealed trait Category extends EnumEntry
 object Category extends Enum[Category] {
 
-  case object ANDROID_WEAR extends Category
   case object ART_AND_DESIGN extends Category
   case object AUTO_AND_VEHICLES extends Category
   case object BEAUTY extends Category

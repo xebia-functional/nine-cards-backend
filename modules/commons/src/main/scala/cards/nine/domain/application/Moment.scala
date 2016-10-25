@@ -11,7 +11,7 @@ object Moment extends Enum[Moment] {
   case object MUSIC extends Moment
   case object NIGHT extends Moment
   case object OUT_AND_ABOUT extends Moment
-  case object SPORTS extends Moment
+  case object SPORT extends Moment
   case object STUDY extends Moment
   case object WORK extends Moment
 
