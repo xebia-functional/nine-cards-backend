@@ -102,6 +102,13 @@ class NineCardsRoutes(
             }
           }
         } ~
+        path("rank-by-moments") {
+          post {
+            entity(as[ApiRankAppsByMomentsRequest]) { request ⇒
+              complete(rankAppsByMoments(request, userContext))
+            }
+          }
+        } ~
         path("search") {
           post {
             entity(as[ApiSearchAppsRequest]) { request ⇒
@@ -395,6 +402,13 @@ class NineCardsRoutes(
     rankingProcesses.getRankedDeviceApps(request.location, request.items)
       .map(toApiRankAppsResponse)
 
+  private[this] def rankAppsByMoments(
+    request: ApiRankAppsByMomentsRequest,
+    userContext: UserContext
+  ): NineCardsServed[Result[ApiRankAppsResponse]] =
+    rankingProcesses.getRankedAppsByMoment(request.location, request.items, request.moments)
+      .map(toApiRankAppsResponse)
+
   private[this] object rankings {
 
     import cards.nine.api.converters.{ rankings ⇒ Converters }
@@ -433,7 +447,7 @@ class NineCardsRoutes(
     ): NineCardsServed[Result[Api.Reload.Response]] =
       rankingProcesses.reloadRanking(scope, params).map(Converters.reload.toApiResponse)
 
-    private[this] def getRanking(scope: GeoScope): NineCardsServed[Api.Ranking] =
+    private[this] def getRanking(scope: GeoScope): NineCardsServed[Result[Api.Ranking]] =
       rankingProcesses.getRanking(scope).map(Converters.toApiRanking)
 
   }

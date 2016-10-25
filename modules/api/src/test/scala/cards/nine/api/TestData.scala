@@ -76,6 +76,8 @@ object TestData {
 
   val excludePackages = packagesName.filter(_.value.length > 18)
 
+  val moments = List("HOME", "NIGHT")
+
   val publicIdentifier = "40daf308-fecf-4228-9262-a712d783cf49"
 
   val removedPackages = None
@@ -169,6 +171,12 @@ object TestData {
     val apiRankAppsRequest = ApiRankAppsRequest(
       location = location,
       items    = deviceApps
+    )
+
+    val apiRankAppsByMomentsRequest = ApiRankAppsByMomentsRequest(
+      location = location,
+      items    = packagesName,
+      moments  = moments
     )
 
     val getRankedAppsResponse = Map.empty[String, List[RankedApp]]
@@ -266,6 +274,8 @@ object TestData {
     val login = "/login"
 
     val rankApps = "/applications/rank"
+
+    val rankAppsByMoments = "/applications/rank-by-moments"
 
     val recommendationsByCategory = "/recommendations/SOCIAL"
 

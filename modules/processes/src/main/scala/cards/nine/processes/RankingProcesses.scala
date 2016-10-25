@@ -21,8 +21,8 @@ class RankingProcesses[F[_]](
   rankingServices: algebra.Ranking.Services[F]
 ) {
 
-  def getRanking(scope: GeoScope): Free[F, Get.Response] =
-    rankingServices.getRanking(scope) map Get.Response
+  def getRanking(scope: GeoScope): Free[F, Result[Get.Response]] =
+    (rankingServices.getRanking(scope) map Get.Response).value
 
   def reloadRanking(scope: GeoScope, params: RankingParams): Free[F, Result[Reload.Response]] = {
 
@@ -44,16 +44,8 @@ class RankingProcesses[F[_]](
     deviceApps: Map[String, List[Package]]
   ): Free[F, Result[Map[String, List[RankedApp]]]] = {
 
-    def geoScopeFromLocation(isoCode: String): NineCardsService[F, GeoScope] =
-      countryPersistence.getCountryByIsoCode2(isoCode.toUpperCase)
-        .map { country ⇒
-          val scope: GeoScope = CountryScope(CountryIsoCode(country.isoCode2))
-          scope
-        }
-        .recover { case _: CountryNotFound ⇒ WorldScope }
-
     def unifyDeviceApps(deviceApps: Map[String, List[Package]]) = {
-      val (games, otherApps) = deviceApps.partition { case (cat, apps) ⇒ cat.matches("GAME\\_.*") }
+      val (games, otherApps) = deviceApps.partition { case (cat, _) ⇒ cat.matches("GAME\\_.*") }
 
       if (games.isEmpty)
         otherApps
@@ -84,6 +76,28 @@ class RankingProcesses[F[_]](
     }.value
   }
 
+  def getRankedAppsByMoment(
+    location: Option[String],
+    apps: List[Package],
+    moments: List[String]
+  ): Free[F, Result[Map[String, List[RankedApp]]]] = {
+    if (apps.isEmpty)
+      NineCardsService.right(Map.empty[String, List[RankedApp]]).value
+    else {
+      for {
+        geoScope ← location.fold(NineCardsService.right[F, GeoScope](WorldScope))(geoScopeFromLocation)
+        rankedApps ← rankingServices.getRankingForAppsWithinMoments(geoScope, apps, moments)
+      } yield rankedApps.groupBy(_.category)
+    }.value
+  }
+
+  private[this] def geoScopeFromLocation(isoCode: String): NineCardsService[F, GeoScope] =
+    countryPersistence.getCountryByIsoCode2(isoCode.toUpperCase)
+      .map { country ⇒
+        val scope: GeoScope = CountryScope(CountryIsoCode(country.isoCode2))
+        scope
+      }
+      .recover { case _: CountryNotFound ⇒ WorldScope }
 }
 
 object RankingProcesses {

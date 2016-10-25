@@ -14,5 +14,7 @@ object NineCardsErrors {
 
   final case class HttpUnauthorized(message: String) extends NineCardsError
 
+  final case class RankingNotFound(message: String) extends NineCardsError
+
   final case class ReportNotFound(message: String) extends NineCardsError
 }
