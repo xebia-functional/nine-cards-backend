@@ -25,7 +25,10 @@ object Ranking {
 
     def worldScope: CacheKey = CacheKey(WorldScope, AppsRankingByCategory)
 
-    def countryScope(code: String): CacheKey = CacheKey(CountryScope(CountryIsoCode(code)), AppsRankingByCategory)
+    def countryScope(code: String): CacheKey = CacheKey(
+      scope      = CountryScope(CountryIsoCode(code.toLowerCase)),
+      reportType = AppsRankingByCategory
+    )
 
   }
 }
