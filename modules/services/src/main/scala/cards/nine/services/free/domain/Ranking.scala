@@ -3,13 +3,12 @@ package cards.nine.services.free.domain
 import cards.nine.domain.analytics._
 import cards.nine.domain.analytics.ReportType.AppsRankingByCategory
 import cards.nine.domain.application.Package
-import cats.data.Xor
 
 object Ranking {
 
   case class GoogleAnalyticsRanking(categories: Map[String, List[Package]]) extends AnyVal
 
-  type TryRanking = RankingError Xor GoogleAnalyticsRanking
+  case class CountriesWithRanking(countries: List[CountryIsoCode]) extends AnyVal
 
   case class UpdateRankingSummary(created: Int, deleted: Int)
 

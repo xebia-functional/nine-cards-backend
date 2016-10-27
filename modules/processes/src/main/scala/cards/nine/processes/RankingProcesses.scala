@@ -4,11 +4,12 @@ import cards.nine.commons.NineCardsErrors.CountryNotFound
 import cards.nine.commons.NineCardsService
 import cards.nine.commons.NineCardsService._
 import cards.nine.domain.analytics._
-import cards.nine.domain.application.{ Category, Package }
+import cards.nine.domain.application.{ Category, Moment, Package }
 import cards.nine.processes.converters.Converters._
 import cards.nine.processes.messages.rankings._
 import cards.nine.services.free.algebra
 import cards.nine.services.free.algebra.GoogleAnalytics
+import cards.nine.services.free.domain.Ranking.GoogleAnalyticsRanking
 import cats.free.Free
 import cats.instances.list._
 import cats.instances.map._
@@ -26,15 +27,22 @@ class RankingProcesses[F[_]](
 
   def reloadRanking(scope: GeoScope, params: RankingParams): Free[F, Result[Reload.Response]] = {
 
-    def getCountryName(scope: GeoScope): NineCardsService[F, Option[CountryName]] = scope match {
-      case WorldScope ⇒ NineCardsService.right[F, Option[CountryName]](None)
-      case CountryScope(code) ⇒
-        countryPersistence.getCountryByIsoCode2(code.value).map(c ⇒ Option(CountryName(c.name)))
+    val allCategories = Category.valuesName ++ Moment.valuesName ++ Moment.widgetValuesName
+
+    def hasRankingInfo(code: CountryIsoCode, countries: List[CountryIsoCode]) =
+      countries.exists(_.value.equalsIgnoreCase(code.value))
+
+    def generateRanking(scope: GeoScope, countries: List[CountryIsoCode]) = scope match {
+      case WorldScope ⇒ analytics.getRanking(None, allCategories, params)
+      case CountryScope(code) if hasRankingInfo(code, countries) ⇒
+        analytics.getRanking(Option(code), allCategories, params)
+      case _ ⇒
+        NineCardsService.left[F, GoogleAnalyticsRanking](CountryNotFound("The country doesn't have ranking info"))
     }
 
     for {
-      countryName ← getCountryName(scope)
-      ranking ← analytics.getRanking(countryName, params)
+      countriesWithRanking ← analytics.getCountriesWithRanking(params)
+      ranking ← generateRanking(scope, countriesWithRanking.countries)
       _ ← rankingServices.updateRanking(scope, ranking)
     } yield Reload.Response()
   }.value
