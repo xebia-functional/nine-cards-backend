@@ -8,6 +8,17 @@ import enumeratum.{ Enum, EnumEntry }
   */
 case class Package(value: String) extends AnyVal
 
+case class Widget(packageName: Package, className: String)
+
+object Widget {
+  val FromRaw = "([a-zA-Z0-9\\.\\_]+):([a-zA-Z0-9\\.\\_]+)".r
+
+  def apply(raw: String): Option[Widget] = raw match {
+    case FromRaw(packageName, className) ⇒ Option(Widget(Package(packageName), className))
+    case _ ⇒ None
+  }
+}
+
 /**
   * A FullCard contains all the information about an existing Android App
   * managed by the NineCards Backend application.

@@ -6,6 +6,8 @@ import org.joda.time.DateTime
 
 package analytics {
 
+  import cards.nine.domain.application.Widget
+
   case class CountryIsoCode(value: String) extends AnyVal
 
   case class CountryName(value: String) extends AnyVal
@@ -36,4 +38,8 @@ package analytics {
   case class RankedApp(packageName: Package, category: String, position: Option[Int])
 
   case class RankedAppsByCategory(category: String, packages: List[RankedApp])
+
+  case class RankedWidget(widget: Widget, moment: String, position: Option[Int])
+
+  case class RankedWidgetsByMoment(moment: String, widgets: List[RankedWidget])
 }

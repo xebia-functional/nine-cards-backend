@@ -2,7 +2,7 @@ package cards.nine.processes
 
 import cards.nine.commons.NineCardsErrors.NineCardsError
 import cards.nine.commons.NineCardsService
-import cards.nine.domain.analytics.{ RankedApp, RankedAppsByCategory, WorldScope }
+import cards.nine.domain.analytics._
 import cards.nine.processes.NineCardsServices._
 import cards.nine.processes.TestData.Values._
 import cards.nine.processes.TestData.rankings._
@@ -33,12 +33,28 @@ trait RankingsProcessesSpecification
 
     val rankingProcesses = RankingProcesses.processes[NineCardsServices]
 
-    def hasRankingInfo(hasRanking: Boolean): Matcher[RankedApp] = {
+    def appsHaveAtMost(maxSize: Int): Matcher[RankedAppsByCategory] = {
+      ranking: RankedAppsByCategory ⇒ ranking.packages.size must be_<=(maxSize)
+    }
+
+    def appHasRankingInfo(hasRanking: Boolean): Matcher[RankedApp] = {
       app: RankedApp ⇒ app.position.isDefined must_== hasRanking
     }
 
-    def hasRankingInfoForAll(hasRanking: Boolean): Matcher[RankedAppsByCategory] = {
-      ranking: RankedAppsByCategory ⇒ ranking.packages must contain(hasRankingInfo(hasRanking)).forall
+    def allAppsHaveRankingInfo(hasRanking: Boolean): Matcher[RankedAppsByCategory] = {
+      ranking: RankedAppsByCategory ⇒ ranking.packages must contain(appHasRankingInfo(hasRanking)).forall
+    }
+
+    def widgetHasRankingInfo(hasRanking: Boolean): Matcher[RankedWidget] = {
+      app: RankedWidget ⇒ app.position.isDefined must_== hasRanking
+    }
+
+    def widgetsHaveAtMost(maxSize: Int): Matcher[RankedWidgetsByMoment] = {
+      ranking: RankedWidgetsByMoment ⇒ ranking.widgets.size must be_<=(maxSize)
+    }
+
+    def allWidgetsHaveRankingInfo(hasRanking: Boolean): Matcher[RankedWidgetsByMoment] = {
+      ranking: RankedWidgetsByMoment ⇒ ranking.widgets must contain(widgetHasRankingInfo(hasRanking)).forall
     }
   }
 }
@@ -90,7 +106,7 @@ class RankingsProcessesSpec extends RankingsProcessesSpecification {
       val response = rankingProcesses.getRankedDeviceApps(location, unrankedAppsMap)
 
       response.foldMap(testInterpreters) must beRight[List[RankedAppsByCategory]].which { r ⇒
-        r must contain(hasRankingInfoForAll(true)).forall
+        r must contain(allAppsHaveRankingInfo(true)).forall
       }
     }
     "return all the device apps as ranked by using world ranking if an unknown country is given" in new BasicScope {
@@ -100,7 +116,7 @@ class RankingsProcessesSpec extends RankingsProcessesSpecification {
       val response = rankingProcesses.getRankedDeviceApps(location, unrankedAppsMap)
 
       response.foldMap(testInterpreters) must beRight[List[RankedAppsByCategory]].which { r ⇒
-        r must contain(hasRankingInfoForAll(true)).forall
+        r must contain(allAppsHaveRankingInfo(true)).forall
       }
     }
     "return all the device apps as unranked if there is no ranking info for them" in new BasicScope {
@@ -110,7 +126,7 @@ class RankingsProcessesSpec extends RankingsProcessesSpecification {
       val response = rankingProcesses.getRankedDeviceApps(location, unrankedAppsMap)
 
       response.foldMap(testInterpreters) must beRight[List[RankedAppsByCategory]].which { r ⇒
-        r must contain(hasRankingInfoForAll(false)).forall
+        r must contain(allAppsHaveRankingInfo(false)).forall
       }
     }
 
@@ -118,7 +134,7 @@ class RankingsProcessesSpec extends RankingsProcessesSpecification {
 
   "getRankedAppsByMoment" should {
     "return an empty response if no device apps are given" in new BasicScope {
-      val response = rankingProcesses.getRankedAppsByMoment(location, emptyUnrankedAppsList, moments)
+      val response = rankingProcesses.getRankedAppsByMoment(location, emptyUnrankedAppsList, moments, limit)
 
       response.foldMap(testInterpreters) must beRight[List[RankedAppsByCategory]](Nil)
     }
@@ -127,10 +143,11 @@ class RankingsProcessesSpec extends RankingsProcessesSpecification {
       rankingServices.getRankingForAppsWithinMoments(mockEq(usaScope), any, mockEq(moments)) returns
         rankingForAppsResponse
 
-      val response = rankingProcesses.getRankedAppsByMoment(location, unrankedAppsList, moments)
+      val response = rankingProcesses.getRankedAppsByMoment(location, unrankedAppsList, moments, limit)
 
       response.foldMap(testInterpreters) must beRight[List[RankedAppsByCategory]].which { r ⇒
-        r must contain(hasRankingInfoForAll(true)).forall
+        r must contain(appsHaveAtMost(limit)).forall
+        r must contain(allAppsHaveRankingInfo(true)).forall
       }
     }
     "return all the  apps as ranked by using world ranking if an unknown country is given" in new BasicScope {
@@ -138,10 +155,11 @@ class RankingsProcessesSpec extends RankingsProcessesSpecification {
       rankingServices.getRankingForAppsWithinMoments(mockEq(WorldScope), any, mockEq(moments)) returns
         rankingForAppsResponse
 
-      val response = rankingProcesses.getRankedAppsByMoment(location, unrankedAppsList, moments)
+      val response = rankingProcesses.getRankedAppsByMoment(location, unrankedAppsList, moments, limit)
 
       response.foldMap(testInterpreters) must beRight[List[RankedAppsByCategory]].which { r ⇒
-        r must contain(hasRankingInfoForAll(true)).forall
+        r must contain(appsHaveAtMost(limit)).forall
+        r must contain(allAppsHaveRankingInfo(true)).forall
       }
     }
     "return an empty response if there is no ranking info for them" in new BasicScope {
@@ -149,10 +167,50 @@ class RankingsProcessesSpec extends RankingsProcessesSpecification {
       rankingServices.getRankingForAppsWithinMoments(mockEq(usaScope), any, mockEq(moments)) returns
         rankingForAppsEmptyResponse
 
-      val response = rankingProcesses.getRankedAppsByMoment(location, unrankedAppsList, moments)
+      val response = rankingProcesses.getRankedAppsByMoment(location, unrankedAppsList, moments, limit)
 
       response.foldMap(testInterpreters) must beRight[List[RankedAppsByCategory]](Nil)
     }
+  }
 
+  "getRankedWidgets" should {
+    "return an empty response if no apps are given" in new BasicScope {
+      val response = rankingProcesses.getRankedWidgets(location, emptyUnrankedAppsList, moments, limit)
+
+      response.foldMap(testInterpreters) must beRight[List[RankedWidgetsByMoment]](Nil)
+    }
+    "return all the widgets as ranked if there is ranking info for them" in new BasicScope {
+      countryServices.getCountryByIsoCode2("US") returns NineCardsService.right(country)
+      rankingServices.getRankingForWidgets(mockEq(usaScope), any, mockEq(widgetMoments)) returns
+        rankingForWidgetsResponse
+
+      val response = rankingProcesses.getRankedWidgets(location, unrankedAppsList, moments, limit)
+
+      response.foldMap(testInterpreters) must beRight[List[RankedWidgetsByMoment]].which { r ⇒
+        r must contain(widgetsHaveAtMost(limit)).forall
+        r must contain(allWidgetsHaveRankingInfo(true)).forall
+      }
+    }
+    "return all the widgets as ranked by using world ranking if an unknown country is given" in new BasicScope {
+      countryServices.getCountryByIsoCode2("US") returns NineCardsService.left(countryNotFoundError)
+      rankingServices.getRankingForWidgets(mockEq(WorldScope), any, mockEq(widgetMoments)) returns
+        rankingForWidgetsResponse
+
+      val response = rankingProcesses.getRankedWidgets(location, unrankedAppsList, moments, limit)
+
+      response.foldMap(testInterpreters) must beRight[List[RankedWidgetsByMoment]].which { r ⇒
+        r must contain(widgetsHaveAtMost(limit)).forall
+        r must contain(allWidgetsHaveRankingInfo(true)).forall
+      }
+    }
+    "return all the widgets as unranked if there is no ranking info for them" in new BasicScope {
+      countryServices.getCountryByIsoCode2("US") returns NineCardsService.right(country)
+      rankingServices.getRankingForWidgets(mockEq(usaScope), any, mockEq(widgetMoments)) returns
+        rankingForWidgetsEmptyResponse
+
+      val response = rankingProcesses.getRankedWidgets(location, unrankedAppsList, moments, limit)
+
+      response.foldMap(testInterpreters) must beRight[List[RankedWidgetsByMoment]](Nil)
+    }
   }
 }

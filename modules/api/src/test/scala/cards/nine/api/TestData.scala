@@ -7,7 +7,7 @@ import cards.nine.api.messages.SharedCollectionMessages._
 import cards.nine.api.messages.UserMessages.ApiLoginRequest
 import cards.nine.api.messages.{ rankings ⇒ Api }
 import cards.nine.domain.account._
-import cards.nine.domain.analytics.RankedAppsByCategory
+import cards.nine.domain.analytics.{ RankedAppsByCategory, RankedWidgetsByMoment }
 import cards.nine.domain.application.{ Category, FullCardList, Package }
 import cards.nine.processes.ProcessesExceptions.SharedCollectionNotFoundException
 import cards.nine.processes.messages.InstallationsMessages._
@@ -173,13 +173,16 @@ object TestData {
       items    = deviceApps
     )
 
-    val apiRankAppsByMomentsRequest = ApiRankAppsByMomentsRequest(
+    val apiRankByMomentsRequest = ApiRankByMomentsRequest(
       location = location,
       items    = packagesName,
-      moments  = moments
+      moments  = moments,
+      limit    = limit
     )
 
     val getRankedAppsResponse = List.empty[RankedAppsByCategory]
+
+    val getRankedWidgetsResponse = List.empty[RankedWidgetsByMoment]
 
     val getRecommendationsByCategoryResponse = FullCardList(Nil, Nil)
 
@@ -276,6 +279,8 @@ object TestData {
     val rankApps = "/applications/rank"
 
     val rankAppsByMoments = "/applications/rank-by-moments"
+
+    val rankWidgets = "/widgets/rank"
 
     val recommendationsByCategory = "/recommendations/SOCIAL"
 

@@ -116,8 +116,11 @@ trait NineCardsApiSpecification
     rankingProcesses.getRankedDeviceApps(any, any) returns
       NineCardsService.right(Messages.getRankedAppsResponse).value
 
-    rankingProcesses.getRankedAppsByMoment(any, any, any) returns
+    rankingProcesses.getRankedAppsByMoment(any, any, any, any) returns
       NineCardsService.right(Messages.getRankedAppsResponse).value
+
+    rankingProcesses.getRankedWidgets(any, any, any, any) returns
+      NineCardsService.right(Messages.getRankedWidgetsResponse).value
   }
 
   trait UnsuccessfulScope extends BasicScope {
@@ -516,7 +519,21 @@ class NineCardsApiSpec
 
     val request = Post(
       uri     = Paths.rankAppsByMoments,
-      content = Messages.apiRankAppsByMomentsRequest
+      content = Messages.apiRankByMomentsRequest
+    )
+
+    authenticatedBadRequestEmptyBody(Post(Paths.rankApps))
+
+    unauthorizedNoHeaders(request)
+
+    successOk(request)
+  }
+
+  "POST /widgets/rank" should {
+
+    val request = Post(
+      uri     = Paths.rankWidgets,
+      content = Messages.apiRankByMomentsRequest
     )
 
     authenticatedBadRequestEmptyBody(Post(Paths.rankApps))

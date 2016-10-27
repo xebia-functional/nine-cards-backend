@@ -1,15 +1,17 @@
 package cards.nine.googleplay.processes
 
-import cats.data.Xor
-import cats.{ ~>, Id }
+import cards.nine.domain.ScalaCheck._
 import cards.nine.domain.application.{ FullCard, Package }
 import cards.nine.domain.market.MarketCredentials
 import cards.nine.googleplay.domain.{ apigoogle ⇒ ApiDom, webscrapper ⇒ WebDom }
-import cards.nine.googleplay.service.free.algebra.{ GoogleApi ⇒ ApiAlg, Cache ⇒ CacheAlg, WebScraper ⇒ WebAlg }
-import cards.nine.googleplay.service.free.interpreter.{ googleapi ⇒ ApiInt, cache ⇒ CacheInt, webscrapper ⇒ WebInt }
-import cards.nine.googleplay.service.free.{ JoinServices, JoinInterpreter }
+import cards.nine.googleplay.service.free.algebra.{ Cache ⇒ CacheAlg, GoogleApi ⇒ ApiAlg, WebScraper ⇒ WebAlg }
+import cards.nine.googleplay.service.free.interpreter.{ cache ⇒ CacheInt, googleapi ⇒ ApiInt, webscrapper ⇒ WebInt }
+import cards.nine.googleplay.service.free.{ JoinInterpreter, JoinServices }
+import cards.nine.googleplay.util.ScalaCheck._
+import cats.data.Xor
+import cats.{ Id, ~> }
 import org.joda.time.{ DateTime, DateTimeZone }
-import org.mockito.Mockito.{ reset }
+import org.mockito.Mockito.reset
 import org.specs2.ScalaCheck
 import org.specs2.matcher.Matchers
 import org.specs2.mock.Mockito
@@ -20,9 +22,6 @@ class CardsProcessesSpec
   with Matchers
   with ScalaCheck
   with Mockito {
-
-  import cards.nine.googleplay.util.ScalaCheck._
-  import cards.nine.domain.application.ScalaCheck._
 
   val apiGoogleIntServer: ApiInt.InterpreterServer[Id] = mock[ApiInt.InterpreterServer[Id]]
   val apiGoogleInt: ApiAlg.Ops ~> Id = ApiInt.MockInterpreter(apiGoogleIntServer)

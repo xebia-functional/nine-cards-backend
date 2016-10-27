@@ -1,6 +1,6 @@
 package cards.nine.api.messages
 
-import cards.nine.domain.application.Package
+import cards.nine.domain.application.{ Package, Widget }
 
 object GooglePlayMessages {
 
@@ -47,15 +47,20 @@ object GooglePlayMessages {
 
   case class ApiRankAppsRequest(location: Option[String], items: Map[String, List[Package]])
 
-  case class ApiRankAppsByMomentsRequest(
+  case class ApiRankByMomentsRequest(
     location: Option[String],
     items: List[Package],
-    moments: List[String]
+    moments: List[String],
+    limit: Int
   )
 
   case class ApiRankedAppsByCategory(category: String, packages: List[Package])
 
   case class ApiRankAppsResponse(items: List[ApiRankedAppsByCategory])
+
+  case class ApiRankedWidgetsByMoment(moment: String, widgets: List[Widget])
+
+  case class ApiRankWidgetsResponse(items: List[ApiRankedWidgetsByMoment])
 
   case class ApiSearchAppsRequest(
     query: String,

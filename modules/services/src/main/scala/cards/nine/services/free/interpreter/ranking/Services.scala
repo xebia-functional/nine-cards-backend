@@ -1,9 +1,9 @@
 package cards.nine.services.free.interpreter.ranking
 
 import cards.nine.commons.CacheWrapper
-import cards.nine.commons.NineCardsErrors.RankingNotFound
-import cards.nine.domain.analytics.{ CountryScope, GeoScope, RankedApp, WorldScope }
-import cards.nine.domain.application.{ Category, Moment, Package }
+import cards.nine.commons.NineCardsErrors.{ NineCardsError, RankingNotFound }
+import cards.nine.domain.analytics._
+import cards.nine.domain.application.{ Moment, Package, Widget }
 import cards.nine.googleplay.processes.withTypes.WithRedisClient
 import cards.nine.services.free.algebra.Ranking._
 import cards.nine.services.free.domain.Ranking._
@@ -11,7 +11,6 @@ import cats.~>
 import cats.syntax.either._
 import com.redis.RedisClient
 import com.redis.serialization.{ Format, Parse }
-import enumeratum.{ Circe ⇒ CirceEnum }
 import io.circe.{ Decoder, Encoder }
 import io.circe.generic.auto._
 import io.circe.generic.semiauto._
@@ -19,10 +18,12 @@ import io.circe.parser._
 
 import scalaz.concurrent.Task
 
-class Services(implicit
+class Services(
+  implicit
   format: Format,
   keyParse: Parse[Option[CacheKey]],
-  valParse: Parse[Option[CacheVal]]) extends (Ops ~> WithRedisClient) {
+  valParse: Parse[Option[CacheVal]]
+) extends (Ops ~> WithRedisClient) {
 
   private[this] def generateCacheKey(scope: GeoScope) = scope match {
     case WorldScope ⇒ CacheKey.worldScope
@@ -47,9 +48,7 @@ class Services(implicit
           .flatMap(_.ranking)
           .getOrElse(GoogleAnalyticsRanking(Map.empty))
 
-        val rankingsByCategory = rankings.categories.filterNot {
-          case (category, _) ⇒ Moment.isMoment(category)
-        }
+        val rankingsByCategory = rankings.categories.filterKeys(c ⇒ !Moment.isMoment(c))
 
         val packagesByCategory = apps.toList.groupBy(_.category).mapValues(_.map(_.packageName))
 
@@ -72,7 +71,7 @@ class Services(implicit
           .flatMap(_.ranking)
           .getOrElse(GoogleAnalyticsRanking(Map.empty))
 
-        val rankingsByMoment = rankings.categories.filter { case (moment, _) ⇒ moments.contains(moment) }
+        val rankingsByMoment = rankings.categories.filterKeys(moment ⇒ moments.contains(moment))
 
         val rankedByMoment = rankingsByMoment flatMap {
           case (category, ranking) ⇒
@@ -83,6 +82,31 @@ class Services(implicit
         }
 
         Either.right(rankedByMoment.toList)
+      }
+
+    case GetRankingForWidgets(scope, apps, moments) ⇒ client: RedisClient ⇒
+      Task.delay {
+        val wrap = CacheWrapper[CacheKey, CacheVal](client)
+
+        val rankings = wrap.get(generateCacheKey(scope))
+          .flatMap(_.ranking)
+          .getOrElse(GoogleAnalyticsRanking(Map.empty))
+
+        val rankingsByMoment =
+          rankings
+            .categories
+            .filterKeys(moment ⇒ moments.contains(moment))
+            .mapValues(packages ⇒ packages flatMap (p ⇒ Widget(p.value)))
+
+        val rankedByMoment = rankingsByMoment flatMap {
+          case (moment, ranking) ⇒
+            ranking
+              .filter(w ⇒ apps.contains(w.packageName))
+              .zipWithIndex
+              .map { case (widget, position) ⇒ RankedWidget(widget, moment, Option(position)) }
+        }
+
+        Either.right[NineCardsError, List[RankedWidget]](rankedByMoment.toList)
       }
 
     case UpdateRanking(scope, ranking) ⇒ client: RedisClient ⇒
@@ -104,14 +128,8 @@ class Services(implicit
 
 object Services {
 
-  implicit lazy val categoryD: Decoder[Category] = CirceEnum.decoder(Category)
-  implicit lazy val categoryE: Encoder[Category] = CirceEnum.encoder(Category)
-
   implicit lazy val packageD: Decoder[Package] = Decoder.decodeString map Package
   implicit lazy val packageE: Encoder[Package] = Encoder.encodeString.contramap(_.value)
-
-  implicit lazy val appRankingInfoD: Decoder[AppRankingInfo] = deriveDecoder[AppRankingInfo]
-  implicit lazy val appRankingInfoE: Encoder[AppRankingInfo] = deriveEncoder[AppRankingInfo]
 
   implicit lazy val rankingD: Decoder[GoogleAnalyticsRanking] = deriveDecoder[GoogleAnalyticsRanking]
   implicit lazy val rankingE: Encoder[GoogleAnalyticsRanking] = deriveEncoder[GoogleAnalyticsRanking]
@@ -128,8 +146,10 @@ object Services {
       case value: CacheVal ⇒ ev(value).noSpaces
     }
 
-  def services(implicit
+  def services(
+    implicit
     format: Format,
     keyParse: Parse[Option[CacheKey]],
-    valParse: Parse[Option[CacheVal]]) = new Services()(keyAndValFormat, keyParse, valParse)
+    valParse: Parse[Option[CacheVal]]
+  ) = new Services()(keyAndValFormat, keyParse, valParse)
 }

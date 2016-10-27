@@ -17,6 +17,8 @@ object Moment extends Enum[Moment] {
 
   val values = super.findValues
 
+  val widgetMomentPrefix = "WIDGET_"
+
   def isMoment(categoryName: String): Boolean =
-    Moment.withNameOption(categoryName).fold(false)(values.contains)
+    Moment.withNameOption(categoryName.replace(widgetMomentPrefix, "")).fold(false)(values.contains)
 }

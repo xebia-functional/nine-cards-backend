@@ -2,12 +2,11 @@ package cards.nine.services.persistence
 
 import cards.nine.domain.account._
 import cards.nine.domain.analytics._
-import cards.nine.domain.application.Category
+import cards.nine.domain.ScalaCheck._
 import cards.nine.services.free.interpreter.collection.Services.SharedCollectionData
 import cards.nine.services.free.interpreter.user.Services.UserData
 import cards.nine.services.persistence.NineCardsGenEntities._
 import cats.Monad
-import enumeratum.{ Enum, EnumEntry }
 import java.sql.Timestamp
 import java.time.Instant
 
@@ -91,13 +90,6 @@ trait NineCardsScalacheckGen {
 
   implicit val abWrongIsoCode2: Arbitrary[WrongIsoCode2] = Arbitrary(fixedLengthNumericString(2).map(WrongIsoCode2.apply))
 
-  def genEnumeratum[C <: EnumEntry](e: Enum[C]): Gen[C] =
-    for (i ← Gen.choose(0, e.values.length - 1)) yield e.values(i)
-
-  def abEnumeratum[C <: EnumEntry](e: Enum[C]): Arbitrary[C] = Arbitrary(genEnumeratum(e))
-
-  implicit val abCategory: Arbitrary[Category] = abEnumeratum[Category](Category)
-
   private[this] val genMonad: Monad[Gen] = new Monad[Gen] {
     def pure[A](a: A): Gen[A] = Gen.const(a)
     def flatMap[A, B](fa: Gen[A])(f: A ⇒ Gen[B]): Gen[B] = fa flatMap f
@@ -114,11 +106,9 @@ trait NineCardsScalacheckGen {
       elems ← Gen.listOfN(num, gen)
     } yield elems.distinct
 
-  import cards.nine.domain.application.ScalaCheck.arbPackage
-
   val genDeviceApp: Gen[UnrankedApp] = for {
     p ← arbPackage.arbitrary
-    c ← abCategory.arbitrary
+    c ← arbCategory.arbitrary
   } yield UnrankedApp(p, c.entryName)
 
   implicit val abDeviceApp: Arbitrary[UnrankedApp] = Arbitrary(genDeviceApp)
