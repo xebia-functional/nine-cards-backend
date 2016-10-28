@@ -1,10 +1,11 @@
 package cards.nine.processes
 
+import cards.nine.commons.config.DummyConfig
 import cards.nine.domain.account._
 import cards.nine.processes.NineCardsServices._
 import cards.nine.processes.messages.InstallationsMessages._
 import cards.nine.processes.messages.UserMessages.{ LoginRequest, LoginResponse }
-import cards.nine.processes.utils.{ DummyNineCardsConfig, HashUtils }
+import cards.nine.processes.utils.HashUtils
 import cards.nine.services.free.algebra
 import cards.nine.services.free.domain.{ Installation, User }
 import cats.free.Free
@@ -21,7 +22,7 @@ trait UserProcessesSpecification
   with Matchers
   with Mockito
   with UserProcessesContext
-  with DummyNineCardsConfig
+  with DummyConfig
   with TestInterpreters {
 
   trait BasicScope extends Scope {
@@ -172,7 +173,7 @@ class UserProcessesSpec
 
         val debugUserProcesses = UserProcesses.processes[NineCardsServices](
           userServices = userServices,
-          config       = dummyConfig(debugMode = true),
+          config       = debugConfig,
           hashUtils    = HashUtils.hashUtils
         )
 

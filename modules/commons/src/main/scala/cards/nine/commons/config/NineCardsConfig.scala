@@ -1,6 +1,7 @@
-package cards.nine.commons
+package cards.nine.commons.config
 
-import cards.nine.commons.NineCardsConfig._
+import cards.nine.commons.config.Domain.NineCardsConfiguration
+import cards.nine.commons.config.NineCardsConfig._
 import com.typesafe.config.{ Config, ConfigFactory }
 
 class NineCardsConfig(hocon: Option[String] = None) {
@@ -50,5 +51,7 @@ object NineCardsConfig {
     def getOptionalString(path: String): Option[String] = getOptionalValue(path)(config.getString)
   }
 
-  implicit val defaultConfig: NineCardsConfig = new NineCardsConfig
+  val defaultConfig: NineCardsConfig = new NineCardsConfig
+
+  implicit val nineCardsConfiguration: NineCardsConfiguration = NineCardsConfiguration(defaultConfig)
 }

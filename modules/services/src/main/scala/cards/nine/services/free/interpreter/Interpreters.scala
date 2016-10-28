@@ -1,7 +1,8 @@
 package cards.nine.services.free.interpreter
 
-import cards.nine.commons.NineCardsConfig._
+import cards.nine.commons.config.NineCardsConfig._
 import cards.nine.commons.TaskInstances
+import cards.nine.commons.config.Domain.{ GoogleAnalyticsConfiguration, GoogleApiConfiguration, GoogleFirebaseConfiguration }
 import cards.nine.googleplay.processes.withTypes.WithRedisClient
 import cats._
 import cards.nine.services.free.algebra._
@@ -25,14 +26,15 @@ abstract class Interpreters[M[_]](implicit A: ApplicativeError[M, Throwable], T:
 
   val task2M: (Task ~> M)
 
-  val redisClientPool: RedisClientPool = {
-    val baseConfig = "ninecards.google.play.redis"
-    new RedisClientPool(
-      host   = defaultConfig.getString(s"$baseConfig.host"),
-      port   = defaultConfig.getInt(s"$baseConfig.port"),
-      secret = defaultConfig.getOptionalString(s"$baseConfig.secret")
-    )
-  }
+  implicit val fanalyticsConfig: GoogleAnalyticsConfiguration = nineCardsConfiguration.google.analytics
+  implicit val firebaseConfig: GoogleFirebaseConfiguration = nineCardsConfiguration.google.firebase
+  implicit val googleApiConfig: GoogleApiConfiguration = nineCardsConfiguration.google.api
+
+  val redisClientPool: RedisClientPool = new RedisClientPool(
+    host   = nineCardsConfiguration.redis.host,
+    port   = nineCardsConfiguration.redis.port,
+    secret = nineCardsConfiguration.redis.secret
+  )
 
   val toTask = new (WithRedisClient ~> Task) {
 
