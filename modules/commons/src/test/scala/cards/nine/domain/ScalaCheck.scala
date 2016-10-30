@@ -1,7 +1,11 @@
 package cards.nine.domain
 
+import cards.nine.domain.analytics.DateRange
 import cards.nine.domain.application.{ Category, Moment, Package, PriceFilter }
+import com.fortysevendeg.scalacheck.datetime.instances.joda._
+import com.fortysevendeg.scalacheck.datetime.GenDateTime.genDateTimeWithinRange
 import enumeratum.{ Enum, EnumEntry }
+import org.joda.time.{ DateTime, Period }
 import org.scalacheck.{ Arbitrary, Gen }
 
 object ScalaCheck {
@@ -17,5 +21,18 @@ object ScalaCheck {
   }
 
   implicit val arbPriceFilter: Arbitrary[PriceFilter] = arbEnumeratum[PriceFilter](PriceFilter)
+
+  implicit val arbDateRange: Arbitrary[DateRange] = Arbitrary {
+    val rangeGenerator = genDateTimeWithinRange(DateTime.now, Period.months(1))
+    for {
+      date1 ← rangeGenerator
+      date2 ← rangeGenerator
+    } yield {
+      if (date1.isBefore(date2))
+        DateRange(date1, date2)
+      else
+        DateRange(date2, date1)
+    }
+  }
 }
 

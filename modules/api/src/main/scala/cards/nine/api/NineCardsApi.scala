@@ -467,7 +467,7 @@ class NineCardsRoutes(
       scope: GeoScope,
       params: RankingParams
     ): NineCardsServed[Result[Api.Reload.Response]] =
-      rankingProcesses.reloadRanking(scope, params).map(Converters.reload.toApiResponse)
+      rankingProcesses.reloadRankingByScope(scope, params).map(Converters.reload.toApiResponse)
 
     private[this] def getRanking(scope: GeoScope): NineCardsServed[Result[Api.Ranking]] =
       rankingProcesses.getRanking(scope).map(Converters.toApiRanking)

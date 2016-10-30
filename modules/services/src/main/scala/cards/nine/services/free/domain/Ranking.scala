@@ -10,8 +10,6 @@ object Ranking {
 
   case class CountriesWithRanking(countries: List[CountryIsoCode]) extends AnyVal
 
-  case class UpdateRankingSummary(created: Int, deleted: Int)
-
   case class RankingError(code: Int, message: String, status: String)
 
   case class AppRankingInfo(packageName: Package, position: Int)

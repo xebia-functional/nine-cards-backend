@@ -6,11 +6,14 @@ import cards.nine.services.free.algebra.Country._
 import cards.nine.services.free.domain.Country
 import cards.nine.services.free.domain.Country.Queries
 import cards.nine.services.persistence.Persistence
-import cats.~>
 import cats.syntax.either._
+import cats.~>
 import doobie.imports._
 
 class Services(persistence: Persistence[Country]) extends (Ops ~> ConnectionIO) {
+
+  def getCountries(limit: Int, offset: Int): ConnectionIO[Result[List[Country]]] =
+    persistence.fetchList(Queries.getCountriesWithPaginationSql, (limit, offset)) map Either.right
 
   def getCountryByIsoCode2(isoCode: String): ConnectionIO[Result[Country]] =
     persistence.fetchOption(Queries.getByIsoCode2Sql, isoCode.toUpperCase) map {
@@ -18,6 +21,7 @@ class Services(persistence: Persistence[Country]) extends (Ops ~> ConnectionIO) 
     }
 
   def apply[A](fa: Ops[A]): ConnectionIO[A] = fa match {
+    case GetCountries(limit, offset) ⇒ getCountries(limit, offset)
     case GetCountryByIsoCode2(isoCode) ⇒ getCountryByIsoCode2(isoCode)
   }
 }

@@ -42,4 +42,6 @@ package analytics {
   case class RankedWidget(widget: Widget, moment: String, position: Option[Int])
 
   case class RankedWidgetsByMoment(moment: String, widgets: List[RankedWidget])
+
+  case class UpdateRankingSummary(countryCode: Option[CountryIsoCode], created: Int)
 }

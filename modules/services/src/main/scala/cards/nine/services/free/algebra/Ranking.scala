@@ -2,7 +2,7 @@ package cards.nine.services.free.algebra
 
 import cards.nine.commons.NineCardsService
 import cards.nine.commons.NineCardsService._
-import cards.nine.domain.analytics.{ GeoScope, RankedApp, RankedWidget, UnrankedApp }
+import cards.nine.domain.analytics._
 import cards.nine.domain.application.Package
 import cards.nine.services.free.domain.Ranking._
 import cats.free.{ :<:, Free }

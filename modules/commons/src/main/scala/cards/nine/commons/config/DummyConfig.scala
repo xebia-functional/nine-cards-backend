@@ -84,8 +84,8 @@ trait DummyConfig {
   }
 
   object rankings {
-    val actorInterval = "60m"
-    val rankingPeriodInDays = 30
+    val actorInterval = "1 hour"
+    val rankingPeriod = "30 days"
     val countriesPerRequest = 2
     val maxNumberOfAppsPerCategory = 100
   }
@@ -167,8 +167,8 @@ trait DummyConfig {
        |    port = ${common.port}
        |  }
        |  rankings {
-       |    actorInterval = "${rankings.actorInterval}"
-       |    rankingPeriodInDays = ${rankings.rankingPeriodInDays}
+       |    actorInterval = ${rankings.actorInterval}
+       |    rankingPeriod = ${rankings.rankingPeriod}
        |    countriesPerRequest = ${rankings.countriesPerRequest}
        |    maxNumberOfAppsPerCategory = ${rankings.maxNumberOfAppsPerCategory}
        |  }

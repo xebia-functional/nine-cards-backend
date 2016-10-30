@@ -1,7 +1,6 @@
 package cards.nine.processes.utils
 
 import cards.nine.commons.config.Domain.NineCardsConfiguration
-import cards.nine.commons.config.NineCardsConfig
 import cards.nine.processes.utils.EncryptionAlgorithm._
 import com.roundeights.hasher.Hasher
 

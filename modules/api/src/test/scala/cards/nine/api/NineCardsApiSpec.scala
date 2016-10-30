@@ -108,7 +108,7 @@ trait NineCardsApiSpecification
 
     rankingProcesses.getRanking(any) returns Free.pure(Either.right(Messages.rankings.getResponse))
 
-    rankingProcesses.reloadRanking(any, any) returns
+    rankingProcesses.reloadRankingByScope(any, any) returns
       Free.pure(Either.right(Messages.rankings.reloadResponse))
 
     recommendationsProcesses.getRecommendationsByCategory(any, any, any, any, any) returns
@@ -196,7 +196,7 @@ trait NineCardsApiSpecification
 
     rankingProcesses.getRanking(any) returns Free.pure(Either.right(Messages.rankings.getResponse))
 
-    rankingProcesses.reloadRanking(any, any) returns
+    rankingProcesses.reloadRankingByScope(any, any) returns
       Free.pure(Either.right(Messages.rankings.reloadResponse))
 
     rankingProcesses.getRankedDeviceApps(any, any) returns

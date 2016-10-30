@@ -11,6 +11,7 @@ object Country {
 
   object Queries {
     val getAllSql = "select * from countries"
+    val getCountriesWithPaginationSql = "select * from countries order by iso2 limit ? offset ?"
     val getByIsoCode2Sql = "select * from countries where iso2=?"
   }
 
