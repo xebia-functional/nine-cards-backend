@@ -7,6 +7,8 @@ import cards.nine.googleplay.service.free.algebra.WebScraper._
 import cards.nine.googleplay.service.util.MockServer
 import cards.nine.googleplay.util.WithHttp1Client
 import java.nio.file.{ Files, Paths }
+
+import cards.nine.commons.config.Domain.{ GooglePlayWebConfiguration, GooglePlayWebPaths }
 import org.mockserver.model.{ HttpRequest, HttpResponse }
 import org.mockserver.model.HttpStatusCode._
 import org.specs2.matcher.Matchers
@@ -18,11 +20,11 @@ class InterpreterSpec extends Specification with Matchers with MockServer with W
 
   override val mockServerPort = 9994
 
-  implicit val configuration = Configuration(
-    protocol    = "http",
-    host        = "localhost",
-    port        = mockServerPort,
-    detailsPath = detailsPath
+  implicit val configuration = GooglePlayWebConfiguration(
+    protocol = "http",
+    host     = "localhost",
+    port     = mockServerPort,
+    paths    = GooglePlayWebPaths(detailsPath)
   )
 
   override def afterAll = {

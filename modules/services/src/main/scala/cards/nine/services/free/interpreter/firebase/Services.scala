@@ -1,5 +1,6 @@
 package cards.nine.services.free.interpreter.firebase
 
+import cards.nine.commons.config.Domain.GoogleFirebaseConfiguration
 import cards.nine.services.free.algebra.Firebase._
 import cards.nine.services.free.domain.Firebase._
 import cards.nine.services.free.interpreter.firebase.Decoders._
@@ -13,7 +14,7 @@ import org.http4s.client.UnexpectedStatus
 
 import scalaz.concurrent.Task
 
-class Services(config: Configuration) extends (Ops ~> Task) {
+class Services(config: GoogleFirebaseConfiguration) extends (Ops ~> Task) {
 
   private[this] val client = org.http4s.client.blaze.PooledHttp1Client()
 
@@ -26,7 +27,7 @@ class Services(config: Configuration) extends (Ops ~> Task) {
   private[this] val uri = Uri(
     scheme    = Option(config.protocol.ci),
     authority = Option(Authority(host = RegName(config.host), port = config.port)),
-    path      = config.sendNotificationPath
+    path      = config.paths.sendNotification
   )
 
   private[this] val baseRequest = Request(Method.POST, uri = uri, headers = authHeaders)
@@ -65,5 +66,5 @@ class Services(config: Configuration) extends (Ops ~> Task) {
 }
 
 object Services {
-  def services(implicit config: Configuration) = new Services(config)
+  def services(implicit config: GoogleFirebaseConfiguration) = new Services(config)
 }

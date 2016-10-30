@@ -1,5 +1,6 @@
 package cards.nine.googleplay.service.free.interpreter.webscrapper
 
+import cards.nine.commons.config.Domain.GooglePlayWebConfiguration
 import cats.~>
 import cats.data.Xor
 import cards.nine.domain.application.{ FullCard, Package }
@@ -8,10 +9,11 @@ import cards.nine.googleplay.service.free.algebra.WebScraper._
 import org.http4s.Http4s._
 import org.http4s.client.{ Client, UnexpectedStatus }
 import org.http4s.{ Method, Request, Status, Uri }
+
 import scalaz.concurrent.Task
 import scodec.bits.ByteVector
 
-class Interpreter(config: Configuration) extends (Ops ~> WithClient) {
+class Interpreter(config: GooglePlayWebConfiguration) extends (Ops ~> WithClient) {
 
   override def apply[A](ops: Ops[A]): WithClient[A] = ops match {
     case ExistsApp(pack) ⇒ new ExistsAppWP(pack)
@@ -24,7 +26,7 @@ class Interpreter(config: Configuration) extends (Ops ~> WithClient) {
   )
 
   private[this] def detailsUriOf(pack: Package) = baseUri
-    .withPath(config.detailsPath)
+    .withPath(config.paths.details)
     .withQueryParam("id", pack.value)
     .withQueryParam("hl", "en_US")
 

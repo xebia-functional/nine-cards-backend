@@ -1,5 +1,6 @@
 package cards.nine.services.free.interpreter.googleapi
 
+import cards.nine.commons.config.Domain.{ GoogleApiConfiguration, GoogleApiTokenInfo }
 import cats.data.Xor
 import cards.nine.domain.account.GoogleIdToken
 import cards.nine.services.free.domain.{ TokenInfo, WrongTokenInfo }
@@ -127,15 +128,17 @@ class GoogleApiServicesSpec
   with MockGoogleApiServer
   with XorMatchers {
 
-  implicit val googleApiConfiguration = Configuration(
-    protocol              = "http",
-    host                  = "localhost",
-    port                  = Option(mockServerPort),
-    tokenInfoUri          = getTokenInfoPath,
-    tokenIdQueryParameter = tokenIdParameterName
+  val config = GoogleApiConfiguration(
+    protocol  = "http",
+    host      = "localhost",
+    port      = Option(mockServerPort),
+    tokenInfo = GoogleApiTokenInfo(
+      path                  = getTokenInfoPath,
+      tokenIdQueryParameter = tokenIdParameterName
+    )
   )
 
-  val googleApiServices = Services.services
+  val googleApiServices = Services.services(config)
 
   "getTokenInfo" should {
     "return the TokenInfo object when a valid token id is provided" in {

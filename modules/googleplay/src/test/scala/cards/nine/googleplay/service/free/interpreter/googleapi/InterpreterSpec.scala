@@ -2,6 +2,7 @@ package cards.nine.googleplay.service.free.interpreter.googleapi
 
 import java.nio.file.{ Files, Paths }
 
+import cards.nine.commons.config.Domain.{ GooglePlayApiConfiguration, GooglePlayApiPaths }
 import cards.nine.domain.account.AndroidId
 import cards.nine.domain.application.{ FullCard, Package }
 import cards.nine.domain.market.{ MarketCredentials, MarketToken }
@@ -25,15 +26,17 @@ class InterpreterSpec extends Specification with Matchers with MockServer with W
 
   val auth = MarketCredentials(AndroidId("androidId"), MarketToken("token"), None)
 
-  val configuration = Configuration(
-    protocol            = "http",
-    host                = "localhost",
-    port                = mockServerPort,
-    bulkDetailsPath     = "/my/bulkdetails/path",
-    detailsPath         = "/my/details/path",
-    listPath            = "/path/to/list",
-    searchPath          = "/to/searches/path",
-    recommendationsPath = "/my/path/to/recommendations"
+  val configuration = GooglePlayApiConfiguration(
+    protocol = "http",
+    host     = "localhost",
+    port     = mockServerPort,
+    paths    = GooglePlayApiPaths(
+      bulkDetails     = "/my/bulkdetails/path",
+      details         = "/my/details/path",
+      list            = "/path/to/list",
+      search          = "/to/searches/path",
+      recommendations = "/my/path/to/recommendations"
+    )
   )
 
   private[this] def msHeaders(auth: MarketCredentials): java.util.List[Header] = {
@@ -74,7 +77,7 @@ class InterpreterSpec extends Specification with Matchers with MockServer with W
 
     val httpRequest: HttpRequest = HttpRequest.request
       .withMethod("GET")
-      .withPath(configuration.detailsPath)
+      .withPath(configuration.paths.details)
       .withQueryStringParameter("doc", fisherPrice.packageName)
       .withHeaders(msHeaders(auth))
 
@@ -106,7 +109,7 @@ class InterpreterSpec extends Specification with Matchers with MockServer with W
 
     val httpRequest: HttpRequest = HttpRequest.request
       .withMethod("GET")
-      .withPath(configuration.searchPath)
+      .withPath(configuration.paths.search)
       .withQueryStringParameter("q", searchCosmos.queryWord)
       .withQueryStringParameter("rt", "1")
       .withQueryStringParameter("c", "3")
