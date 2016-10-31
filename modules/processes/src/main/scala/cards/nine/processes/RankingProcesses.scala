@@ -5,15 +5,16 @@ import cards.nine.commons.NineCardsService
 import cards.nine.commons.NineCardsService._
 import cards.nine.domain.analytics._
 import cards.nine.domain.application.{ Category, Moment, Package }
+import cards.nine.domain.pagination.Page
 import cards.nine.processes.converters.Converters._
 import cards.nine.processes.messages.rankings._
 import cards.nine.services.free.algebra
 import cards.nine.services.free.algebra.GoogleAnalytics
 import cards.nine.services.free.domain.Ranking.GoogleAnalyticsRanking
 import cats.free.Free
-import cats.instances.list._
-import cats.instances.map._
+import cats.instances.all._
 import cats.syntax.semigroup._
+import cats.syntax.traverse._
 
 class RankingProcesses[F[_]](
   implicit
@@ -21,16 +22,40 @@ class RankingProcesses[F[_]](
   countryPersistence: algebra.Country.Services[F],
   rankingServices: algebra.Ranking.Services[F]
 ) {
+  private[this] val allCategories = Category.valuesName ++ Moment.valuesName ++ Moment.widgetValuesName
 
   def getRanking(scope: GeoScope): Free[F, Result[Get.Response]] =
     (rankingServices.getRanking(scope) map Get.Response).value
 
-  def reloadRanking(scope: GeoScope, params: RankingParams): Free[F, Result[Reload.Response]] = {
+  def reloadRankingForCountries(params: RankingParams, pageParams: Page): Free[F, Result[Reload.SummaryResponse]] = {
 
-    val allCategories = Category.valuesName ++ Moment.valuesName ++ Moment.widgetValuesName
+    def generateRanking(countryCode: CountryIsoCode) = {
+      for {
+        ranking ← analytics.getRanking(Option(countryCode), allCategories, params)
+        summary ← rankingServices.updateRanking(CountryScope(countryCode), ranking)
+      } yield summary
+    }.value
 
-    def hasRankingInfo(code: CountryIsoCode, countries: List[CountryIsoCode]) =
-      countries.exists(_.value.equalsIgnoreCase(code.value))
+    def generateRankings(countries: List[CountryIsoCode]): NineCardsService[F, List[UpdateRankingSummary]] =
+      NineCardsService {
+        countries
+          .traverse[Free[F, ?], Result[UpdateRankingSummary]](generateRanking)
+          .map(_.sequenceU)
+      }
+
+    for {
+      countries ← countryPersistence.getCountries(pageParams)
+      countriesWithRanking ← analytics.getCountriesWithRanking(params)
+      countriesCode = countries.map(c ⇒ CountryIsoCode(c.isoCode2))
+      selectedCountries = countriesCode.intersect(countriesWithRanking.countries)
+      updateRankingsSummary ← generateRankings(selectedCountries)
+    } yield Reload.SummaryResponse(
+      countriesWithoutRanking = countriesCode diff selectedCountries,
+      countriesWithRanking    = updateRankingsSummary
+    )
+  }.value
+
+  def reloadRankingByScope(scope: GeoScope, params: RankingParams): Free[F, Result[Reload.Response]] = {
 
     def generateRanking(scope: GeoScope, countries: List[CountryIsoCode]) = scope match {
       case WorldScope ⇒ analytics.getRanking(None, allCategories, params)
@@ -132,6 +157,9 @@ class RankingProcesses[F[_]](
         scope
       }
       .recover { case _: CountryNotFound ⇒ WorldScope }
+
+  private[this] def hasRankingInfo(code: CountryIsoCode, countries: List[CountryIsoCode]) =
+    countries.exists(_.value.equalsIgnoreCase(code.value))
 }
 
 object RankingProcesses {

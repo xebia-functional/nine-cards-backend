@@ -1,9 +1,8 @@
 package cards.nine.processes.messages
 
-import cards.nine.domain.analytics.{ GeoScope, RankingParams }
+import cards.nine.domain.analytics.{ CountryIsoCode, GeoScope, RankingParams, UpdateRankingSummary }
 import cards.nine.domain.application.Package
 import cards.nine.services.free.domain.Ranking._
-import cats.data.Xor
 
 object rankings {
 
@@ -13,9 +12,11 @@ object rankings {
 
     case class Response()
 
-    case class Error(code: Int, message: String, status: String) extends Throwable
+    case class SummaryResponse(
+      countriesWithoutRanking: List[CountryIsoCode],
+      countriesWithRanking: List[UpdateRankingSummary]
+    )
 
-    type XorResponse = Xor[Error, Response]
   }
 
   object Get {
@@ -27,7 +28,9 @@ object rankings {
   }
 
   object GetRankedDeviceApps {
+
     case class DeviceApp(packageName: Package)
+
   }
 
 }

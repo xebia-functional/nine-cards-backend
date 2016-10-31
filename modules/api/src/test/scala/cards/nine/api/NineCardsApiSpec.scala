@@ -88,7 +88,7 @@ trait NineCardsApiSpecification
     sharedCollectionProcesses.unsubscribe(any[String], any[Long]) returns
       Free.pure(Messages.unsubscribeResponse.right)
 
-    sharedCollectionProcesses.getLatestCollectionsByCategory(any, any, any, any, any) returns
+    sharedCollectionProcesses.getLatestCollectionsByCategory(any, any, any, any) returns
       Free.pure(Messages.getCollectionsResponse)
 
     sharedCollectionProcesses.getPublishedCollections(any[Long], any) returns
@@ -97,7 +97,7 @@ trait NineCardsApiSpecification
     sharedCollectionProcesses.getSubscriptionsByUser(any) returns
       Free.pure(Messages.getSubscriptionsByUserResponse)
 
-    sharedCollectionProcesses.getTopCollectionsByCategory(any, any, any, any, any) returns
+    sharedCollectionProcesses.getTopCollectionsByCategory(any, any, any, any) returns
       Free.pure(Messages.getCollectionsResponse)
 
     sharedCollectionProcesses.updateCollection(any, any, any) returns
@@ -108,7 +108,7 @@ trait NineCardsApiSpecification
 
     rankingProcesses.getRanking(any) returns Free.pure(Either.right(Messages.rankings.getResponse))
 
-    rankingProcesses.reloadRanking(any, any) returns
+    rankingProcesses.reloadRankingByScope(any, any) returns
       Free.pure(Either.right(Messages.rankings.reloadResponse))
 
     recommendationsProcesses.getRecommendationsByCategory(any, any, any, any, any) returns
@@ -173,7 +173,7 @@ trait NineCardsApiSpecification
     sharedCollectionProcesses.getCollectionByPublicIdentifier(any, any[String], any) returns
       Free.pure(Messages.getCollectionByPublicIdentifierResponse.right)
 
-    sharedCollectionProcesses.getLatestCollectionsByCategory(any, any, any, any, any) returns
+    sharedCollectionProcesses.getLatestCollectionsByCategory(any, any, any, any) returns
       Free.pure(Messages.getCollectionsResponse)
 
     sharedCollectionProcesses.getPublishedCollections(any[Long], any) returns
@@ -182,7 +182,7 @@ trait NineCardsApiSpecification
     sharedCollectionProcesses.getSubscriptionsByUser(any) returns
       Free.pure(Messages.getSubscriptionsByUserResponse)
 
-    sharedCollectionProcesses.getTopCollectionsByCategory(any, any, any, any, any) returns
+    sharedCollectionProcesses.getTopCollectionsByCategory(any, any, any, any) returns
       Free.pure(Messages.getCollectionsResponse)
 
     sharedCollectionProcesses.subscribe(any[String], any[Long]) returns
@@ -196,7 +196,7 @@ trait NineCardsApiSpecification
 
     rankingProcesses.getRanking(any) returns Free.pure(Either.right(Messages.rankings.getResponse))
 
-    rankingProcesses.reloadRanking(any, any) returns
+    rankingProcesses.reloadRankingByScope(any, any) returns
       Free.pure(Either.right(Messages.rankings.reloadResponse))
 
     rankingProcesses.getRankedDeviceApps(any, any) returns

@@ -212,7 +212,7 @@ object model {
   case class ReportData(
     rows: Option[List[ReportRow]],
     rowCount: Option[Int],
-    isDataGolden: Boolean
+    isDataGolden: Option[Boolean]
   )
 
   /* A ReportRow is a "cell", that contains the values of metrics for one point in the dimension-space.

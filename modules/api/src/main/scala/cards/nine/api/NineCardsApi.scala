@@ -16,6 +16,7 @@ import cards.nine.commons.config.NineCardsConfig
 import cards.nine.domain.account.SessionToken
 import cards.nine.domain.analytics._
 import cards.nine.domain.application.{ Category, FullCardList, PriceFilter }
+import cards.nine.domain.pagination.Page
 import cards.nine.processes.NineCardsServices._
 import cards.nine.processes._
 import cats.data.Xor
@@ -319,8 +320,7 @@ class NineCardsRoutes(
         userId     = userContext.userId.value,
         category   = category.entryName,
         marketAuth = toMarketAuth(googlePlayContext, userContext),
-        pageNumber = pageNumber.value,
-        pageSize   = pageSize.value
+        pageParams = Page(pageNumber.value, pageSize.value)
       )
       .map(toApiSharedCollectionList)
 
@@ -351,8 +351,7 @@ class NineCardsRoutes(
         userId     = userContext.userId.value,
         category   = category.entryName,
         marketAuth = toMarketAuth(googlePlayContext, userContext),
-        pageNumber = pageNumber.value,
-        pageSize   = pageSize.value
+        pageParams = Page(pageNumber.value, pageSize.value)
       )
       .map(toApiSharedCollectionList)
 
@@ -467,7 +466,7 @@ class NineCardsRoutes(
       scope: GeoScope,
       params: RankingParams
     ): NineCardsServed[Result[Api.Reload.Response]] =
-      rankingProcesses.reloadRanking(scope, params).map(Converters.reload.toApiResponse)
+      rankingProcesses.reloadRankingByScope(scope, params).map(Converters.reload.toApiResponse)
 
     private[this] def getRanking(scope: GeoScope): NineCardsServed[Result[Api.Ranking]] =
       rankingProcesses.getRanking(scope).map(Converters.toApiRanking)

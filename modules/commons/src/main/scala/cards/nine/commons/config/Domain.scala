@@ -1,5 +1,10 @@
 package cards.nine.commons.config
 
+import org.joda.time.Period
+import org.joda.time.format.PeriodFormat
+
+import scala.concurrent.duration.{ Duration, FiniteDuration }
+
 object Domain {
 
   case class NineCardsConfiguration(
@@ -303,19 +308,24 @@ object Domain {
   }
 
   case class RankingsConfiguration(
-    actorInterval: String,
-    rankingPeriodInDays: Int,
+    actorInterval: FiniteDuration,
+    rankingPeriod: Period,
     countriesPerRequest: Int,
     maxNumberOfAppsPerCategory: Int
   )
 
   object RankingsConfiguration {
+    def convertToFiniteDuration(value: String) = {
+      val duration = Duration(value)
+      FiniteDuration(duration._1, duration._2)
+    }
+
     def apply(config: NineCardsConfig, parentPrefix: String): RankingsConfiguration = {
       val prefix = s"$parentPrefix.rankings"
 
       RankingsConfiguration(
-        config.getString(s"$prefix.actorInterval"),
-        config.getInt(s"$prefix.rankingPeriodInDays"),
+        convertToFiniteDuration(config.getString(s"$prefix.actorInterval")),
+        PeriodFormat.getDefault.parsePeriod(config.getString(s"$prefix.rankingPeriod")),
         config.getInt(s"$prefix.countriesPerRequest"),
         config.getInt(s"$prefix.maxNumberOfAppsPerCategory")
       )

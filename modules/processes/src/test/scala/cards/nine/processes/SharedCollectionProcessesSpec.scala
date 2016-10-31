@@ -69,8 +69,7 @@ trait SharedCollectionProcessesSpecification
 
     collectionServices.getLatestByCategory(
       category   = category,
-      pageNumber = pageNumber,
-      pageSize   = pageSize
+      pageParams = pageParams
     ) returns Free.pure(List(collection))
 
     collectionServices.getByUser(
@@ -79,8 +78,7 @@ trait SharedCollectionProcessesSpecification
 
     collectionServices.getTopByCategory(
       category   = category,
-      pageNumber = pageNumber,
-      pageSize   = pageSize
+      pageParams = pageParams
     ) returns Free.pure(List(collection))
 
     collectionServices.getByUser(
@@ -168,8 +166,7 @@ class SharedCollectionProcessesSpec
         userId     = publisherId,
         category   = category,
         marketAuth = marketAuth,
-        pageNumber = pageNumber,
-        pageSize   = pageSize
+        pageParams = pageParams
       )
       collectionsInfo.foldMap(testInterpreters) mustEqual response
     }
@@ -218,8 +215,7 @@ class SharedCollectionProcessesSpec
         userId     = publisherId,
         category   = category,
         marketAuth = marketAuth,
-        pageNumber = pageNumber,
-        pageSize   = pageSize
+        pageParams = pageParams
       )
       collectionsInfo.foldMap(testInterpreters) mustEqual response
     }

@@ -9,7 +9,7 @@ import cards.nine.processes.TestData.Values._
 import cards.nine.processes.TestData.rankings._
 import cards.nine.processes.messages.rankings._
 import cards.nine.services.free.algebra.{ Country, GoogleAnalytics, Ranking }
-import cards.nine.services.free.domain.Ranking.{ CountriesWithRanking, UpdateRankingSummary }
+import cards.nine.services.free.domain.Ranking.CountriesWithRanking
 import org.mockito.Matchers.{ eq ⇒ mockEq }
 import org.specs2.matcher.{ Matcher, Matchers, XorMatchers }
 import org.specs2.mock.Mockito
@@ -79,7 +79,7 @@ class RankingsProcessesSpec extends RankingsProcessesSpecification {
     }
   }
 
-  "reloadRanking" should {
+  "reloadRankingByScope" should {
     "give a good answer" in new BasicScope {
       analyticsServices.getRanking(code = any, categories = any, params = mockEq(params)) returns
         NineCardsService.right(googleAnalyticsRanking)
@@ -88,9 +88,9 @@ class RankingsProcessesSpec extends RankingsProcessesSpecification {
         NineCardsService.right(CountriesWithRanking(List(CountryIsoCode(countryIsoCode2))))
 
       rankingServices.updateRanking(usaScope, googleAnalyticsRanking) returns
-        NineCardsService.right(UpdateRankingSummary(0, 0))
+        NineCardsService.right(UpdateRankingSummary(Option(CountryIsoCode(countryIsoCode2)), 0))
 
-      val response = rankingProcesses.reloadRanking(usaScope, params)
+      val response = rankingProcesses.reloadRankingByScope(usaScope, params)
       response.foldMap(testInterpreters) must beRight(Reload.Response())
     }
     "return a CountryNotFound error if the country doesn't have ranking info" in new BasicScope {
@@ -100,7 +100,7 @@ class RankingsProcessesSpec extends RankingsProcessesSpecification {
       analyticsServices.getCountriesWithRanking(params) returns
         NineCardsService.right(CountriesWithRanking(List(CountryIsoCode(countryIsoCode2))))
 
-      val response = rankingProcesses.reloadRanking(scope, params)
+      val response = rankingProcesses.reloadRankingByScope(scope, params)
       response.foldMap(testInterpreters) must beLeft(CountryNotFound("The country doesn't have ranking info"))
     }
   }

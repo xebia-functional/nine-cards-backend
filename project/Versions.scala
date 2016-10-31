@@ -27,6 +27,7 @@ object Versions {
   // Testing libs
   val embeddedRedis = "0.6"
   val mockserver = "3.10.4"
+  val scalacheckDateTime = "0.1.0"
   val scalacheckShapeless = "1.1.0-RC3"
   val specs2 = "3.8.4"
 }
