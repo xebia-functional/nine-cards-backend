@@ -6,6 +6,8 @@ import cards.nine.api.NineCardsHeaders._
 import cards.nine.api.TestData.Exceptions._
 import cards.nine.api.TestData._
 import cards.nine.commons.NineCardsService
+import cards.nine.commons.config.Domain.NineCardsConfiguration
+import cards.nine.commons.config.NineCardsConfig
 import cards.nine.domain.account._
 import cards.nine.processes.NineCardsServices._
 import cards.nine.processes._
@@ -52,6 +54,8 @@ trait NineCardsApiSpecification
     implicit val recommendationsProcesses: RecommendationsProcesses[NineCardsServices] = mock[RecommendationsProcesses[NineCardsServices]]
 
     implicit val sharedCollectionProcesses: SharedCollectionProcesses[NineCardsServices] = mock[SharedCollectionProcesses[NineCardsServices]]
+
+    implicit val config: NineCardsConfiguration = NineCardsConfig.nineCardsConfiguration
 
     val nineCardsApi = new NineCardsRoutes().nineCardsRoutes
 

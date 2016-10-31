@@ -1,7 +1,7 @@
 package cards.nine.processes
 
 import cards.nine.commons.FreeUtils._
-import cards.nine.commons.NineCardsConfig
+import cards.nine.commons.config.Domain.NineCardsConfiguration
 import cards.nine.domain.account._
 import cards.nine.processes.converters.Converters._
 import cards.nine.processes.messages.InstallationsMessages._
@@ -14,7 +14,7 @@ import cats.free.Free
 class UserProcesses[F[_]](
   implicit
   userServices: algebra.User.Services[F],
-  config: NineCardsConfig,
+  config: NineCardsConfiguration,
   hashUtils: HashUtils
 ) {
 
@@ -66,7 +66,7 @@ class UserProcesses[F[_]](
   ): Free[F, Option[Long]] =
     userServices.getBySessionToken(sessionToken) flatMap {
       case Some(user) ⇒
-        if (config.getOptionalBoolean("ninecards.debugMode").getOrElse(false))
+        if (config.debugMode.getOrElse(false))
           Option(user.id).toFree
         else
           validateAuthToken(user, androidId, authToken, requestUri)
@@ -100,7 +100,7 @@ object UserProcesses {
   implicit def processes[F[_]](
     implicit
     userServices: algebra.User.Services[F],
-    config: NineCardsConfig,
+    config: NineCardsConfiguration,
     hashUtils: HashUtils
   ) = new UserProcesses
 

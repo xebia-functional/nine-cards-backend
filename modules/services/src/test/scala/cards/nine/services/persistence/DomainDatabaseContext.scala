@@ -2,13 +2,12 @@ package cards.nine.services.persistence
 
 import java.sql.Connection
 
-import cards.nine.commons.NineCardsConfig
+import cards.nine.commons.config.DummyConfig
 import cards.nine.services.free.domain._
 import cards.nine.services.free.interpreter.collection.{ Services ⇒ CollectionServices }
 import cards.nine.services.free.interpreter.country.{ Services ⇒ CountryServices }
 import cards.nine.services.free.interpreter.subscription.{ Services ⇒ SubscriptionServices }
 import cards.nine.services.free.interpreter.user.{ Services ⇒ UserServices }
-import cards.nine.services.utils.DummyNineCardsConfig
 import doobie.free.{ drivermanager ⇒ FD }
 import doobie.imports._
 import org.flywaydb.core.Flyway
@@ -18,19 +17,18 @@ import scalaz.{ Foldable, \/ }
 import scalaz.concurrent.Task
 import scalaz.syntax.apply._
 
-trait BasicDatabaseContext extends DummyNineCardsConfig {
+trait BasicDatabaseContext extends DummyConfig {
 
   val dbPrefix = "ninecards.db"
 
   class CustomTransactor[B](
     implicit
-    beforeActions: ConnectionIO[B],
-    config: NineCardsConfig
+    beforeActions: ConnectionIO[B]
   ) extends Transactor[Task] {
-    val driver = config.getString(s"$dbPrefix.default.driver")
-    def url = config.getString(s"$dbPrefix.default.url")
-    val user = config.getString(s"$dbPrefix.default.user")
-    val pass = config.getString(s"$dbPrefix.default.password")
+    val driver = config.db.default.driver
+    def url = config.db.default.url
+    val user = config.db.default.user
+    val pass = config.db.default.password
 
     val connect: Task[Connection] =
       Task.delay(Class.forName(driver)) *> FD.getConnection(url, user, pass).trans[Task]
@@ -78,18 +76,18 @@ trait DomainDatabaseContext extends BasicDatabaseContext {
 
   implicit val transactor: Transactor[Task] =
     DriverManagerTransactor[Task](
-      driver = dummyConfig.getString(s"$dbPrefix.domain.driver"),
-      url    = dummyConfig.getString(s"$dbPrefix.domain.url"),
-      user   = dummyConfig.getString(s"$dbPrefix.domain.user"),
-      pass   = dummyConfig.getString(s"$dbPrefix.domain.password")
+      driver = db.domain.driver,
+      url    = db.domain.url,
+      user   = db.domain.user,
+      pass   = db.domain.password
     )
 
   val flywaydb = new Flyway
 
   flywaydb.setDataSource(
-    dummyConfig.getString(s"$dbPrefix.domain.url"),
-    dummyConfig.getString(s"$dbPrefix.domain.user"),
-    dummyConfig.getString(s"$dbPrefix.domain.password")
+    db.domain.url,
+    db.domain.user,
+    db.domain.password
   )
 
   flywaydb.migrate()

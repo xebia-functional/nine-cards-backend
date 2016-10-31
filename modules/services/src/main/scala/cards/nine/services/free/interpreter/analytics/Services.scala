@@ -3,6 +3,7 @@ package cards.nine.services.free.interpreter.analytics
 import cards.nine.commons.NineCardsErrors._
 import cards.nine.commons.NineCardsService.Result
 import cards.nine.commons.TaskInstances._
+import cards.nine.commons.config.Domain.GoogleAnalyticsConfiguration
 import cards.nine.domain.analytics.{ CountryIsoCode, RankingParams }
 import cards.nine.services.free.algebra.GoogleAnalytics._
 import cards.nine.services.free.domain.Ranking._
@@ -18,7 +19,7 @@ import org.http4s.circe.{ jsonEncoderOf, jsonOf }
 
 import scalaz.concurrent.Task
 
-class Services(config: Configuration) extends (Ops ~> Task) {
+class Services(config: GoogleAnalyticsConfiguration) extends (Ops ~> Task) {
 
   import Encoders._
   import model.{ RequestBody, ResponseBody }
@@ -28,7 +29,7 @@ class Services(config: Configuration) extends (Ops ~> Task) {
   private[this] val uri: Uri = Uri(
     scheme    = Option(config.protocol.ci),
     authority = Option(Authority(host = RegName(config.host), port = config.port)),
-    path      = config.uri
+    path      = config.path
   )
 
   implicit private[this] val requestBodyEntity: EntityEncoder[RequestBody] =
@@ -86,5 +87,5 @@ class Services(config: Configuration) extends (Ops ~> Task) {
 }
 
 object Services {
-  def services(implicit config: Configuration) = new Services(config)
+  def services(implicit config: GoogleAnalyticsConfiguration) = new Services(config)
 }

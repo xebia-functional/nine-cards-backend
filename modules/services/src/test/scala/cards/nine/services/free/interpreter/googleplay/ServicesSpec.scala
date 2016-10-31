@@ -13,7 +13,7 @@ import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
 import org.specs2.specification.Scope
 
-class GooglePlayServicesSpec
+class ServicesSpec
   extends Specification
   with Matchers
   with Mockito

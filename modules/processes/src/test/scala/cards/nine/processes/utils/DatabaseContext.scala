@@ -1,5 +1,6 @@
 package cards.nine.processes.utils
 
+import cards.nine.commons.config.DummyConfig
 import cards.nine.services.persistence.DatabaseTransactor
 import cats.Id
 import doobie.imports.Transactor
@@ -27,7 +28,7 @@ trait CatsIdInstances {
   }
 }
 
-object DatabaseContext extends DummyNineCardsConfig with CatsIdInstances {
+object DatabaseContext extends DummyConfig with CatsIdInstances {
 
-  implicit val transactor: Transactor[Id] = new DatabaseTransactor(config).transactor
+  implicit val transactor: Transactor[Id] = new DatabaseTransactor(config.db).transactor
 }

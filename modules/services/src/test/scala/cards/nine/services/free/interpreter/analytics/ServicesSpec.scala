@@ -2,6 +2,7 @@ package cards.nine.services.free.interpreter.analytics
 
 import cards.nine.commons.NineCardsErrors.NineCardsError
 import cards.nine.commons.NineCardsService.Result
+import cards.nine.commons.config.Domain.GoogleAnalyticsConfiguration
 import cards.nine.domain.analytics._
 import cards.nine.services.free.domain.Ranking.GoogleAnalyticsRanking
 import cards.nine.services.utils.MockServerService
@@ -58,11 +59,11 @@ class ServicesSpec
 
   import TestData._
 
-  implicit val configuration: Configuration = Configuration(
+  implicit val configuration: GoogleAnalyticsConfiguration = GoogleAnalyticsConfiguration(
     protocol = "http",
     host     = "localhost",
     port     = Option(mockServerPort),
-    uri      = paths.batchGet,
+    path     = paths.batchGet,
     viewId   = TestData.viewId
   )
 
