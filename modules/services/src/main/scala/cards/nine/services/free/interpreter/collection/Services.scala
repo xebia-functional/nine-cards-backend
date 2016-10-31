@@ -2,6 +2,7 @@ package cards.nine.services.free.interpreter.collection
 
 import java.sql.Timestamp
 
+import cards.nine.domain.application.Package
 import cards.nine.services.free.algebra.SharedCollection._
 import cards.nine.services.free.domain.SharedCollection.{ Queries ⇒ CollectionQueries }
 import cards.nine.services.free.domain.SharedCollectionPackage.{ Queries ⇒ PackageQueries }
@@ -49,14 +50,14 @@ class Services(
   ): ConnectionIO[List[SharedCollection]] =
     collectionPersistence.fetchList(CollectionQueries.getTopByCategory, (category, pageSize, pageNumber))
 
-  def addPackage[K: Composite](collectionId: Long, packageName: String): ConnectionIO[K] =
+  def addPackage[K: Composite](collectionId: Long, packageName: Package): ConnectionIO[K] =
     packagePersistence.updateWithGeneratedKeys[K](
       sql    = PackageQueries.insert,
       fields = SharedCollectionPackage.allFields,
       values = (collectionId, packageName)
     )
 
-  def addPackages(collectionId: Long, packagesName: List[String]): ConnectionIO[Int] = {
+  def addPackages(collectionId: Long, packagesName: List[Package]): ConnectionIO[Int] = {
     val packages = packagesName map {
       (collectionId, _)
     }
@@ -70,7 +71,7 @@ class Services(
   def getPackagesByCollection(collectionId: Long): ConnectionIO[List[SharedCollectionPackage]] =
     packagePersistence.fetchList(PackageQueries.getBySharedCollection, collectionId)
 
-  def deletePackages(collectionId: Long, packagesName: List[String]): ConnectionIO[Int] = {
+  def deletePackages(collectionId: Long, packagesName: List[Package]): ConnectionIO[Int] = {
     val packages = packagesName map {
       (collectionId, _)
     }
@@ -90,10 +91,10 @@ class Services(
       values = (title, id)
     )
 
-  def updatePackages(collection: Long, packages: List[String]): ConnectionIO[(List[String], List[String])] =
+  def updatePackages(collection: Long, packages: List[Package]): ConnectionIO[(List[Package], List[Package])] =
     for {
       oldPackages ← getPackagesByCollection(collection)
-      oldPackagesNames = oldPackages map (_.packageName)
+      oldPackagesNames = oldPackages map (p ⇒ Package(p.packageName))
       newPackages = packages diff oldPackagesNames
       removedPackages = oldPackagesNames diff packages
       addedPackages ← addPackages(collection, newPackages)

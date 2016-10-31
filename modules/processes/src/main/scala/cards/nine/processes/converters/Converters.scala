@@ -2,33 +2,13 @@ package cards.nine.processes.converters
 
 import java.sql.Timestamp
 
-import cards.nine.processes.messages.ApplicationMessages._
-import cards.nine.processes.messages.GooglePlayAuthMessages._
+import cards.nine.domain.analytics._
+import cards.nine.domain.application.{FullCard, FullCardList, Moment, Package}
 import cards.nine.processes.messages.InstallationsMessages._
-import cards.nine.processes.messages.rankings.GetRankedDeviceApps._
-import cards.nine.processes.messages.RecommendationsMessages._
 import cards.nine.processes.messages.SharedCollectionMessages._
 import cards.nine.processes.messages.UserMessages.LoginResponse
-import cards.nine.services.free.domain.GooglePlay.{
-  AppsInfo,
-  AppInfo ⇒ AppInfoServices,
-  AuthParams ⇒ AuthParamServices,
-  Recommendation,
-  Recommendations
-}
-import cards.nine.services.free.domain.rankings.{ RankedApp, UnrankedApp }
-import cards.nine.services.free.domain.{
-  BaseSharedCollection,
-  Installation ⇒ InstallationServices,
-  SharedCollection ⇒ SharedCollectionServices,
-  SharedCollectionSubscription ⇒ SharedCollectionSubscriptionServices,
-  SharedCollectionWithAggregatedInfo,
-  User ⇒ UserAppServices
-}
-import cards.nine.services.free.interpreter.collection.Services.{
-  SharedCollectionData ⇒ SharedCollectionDataServices
-}
-
+import cards.nine.services.free.domain.{BaseSharedCollection, SharedCollectionWithAggregatedInfo, Installation => InstallationServices, SharedCollection => SharedCollectionServices, SharedCollectionSubscription => SharedCollectionSubscriptionServices, User => UserAppServices}
+import cards.nine.services.free.interpreter.collection.Services.{SharedCollectionData => SharedCollectionDataServices}
 import org.joda.time.DateTime
 
 object Converters {
@@ -67,7 +47,7 @@ object Converters {
       community        = data.community
     )
 
-  def toSharedCollection: (BaseSharedCollection, List[String], Long) ⇒ SharedCollection = {
+  def toSharedCollection: (BaseSharedCollection, List[Package], Long) ⇒ SharedCollection = {
     case (collection: SharedCollectionWithAggregatedInfo, packages, userId) ⇒
       toSharedCollection(collection.sharedCollectionData, packages, Option(collection.subscriptionsCount), userId)
     case (collection: SharedCollectionServices, packages, userId) ⇒
@@ -76,7 +56,7 @@ object Converters {
 
   def toSharedCollection(
     collection: SharedCollectionServices,
-    packages: List[String],
+    packages: List[Package],
     subscriptionCount: Option[Long],
     userId: Long
   ) =
@@ -97,67 +77,18 @@ object Converters {
 
   def toSharedCollectionWithAppsInfo(
     collection: SharedCollection,
-    appsInfo: List[AppInfoServices]
+    appsInfo: List[FullCard]
   ): SharedCollectionWithAppsInfo =
     SharedCollectionWithAppsInfo(
       collection = collection,
-      appsInfo   = appsInfo map toAppInfo
+      appsInfo   = appsInfo
     )
 
-  def toAppInfo(info: AppInfoServices): AppInfo =
-    AppInfo(
-      packageName = info.packageName,
-      title       = info.title,
-      free        = info.free,
-      icon        = info.icon,
-      stars       = info.stars,
-      downloads   = info.downloads,
-      category    = info.categories.headOption getOrElse ""
-    )
-
-  def toGetAppsInfoResponse(info: AppsInfo): GetAppsInfoResponse = {
-    val (appsWithoutCategories, apps) = info.apps.partition(app ⇒ app.categories.isEmpty)
-
-    GetAppsInfoResponse(
-      errors = info.missing ++ appsWithoutCategories.map(_.packageName),
-      items  = apps map { app ⇒
-      AppGooglePlayInfo(
-        packageName = app.packageName,
-        title       = app.title,
-        free        = app.free,
-        icon        = app.icon,
-        stars       = app.stars,
-        downloads   = app.downloads,
-        categories  = app.categories
-      )
-    }
-    )
-  }
-
-  def toGooglePlayRecommendation(recommendation: Recommendation): GooglePlayRecommendation =
-    GooglePlayRecommendation(
-      packageName = recommendation.packageName,
-      title       = recommendation.title,
-      free        = recommendation.free,
-      icon        = recommendation.icon,
-      stars       = recommendation.stars,
-      downloads   = recommendation.downloads,
-      screenshots = recommendation.screenshots
-    )
-
-  def toGetRecommendationsResponse(recommendations: Recommendations): GetRecommendationsResponse =
-    GetRecommendationsResponse(
-      items = recommendations.apps map toGooglePlayRecommendation
-    )
-
-  def toSearchAppsResponse(searchResults: Recommendations): SearchAppsResponse =
-    RecommendationAppList(apps = searchResults.apps map toGooglePlayRecommendation)
-
-  def toAuthParamsServices(authParams: AuthParams): AuthParamServices = {
-    AuthParamServices(
-      androidId    = authParams.androidId,
-      localization = authParams.localization,
-      token        = authParams.token
+  def filterCategorized(info: FullCardList): FullCardList = {
+    val (appsWithoutCategories, apps) = info.cards.partition(app ⇒ app.categories.isEmpty)
+    FullCardList(
+      missing = info.missing ++ appsWithoutCategories.map(_.packageName),
+      cards   = apps
     )
   }
 
@@ -166,7 +97,21 @@ object Converters {
       subscriptions map (_.sharedCollectionPublicId)
     )
 
-  def toUnrankedApp(category: String)(app: DeviceApp) = UnrankedApp(app.packageName, category)
+  def toUnrankedApp(category: String)(pack: Package) = UnrankedApp(pack, category)
 
-  def toRankedDeviceApp(app: RankedApp) = RankedDeviceApp(app.packageName, app.ranking)
+  def toMoment(widgetMoment: String) = widgetMoment.replace(Moment.widgetMomentPrefix, "")
+
+  def toWidgetMoment(moment: String) = s"${Moment.widgetMomentPrefix}$moment"
+
+  def toRankedAppsByCategory(limit: Option[Int] = None)(ranking: (String, List[RankedApp])) = {
+    val (category, apps) = ranking
+
+    RankedAppsByCategory(category, limit.fold(apps)(apps.take))
+  }
+
+  def toRankedWidgetsByMoment(limit: Int)(ranking: (String, List[RankedWidget])) = {
+    val (moment, widgets) = ranking
+
+    RankedWidgetsByMoment(toMoment(moment), widgets.take(limit))
+  }
 }

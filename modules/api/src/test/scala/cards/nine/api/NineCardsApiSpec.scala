@@ -6,10 +6,12 @@ import cards.nine.api.NineCardsHeaders._
 import cards.nine.api.TestData.Exceptions._
 import cards.nine.api.TestData._
 import cards.nine.commons.NineCardsService
+import cards.nine.domain.account._
 import cards.nine.processes.NineCardsServices._
 import cards.nine.processes._
 import cards.nine.processes.messages.UserMessages._
 import cats.free.Free
+import cats.syntax.either._
 import cats.syntax.xor._
 import org.mockito.Matchers.{ eq ⇒ mockEq }
 import org.specs2.matcher.Matchers
@@ -54,8 +56,8 @@ trait NineCardsApiSpecification
     val nineCardsApi = new NineCardsRoutes().nineCardsRoutes
 
     userProcesses.checkAuthToken(
-      sessionToken = mockEq(sessionToken),
-      androidId    = mockEq(androidId),
+      sessionToken = SessionToken(mockEq(sessionToken.value)),
+      androidId    = AndroidId(mockEq(androidId.value)),
       authToken    = mockEq(authToken),
       requestUri   = any[String]
     ) returns Free.pure(Option(userId))
@@ -65,9 +67,7 @@ trait NineCardsApiSpecification
 
     googleApiProcesses.checkGoogleTokenId(email, tokenId) returns Free.pure(true)
 
-    userProcesses.signUpUser(
-      LoginRequest(email, androidId, any, tokenId)
-    ) returns Free.pure(Messages.loginResponse)
+    userProcesses.signUpUser(any[LoginRequest]) returns Free.pure(Messages.loginResponse)
 
     userProcesses.updateInstallation(mockEq(Messages.updateInstallationRequest)) returns
       Free.pure(Messages.updateInstallationResponse)
@@ -102,10 +102,10 @@ trait NineCardsApiSpecification
     applicationProcesses.getAppsInfo(any, any) returns
       Free.pure(Messages.getAppsInfoResponse)
 
-    rankingProcesses.getRanking(any) returns Free.pure(Messages.rankings.getResponse)
+    rankingProcesses.getRanking(any) returns Free.pure(Either.right(Messages.rankings.getResponse))
 
     rankingProcesses.reloadRanking(any, any) returns
-      Free.pure(Messages.rankings.reloadResponse.right)
+      Free.pure(Either.right(Messages.rankings.reloadResponse))
 
     recommendationsProcesses.getRecommendationsByCategory(any, any, any, any, any) returns
       Free.pure(Messages.getRecommendationsByCategoryResponse)
@@ -115,6 +115,12 @@ trait NineCardsApiSpecification
 
     rankingProcesses.getRankedDeviceApps(any, any) returns
       NineCardsService.right(Messages.getRankedAppsResponse).value
+
+    rankingProcesses.getRankedAppsByMoment(any, any, any, any) returns
+      NineCardsService.right(Messages.getRankedAppsResponse).value
+
+    rankingProcesses.getRankedWidgets(any, any, any, any) returns
+      NineCardsService.right(Messages.getRankedWidgetsResponse).value
   }
 
   trait UnsuccessfulScope extends BasicScope {
@@ -122,8 +128,8 @@ trait NineCardsApiSpecification
     googleApiProcesses.checkGoogleTokenId(email, tokenId) returns Free.pure(false)
 
     userProcesses.checkAuthToken(
-      sessionToken = mockEq(sessionToken),
-      androidId    = mockEq(androidId),
+      sessionToken = SessionToken(mockEq(sessionToken.value)),
+      androidId    = AndroidId(mockEq(androidId.value)),
       authToken    = mockEq(failingAuthToken),
       requestUri   = any[String]
     ) returns Free.pure(None)
@@ -146,15 +152,13 @@ trait NineCardsApiSpecification
     googleApiProcesses.checkGoogleTokenId(email, tokenId) returns Free.pure(true)
 
     userProcesses.checkAuthToken(
-      sessionToken = mockEq(sessionToken),
-      androidId    = mockEq(androidId),
+      sessionToken = SessionToken(mockEq(sessionToken.value)),
+      androidId    = AndroidId(mockEq(androidId.value)),
       authToken    = mockEq(failingAuthToken),
       requestUri   = any[String]
     ) returns Free.pure[NineCardsServices, Option[Long]](Option(userId))
 
-    userProcesses.signUpUser(
-      LoginRequest(email, androidId, any, tokenId)
-    ) returns Free.pure(Messages.loginResponse)
+    userProcesses.signUpUser(any[LoginRequest]) returns Free.pure(Messages.loginResponse)
 
     userProcesses.updateInstallation(mockEq(Messages.updateInstallationRequest)) returns
       Free.pure(Messages.updateInstallationResponse)
@@ -186,10 +190,10 @@ trait NineCardsApiSpecification
     sharedCollectionProcesses.updateCollection(any, any, any) returns
       Free.pure(Messages.createOrUpdateCollectionResponse.right)
 
-    rankingProcesses.getRanking(any) returns Free.pure(Messages.rankings.getResponse)
+    rankingProcesses.getRanking(any) returns Free.pure(Either.right(Messages.rankings.getResponse))
 
     rankingProcesses.reloadRanking(any, any) returns
-      Free.pure(Messages.rankings.reloadResponse.right)
+      Free.pure(Either.right(Messages.rankings.reloadResponse))
 
     rankingProcesses.getRankedDeviceApps(any, any) returns
       NineCardsService.right(Messages.getRankedAppsResponse).value
@@ -209,7 +213,7 @@ class NineCardsApiSpec
     }
 
     "return a 401 Unauthorized status code if some of the headers aren't provided" in new BasicScope {
-      request ~> addHeader(RawHeader(headerAndroidId, androidId)) ~> sealRoute(nineCardsApi) ~> check {
+      request ~> addHeader(RawHeader(headerAndroidId, androidId.value)) ~> sealRoute(nineCardsApi) ~> check {
         status.intValue shouldEqual StatusCodes.Unauthorized.intValue
       }
     }
@@ -286,14 +290,13 @@ class NineCardsApiSpec
     }
 
   }
-
   "POST /login" should {
 
     val request = Post(Paths.login, Messages.apiLoginRequest)
 
     "return a 401 Unauthorized status code if the given email is empty" in new BasicScope {
 
-      Post(Paths.login, Messages.apiLoginRequest.copy(email = "")) ~>
+      Post(Paths.login, Messages.apiLoginRequest.copy(email = Email(""))) ~>
         sealRoute(nineCardsApi) ~>
         check {
           status.intValue shouldEqual StatusCodes.Unauthorized.intValue
@@ -302,7 +305,7 @@ class NineCardsApiSpec
 
     "return a 401 Unauthorized status code if the given tokenId is empty" in new BasicScope {
 
-      Post(Paths.login, Messages.apiLoginRequest.copy(tokenId = "")) ~>
+      Post(Paths.login, Messages.apiLoginRequest.copy(tokenId = GoogleIdToken(""))) ~>
         sealRoute(nineCardsApi) ~>
         check {
           status.intValue shouldEqual StatusCodes.Unauthorized.intValue
@@ -345,7 +348,6 @@ class NineCardsApiSpec
 
     successOk(request)
   }
-
   "POST /collections" should {
 
     val request = Post(Paths.collections, Messages.apiCreateCollectionRequest)
@@ -497,6 +499,50 @@ class NineCardsApiSpec
     successOk(request)
   }
 
+  "POST /applications/rank" should {
+
+    val request = Post(
+      uri     = Paths.rankApps,
+      content = Messages.apiRankAppsRequest
+    )
+
+    authenticatedBadRequestEmptyBody(Post(Paths.rankApps))
+
+    unauthorizedNoHeaders(request)
+
+    internalServerError(request)
+
+    successOk(request)
+  }
+
+  "POST /applications/rank-by-moment" should {
+
+    val request = Post(
+      uri     = Paths.rankAppsByMoments,
+      content = Messages.apiRankByMomentsRequest
+    )
+
+    authenticatedBadRequestEmptyBody(Post(Paths.rankApps))
+
+    unauthorizedNoHeaders(request)
+
+    successOk(request)
+  }
+
+  "POST /widgets/rank" should {
+
+    val request = Post(
+      uri     = Paths.rankWidgets,
+      content = Messages.apiRankByMomentsRequest
+    )
+
+    authenticatedBadRequestEmptyBody(Post(Paths.rankApps))
+
+    unauthorizedNoHeaders(request)
+
+    successOk(request)
+  }
+
   "POST /recommendations" should {
 
     val request = Post(
@@ -557,27 +603,10 @@ class NineCardsApiSpec
   }
 
   val rankingPaths: List[String] = {
-    import cards.nine.services.free.domain.rankings.{ Continent, Country }
-    val countries = Country.values.map(c ⇒ s"countries/$c").toList
-    val continents = Continent.values.map(c ⇒ s"continents/$c").toList
-    "world" :: (continents ++ countries)
+    val countries = List("countries/es", "countries/ES", "countries/gb", "countries/us", "countries/it")
+    "world" :: countries
   }
 
   rankingPaths foreach testRanking
 
-  "POST /applications/rank" should {
-
-    val request = Post(
-      uri     = Paths.rankApps,
-      content = Messages.apiRankAppsRequest
-    )
-
-    authenticatedBadRequestEmptyBody(Post(Paths.rankApps))
-
-    unauthorizedNoHeaders(request)
-
-    internalServerError(request)
-
-    successOk(request)
-  }
 }

@@ -1,30 +1,18 @@
 package cards.nine.services.persistence
 
-import java.sql.Timestamp
-import java.time.Instant
-
-import cats.Monad
-import cats.syntax.traverse._
-import cats.instances.list._
-import cards.nine.services.free.domain.rankings._
-import cards.nine.services.free.domain.{ Category, PackageName }
+import cards.nine.domain.account._
+import cards.nine.domain.analytics._
+import cards.nine.domain.ScalaCheck._
 import cards.nine.services.free.interpreter.collection.Services.SharedCollectionData
 import cards.nine.services.free.interpreter.user.Services.UserData
 import cards.nine.services.persistence.NineCardsGenEntities._
-import enumeratum.{ Enum, EnumEntry }
+import cats.Monad
+import java.sql.Timestamp
+import java.time.Instant
+
 import org.scalacheck.{ Arbitrary, Gen }
 
 object NineCardsGenEntities {
-
-  case class ApiKey(value: String) extends AnyVal
-
-  case class DeviceToken(value: String) extends AnyVal
-
-  case class Email(value: String) extends AnyVal
-
-  case class SessionToken(value: String) extends AnyVal
-
-  case class AndroidId(value: String) extends AnyVal
 
   case class PublicIdentifier(value: String) extends AnyVal
 
@@ -45,11 +33,11 @@ trait NineCardsScalacheckGen {
 
   val stringGenerator = Arbitrary.arbitrary[String]
 
-  val emailGenerator: Gen[String] = for {
+  val emailGenerator: Gen[Email] = for {
     mailbox ← nonEmptyString(50)
     topLevelDomain ← nonEmptyString(45)
     domain ← fixedLengthString(3)
-  } yield s"$mailbox@$topLevelDomain.$domain"
+  } yield Email(s"$mailbox@$topLevelDomain.$domain")
 
   val timestampGenerator: Gen[Timestamp] = Gen.choose(0l, 253402300799l) map { seconds ⇒
     Timestamp.from(Instant.ofEpochSecond(seconds))
@@ -82,7 +70,7 @@ trait NineCardsScalacheckGen {
     email ← emailGenerator
     apiKey ← Gen.uuid
     sessionToken ← Gen.uuid
-  } yield UserData(email, apiKey.toString, sessionToken.toString)
+  } yield UserData(email.value, apiKey.toString, sessionToken.toString)
 
   implicit val abAndroidId: Arbitrary[AndroidId] = Arbitrary(Gen.uuid.map(u ⇒ AndroidId(u.toString)))
 
@@ -90,7 +78,7 @@ trait NineCardsScalacheckGen {
 
   implicit val abDeviceToken: Arbitrary[DeviceToken] = Arbitrary(Gen.uuid.map(u ⇒ DeviceToken(u.toString)))
 
-  implicit val abEmail: Arbitrary[Email] = Arbitrary(emailGenerator.map(Email.apply))
+  implicit val abEmail: Arbitrary[Email] = Arbitrary(emailGenerator)
 
   implicit val abPublicIdentifier: Arbitrary[PublicIdentifier] = Arbitrary(Gen.uuid.map(u ⇒ PublicIdentifier(u.toString)))
 
@@ -101,28 +89,6 @@ trait NineCardsScalacheckGen {
   implicit val abUserData: Arbitrary[UserData] = Arbitrary(userDataGenerator)
 
   implicit val abWrongIsoCode2: Arbitrary[WrongIsoCode2] = Arbitrary(fixedLengthNumericString(2).map(WrongIsoCode2.apply))
-
-  def genEnumeratum[C <: EnumEntry](e: Enum[C]): Gen[C] =
-    for (i ← Gen.choose(0, e.values.length - 1)) yield e.values(i)
-
-  def abEnumeratum[C <: EnumEntry](e: Enum[C]): Arbitrary[C] = Arbitrary(genEnumeratum(e))
-
-  val genPackage: Gen[PackageName] =
-    Gen.nonEmptyListOf(Gen.alphaNumChar).map(chars ⇒ PackageName(chars.mkString))
-
-  implicit val abCategory: Arbitrary[Category] = abEnumeratum[Category](Category)
-
-  implicit val abCountry: Arbitrary[Country] = abEnumeratum[Country](Country)
-
-  implicit val abContinent: Arbitrary[Continent] = abEnumeratum[Continent](Continent)
-
-  val genGeoScope: Gen[GeoScope] = {
-    val countries = Country.values.toSeq map CountryScope.apply
-    val continents = Continent.values.toSeq map ContinentScope.apply
-    Gen.oneOf(countries ++ continents ++ Seq(WorldScope))
-  }
-
-  implicit val abGeoScope: Arbitrary[GeoScope] = Arbitrary(genGeoScope)
 
   private[this] val genMonad: Monad[Gen] = new Monad[Gen] {
     def pure[A](a: A): Gen[A] = Gen.const(a)
@@ -140,41 +106,10 @@ trait NineCardsScalacheckGen {
       elems ← Gen.listOfN(num, gen)
     } yield elems.distinct
 
-  val genRankingEntries: Gen[List[Entry]] = {
-
-    def genCatEntries(cat: Category): Gen[List[Entry]] =
-      for /*Gen*/ {
-        packs ← listOfDistinctN(0, 10, genPackage)
-        entries = packs.zipWithIndex map {
-          case (pack, ind) ⇒ Entry(pack, cat, ind + 1)
-        }
-      } yield entries
-
-    for /*Gen */ {
-      cats ← listOfDistinctN(0, 10, genEnumeratum[Category](Category))
-      entries ← cats.traverse(genCatEntries)(genMonad)
-    } yield entries.flatten
-  }
-
-  implicit val abRankingEntries: Arbitrary[List[Entry]] = Arbitrary(genRankingEntries)
-
-  def genCatRanking(maxSize: Int): Gen[CategoryRanking] =
-    listOfDistinctN(0, maxSize, genPackage).map(CategoryRanking.apply)
-
-  val genRanking: Gen[Ranking] =
-    for {
-      cats ← listOfDistinctN(0, 10, genEnumeratum[Category](Category))
-      pairs ← cats.traverse({ cat ⇒
-        for (r ← genCatRanking(10)) yield (cat, r)
-      })(genMonad)
-    } yield Ranking(pairs.toMap)
-
-  implicit val abRanking: Arbitrary[Ranking] = Arbitrary(genRanking)
-
   val genDeviceApp: Gen[UnrankedApp] = for {
-    p ← genPackage
-    c ← abCategory.arbitrary
-  } yield UnrankedApp(p.name, c.entryName)
+    p ← arbPackage.arbitrary
+    c ← arbCategory.arbitrary
+  } yield UnrankedApp(p, c.entryName)
 
   implicit val abDeviceApp: Arbitrary[UnrankedApp] = Arbitrary(genDeviceApp)
 

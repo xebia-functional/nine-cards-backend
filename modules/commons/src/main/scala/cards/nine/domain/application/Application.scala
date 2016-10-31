@@ -1,0 +1,55 @@
+package cards.nine.domain.application
+
+import enumeratum.{ Enum, EnumEntry }
+
+/**
+  * A Package is the unique identifier of an android App.
+  * It is a dot-separated sequence of lowercase segments, much like Java packages.
+  */
+case class Package(value: String) extends AnyVal
+
+case class Widget(packageName: Package, className: String)
+
+object Widget {
+  val FromRaw = "([a-zA-Z0-9\\.\\_]+):([a-zA-Z0-9\\.\\_]+)".r
+
+  def apply(raw: String): Option[Widget] = raw match {
+    case FromRaw(packageName, className) ⇒ Option(Widget(Package(packageName), className))
+    case _ ⇒ None
+  }
+}
+
+/**
+  * A FullCard contains all the information about an existing Android App
+  * managed by the NineCards Backend application.
+  */
+case class FullCard(
+  packageName: Package,
+  title: String,
+  categories: List[String],
+  downloads: String,
+  free: Boolean,
+  icon: String,
+  screenshots: List[String],
+  stars: Double
+)
+
+/**
+  * A FullCardList carries the information known in the backend about a set of packages.
+  * The `cards` field contains the FullCard for those packages for which one is available.
+  * The `missing` field contains the name of those packages for which there is none.a
+  */
+case class FullCardList(
+  missing: List[Package],
+  cards: List[FullCard]
+)
+
+sealed trait PriceFilter extends EnumEntry
+object PriceFilter extends Enum[PriceFilter] {
+  case object ALL extends PriceFilter
+  case object FREE extends PriceFilter
+  case object PAID extends PriceFilter
+
+  val values = super.findValues
+}
+

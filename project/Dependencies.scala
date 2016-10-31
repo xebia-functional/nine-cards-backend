@@ -58,9 +58,18 @@ object Dependencies {
 
   val commonsDeps = Seq(libraryDependencies ++= Seq(
     cats,
+    circe("-core"),
+    circe("-generic"),
+    circe("-parser"),
+    embeddedRedis,
+    enumeratum(""),
+    jodaConvert,
+    jodaTime,
+    redisClient,
     scalaz("-concurrent"),
     specs2Core,
     specs2("-scalacheck"),
+    scalacheckShapeless,
     typesafeConfig
   ))
 

@@ -1,8 +1,10 @@
 package cards.nine.googleplay.util
 
+import cards.nine.domain.application.FullCard
+import cards.nine.domain.ScalaCheck.arbPackage
+import cards.nine.domain.market.MarketCredentials
 import cards.nine.googleplay.domain._
 import cats.data.Xor
-import enumeratum.{ Enum, EnumEntry }
 import org.scalacheck.Arbitrary._
 import org.scalacheck.Gen._
 import org.scalacheck.Shapeless._
@@ -17,26 +19,14 @@ object ScalaCheck {
   implicit val arbPathSegment: Arbitrary[PathSegment] =
     Arbitrary(ScalaCheck_Aux.genUriPathString.map(PathSegment.apply))
 
-  implicit val arbPackage: Arbitrary[Package] =
-    Arbitrary(nonEmptyListOf(alphaNumChar).map(chars ⇒ Package(chars.mkString)))
-
-  implicit val arbAuth: Arbitrary[GoogleAuthParams] =
+  implicit val arbAuth: Arbitrary[MarketCredentials] =
     ScalaCheck_Aux.arbAuth
 
   implicit val arbFullCard: Arbitrary[FullCard] =
     ScalaCheck_Aux.arbFullCard
 
-  implicit val arbString: Arbitrary[String] =
-    ScalaCheck_Aux.arbString
-
   implicit val arbGetCardAnswer: Arbitrary[Xor[InfoError, FullCard]] =
     ScalaCheck_Aux.arbGetCardAnswer
-
-  implicit val arbCategory: Arbitrary[Category] =
-    ScalaCheck_Aux.arbCategory
-
-  implicit val arbPriceFilter: Arbitrary[PriceFilter] =
-    ScalaCheck_Aux.arbPriceFilter
 
   // TODO pull this out somewhere else
   // A generator which returns a map of A->B, a list of As that are in the map, and a list of As that are not
@@ -62,27 +52,15 @@ object ScalaCheck_Aux {
 
   val usAsciiStringGen = Gen.containerOf[Array, Char](Gen.choose[Char](0, 127)).map(_.mkString)
 
-  val arbAuth = implicitly[Arbitrary[GoogleAuthParams]]
-
-  val arbString = implicitly[Arbitrary[String]]
-
-  def enumeratumGen[C <: EnumEntry](e: Enum[C]): Gen[C] =
-    for (i ← Gen.choose(0, e.values.length - 1)) yield e.values(i)
-
-  def enumeratumArbitrary[C <: EnumEntry](implicit e: Enum[C]): Arbitrary[C] =
-    Arbitrary(enumeratumGen(e))
-
-  val arbCategory: Arbitrary[Category] = enumeratumArbitrary[Category](Category)
-
-  val arbPriceFilter: Arbitrary[PriceFilter] = enumeratumArbitrary[PriceFilter](PriceFilter)
+  val arbAuth = implicitly[Arbitrary[MarketCredentials]]
 
   val genFullCard: Gen[FullCard] =
     for /*ScalaCheck.Gen*/ {
       title ← identifier
-      docid ← identifier
+      packageName ← arbPackage.arbitrary
       appDetails ← listOf(identifier)
     } yield FullCard(
-      packageName = docid,
+      packageName = packageName,
       title       = title,
       free        = false,
       icon        = "",
@@ -96,7 +74,6 @@ object ScalaCheck_Aux {
 
   val arbGetCardAnswer = {
     implicit val app: Arbitrary[FullCard] = arbFullCard
-    implicit val fail: Arbitrary[String] = arbString
     implicitly[Arbitrary[Xor[InfoError, FullCard]]]
   }
 

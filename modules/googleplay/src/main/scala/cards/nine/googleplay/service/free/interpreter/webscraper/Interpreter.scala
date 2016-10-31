@@ -2,7 +2,7 @@ package cards.nine.googleplay.service.free.interpreter.webscrapper
 
 import cats.~>
 import cats.data.Xor
-import cards.nine.googleplay.domain.{ FullCard, Package }
+import cards.nine.domain.application.{ FullCard, Package }
 import cards.nine.googleplay.domain.webscrapper._
 import cards.nine.googleplay.service.free.algebra.WebScraper._
 import org.http4s.Http4s._

@@ -3,6 +3,7 @@ package cards.nine.googleplay.processes
 import cats.data.Xor
 import cats.~>
 import cards.nine.commons.TaskInstances._
+import cards.nine.domain.application.{ FullCard, Package }
 import cards.nine.googleplay.domain._
 import cards.nine.googleplay.service.free.{ JoinServices, JoinInterpreter }
 import cards.nine.googleplay.service.free.{ algebra ⇒ Alg, interpreter ⇒ Inter }
@@ -49,7 +50,7 @@ case class AppServiceByProcess(
   override def apply(appRequest: AppRequest): Task[InfoError Xor FullCard] = {
     val pack: Package = appRequest.packageName
     val date = DateTime.now(DateTimeZone.UTC)
-    process.getCard(appRequest.packageName, appRequest.authParams)
+    process.getCard(appRequest.packageName, appRequest.marketAuth)
       .foldMap(interpreter)
       .map(xor ⇒ xor.bimap(_ ⇒ InfoError(pack.value), c ⇒ c))
   }

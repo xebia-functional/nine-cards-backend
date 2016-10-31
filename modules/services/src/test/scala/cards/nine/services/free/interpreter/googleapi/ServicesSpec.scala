@@ -1,6 +1,7 @@
 package cards.nine.services.free.interpreter.googleapi
 
 import cats.data.Xor
+import cards.nine.domain.account.GoogleIdToken
 import cards.nine.services.free.domain.{ TokenInfo, WrongTokenInfo }
 import cards.nine.services.utils.MockServerService
 import org.mockserver.model.HttpRequest._
@@ -138,7 +139,7 @@ class GoogleApiServicesSpec
 
   "getTokenInfo" should {
     "return the TokenInfo object when a valid token id is provided" in {
-      val response = googleApiServices.getTokenInfo(validTokenId)
+      val response = googleApiServices.getTokenInfo(GoogleIdToken(validTokenId))
 
       response.unsafePerformSyncAttempt should be_\/-[WrongTokenInfo Xor TokenInfo].which {
         content ⇒
@@ -147,7 +148,7 @@ class GoogleApiServicesSpec
     }
     "return the TokenInfo object when a valid token id is provided and the hd field isn't" +
       "included into the response" in {
-        val response = googleApiServices.getTokenInfo(otherTokenId)
+        val response = googleApiServices.getTokenInfo(GoogleIdToken(otherTokenId))
 
         response.unsafePerformSyncAttempt should be_\/-[WrongTokenInfo Xor TokenInfo].which {
           content ⇒
@@ -155,7 +156,7 @@ class GoogleApiServicesSpec
         }
       }
     "return a WrongTokenInfo object when a wrong token id is provided" in {
-      val result = googleApiServices.getTokenInfo(wrongTokenId)
+      val result = googleApiServices.getTokenInfo(GoogleIdToken(wrongTokenId))
 
       result.unsafePerformSyncAttempt should be_\/-[WrongTokenInfo Xor TokenInfo].which {
         content ⇒
@@ -163,7 +164,7 @@ class GoogleApiServicesSpec
       }
     }
     "return an exception when something fails during the call to the Google API" in {
-      val result = googleApiServices.getTokenInfo(failingTokenId)
+      val result = googleApiServices.getTokenInfo(GoogleIdToken(failingTokenId))
 
       result.unsafePerformSyncAttempt should be_-\/[Throwable]
     }

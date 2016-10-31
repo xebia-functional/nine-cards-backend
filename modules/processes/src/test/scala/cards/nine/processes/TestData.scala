@@ -3,15 +3,19 @@ package cards.nine.processes
 import java.sql.Timestamp
 import java.time.Instant
 
-import cards.nine.commons.NineCardsErrors.CountryNotFound
+import cards.nine.commons.NineCardsErrors.{ CountryNotFound, RankingNotFound }
+import cards.nine.commons.NineCardsService
+import cards.nine.domain.account.{ AndroidId, DeviceToken }
+import cards.nine.domain.analytics._
+import cards.nine.domain.application.{ FullCard, FullCardList, Package, Widget }
+import cards.nine.domain.market.{ Localization, MarketCredentials, MarketToken }
+import cards.nine.processes.NineCardsServices.NineCardsServices
 import cards.nine.processes.ProcessesExceptions.SharedCollectionNotFoundException
-import cards.nine.processes.messages.GooglePlayAuthMessages.AuthParams
+import cards.nine.processes.converters.Converters
 import cards.nine.processes.messages.SharedCollectionMessages._
-import cards.nine.processes.messages.rankings.GetRankedDeviceApps.DeviceApp
-import cards.nine.services.free.domain.{ SharedCollection ⇒ SharedCollectionServices, _ }
 import cards.nine.services.free.domain.Firebase.{ NotificationIndividualResult, NotificationResponse }
-import cards.nine.services.free.domain.GooglePlay.{ AppsInfo, AppInfo ⇒ AppInfoServices }
-import cards.nine.services.free.domain.rankings.{ Country ⇒ CountryEnum }
+import cards.nine.services.free.domain.Ranking.GoogleAnalyticsRanking
+import cards.nine.services.free.domain.{ SharedCollection ⇒ SharedCollectionServices, _ }
 import cards.nine.services.free.interpreter.collection.Services.{ SharedCollectionData ⇒ SharedCollectionDataServices }
 import org.joda.time.{ DateTime, DateTimeZone }
 
@@ -19,7 +23,7 @@ object TestData {
 
   val addedPackagesCount = 2
 
-  val androidId = "50a4dbf7-85a2-4875-8c75-7232c237808c"
+  val androidId = AndroidId("50a4dbf7-85a2-4875-8c75-7232c237808c")
 
   val appCategory = "COUNTRY"
 
@@ -41,7 +45,7 @@ object TestData {
 
   val countryName = "United States"
 
-  val deviceToken = "5d56922c-5257-4392-817e-503166cd7afd"
+  val deviceToken = DeviceToken("5d56922c-5257-4392-817e-503166cd7afd")
 
   val failure = 0
 
@@ -51,7 +55,7 @@ object TestData {
 
   val installations = 1
 
-  val localization = Option("en-EN")
+  val localization = Localization("en-EN")
 
   val messageId = "a000dcbd-5419-446f-b2c6-6eaefd88480c"
 
@@ -98,42 +102,51 @@ object TestData {
     "earth.europe.france",
     "earth.europe.portugal",
     "earth.europe.spain"
-  )
+  ) map Package
 
   val missing = List(
     "earth.europe.italy",
     "earth.europe.unitedKingdom"
-  )
+  ) map Package
 
   val updatePackagesName = List(
     "earth.europe.italy",
     "earth.europe.unitedKingdom",
     "earth.europe.germany"
-  )
+  ) map Package
 
   val addedPackages = List(
     "earth.europe.italy",
     "earth.europe.unitedKingdom"
-  )
+  ) map Package
 
   val removedPackages = List(
     "earth.europe.germany"
-  )
+  ) map Package
 
   val updatedPackages = (addedPackages, removedPackages)
 
   object Values {
 
     val apps = packagesName map { packageName ⇒
-      AppInfoServices(packageName, "Germany", true, icon, stars, "100.000+", List(appCategory))
+      FullCard(
+        packageName = packageName,
+        title       = "Germany",
+        free        = true,
+        icon        = icon,
+        stars       = stars,
+        downloads   = "100.000+",
+        categories  = List(appCategory),
+        screenshots = Nil
+      )
     }
 
-    val appsInfo = AppsInfo(missing, apps)
+    val appsInfo = FullCardList(missing, apps)
 
-    val authParams = AuthParams(
+    val marketAuth = MarketCredentials(
       androidId    = androidId,
-      localization = localization,
-      token        = token
+      localization = Some(localization),
+      token        = MarketToken(token)
     )
 
     val collection = SharedCollectionServices(
@@ -168,7 +181,7 @@ object TestData {
 
     val packages = packagesName.zip(1l to packagesName.size.toLong) map {
       case (n, id) ⇒
-        SharedCollectionPackage(id, collectionId, n)
+        SharedCollectionPackage(id, collectionId, n.value)
     }
 
     val createPackagesStats = PackagesStats(addedPackagesCount, None)
@@ -176,7 +189,7 @@ object TestData {
     val updatePackagesStats = PackagesStats(addedPackagesCount, Option(removedPackagesCount))
 
     val appInfoList = packagesName map { packageName ⇒
-      AppInfo(packageName, "Germany", true, icon, stars, "100.000+", appCategory)
+      FullCard(packageName, "Germany", List(appCategory), "100.000+", true, icon, Nil, stars)
     }
 
     val installation = Installation(
@@ -306,18 +319,29 @@ object TestData {
   }
 
   object rankings {
-    import cards.nine.services.free.domain.rankings.{ AuthParams ⇒ AuthRanking, _ }
 
-    lazy val scope = CountryScope(CountryEnum.Spain)
+    lazy val limit = 2
     lazy val location = Option("US")
+    lazy val moments = List("HOME", "NIGHT")
+    lazy val widgetMoments = moments map Converters.toWidgetMoment
+    lazy val params = RankingParams(DateRange(startDate, endDate), 5, AnalyticsToken("auth_token"))
+    lazy val scope = CountryScope(CountryIsoCode("ES"))
+    lazy val usaScope = CountryScope(CountryIsoCode("US"))
     lazy val startDate = new DateTime(2016, 1, 1, 0, 0, DateTimeZone.UTC)
     lazy val endDate = new DateTime(2016, 2, 1, 0, 0, DateTimeZone.UTC)
-    lazy val params = RankingParams(DateRange(startDate, endDate), 5, AuthRanking("auth_token"))
-    lazy val error = RankingError(401, "Unauthorized", "Unauthorized")
-    lazy val ranking = Ranking(Map(Category.SOCIAL →
-      CategoryRanking(List(PackageName("socialite"), PackageName("socialist")))))
+    lazy val googleAnalyticsRanking = GoogleAnalyticsRanking(
+      Map("SOCIAL" → List(Package("socialite"), Package("socialist")))
+    )
 
-    val emptyDeviceAppsMap = Map.empty[String, List[DeviceApp]]
+    val rankingNotFoundError = RankingNotFound("Ranking not found for the scope")
+
+    val emptyRankedAppsMap = Map.empty[String, List[RankedApp]]
+
+    val emptyRankedWidgetsMap = Map.empty[String, List[RankedWidget]]
+
+    val emptyUnrankedAppsList = List.empty[Package]
+
+    val emptyUnrankedAppsMap = Map.empty[String, List[Package]]
 
     val emptyRankedAppsList = List.empty[RankedApp]
 
@@ -329,27 +353,50 @@ object TestData {
       "earth.europe.france",
       "earth.europe.germany",
       "earth.europe.italy"
-    )
+    ) map Package
 
     val countriesNZList = List(
       "earth.europe.portugal",
       "earth.europe.spain",
       "earth.europe.unitedKingdom"
+    ) map Package
+
+    val unrankedAppsList = countriesAMList ++ countriesNZList
+
+    val unrankedAppsMap = Map(
+      countriesAMCategory → countriesAMList,
+      countriesNZCategory → countriesNZList
     )
 
-    val deviceAppsMap = Map(
-      countriesAMCategory → countriesAMList.map(DeviceApp.apply),
-      countriesNZCategory → countriesNZList.map(DeviceApp.apply)
-    )
-
-    def appsWithRanking(apps: List[String], category: String) =
+    def appsWithRanking(apps: List[Package], category: String) =
       apps.zipWithIndex.map {
-        case (packageName: String, rank: Int) ⇒
+        case (packageName: Package, rank: Int) ⇒
           RankedApp(packageName, category, Option(rank))
       }
 
-    val rankedAppsList =
+    val rankingForAppsResponse = NineCardsService.right[NineCardsServices, List[RankedApp]] {
       appsWithRanking(countriesAMList, countriesAMCategory) ++
         appsWithRanking(countriesNZList, countriesNZCategory)
+    }
+
+    val rankingForAppsEmptyResponse = NineCardsService.right[NineCardsServices, List[RankedApp]] {
+      Nil
+    }
+
+    def widgetsWithRanking(apps: List[Package], category: String) =
+      apps.zipWithIndex.map {
+        case (packageName: Package, rank: Int) ⇒
+          RankedWidget(Widget(packageName, "className"), category, Option(rank))
+      }
+
+    val rankingForWidgetsResponse = NineCardsService.right[NineCardsServices, List[RankedWidget]] {
+      widgetsWithRanking(countriesAMList, countriesAMCategory) ++
+        widgetsWithRanking(countriesNZList, countriesNZCategory)
+    }
+
+    val rankingForWidgetsEmptyResponse = NineCardsService.right[NineCardsServices, List[RankedWidget]] {
+      Nil
+    }
   }
+
 }

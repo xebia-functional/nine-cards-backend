@@ -1,7 +1,9 @@
 package cards.nine.processes.messages
 
+import cards.nine.domain.analytics.{ GeoScope, RankingParams }
+import cards.nine.domain.application.Package
+import cards.nine.services.free.domain.Ranking._
 import cats.data.Xor
-import cards.nine.services.free.domain.rankings._
 
 object rankings {
 
@@ -20,15 +22,12 @@ object rankings {
 
     case class Request(scope: GeoScope)
 
-    case class Response(ranking: Ranking)
+    case class Response(ranking: GoogleAnalyticsRanking)
 
   }
 
   object GetRankedDeviceApps {
-
-    case class DeviceApp(packageName: String)
-
-    case class RankedDeviceApp(packageName: String, ranking: Option[Int])
+    case class DeviceApp(packageName: Package)
   }
 
 }

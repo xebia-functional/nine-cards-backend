@@ -1,6 +1,6 @@
 package cards.nine.googleplay.service.free.interpreter.cache
 
-import cards.nine.googleplay.domain.{ FullCard, Package }
+import cards.nine.domain.application.{ FullCard, Package }
 import enumeratum.{ Circe ⇒ CirceEnum }
 import io.circe.{ Decoder, Encoder }
 import org.joda.time.DateTime
@@ -18,7 +18,7 @@ object CirceCoders {
   implicit val keyTypeD: Decoder[KeyType] = CirceEnum.decoder(KeyType)
   implicit val keyTypeE: Encoder[KeyType] = CirceEnum.encoder(KeyType)
 
-  implicit val packageD: Decoder[Package] = Decoder.decodeString.map(Package.apply)
+  implicit val packageD: Decoder[Package] = Decoder.decodeString map Package
   implicit val packageE: Encoder[Package] = Encoder.encodeString.contramap(_.value)
 
   implicit val fullCardD: Decoder[FullCard] = deriveDecoder[FullCard]

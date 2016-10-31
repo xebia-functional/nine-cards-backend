@@ -1,8 +1,6 @@
 package cards.nine.api.utils
 
-import cards.nine.api.messages.PathEnumerations.PriceFilter
-import cards.nine.services.free.domain.Category
-import cards.nine.services.free.domain.rankings.{ Continent, Country }
+import cards.nine.domain.application.{ Category, PriceFilter }
 import enumeratum.{ Enum, EnumEntry }
 import shapeless._
 import spray.http.Uri.Path
@@ -23,8 +21,6 @@ object SprayMatchers {
   }
 
   val CategorySegment: PathMatcher1[Category] = new EnumSegment[Category]
-  val ContinentSegment: PathMatcher1[Continent] = new EnumSegment[Continent]
-  val CountrySegment: PathMatcher1[Country] = new EnumSegment[Country]
   val PriceFilterSegment: PathMatcher1[PriceFilter] = new EnumSegment[PriceFilter]
 
   class TypedSegment[T](implicit gen: Generic.Aux[T, String :: HNil]) extends PathMatcher1[T] {

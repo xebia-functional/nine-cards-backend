@@ -1,8 +1,7 @@
 package cards.nine.api
 
 import cards.nine.api.messages.rankings
-import cards.nine.services.free.domain.Category
-import enumeratum.{ Circe ⇒ CirceEnum }
+import cards.nine.domain.application.Package
 import io.circe.generic.semiauto._
 import io.circe.{ Decoder, Encoder, ObjectEncoder }
 import org.joda.time.DateTime
@@ -30,9 +29,8 @@ object Encoders {
     Encoder.encodeString.contramap(dayFormatter.print)
   }
 
-  implicit val category: Encoder[Category] = CirceEnum.encoder(Category)
-
-  implicit val catRanking: ObjectEncoder[rankings.CategoryRanking] = deriveEncoder[rankings.CategoryRanking]
+  implicit val packageName: Encoder[Package] =
+    Encoder.encodeString.contramap(_.value)
 
   implicit val ranking: ObjectEncoder[rankings.Ranking] = deriveEncoder[rankings.Ranking]
 
@@ -44,4 +42,3 @@ object Encoders {
     deriveEncoder[rankings.Reload.Response]
 
 }
-

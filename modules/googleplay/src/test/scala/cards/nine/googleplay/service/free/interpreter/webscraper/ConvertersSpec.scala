@@ -29,7 +29,7 @@ class ConvertersSpec extends Specification {
         .getOrElse(failTest("FullCard should parse correctly"))
 
       card.categories must_=== fisherPrice.card.categories
-      card.packageName must_=== fisherPrice.packageName
+      card.packageName must_=== fisherPrice.packageObj
       card.title must_=== fisherPrice.card.title
       card.free must_=== fisherPrice.card.free
       card.icon must_=== fisherPrice.card.icon

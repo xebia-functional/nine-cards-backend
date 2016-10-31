@@ -1,91 +1,65 @@
 package cards.nine.services.free.interpreter.analytics
 
-import cards.nine.services.free.domain.{ Category, PackageName }
-import cards.nine.services.free.domain.rankings.{ GeoScope ⇒ DomainScope, _ }
+import cards.nine.commons.NineCardsErrors.ReportNotFound
+import cards.nine.commons.NineCardsService.Result
+import cards.nine.domain.analytics._
+import cards.nine.domain.application.Package
+import cards.nine.services.free.domain.Ranking.GoogleAnalyticsRanking
+import cards.nine.services.free.interpreter.analytics.model.DimensionFilter._
+import cats.syntax.either._
 
 object Converters {
 
   import model._
 
-  type Cell = (Category, PackageName)
+  type Cell = (String, Package)
 
-  def parseRanking(response: ResponseBody, rankingSize: Int, geoScope: DomainScope): Ranking = {
-    val scope = GeoScope(geoScope)
+  def parseRanking(
+    response: ResponseBody,
+    rankingSize: Int,
+    name: Option[CountryName]
+  ): Result[GoogleAnalyticsRanking] = {
+    def buildScore(cells: List[Cell]): List[Package] = cells.map(_._2).take(rankingSize)
 
-    def buildScore(cells: List[Cell]): CategoryRanking = CategoryRanking(
-      cells.map(_._2).take(rankingSize)
-    )
-    val rows: List[ReportRow] = response.reports.headOption match {
-      case Some(report) ⇒ report.data.rows
-      case None ⇒ throw new RuntimeException("Response from Google API contained no report")
+    Either.fromOption(response.reports.headOption, ReportNotFound("Report not found")) map {
+      report ⇒
+        GoogleAnalyticsRanking(
+          report.data.rows
+            .map(parseCellFor(name, _))
+            .groupBy(_._1)
+            .mapValues(buildScore)
+        )
     }
-    val scores: Map[Category, CategoryRanking] =
-      rows
-        .map(scope.parseCell)
-        .groupBy(_._1)
-        .mapValues(buildScore)
-    Ranking(scores)
   }
 
-  def buildRequest(geoScope: DomainScope, viewId: String, dateRange: DateRange): RequestBody = {
-    val scope = Converters.GeoScope(geoScope)
-
+  def buildRequest(name: Option[CountryName], viewId: String, dateRange: DateRange): RequestBody =
     RequestBody(ReportRequest(
       viewId                 = viewId,
-      dimensions             = scope.dimensions,
+      dimensions             = dimensionsFor(name),
       metrics                = List(Metric.eventValue),
       dateRanges             = List(dateRange),
-      dimensionFilterClauses = scope.dimensionFilters,
+      dimensionFilterClauses = dimensionFiltersFor(name),
       orderBys               = {
         import order.OrderBy.{ category, eventValue }
         List(category, eventValue)
       }
     ))
+
+  private[Converters] def dimensionsFor(code: Option[CountryName]): List[Dimension] = {
+    val tailDimensions = List(Dimension.category, Dimension.packageName)
+    code.fold(tailDimensions)(_ ⇒ Dimension.country :: tailDimensions)
   }
 
-  private[Converters] sealed trait GeoScope {
-    def dimensions: List[Dimension]
-    def dimensionFilters: DimensionFilter.Clauses
-    def parseCell(row: ReportRow): Cell
-  }
+  private[Converters] def dimensionFiltersFor(code: Option[CountryName]): DimensionFilter.Clauses =
+    code
+      .map(name ⇒ singleClause(Filter.isCountry(name)))
+      .getOrElse(Nil)
 
-  private[Converters] object GeoScope {
-    def apply(scope: DomainScope): GeoScope = scope match {
-      case CountryScope(country) ⇒ new Converters.GeoCountry(country)
-      case ContinentScope(continent) ⇒ new Converters.GeoContinent(continent)
-      case WorldScope ⇒ Converters.GeoWorld
-    }
-  }
+  private[Converters] def parseCellFor(name: Option[CountryName], row: ReportRow): Cell = {
+    val tailDimensions: List[String] = name.fold(row.dimensions)(_ ⇒ row.dimensions.drop(1)) // drop first dimension: country
 
-  private[Converters] class GeoCountry(country: Country) extends GeoScope {
-    override val dimensions = List(Dimension.country, Dimension.category, Dimension.packageName)
-    override val dimensionFilters = DimensionFilter.singleClause(DimensionFilter.Filter.isCountry(country))
-    def parseCell(row: ReportRow): Cell = {
-      val List(_country, categoryStr, packageStr) = row.dimensions
-      makeCell(categoryStr, packageStr)
-    }
+    val List(category, packageStr) = tailDimensions
+    (category, Package(packageStr))
   }
-
-  private[Converters] class GeoContinent(continent: Continent) extends GeoScope {
-    override val dimensions = List(Dimension.continent, Dimension.category, Dimension.packageName)
-    override val dimensionFilters =
-      DimensionFilter.singleClause(DimensionFilter.Filter.isContinent(continent))
-    def parseCell(row: ReportRow): Cell = {
-      val List(_continent, categoryStr, packageStr) = row.dimensions
-      makeCell(categoryStr, packageStr)
-    }
-  }
-
-  private[Converters] object GeoWorld extends GeoScope {
-    override val dimensions = List(Dimension.category, Dimension.packageName)
-    override val dimensionFilters = List()
-    def parseCell(row: ReportRow): Cell = {
-      val List(categoryStr, packageStr) = row.dimensions
-      makeCell(categoryStr, packageStr)
-    }
-  }
-
-  private[this] def makeCell(categoryStr: String, packageStr: String): Cell =
-    Category.withName(categoryStr) → PackageName(packageStr)
 
 }

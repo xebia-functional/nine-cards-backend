@@ -1,5 +1,6 @@
 package cards.nine.processes
 
+import cards.nine.domain.account._
 import cards.nine.processes.NineCardsServices._
 import cards.nine.processes.messages.InstallationsMessages._
 import cards.nine.processes.messages.UserMessages.{ LoginRequest, LoginResponse }
@@ -31,45 +32,45 @@ trait UserProcessesSpecification
 
   trait UserAndInstallationSuccessfulScope extends BasicScope {
 
-    userServices.getByEmail(mockEq(email)) returns Free.pure(Option(user))
+    userServices.getByEmail(Email(mockEq(email))) returns Free.pure(Option(user))
 
-    userServices.getInstallationByUserAndAndroidId(mockEq(userId), mockEq(androidId)) returns
+    userServices.getInstallationByUserAndAndroidId(mockEq(userId), AndroidId(mockEq(androidId))) returns
       Free.pure(Option(installation))
 
-    userServices.updateInstallation(mockEq(userId), mockEq(Option(deviceToken)), mockEq(androidId)) returns
+    userServices.updateInstallation(mockEq(userId), mockEq(Option(DeviceToken(deviceToken))), AndroidId(mockEq(androidId))) returns
       Free.pure(installation)
 
-    userServices.getBySessionToken(mockEq(sessionToken)) returns
+    userServices.getBySessionToken(SessionToken(mockEq(sessionToken))) returns
       Free.pure(Option(user))
 
-    userServices.getInstallationByUserAndAndroidId(mockEq(userId), mockEq(androidId)) returns
+    userServices.getInstallationByUserAndAndroidId(mockEq(userId), AndroidId(mockEq(androidId))) returns
       Free.pure(Option(installation))
   }
 
   trait UserSuccessfulAndInstallationFailingScope extends BasicScope {
 
-    userServices.getByEmail(mockEq(email)) returns Free.pure(Option(user))
+    userServices.getByEmail(Email(mockEq(email))) returns Free.pure(Option(user))
 
-    userServices.getInstallationByUserAndAndroidId(mockEq(userId), mockEq(androidId)) returns
+    userServices.getInstallationByUserAndAndroidId(mockEq(userId), AndroidId(mockEq(androidId))) returns
       Free.pure(nonExistingInstallation)
 
-    userServices.addInstallation(mockEq(userId), mockEq(None), mockEq(androidId)) returns
+    userServices.addInstallation(mockEq(userId), mockEq(None), AndroidId(mockEq(androidId))) returns
       Free.pure(installation)
 
-    userServices.getBySessionToken(mockEq(sessionToken)) returns
+    userServices.getBySessionToken(SessionToken(mockEq(sessionToken))) returns
       Free.pure(Option(user))
   }
 
   trait UserAndInstallationFailingScope extends BasicScope {
 
-    userServices.getByEmail(email) returns Free.pure(nonExistingUser)
+    userServices.getByEmail(Email(mockEq(email))) returns Free.pure(nonExistingUser)
 
-    userServices.add(mockEq(email), any[String], any[String]) returns Free.pure(user)
+    userServices.add(Email(mockEq(email)), ApiKey(any[String]), SessionToken(any[String])) returns Free.pure(user)
 
-    userServices.addInstallation(mockEq(userId), mockEq(None), mockEq(androidId)) returns
+    userServices.addInstallation(mockEq(userId), mockEq(None), AndroidId(mockEq(androidId))) returns
       Free.pure(installation)
 
-    userServices.getBySessionToken(mockEq(sessionToken)) returns
+    userServices.getBySessionToken(SessionToken(mockEq(sessionToken))) returns
       Free.pure(nonExistingUser)
   }
 
@@ -89,7 +90,7 @@ trait UserProcessesContext {
 
   val banned = false
 
-  val user = User(userId, email, sessionToken, apiKey, banned)
+  val user = User(userId, Email(email), SessionToken(sessionToken), ApiKey(apiKey), banned)
 
   val nonExistingUser: Option[User] = None
 
@@ -101,15 +102,15 @@ trait UserProcessesContext {
 
   val installationId = 1l
 
-  val loginRequest = LoginRequest(email, androidId, sessionToken, googleTokenId)
+  val loginRequest = LoginRequest(Email(email), AndroidId(androidId), SessionToken(sessionToken), GoogleIdToken(googleTokenId))
 
-  val loginResponse = LoginResponse(apiKey, sessionToken)
+  val loginResponse = LoginResponse(ApiKey(apiKey), SessionToken(sessionToken))
 
-  val updateInstallationRequest = UpdateInstallationRequest(userId, androidId, Option(deviceToken))
+  val updateInstallationRequest = UpdateInstallationRequest(userId, AndroidId(androidId), Option(DeviceToken(deviceToken)))
 
-  val updateInstallationResponse = UpdateInstallationResponse(androidId, Option(deviceToken))
+  val updateInstallationResponse = UpdateInstallationResponse(AndroidId(androidId), Option(DeviceToken(deviceToken)))
 
-  val installation = Installation(installationId, userId, Option(deviceToken), androidId)
+  val installation = Installation(installationId, userId, Option(DeviceToken(deviceToken)), AndroidId(androidId))
 
   val nonExistingInstallation: Option[Installation] = None
 
@@ -157,8 +158,8 @@ class UserProcessesSpec
     "return the userId if there is a user with the given sessionToken and androidId and the " +
       "auth token is valid" in new UserAndInstallationSuccessfulScope {
         val checkAuthToken = userProcesses.checkAuthToken(
-          sessionToken = sessionToken,
-          androidId    = androidId,
+          sessionToken = SessionToken(sessionToken),
+          androidId    = AndroidId(androidId),
           authToken    = validAuthToken,
           requestUri   = dummyUrl
         )
@@ -176,8 +177,8 @@ class UserProcessesSpec
         )
 
         val checkAuthToken = debugUserProcesses.checkAuthToken(
-          sessionToken = sessionToken,
-          androidId    = androidId,
+          sessionToken = SessionToken(sessionToken),
+          androidId    = AndroidId(androidId),
           authToken    = "",
           requestUri   = dummyUrl
         )
@@ -187,8 +188,8 @@ class UserProcessesSpec
 
     "return None when a wrong auth token is given" in new UserAndInstallationSuccessfulScope {
       val checkAuthToken = userProcesses.checkAuthToken(
-        sessionToken = sessionToken,
-        androidId    = androidId,
+        sessionToken = SessionToken(sessionToken),
+        androidId    = AndroidId(androidId),
         authToken    = wrongAuthToken,
         requestUri   = dummyUrl
       )
@@ -199,8 +200,8 @@ class UserProcessesSpec
     "return None if there is no user with the given sessionToken" in
       new UserAndInstallationFailingScope {
         val checkAuthToken = userProcesses.checkAuthToken(
-          sessionToken = sessionToken,
-          androidId    = androidId,
+          sessionToken = SessionToken(sessionToken),
+          androidId    = AndroidId(androidId),
           authToken    = validAuthToken,
           requestUri   = dummyUrl
         )
@@ -211,8 +212,8 @@ class UserProcessesSpec
     "return None if there is no installation with the given androidId that belongs to the user" in
       new UserSuccessfulAndInstallationFailingScope {
         val checkAuthToken = userProcesses.checkAuthToken(
-          sessionToken = sessionToken,
-          androidId    = androidId,
+          sessionToken = SessionToken(sessionToken),
+          androidId    = AndroidId(androidId),
           authToken    = validAuthToken,
           requestUri   = dummyUrl
         )

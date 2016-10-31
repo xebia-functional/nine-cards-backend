@@ -1,6 +1,9 @@
 package cards.nine.services.free.interpreter.analytics
 
-import cards.nine.services.free.domain.rankings._
+import cards.nine.commons.NineCardsErrors.NineCardsError
+import cards.nine.commons.NineCardsService.Result
+import cards.nine.domain.analytics._
+import cards.nine.services.free.domain.Ranking.{ GoogleAnalyticsRanking }
 import cards.nine.services.utils.MockServerService
 import org.joda.time.{ DateTime, DateTimeZone }
 import org.mockserver.model.HttpRequest.{ request ⇒ mockRequest }
@@ -68,24 +71,24 @@ class ServicesSpec
   "getRanking" should {
 
     "translate fine to json the answers" in {
-      val req = Converters.buildRequest(CountryScope(Country.Spain), viewId, dateRange)
+      val req = Converters.buildRequest(countryName, viewId, dateRange)
       Encoders.requestBody.apply(req).toString shouldEqual requestBody
     }
 
     "respond 200 OK and return the Rankings object if a valid access token is provided" in {
-      val params = RankingParams(dateRange, 5, AuthParams(auth.valid_token))
-      val response = services.getRanking(CountryScope(Country.Spain), params)
-      response.unsafePerformSyncAttempt should be_\/-[TryRanking].which {
-        content ⇒ content should beXorRight[Ranking]
+      val params = RankingParams(dateRange, 5, AnalyticsToken(auth.valid_token))
+      val response = services.getRanking(countryName, params)
+      response.unsafePerformSyncAttempt should be_\/-[Result[GoogleAnalyticsRanking]].which {
+        content ⇒ content should beRight[GoogleAnalyticsRanking]
       }
     }
 
     /* Return a 401 error message if the auth token is wrong*/
     "respond 401 Unauthorized if the authToken is not authenticated" in {
-      val params = RankingParams(dateRange, 5, AuthParams(auth.invalid_token))
-      val response = services.getRanking(CountryScope(Country.Spain), params)
-      response.unsafePerformSyncAttempt should be_\/-[TryRanking].which {
-        content ⇒ content should beXorLeft[RankingError]
+      val params = RankingParams(dateRange, 5, AnalyticsToken(auth.invalid_token))
+      val response = services.getRanking(countryName, params)
+      response.unsafePerformSyncAttempt should be_\/-[Result[GoogleAnalyticsRanking]].which {
+        content ⇒ content should beLeft[NineCardsError]
       }
     }.pendingUntilFixed("Server gives Unexpected Status")
 
@@ -94,6 +97,8 @@ class ServicesSpec
 }
 
 object TestData {
+
+  val countryName = Option(CountryName("Spain"))
 
   val viewId = "analytics_view_id"
 

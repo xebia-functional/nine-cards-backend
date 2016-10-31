@@ -1,5 +1,7 @@
 package cards.nine.services.free.interpreter.firebase
 
+import cards.nine.domain.account.DeviceToken
+import cards.nine.domain.application.Package
 import cards.nine.services.free.domain.Firebase._
 import io.circe.generic.encoding.DerivedObjectEncoder
 import io.circe.generic.semiauto._
@@ -8,6 +10,8 @@ import org.http4s.{ EntityDecoder, EntityEncoder }
 import org.http4s.circe._
 
 object Decoders {
+
+  implicit val packageD: Decoder[Package] = Decoder.decodeString map Package
 
   implicit val firebaseErrorDecoder: Decoder[FirebaseError] =
     deriveDecoder[FirebaseError]
@@ -23,6 +27,10 @@ object Decoders {
 }
 
 object Encoders {
+
+  implicit val packageE: Encoder[Package] = Encoder.encodeString.contramap(_.value)
+
+  implicit val deviceTokenE: Encoder[DeviceToken] = Encoder.encodeString.contramap(_.value)
 
   implicit val updateCollectionNotificationPayloadEncoder: Encoder[UpdateCollectionNotificationPayload] =
     deriveEncoder[UpdateCollectionNotificationPayload]

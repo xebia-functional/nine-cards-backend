@@ -1,27 +1,26 @@
 package cards.nine.api
 
 import akka.actor.{ Actor, ActorRefFactory }
-import cats.data.Xor
 import cards.nine.api.NineCardsDirectives._
 import cards.nine.api.NineCardsHeaders.Domain._
 import cards.nine.api.converters.Converters._
 import cards.nine.api.messages.GooglePlayMessages._
 import cards.nine.api.messages.InstallationsMessages._
-import cards.nine.api.messages.PathEnumerations.PriceFilter
 import cards.nine.api.messages.SharedCollectionMessages._
 import cards.nine.api.messages.UserMessages._
 import cards.nine.api.utils.SprayMarshallers._
 import cards.nine.api.utils.SprayMatchers._
+import cards.nine.domain.account.SessionToken
+import cards.nine.domain.analytics._
+import cards.nine.domain.application.{ Category, FullCardList, PriceFilter }
 import cards.nine.commons.NineCardsService.Result
 import cards.nine.processes.NineCardsServices._
 import cards.nine.processes._
-import cards.nine.processes.messages.ApplicationMessages.GetAppsInfoResponse
-import cards.nine.services.free.domain.Category
-import cards.nine.services.free.domain.rankings._
-import spray.http.StatusCodes.NotFound
-import spray.routing._
+import cats.data.Xor
 
 import scala.concurrent.ExecutionContext
+import spray.http.StatusCodes.NotFound
+import spray.routing._
 
 class NineCardsApiActor
   extends Actor
@@ -60,6 +59,7 @@ class NineCardsRoutes(
     case "installations" ⇒ installationsRoute
     case "login" ⇒ userRoute
     case "rankings" ⇒ rankings.route
+    case "widgets" ⇒ widgetRoute
     case _ ⇒ complete(NotFound)
   }
 
@@ -100,6 +100,13 @@ class NineCardsRoutes(
           post {
             entity(as[ApiRankAppsRequest]) { request ⇒
               complete(rankApps(request, userContext))
+            }
+          }
+        } ~
+        path("rank-by-moments") {
+          post {
+            entity(as[ApiRankByMomentsRequest]) { request ⇒
+              complete(rankAppsByMoments(request, userContext))
             }
           }
         } ~
@@ -229,6 +236,17 @@ class NineCardsRoutes(
       getFromResourceDirectory("apiDocs")
     }
 
+  private[this] lazy val widgetRoute: Route =
+    nineCardsDirectives.authenticateUser { userContext ⇒
+      path("rank") {
+        post {
+          entity(as[ApiRankByMomentsRequest]) { request ⇒
+            complete(rankWidgets(request, userContext))
+          }
+        }
+      }
+    }
+
   private type NineCardsServed[A] = cats.free.Free[NineCardsServices, A]
 
   private[this] def updateInstallation(
@@ -248,7 +266,7 @@ class NineCardsRoutes(
       .getCollectionByPublicIdentifier(
         userId           = userContext.userId.value,
         publicIdentifier = publicId.value,
-        authParams       = toAuthParams(googlePlayContext, userContext)
+        marketAuth       = toMarketAuth(googlePlayContext, userContext)
       )
       .map(_.map(r ⇒ toApiSharedCollection(r.data)))
 
@@ -296,7 +314,7 @@ class NineCardsRoutes(
       .getLatestCollectionsByCategory(
         userId     = userContext.userId.value,
         category   = category.entryName,
-        authParams = toAuthParams(googlePlayContext, userContext),
+        marketAuth = toMarketAuth(googlePlayContext, userContext),
         pageNumber = pageNumber.value,
         pageSize   = pageSize.value
       )
@@ -307,7 +325,7 @@ class NineCardsRoutes(
     userContext: UserContext
   ): NineCardsServed[ApiSharedCollectionList] =
     sharedCollectionProcesses
-      .getPublishedCollections(userContext.userId.value, toAuthParams(googlePlayContext, userContext))
+      .getPublishedCollections(userContext.userId.value, toMarketAuth(googlePlayContext, userContext))
       .map(toApiSharedCollectionList)
 
   private[this] def getSubscriptionsByUser(
@@ -328,7 +346,7 @@ class NineCardsRoutes(
       .getTopCollectionsByCategory(
         userId     = userContext.userId.value,
         category   = category.entryName,
-        authParams = toAuthParams(googlePlayContext, userContext),
+        marketAuth = toMarketAuth(googlePlayContext, userContext),
         pageNumber = pageNumber.value,
         pageSize   = pageSize.value
       )
@@ -338,9 +356,9 @@ class NineCardsRoutes(
     request: ApiGetAppsInfoRequest,
     googlePlayContext: GooglePlayContext,
     userContext: UserContext
-  )(converter: GetAppsInfoResponse ⇒ T): NineCardsServed[T] =
+  )(converter: FullCardList ⇒ T): NineCardsServed[T] =
     applicationProcesses
-      .getAppsInfo(request.items, toAuthParams(googlePlayContext, userContext))
+      .getAppsInfo(request.items, toMarketAuth(googlePlayContext, userContext))
       .map(converter)
 
   private[this] def getRecommendationsByCategory(
@@ -353,10 +371,10 @@ class NineCardsRoutes(
     recommendationsProcesses
       .getRecommendationsByCategory(
         category.entryName,
-        priceFilter.entryName,
+        priceFilter,
         request.excludePackages,
         request.limit,
-        toAuthParams(googlePlayContext, userContext)
+        toMarketAuth(googlePlayContext, userContext)
       )
       .map(toApiGetRecommendationsResponse)
 
@@ -371,7 +389,7 @@ class NineCardsRoutes(
         request.excludePackages,
         request.limitPerApp.getOrElse(Int.MaxValue),
         request.limit,
-        toAuthParams(googlePlayContext, userContext)
+        toMarketAuth(googlePlayContext, userContext)
       )
       .map(toApiGetRecommendationsResponse)
 
@@ -385,7 +403,7 @@ class NineCardsRoutes(
         request.query,
         request.excludePackages,
         request.limit,
-        toAuthParams(googlePlayContext, userContext)
+        toMarketAuth(googlePlayContext, userContext)
       )
       .map(toApiSearchAppsResponse)
 
@@ -393,8 +411,22 @@ class NineCardsRoutes(
     request: ApiRankAppsRequest,
     userContext: UserContext
   ): NineCardsServed[Result[ApiRankAppsResponse]] =
-    rankingProcesses.getRankedDeviceApps(request.location, request.items.mapValues(toDeviceAppList))
+    rankingProcesses.getRankedDeviceApps(request.location, request.items)
       .map(toApiRankAppsResponse)
+
+  private[this] def rankAppsByMoments(
+    request: ApiRankByMomentsRequest,
+    userContext: UserContext
+  ): NineCardsServed[Result[ApiRankAppsResponse]] =
+    rankingProcesses.getRankedAppsByMoment(request.location, request.items, request.moments, request.limit)
+      .map(toApiRankAppsResponse)
+
+  private[this] def rankWidgets(
+    request: ApiRankByMomentsRequest,
+    userContext: UserContext
+  ): NineCardsServed[Result[ApiRankWidgetsResponse]] =
+    rankingProcesses.getRankedWidgets(request.location, request.items, request.moments, request.limit)
+      .map(toApiRankWidgetsResponse)
 
   private[this] object rankings {
 
@@ -414,15 +446,12 @@ class NineCardsRoutes(
       }
 
     private[this] lazy val geographicScope: Directive1[GeoScope] = {
-      val continent: Directive1[GeoScope] =
-        path("continents" / ContinentSegment)
-          .map(c ⇒ ContinentScope(c): GeoScope)
       val country: Directive1[GeoScope] =
-        path("countries" / CountrySegment)
+        path("countries" / TypedSegment[CountryIsoCode])
           .map(c ⇒ CountryScope(c): GeoScope)
       val world = path("world") & provide(WorldScope: GeoScope)
 
-      world | continent | country
+      world | country
     }
 
     private[this] lazy val reloadParams: Directive1[RankingParams] =
@@ -434,10 +463,10 @@ class NineCardsRoutes(
     private[this] def reloadRanking(
       scope: GeoScope,
       params: RankingParams
-    ): NineCardsServed[Api.Reload.XorResponse] =
-      rankingProcesses.reloadRanking(scope, params).map(Converters.reload.toXorResponse)
+    ): NineCardsServed[Result[Api.Reload.Response]] =
+      rankingProcesses.reloadRanking(scope, params).map(Converters.reload.toApiResponse)
 
-    private[this] def getRanking(scope: GeoScope): NineCardsServed[Api.Ranking] =
+    private[this] def getRanking(scope: GeoScope): NineCardsServed[Result[Api.Ranking]] =
       rankingProcesses.getRanking(scope).map(Converters.toApiRanking)
 
   }

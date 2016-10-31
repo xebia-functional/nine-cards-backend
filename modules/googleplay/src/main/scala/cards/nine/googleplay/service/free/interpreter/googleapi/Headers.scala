@@ -1,17 +1,17 @@
 package cards.nine.googleplay.service.free.interpreter.googleapi
 
-import cards.nine.googleplay.domain.{ GoogleAuthParams, Localization }
+import cards.nine.domain.market.{ MarketCredentials, Localization }
 import org.http4s.{ Header, Headers }
 
 /* Note of development: this set of headers were directly copied from the code of the
  * google-play-crawler, but it is not clear what functions they perform. */
 object headers {
 
-  def fullHeaders(auth: GoogleAuthParams, contentType: Option[String] = None) =
+  def fullHeaders(auth: MarketCredentials, contentType: Option[String] = None) =
     Headers(authHeaders(auth) ++ fixedHeaders)
       .put(Header("Content-Type", contentType.getOrElse("application/json; charset=UTF-8")))
 
-  private[this] def authHeaders(auth: GoogleAuthParams): List[Header] = {
+  private[this] def authHeaders(auth: MarketCredentials): List[Header] = {
     Header("Authorization", s"GoogleLogin auth=${auth.token.value}") ::
       Header("X-DFE-Device-Id", auth.androidId.value) :: (
         auth.localization match {
