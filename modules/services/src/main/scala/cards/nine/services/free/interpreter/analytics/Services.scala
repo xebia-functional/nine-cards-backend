@@ -71,9 +71,11 @@ class Services(config: Configuration) extends (Ops ~> Task) {
 
     client
       .expect[RankingError Either ResponseBody](httpRequest)
-      .map {
-        case Left(error) ⇒ Either.left(handleGoogleAnalyticsError(error))
-        case Right(response) ⇒ Either.right(parser(response))
+      .map { response ⇒
+        response.bimap(
+          handleGoogleAnalyticsError,
+          parser
+        )
       }
   }
 

@@ -3,6 +3,7 @@ package cards.nine.services.free.interpreter.analytics
 import cards.nine.commons.NineCardsErrors.ReportNotFound
 import cards.nine.commons.NineCardsService.Result
 import cards.nine.domain.analytics.{ CountryIsoCode, DateRange }
+import cards.nine.domain.analytics.Values._
 import cards.nine.domain.application.Package
 import cards.nine.services.free.domain.Ranking.CountriesWithRanking
 import cards.nine.services.free.interpreter.analytics.model.DimensionFilter._
@@ -49,7 +50,7 @@ object HttpMessagesFactory {
     ): Iterator[RequestBody] = {
       categories
         .map(buildRequestForCountryAndCategory(code, dateRange, rankingSize, viewId))
-        .grouped(5)
+        .grouped(maxReportsPerRequest)
         .map(list ⇒ RequestBody(list))
     }
 
@@ -78,16 +79,16 @@ object HttpMessagesFactory {
         .groupBy(_.category)
         .mapValues(_ map (_.packageName))
         .toList
-  }
 
-  private def dimensionFiltersFor(code: Option[CountryIsoCode], category: String): DimensionFilter.Clauses =
-    singleClause(Filter.isCategory(category)) ++
-      code.map(isoCode ⇒ singleClause(Filter.isCountry(isoCode))).getOrElse(Nil)
+    private def dimensionFiltersFor(code: Option[CountryIsoCode], category: String): DimensionFilter.Clauses =
+      singleClause(Filter.isCategory(category)) ++
+        code.fold(List.empty[Clause])(isoCode ⇒ singleClause(Filter.isCountry(isoCode)))
 
-  case class DimensionCell(category: String, packageName: Package)
+    case class DimensionCell(category: String, packageName: Package)
 
-  private def toDimensionCell(row: ReportRow): DimensionCell = {
-    val List(category, packageName) = row.dimensions
-    DimensionCell(category, Package(packageName))
+    private def toDimensionCell(row: ReportRow): DimensionCell = {
+      val List(category, packageName) = row.dimensions
+      DimensionCell(category, Package(packageName))
+    }
   }
 }

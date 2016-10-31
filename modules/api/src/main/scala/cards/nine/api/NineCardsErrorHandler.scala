@@ -1,26 +1,31 @@
 package cards.nine.api
 
 import cards.nine.commons.NineCardsErrors._
-import spray.http.{ HttpEntity, HttpResponse, StatusCodes }
+import spray.http.StatusCodes._
+import spray.http.{ HttpEntity, HttpResponse }
 import spray.httpx.marshalling.ToResponseMarshallingContext
 
 class NineCardsErrorHandler {
 
-  def handleNineCardsErrors(e: NineCardsError, ctx: ToResponseMarshallingContext): Unit = e match {
-    case CountryNotFound(message) ⇒
-      ctx.marshalTo(HttpResponse(status = StatusCodes.NotFound, entity = HttpEntity(message)))
-    case GoogleAnalyticsServerError(message) ⇒
-      ctx.marshalTo(HttpResponse(status = StatusCodes.ServiceUnavailable, entity = HttpEntity(message)))
-    case HttpBadRequest(message) ⇒
-      ctx.marshalTo(HttpResponse(status = StatusCodes.BadRequest, entity = HttpEntity(message)))
-    case HttpNotFound(message) ⇒
-      ctx.marshalTo(HttpResponse(status = StatusCodes.NotFound, entity = HttpEntity(message)))
-    case HttpUnauthorized(message) ⇒
-      ctx.marshalTo(HttpResponse(status = StatusCodes.Unauthorized, entity = HttpEntity(message)))
-    case RankingNotFound(message) ⇒
-      ctx.marshalTo(HttpResponse(status = StatusCodes.NotFound, entity = HttpEntity(message)))
-    case ReportNotFound(message) ⇒
-      ctx.marshalTo(HttpResponse(status = StatusCodes.NotFound, entity = HttpEntity(message)))
+  def handleNineCardsErrors(e: NineCardsError, ctx: ToResponseMarshallingContext): Unit = {
+    val (statusCode, errorMessage) = e match {
+      case CountryNotFound(message) ⇒
+        (NotFound, message)
+      case GoogleAnalyticsServerError(message) ⇒
+        (ServiceUnavailable, message)
+      case HttpBadRequest(message) ⇒
+        (BadRequest, message)
+      case HttpNotFound(message) ⇒
+        (NotFound, message)
+      case HttpUnauthorized(message) ⇒
+        (Unauthorized, message)
+      case RankingNotFound(message) ⇒
+        (NotFound, message)
+      case ReportNotFound(message) ⇒
+        (NotFound, message)
+    }
+
+    ctx.marshalTo(HttpResponse(status = statusCode, entity = HttpEntity(errorMessage)))
   }
 }
 
