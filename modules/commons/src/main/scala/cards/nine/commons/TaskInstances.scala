@@ -1,6 +1,6 @@
 package cards.nine.commons
 
-import cats.{ ApplicativeError, Monad, RecursiveTailRecM }
+import cats.{ Applicative, ApplicativeError, Monad, RecursiveTailRecM }
 
 import scalaz.concurrent.Task
 
@@ -26,6 +26,12 @@ trait TaskInstances {
       override def tailRecM[A, B](a: A)(f: (A) ⇒ Task[Either[A, B]]): Task[B] =
         defaultTailRecM(a)(f)
     }
+
+  implicit val taskApplicative: Applicative[Task] = new Applicative[Task] {
+    override def pure[A](x: A): Task[A] = Task.delay(x)
+
+    override def ap[A, B](ff: Task[(A) ⇒ B])(fa: Task[A]): Task[B] = scalaz.Applicative[Task].ap(fa)(ff)
+  }
 }
 
 object TaskInstances extends TaskInstances

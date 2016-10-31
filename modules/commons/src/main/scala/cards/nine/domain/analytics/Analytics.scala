@@ -1,12 +1,14 @@
 package cards.nine.domain
 
-import cards.nine.domain.application.Package
+import cards.nine.domain.application.{ Package, Widget }
 import enumeratum.{ Enum, EnumEntry }
 import org.joda.time.DateTime
 
 package analytics {
 
-  import cards.nine.domain.application.Widget
+  object Values {
+    val maxReportsPerRequest = 5
+  }
 
   case class CountryIsoCode(value: String) extends AnyVal
 

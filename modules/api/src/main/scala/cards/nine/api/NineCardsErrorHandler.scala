@@ -1,19 +1,31 @@
 package cards.nine.api
 
 import cards.nine.commons.NineCardsErrors._
-import spray.http.{ HttpResponse, StatusCodes }
+import spray.http.StatusCodes._
+import spray.http.{ HttpEntity, HttpResponse }
 import spray.httpx.marshalling.ToResponseMarshallingContext
 
 class NineCardsErrorHandler {
 
-  def handleNineCardsErrors(e: NineCardsError, ctx: ToResponseMarshallingContext): Unit = e match {
-    case CountryNotFound(message) ⇒ ctx.marshalTo(HttpResponse(status = StatusCodes.NotFound))
-    case GoogleAnalyticsServerError(_) ⇒ ctx.marshalTo(HttpResponse(status = StatusCodes.ServiceUnavailable))
-    case HttpBadRequest(_) ⇒ ctx.marshalTo(HttpResponse(status = StatusCodes.BadRequest))
-    case HttpNotFound(_) ⇒ ctx.marshalTo(HttpResponse(status = StatusCodes.NotFound))
-    case HttpUnauthorized(_) ⇒ ctx.marshalTo(HttpResponse(status = StatusCodes.Unauthorized))
-    case RankingNotFound(_) ⇒ ctx.marshalTo(HttpResponse(status = StatusCodes.NotFound))
-    case ReportNotFound(_) ⇒ ctx.marshalTo(HttpResponse(status = StatusCodes.NotFound))
+  def handleNineCardsErrors(e: NineCardsError, ctx: ToResponseMarshallingContext): Unit = {
+    val (statusCode, errorMessage) = e match {
+      case CountryNotFound(message) ⇒
+        (NotFound, message)
+      case GoogleAnalyticsServerError(message) ⇒
+        (ServiceUnavailable, message)
+      case HttpBadRequest(message) ⇒
+        (BadRequest, message)
+      case HttpNotFound(message) ⇒
+        (NotFound, message)
+      case HttpUnauthorized(message) ⇒
+        (Unauthorized, message)
+      case RankingNotFound(message) ⇒
+        (NotFound, message)
+      case ReportNotFound(message) ⇒
+        (NotFound, message)
+    }
+
+    ctx.marshalTo(HttpResponse(status = statusCode, entity = HttpEntity(errorMessage)))
   }
 }
 
