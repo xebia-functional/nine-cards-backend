@@ -11,6 +11,7 @@ import cards.nine.services.free.interpreter.collection.{ Services ⇒ Collection
 import cards.nine.services.free.interpreter.country.{ Services ⇒ CountryServices }
 import cards.nine.services.free.interpreter.firebase.{ Services ⇒ FirebaseServices }
 import cards.nine.services.free.interpreter.googleapi.{ Services ⇒ GoogleApiServices }
+import cards.nine.services.free.interpreter.googleoauth.{ Services ⇒ GoogleOAuthServices }
 import cards.nine.services.free.interpreter.googleplay.{ Services ⇒ GooglePlayServices }
 import cards.nine.services.free.interpreter.ranking.{ Services ⇒ RankingServices }
 import cards.nine.services.free.interpreter.ranking.Services._
@@ -54,6 +55,8 @@ abstract class Interpreters[M[_]](implicit A: ApplicativeError[M, Throwable], T:
   lazy val firebaseInterpreter: (Firebase.Ops ~> M) = FirebaseServices.services.andThen(task2M)
 
   lazy val googleApiInterpreter: (GoogleApi.Ops ~> M) = GoogleApiServices.services.andThen(task2M)
+
+  val googleOAuthInterpreter: (GoogleOAuth.Ops ~> M) = GoogleOAuthServices.andThen(task2M)
 
   lazy val googlePlayInterpreter: (GooglePlay.Ops ~> M) = GooglePlayServices.services.andThen(task2M)
 

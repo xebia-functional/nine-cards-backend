@@ -23,6 +23,8 @@ class NineCardsErrorHandler {
         (NotFound, message)
       case ReportNotFound(message) ⇒
         (NotFound, message)
+      case GoogleOAuthError(message) ⇒
+        (Unauthorized, message)
     }
 
     ctx.marshalTo(HttpResponse(status = statusCode, entity = HttpEntity(errorMessage)))
