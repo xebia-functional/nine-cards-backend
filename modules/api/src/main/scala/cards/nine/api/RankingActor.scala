@@ -3,18 +3,21 @@ package cards.nine.api
 import akka.actor.{ Actor, ActorSystem }
 import akka.event.Logging
 import cards.nine.api.RankingActor.RankingByCategory
-import cards.nine.commons.config.NineCardsConfig._
 import cards.nine.commons.TaskInstances._
+import cards.nine.commons.config.NineCardsConfig._
 import cards.nine.domain.analytics._
-import cards.nine.processes.NineCardsServices.NineCardsServices
-import cards.nine.processes.{ NineCardsServices, RankingProcesses }
+import cards.nine.domain.pagination.Page
+import cards.nine.processes.RankingProcesses
+import cats.~>
 import org.joda.time.{ DateTime, DateTimeZone }
 
-class RankingActor extends Actor {
+import scalaz.concurrent.Task
+
+class RankingActor[F[_]](interpreter: F ~> Task)(implicit rankingProcesses: RankingProcesses[F]) extends Actor {
   implicit val system = ActorSystem("on-spray-can")
   val log = Logging(system, getClass)
 
-  class RankingGenerator(implicit rankingProcesses: RankingProcesses[NineCardsServices]) {
+  class RankingGenerator {
     val countriesPerRequest = nineCardsConfiguration.rankings.countriesPerRequest
     val maxNumberOfAppsPerCategory = nineCardsConfiguration.rankings.maxNumberOfAppsPerCategory
     val rankingPeriod = nineCardsConfiguration.rankings.rankingPeriod
@@ -24,7 +27,7 @@ class RankingActor extends Actor {
       val today = now.withTimeAtStartOfDay
 
       now.getDayOfWeek
-      val offset = ((now.getDayOfWeek - 1) * 24 + now.getHourOfDay) * countriesPerRequest
+      val pageNumber = ((now.getDayOfWeek - 1) * 24 + now.getHourOfDay) * countriesPerRequest
 
       rankingProcesses.reloadRankingForCountries(
         RankingParams(
@@ -35,8 +38,7 @@ class RankingActor extends Actor {
           maxNumberOfAppsPerCategory,
           AnalyticsToken("") //TODO: We should generate a valid token
         ),
-        countriesPerRequest,
-        offset
+        Page(pageNumber, countriesPerRequest)
       )
     }
   }
@@ -55,7 +57,7 @@ class RankingActor extends Actor {
   def receive = {
     case RankingByCategory ⇒
       log.info("Running actor for generate rankings ...")
-      rankingGenerator.generateRankings.foldMap(NineCardsServices.prodInterpreters).unsafePerformAsync(
+      rankingGenerator.generateRankings.foldMap(interpreter).unsafePerformAsync(
         _.fold(
           e ⇒ log.error(e, "An error was found while generating rankings"),
           {

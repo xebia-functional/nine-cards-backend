@@ -7,6 +7,8 @@ import akka.pattern.ask
 import akka.util.Timeout
 import cards.nine.api.RankingActor.RankingByCategory
 import cards.nine.commons.config.NineCardsConfig._
+import cards.nine.processes.NineCardsServices
+import cards.nine.processes.NineCardsServices.NineCardsServices
 import spray.can.Http
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -21,7 +23,10 @@ object Boot extends App {
   // create and start our service actor
   val service = system.actorOf(Props[NineCardsApiActor], "ninecards-server")
 
-  val rankingActor = system.actorOf(Props[RankingActor], "ninecards-server-ranking")
+  val rankingActor = system.actorOf(
+    props = Props(new RankingActor[NineCardsServices](NineCardsServices.prodInterpreters)),
+    name  = "ninecards-server-ranking"
+  )
 
   val cancellable =
     system.scheduler.schedule(

@@ -5,6 +5,7 @@ import cards.nine.commons.NineCardsService
 import cards.nine.commons.NineCardsService._
 import cards.nine.domain.analytics._
 import cards.nine.domain.application.{ Category, Moment, Package }
+import cards.nine.domain.pagination.Page
 import cards.nine.processes.converters.Converters._
 import cards.nine.processes.messages.rankings._
 import cards.nine.services.free.algebra
@@ -26,7 +27,7 @@ class RankingProcesses[F[_]](
   def getRanking(scope: GeoScope): Free[F, Result[Get.Response]] =
     (rankingServices.getRanking(scope) map Get.Response).value
 
-  def reloadRankingForCountries(params: RankingParams, offset: Int, limit: Int): Free[F, Result[Reload.SummaryResponse]] = {
+  def reloadRankingForCountries(params: RankingParams, pageParams: Page): Free[F, Result[Reload.SummaryResponse]] = {
 
     def generateRanking(countryCode: CountryIsoCode) = {
       for {
@@ -43,7 +44,7 @@ class RankingProcesses[F[_]](
       }
 
     for {
-      countries ← countryPersistence.getCountries(offset, limit)
+      countries ← countryPersistence.getCountries(pageParams)
       countriesWithRanking ← analytics.getCountriesWithRanking(params)
       countriesCode = countries.map(c ⇒ CountryIsoCode(c.isoCode2))
       selectedCountries = countriesCode.intersect(countriesWithRanking.countries)

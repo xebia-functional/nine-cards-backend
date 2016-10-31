@@ -2,6 +2,7 @@ package cards.nine.services.free.algebra
 
 import cats.free.{ Free, Inject }
 import cards.nine.domain.application.Package
+import cards.nine.domain.pagination.Page
 import cards.nine.services.free.domain
 import cards.nine.services.free.interpreter.collection.Services.SharedCollectionData
 
@@ -19,9 +20,9 @@ object SharedCollection {
 
   case class GetByUser(user: Long) extends Ops[List[domain.SharedCollectionWithAggregatedInfo]]
 
-  case class GetLatestByCategory(category: String, pageNumber: Int, pageSize: Int) extends Ops[List[domain.SharedCollection]]
+  case class GetLatestByCategory(category: String, pageParams: Page) extends Ops[List[domain.SharedCollection]]
 
-  case class GetTopByCategory(category: String, pageNumber: Int, pageSize: Int) extends Ops[List[domain.SharedCollection]]
+  case class GetTopByCategory(category: String, pageParams: Page) extends Ops[List[domain.SharedCollection]]
 
   case class GetPackagesByCollection(collection: Long) extends Ops[List[domain.SharedCollectionPackage]]
 
@@ -45,11 +46,11 @@ object SharedCollection {
     def getByUser(user: Long): Free[F, List[domain.SharedCollectionWithAggregatedInfo]] =
       Free.inject[Ops, F](GetByUser(user))
 
-    def getLatestByCategory(category: String, pageNumber: Int, pageSize: Int): Free[F, List[domain.SharedCollection]] =
-      Free.inject[Ops, F](GetLatestByCategory(category, pageNumber, pageSize))
+    def getLatestByCategory(category: String, pageParams: Page): Free[F, List[domain.SharedCollection]] =
+      Free.inject[Ops, F](GetLatestByCategory(category, pageParams))
 
-    def getTopByCategory(category: String, pageNumber: Int, pageSize: Int): Free[F, List[domain.SharedCollection]] =
-      Free.inject[Ops, F](GetTopByCategory(category, pageNumber, pageSize))
+    def getTopByCategory(category: String, pageParams: Page): Free[F, List[domain.SharedCollection]] =
+      Free.inject[Ops, F](GetTopByCategory(category, pageParams))
 
     def getPackagesByCollection(collection: Long): Free[F, List[domain.SharedCollectionPackage]] =
       Free.inject[Ops, F](GetPackagesByCollection(collection))
