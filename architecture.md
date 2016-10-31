@@ -21,22 +21,25 @@ the [Firebase Cloud Messaging](http://firebase.google.com/docs/cloud-messaging/)
 
 The backend application interacts with several **external** systems and APIs, outside the application proper,
 for retrieving or storing information, or for sending notifications. The external systems are the following:
+
 * **Database** A [PostgreSQL](http://www.postgresql.org/) database is used to store information needed by the backend.
-  This includes information about Nine Cards clients (users and devices), shared collections, the subscriber
-  relation between users and shared collections, and application rankings by category and by continent or country.
+  This includes information about Nine Cards clients (users and devices), shared collections, the subsciptions of
+  users to shared collections, and the information about countries.
 * **Google API**. The API of Google is used upon a client's signup, to check the identity of a new client.
 * **Google Analytics**. A Google Analytics report collects aggregated statistics about the applications used in
   Nine Cards, such as which applications are more frequently added or removed to a _moment_,
   or which applications are most frequently used within each category.
-  This data contains no information about the user except for the country or continent, as given by Google Analytics.
+  This data contains no information about the user except for the country, as given by Google Analytics.
   From this data, the backend builds the _rankings_ of applications.
 * **Android Market**. The API of the Android Market is used to retrieve information about the Android applications
   in the Play store, and also for searching lists of new applications either by name, by their category,
   or by their similarity to already installed apps.
 * **Play Store Web**. Sometimes, the information about an app is not available in the Market API, so instead
   we retrieve it from each app's page in the [Play Store Web Site](play.google.com/store/).
-* **Redis**. We use a [Redis](http://redis.io/) in-memory store as a _cache_ for the data retrieved from the
-  Android Market Api, about each application.
+* **Redis**. We use a [Redis](http://redis.io/) in-memory store as a _cache_ to keep data non-original data,
+  that is to say, data that is retrieved from a remote source, or computed from a remote source.
+  This includes the data about each application fetched from the Android Market API,
+  and the most-valued application rankings computed from the Google Analytics Report.
 * **Firebase**. The [Firebase Cloud Messaging](http://firebase.google.com/docs/cloud-messaging/) API is used to notify
   the subscribers of any shared collection of changes to the list of apps included in the shared collection.
 
@@ -50,7 +53,7 @@ The main libraries and frameworks used in the backend are the following ones:
   such architecture we make use of `cats` implementations for [`Monad`](http://github.com/typelevel/cats/blob/master/core/src/main/scala/cats/Monad.scala),
   for [free monads](http://github.com/typelevel/cats/blob/master/free/src/main/scala/cats/free/Free.scala),
   [natural transformations]([`cats.arrow.FunctionK`](http://github.com/typelevel/cats/blob/master/core/src/main/scala/cats/arrow/FunctionK.scala),
-  and in a few cases we also use some [monad transformers](http://github.com/typelevel/cats/blob/master/core/src/main/scala/cats/data/EitherT.scala) from
+  and, in a few cases, [monad transformers](http://github.com/typelevel/cats/blob/master/core/src/main/scala/cats/data/EitherT.scala).
 
 * [Spray](http://spray.io/) is used to build the `HTTP-REST` API, that serves as the external
   interface for the backend application. This `api` is used by each Nine Cards client to access
@@ -72,13 +75,12 @@ The main libraries and frameworks used in the backend are the following ones:
 
 ### Core Modules
 
-The NCBE is organized within three modules, called `api`, `processes`, and `services`:
-
 The backend source code is organised into four modules, or `sbt` projects, called
 `api`, `processes`, `services`, `googleplay`, and `commons`.
 
 * The [`commons`](/modules/commons) module contains the definition of the backend's `domain` classes,
   and some utility method for common libraries, such as `cats` or `scalaz`.
+  It also handles the environment configuration variables needed for each service interpreter.
 * The [`api`](/modules/api) module implements the `REST-HTTP` application's Api, and the application's
   main method. It uses the libraries `spray`, `spray-json` (with a bit of `circe`).
 * The [`processes`](/modules/processes) module contains the application's process methods. Each process methods implements
@@ -89,6 +91,9 @@ The backend source code is organised into four modules, or `sbt` projects, calle
 * The [`googleplay`](/modules/googleplay) implements a subset of services, originally developed as a separate
   module, that interact with the Android Market API, and which use the Redis cache for internal storage.
 
+The `commons` module is available for all other modules. The dependencies among other modules are as follows:
+the `api` only depends on `processes`; the `processes` depends only on `services`, and `services` depends
+on `googleplay`.
 
 ## Functional Programming Design
 
@@ -136,6 +141,3 @@ the operations for passing the results between the operations from different alg
 
 This is achieved by using as that `F` a `Coproduct` of the different algebras operation types `Ops[A]`.
 The interpretation of the `Coproduct` operations, then, becomes an alternative between them.
-
-
-
