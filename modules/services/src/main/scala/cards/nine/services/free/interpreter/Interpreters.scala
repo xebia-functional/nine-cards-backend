@@ -56,7 +56,7 @@ abstract class Interpreters[M[_]](implicit A: ApplicativeError[M, Throwable], T:
 
   lazy val googleApiInterpreter: (GoogleApi.Ops ~> M) = GoogleApiServices.services.andThen(task2M)
 
-  val googleOAuthInterpreter: (GoogleOAuth.Ops ~> M) = GoogleOAuthServices.andThen(task2M)
+  lazy val googleOAuthInterpreter: (GoogleOAuth.Ops ~> M) = GoogleOAuthServices.andThen(task2M)
 
   lazy val googlePlayInterpreter: (GooglePlay.Ops ~> M) = GooglePlayServices.services.andThen(task2M)
 

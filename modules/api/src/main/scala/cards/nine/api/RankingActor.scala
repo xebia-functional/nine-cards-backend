@@ -1,6 +1,6 @@
 package cards.nine.api
 
-import akka.actor.{Actor, ActorSystem}
+import akka.actor.{ Actor, ActorSystem }
 import akka.event.Logging
 import cards.nine.api.RankingActor.RankingByCategory
 import cards.nine.commons.NineCardsService.Result
@@ -11,10 +11,9 @@ import cards.nine.domain.pagination.Page
 import cards.nine.processes.RankingProcesses
 import cards.nine.processes.messages.rankings.Reload.SummaryResponse
 import cats.~>
-import doobie.enum.resultsetconcurrency.ResultSetConcurrency
-import org.joda.time.{DateTime, DateTimeZone}
+import org.joda.time.{ DateTime, DateTimeZone }
 
-import scalaz.{-\/, \/, \/-}
+import scalaz.{ -\/, \/, \/- }
 import scalaz.concurrent.Task
 
 class RankingActor[F[_]](interpreter: F ~> Task)(implicit rankingProcesses: RankingProcesses[F]) extends Actor {
@@ -46,9 +45,9 @@ class RankingActor[F[_]](interpreter: F ~> Task)(implicit rankingProcesses: Rank
 
   private[this] def showRankingGenerationInfo(result: Throwable \/ Result[SummaryResponse]) = {
     result match {
-      case -\/(e) => log.error(e, "An error was found while generating rankings")
-      case \/-(Left(e)) => log.error("An error was found while generating rankings")
-      case \/-(Right(summary)) =>
+      case -\/(e) ⇒ log.error(e, "An error was found while generating rankings")
+      case \/-(Left(e)) ⇒ log.error("An error was found while generating rankings")
+      case \/-(Right(summary)) ⇒
         showCountriesWithoutRankingInfo(summary.countriesWithoutRanking)
         summary.countriesWithRanking foreach showRankingSummary
         log.info("Rankings generated successfully")

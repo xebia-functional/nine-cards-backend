@@ -21,8 +21,8 @@ object Services extends (Ops ~> Task) {
       val credential: GoogleCredential = Converters.toGoogleCredential(account)
       // A GoogleCredential is stateful object that can contain token.
       // refreshToken is command to fetch token from server. Boolean response indicates success
-      val suc = credential.refreshToken()
-      if (suc) {
+      val success = credential.refreshToken()
+      if (success) {
         Right(AccessToken(credential.getAccessToken()))
       } else {
         import account._
