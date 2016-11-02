@@ -41,9 +41,8 @@ subscribing to Shared Collections.
 ## Description of the Application
 
 In NineCards Version 2, most of the user's data and configuration (such as her collections) is kept in her Google Drive account,
-and most of the functionality is provided either by the [client](https://github.com/47deg/nine-cards-v2/)
-or by a separate [Google Play integration](https://github.com/47deg/nine-cards-backend-google-play) subsystem.
-The Back End is only concerned with those features that involve information shared between several users.
+and most of the functionality is provided by the [client](https://github.com/47deg/nine-cards-v2/).
+The Back End is concerned with those features that involve information shared between several users.
 
 The NCBE is organized within three modules, called `api`, `processes`, and `services`:
 
