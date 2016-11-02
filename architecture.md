@@ -9,8 +9,8 @@ In this section, we describe the environment of the application, and how it inte
 
 ### API
 
-The Nine Cards backend is a reactive HTTP/REST application. Every operation is initiated by a call to
-an endpoint in the API: the backend has no other internal state changing operation.
+The Nine Cards backend is a HTTP/REST application. Every operation is initiated by a call to
+an endpoint in the API: the backend has no other internal state changing operations.
 Most of the endpoints in the API are assumed to receive messages from a Nine Cards client.
 All the information sent from the backend to any client is sent in response to a client's HTTP request.
 The backend does not communicate directly with any Nine Cards client. For notifications, it uses
@@ -19,13 +19,13 @@ the [Firebase Cloud Messaging](http://firebase.google.com/docs/cloud-messaging/)
 
 ### External Systems
 
-The backend application interacts with several **external** systems and APIs, outside the application proper,
+The backend application interacts with several **external** systems and APIs outside of the application,
 for retrieving or storing information, or for sending notifications. The external systems are the following:
 
-* **Database** A [PostgreSQL](http://www.postgresql.org/) database is used to store information needed by the backend.
+* **Database**. A [PostgreSQL](http://www.postgresql.org/) database is used to store information needed by the backend.
   This includes information about Nine Cards clients (users and devices), shared collections, the subsciptions of
   users to shared collections, and the information about countries.
-* **Google API**. The API of Google is used upon a client's signup, to check the identity of a new client.
+* **Google API**. The Google API is used upon a client's signup, to check the identity of a new client.
 * **Google Analytics**. A Google Analytics report collects aggregated statistics about the applications used in
   Nine Cards, such as which applications are more frequently added or removed to a _moment_,
   or which applications are most frequently used within each category.
@@ -35,7 +35,7 @@ for retrieving or storing information, or for sending notifications. The externa
   in the Play store, and also for searching lists of new applications either by name, by their category,
   or by their similarity to already installed apps.
 * **Play Store Web**. Sometimes, the information about an app is not available in the Market API, so instead
-  we retrieve it from each app's page in the [Play Store Web Site](play.google.com/store/).
+  we retrieve it from each app's page in the [Play Store website](http://play.google.com/store/).
 * **Redis**. We use a [Redis](http://redis.io/) in-memory store as a _cache_ to keep data non-original data,
   that is to say, data that is retrieved from a remote source, or computed from a remote source.
   This includes the data about each application fetched from the Android Market API,
@@ -49,8 +49,8 @@ The backend depends for its functionality on several external libraries, apart f
 The main libraries and frameworks used in the backend are the following ones:
 
 * [Cats](http://typelevel.org/cats/) is a core library for the backend. The architecture follows the
-  [Data Types à la carte](http://dblp.org/rec/html/journals/jfp/Swierstra08) article, and to implement
-  such architecture we make use of `cats` implementations for [`Monad`](http://github.com/typelevel/cats/blob/master/core/src/main/scala/cats/Monad.scala),
+  [Data Types à la carte](http://dblp.org/rec/html/journals/jfp/Swierstra08) paper, and to implement
+  such architecture we make use of `Cats` implementations for [`Monad`](http://github.com/typelevel/cats/blob/master/core/src/main/scala/cats/Monad.scala),
   for [free monads](http://github.com/typelevel/cats/blob/master/free/src/main/scala/cats/free/Free.scala),
   [natural transformations]([`cats.arrow.FunctionK`](http://github.com/typelevel/cats/blob/master/core/src/main/scala/cats/arrow/FunctionK.scala),
   and, in a few cases, [monad transformers](http://github.com/typelevel/cats/blob/master/core/src/main/scala/cats/data/EitherT.scala).
@@ -68,9 +68,9 @@ The main libraries and frameworks used in the backend are the following ones:
 * [Http4s](http://http4s.org/) is an HTTP client that we use for implementing all the services that interact with the APIs
   of external services, such as Google Authentication, Analytics, Firebase, or the Android Market.
 * [Enumeratum](http://github.com/lloydmeta/enumeratum/) is used to represent
-* Testing of the different modules is done with a combination of  [Specs2](http://etorreborre.github.io/specs2/)
-  and [Scalacheck](http://www.scalacheck.org/).
-* [Shapeless](http://github.com/milessabin/shapeless) is used as an utility at several places in the code,
+* Testing of the different modules is done with a combination of [Specs2](http://etorreborre.github.io/specs2/)
+  and [ScalaCheck](http://www.scalacheck.org/).
+* [Shapeless](http://github.com/milessabin/shapeless) is used as a utility in several places in the code,
   and it is relied upon by the libraries `Circe`, `ScalaCheck`, or `Doobie`.
 
 ### Core Modules
@@ -91,14 +91,14 @@ The backend source code is organised into four modules, or `sbt` projects, calle
 * The [`googleplay`](/modules/googleplay) implements a subset of services, originally developed as a separate
   module, that interact with the Android Market API, and which use the Redis cache for internal storage.
 
-The `commons` module is available for all other modules. The dependencies among other modules are as follows:
+The `commons` module is available to all other modules. The dependencies among other modules are as follows:
 the `api` only depends on `processes`; the `processes` depends only on `services`, and `services` depends
 on `googleplay`.
 
 ## Functional Programming Design
 
 This section describes the Functional-Programming design followed in writing the processes
-and services of the backend. This design is inspired by the [Data Types à la carte](http://dblp.org/rec/html/journals/jfp/Swierstra08) article.
+and services of the backend. This design is inspired by the [Data Types à la carte](http://dblp.org/rec/html/journals/jfp/Swierstra08) paper.
 The key elements of this design are _1)_ a separation between a service's algebra of operations and
 its interpreter, and _2)_ the use of the `Free` monad for combining operations of different algebras.
 
@@ -128,7 +128,7 @@ or just `Id`, to represent a result obtained just within the application (for te
 #### Processes: Free Monad and Coproducts
 
 Each process in the processes layer implements the functionality of one endpoint, and it usually involves
-using services of different nature.
+using different services.
 For instance, the process to get the details of a shared collection involves reading the collection information
 out of the database, and then retrieving form the Android Market API (or from the cache) the data of each
 application in that collection. However, each service defines its operation in a separate algebra,
