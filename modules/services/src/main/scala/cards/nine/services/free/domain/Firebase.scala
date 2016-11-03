@@ -5,14 +5,6 @@ import cards.nine.domain.application.Package
 
 object Firebase {
 
-  sealed trait FirebaseError
-
-  case object FirebaseBadRequest extends FirebaseError
-
-  case object FirebaseNotFound extends FirebaseError
-
-  case object FirebaseUnauthorized extends FirebaseError
-
   case class UpdatedCollectionNotificationInfo(
     deviceTokens: List[DeviceToken],
     publicIdentifier: String,
@@ -33,6 +25,18 @@ object Firebase {
     publicIdentifier: String,
     addedPackages: List[Package]
   )
+
+  case class SendNotificationResponse(
+    multicastIds: List[Long],
+    success: Int,
+    failure: Int,
+    canonicalIds: Int,
+    results: List[NotificationIndividualResult]
+  )
+
+  object SendNotificationResponse {
+    val emptyResponse = SendNotificationResponse(Nil, 0, 0, 0, Nil)
+  }
 
   case class NotificationResponse(
     multicast_id: Long,

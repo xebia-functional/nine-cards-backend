@@ -5,6 +5,7 @@ import akka.testkit._
 import cards.nine.api.NineCardsHeaders._
 import cards.nine.api.TestData.Exceptions._
 import cards.nine.api.TestData._
+import cards.nine.commons.NineCardsErrors.AuthTokenNotValid
 import cards.nine.commons.NineCardsService
 import cards.nine.commons.config.Domain.NineCardsConfiguration
 import cards.nine.commons.config.NineCardsConfig
@@ -64,17 +65,17 @@ trait NineCardsApiSpecification
       androidId    = AndroidId(mockEq(androidId.value)),
       authToken    = mockEq(authToken),
       requestUri   = any[String]
-    ) returns Free.pure(Option(userId))
+    ) returns Free.pure(Either.right(userId))
   }
 
   trait SuccessfulScope extends BasicScope {
 
     googleApiProcesses.checkGoogleTokenId(email, tokenId) returns Free.pure(true)
 
-    userProcesses.signUpUser(any[LoginRequest]) returns Free.pure(Messages.loginResponse)
+    userProcesses.signUpUser(any[LoginRequest]) returns Free.pure(Either.right(Messages.loginResponse))
 
     userProcesses.updateInstallation(mockEq(Messages.updateInstallationRequest)) returns
-      Free.pure(Messages.updateInstallationResponse)
+      Free.pure(Either.right(Messages.updateInstallationResponse))
 
     sharedCollectionProcesses.createCollection(any) returns
       Free.pure(Messages.createOrUpdateCollectionResponse)
@@ -136,7 +137,7 @@ trait NineCardsApiSpecification
       androidId    = AndroidId(mockEq(androidId.value)),
       authToken    = mockEq(failingAuthToken),
       requestUri   = any[String]
-    ) returns Free.pure(None)
+    ) returns Free.pure(Either.left(AuthTokenNotValid("The provided auth token is not valid")))
 
     sharedCollectionProcesses.getCollectionByPublicIdentifier(any, any[String], any) returns
       Free.pure(sharedCollectionNotFoundException.left)
@@ -160,12 +161,12 @@ trait NineCardsApiSpecification
       androidId    = AndroidId(mockEq(androidId.value)),
       authToken    = mockEq(failingAuthToken),
       requestUri   = any[String]
-    ) returns Free.pure[NineCardsServices, Option[Long]](Option(userId))
+    ) returns Free.pure(Either.right(userId))
 
-    userProcesses.signUpUser(any[LoginRequest]) returns Free.pure(Messages.loginResponse)
+    userProcesses.signUpUser(any[LoginRequest]) returns Free.pure(Either.right(Messages.loginResponse))
 
     userProcesses.updateInstallation(mockEq(Messages.updateInstallationRequest)) returns
-      Free.pure(Messages.updateInstallationResponse)
+      Free.pure(Either.right(Messages.updateInstallationResponse))
 
     sharedCollectionProcesses.createCollection(any) returns
       Free.pure(Messages.createOrUpdateCollectionResponse)

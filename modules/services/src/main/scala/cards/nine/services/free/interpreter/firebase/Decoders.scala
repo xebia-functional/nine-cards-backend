@@ -13,9 +13,6 @@ object Decoders {
 
   implicit val packageD: Decoder[Package] = Decoder.decodeString map Package
 
-  implicit val firebaseErrorDecoder: Decoder[FirebaseError] =
-    deriveDecoder[FirebaseError]
-
   implicit val notificationIndividualResultDecoder: Decoder[NotificationIndividualResult] =
     deriveDecoder[NotificationIndividualResult]
 

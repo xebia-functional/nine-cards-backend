@@ -1,7 +1,7 @@
 package cards.nine.services.free.interpreter.firebase
 
 import cards.nine.commons.config.Domain.{ GoogleFirebaseConfiguration, GoogleFirebasePaths }
-import cats.data.Xor
+import cards.nine.commons.NineCardsErrors.NineCardsError
 import cards.nine.domain.account.DeviceToken
 import cards.nine.domain.application.Package
 import cards.nine.services.free.domain.Firebase._
@@ -102,14 +102,12 @@ class ServicesSpec
         packagesName     = List(packages.package1, packages.package2, packages.package3) map Package
       )
 
-      val response = services.sendUpdatedCollectionNotification(info)
+      val response = services.sendUpdatedCollectionNotification(info).unsafePerformSync
 
-      response.unsafePerformSyncAttempt should be_\/-[FirebaseError Xor NotificationResponse].which {
-        content ⇒
-          content should beXorRight[NotificationResponse].which { info ⇒
-            info.success must_== 2
-            info.failure must_== 0
-          }
+      response should beRight[SendNotificationResponse].which {
+        info ⇒
+          info.success must_== 2
+          info.failure must_== 0
       }
     }
 
@@ -121,13 +119,10 @@ class ServicesSpec
           packagesName     = List(packages.package1, packages.package2, packages.package3) map Package
         )
 
-        val response = services.sendUpdatedCollectionNotification(info)
+        val response = services.sendUpdatedCollectionNotification(info).unsafePerformSync
 
-        response.unsafePerformSyncAttempt should be_\/-[FirebaseError Xor NotificationResponse].which {
-          content ⇒
-            content should beXorRight[NotificationResponse].which { info ⇒
-              info.failure must be_>(0)
-            }
+        response should beRight[SendNotificationResponse].which { info ⇒
+          info.failure must be_>(0)
         }
       }
 
@@ -144,11 +139,9 @@ class ServicesSpec
         packagesName     = List(packages.package1, packages.package2, packages.package3) map Package
       )
 
-      val response = services.sendUpdatedCollectionNotification(info)
+      val response = services.sendUpdatedCollectionNotification(info).unsafePerformSync
 
-      response.unsafePerformSyncAttempt should be_\/-[FirebaseError Xor NotificationResponse].which {
-        content ⇒ content should beXorLeft[FirebaseError](FirebaseUnauthorized)
-      }
+      response should beLeft[NineCardsError]
     }
 
     "respond 400 Bad Request and return a FirebaseError value if an empty list of device tokens is provided" in {
@@ -158,11 +151,9 @@ class ServicesSpec
         packagesName     = List(packages.package1, packages.package2, packages.package3) map Package
       )
 
-      val response = services.sendUpdatedCollectionNotification(info)
+      val response = services.sendUpdatedCollectionNotification(info).unsafePerformSync
 
-      response.unsafePerformSyncAttempt should be_\/-[FirebaseError Xor NotificationResponse].which {
-        content ⇒ content should beXorLeft[FirebaseError](FirebaseBadRequest)
-      }
+      response should beRight[SendNotificationResponse](SendNotificationResponse.emptyResponse)
     }
   }
 }
