@@ -1,8 +1,9 @@
 package cards.nine.services.free.algebra
 
-import cats.data.Xor
-import cats.free.{ Free, Inject }
+import cards.nine.commons.NineCardsService
+import cards.nine.commons.NineCardsService._
 import cards.nine.services.free.domain.Firebase._
+import cats.free.:<:
 
 object Firebase {
 
@@ -10,20 +11,20 @@ object Firebase {
 
   case class SendUpdatedCollectionNotification(
     info: UpdatedCollectionNotificationInfo
-  ) extends Ops[FirebaseError Xor NotificationResponse]
+  ) extends Ops[Result[SendNotificationResponse]]
 
-  class Services[F[_]](implicit I: Inject[Ops, F]) {
+  class Services[F[_]](implicit I: Ops :<: F) {
 
     def sendUpdatedCollectionNotification(
       info: UpdatedCollectionNotificationInfo
-    ): Free[F, FirebaseError Xor NotificationResponse] =
-      Free.inject[Ops, F](SendUpdatedCollectionNotification(info))
+    ): NineCardsService[F, SendNotificationResponse] =
+      NineCardsService(SendUpdatedCollectionNotification(info))
 
   }
 
   object Services {
 
-    implicit def services[F[_]](implicit I: Inject[Ops, F]): Services[F] = new Services
+    implicit def services[F[_]](implicit I: Ops :<: F): Services[F] = new Services
 
   }
 
