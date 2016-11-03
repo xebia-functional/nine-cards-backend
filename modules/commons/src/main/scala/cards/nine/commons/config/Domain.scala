@@ -2,6 +2,7 @@ package cards.nine.commons.config
 
 import org.joda.time.Period
 import org.joda.time.format.PeriodFormat
+import cards.nine.domain.oauth.ServiceAccount
 
 import scala.concurrent.duration.{ Duration, FiniteDuration }
 
@@ -308,6 +309,7 @@ object Domain {
   }
 
   case class RankingsConfiguration(
+    oauth: ServiceAccount,
     actorInterval: FiniteDuration,
     rankingPeriod: Period,
     countriesPerRequest: Int,
@@ -324,12 +326,24 @@ object Domain {
       val prefix = s"$parentPrefix.rankings"
 
       RankingsConfiguration(
+        loadServiceAccount(config, s"$prefix.oauth"),
         convertToFiniteDuration(config.getString(s"$prefix.actorInterval")),
         PeriodFormat.getDefault.parsePeriod(config.getString(s"$prefix.rankingPeriod")),
         config.getInt(s"$prefix.countriesPerRequest"),
         config.getInt(s"$prefix.maxNumberOfAppsPerCategory")
       )
     }
+
+    def loadServiceAccount(config: NineCardsConfig, prefix: String) =
+      ServiceAccount(
+        clientId     = config.getString(s"$prefix.clientId"),
+        clientEmail  = config.getString(s"$prefix.clientEmail"),
+        privateKey   = config.getString(s"$prefix.privateKey"),
+        privateKeyId = config.getString(s"$prefix.privateKeyId"),
+        tokenUri     = config.getString(s"$prefix.tokenUri"),
+        scopes       = config.getStringList(s"$prefix.scopes")
+      )
+
   }
 
   case class RedisConfiguration(

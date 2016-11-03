@@ -26,6 +26,11 @@ class NineCardsConfig(hocon: Option[String] = None) {
     key: String
   ) = sys.props.get(key).fold(config.getOptionalString(key))(Option(_))
 
+  def getStringList(key: String): List[String] = {
+    import scala.collection.JavaConversions._
+    config.getStringList(key).toList
+  }
+
   def getBoolean(key: String) = getSysPropKeyAsBoolean(key).getOrElse(config.getBoolean(key))
 
   def getOptionalBoolean(
