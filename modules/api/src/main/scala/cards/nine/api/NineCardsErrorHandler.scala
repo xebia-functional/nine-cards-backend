@@ -9,21 +9,29 @@ class NineCardsErrorHandler {
 
   def handleNineCardsErrors(e: NineCardsError, ctx: ToResponseMarshallingContext): Unit = {
     val (statusCode, errorMessage) = e match {
+      case AuthTokenNotValid(message) ⇒
+        (Unauthorized, message)
       case CountryNotFound(message) ⇒
         (NotFound, message)
+      case FirebaseServerError(message) ⇒
+        (ServiceUnavailable, message)
       case GoogleAnalyticsServerError(message) ⇒
         (ServiceUnavailable, message)
+      case GoogleOAuthError(message) ⇒
+        (Unauthorized, message)
       case HttpBadRequest(message) ⇒
         (BadRequest, message)
       case HttpNotFound(message) ⇒
         (NotFound, message)
       case HttpUnauthorized(message) ⇒
         (Unauthorized, message)
+      case InstallationNotFound(message) ⇒
+        (Unauthorized, message)
       case RankingNotFound(message) ⇒
         (NotFound, message)
       case ReportNotFound(message) ⇒
         (NotFound, message)
-      case GoogleOAuthError(message) ⇒
+      case UserNotFound(message) ⇒
         (Unauthorized, message)
     }
 

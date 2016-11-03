@@ -14,7 +14,7 @@ import cards.nine.processes.NineCardsServices.NineCardsServices
 import cards.nine.processes.ProcessesExceptions.SharedCollectionNotFoundException
 import cards.nine.processes.converters.Converters
 import cards.nine.processes.messages.SharedCollectionMessages._
-import cards.nine.services.free.domain.Firebase.{ NotificationIndividualResult, NotificationResponse }
+import cards.nine.services.free.domain.Firebase.{ NotificationIndividualResult, SendNotificationResponse }
 import cards.nine.services.free.domain.Ranking.GoogleAnalyticsRanking
 import cards.nine.services.free.domain.{ SharedCollection ⇒ SharedCollectionServices, _ }
 import cards.nine.services.free.interpreter.collection.Services.{ SharedCollectionData ⇒ SharedCollectionDataServices }
@@ -199,18 +199,16 @@ object TestData {
       androidId   = androidId
     )
 
-    val notificationResponse = NotificationResponse(
-      multicast_id  = multicastId,
-      success       = success,
-      failure       = failure,
-      canonical_ids = canonicalId,
-      results       = Option(
-        List(NotificationIndividualResult(
-          message_id      = Option(messageId),
-          registration_id = None,
-          error           = None
-        ))
-      )
+    val sendNotificationResponse = SendNotificationResponse(
+      multicastIds = List(multicastId),
+      success      = success,
+      failure      = failure,
+      canonicalIds = canonicalId,
+      results      = List(NotificationIndividualResult(
+        message_id      = Option(messageId),
+        registration_id = None,
+        error           = None
+      ))
     )
 
     val sharedCollectionDataServices = SharedCollectionDataServices(

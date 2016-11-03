@@ -20,10 +20,11 @@ import cards.nine.domain.pagination.Page
 import cards.nine.processes._
 import cards.nine.processes.NineCardsServices._
 import cats.data.Xor
-import spray.http.StatusCodes.NotFound
-import spray.routing._
+import cats.syntax.either._
 
 import scala.concurrent.ExecutionContext
+import spray.http.StatusCodes.NotFound
+import spray.routing._
 
 class NineCardsApiActor
   extends Actor
@@ -74,7 +75,9 @@ class NineCardsRoutes(
         entity(as[ApiLoginRequest]) { request ⇒
           nineCardsDirectives.authenticateLoginRequest { sessionToken: SessionToken ⇒
             complete {
-              userProcesses.signUpUser(toLoginRequest(request, sessionToken)) map toApiLoginResponse
+              userProcesses
+                .signUpUser(toLoginRequest(request, sessionToken))
+                .map(result ⇒ result map toApiLoginResponse)
             }
           }
         }
@@ -138,7 +141,11 @@ class NineCardsRoutes(
       pathEndOrSingleSlash {
         put {
           entity(as[ApiUpdateInstallationRequest]) { request ⇒
-            complete(updateInstallation(request, userContext))
+            complete {
+              userProcesses
+                .updateInstallation(toUpdateInstallationRequest(request, userContext))
+                .map(result ⇒ result map toApiUpdateInstallationResponse)
+            }
           }
         }
       }
@@ -261,13 +268,10 @@ class NineCardsRoutes(
 
   private type NineCardsServed[A] = cats.free.Free[NineCardsServices, A]
 
-  private[this] def updateInstallation(
-    request: ApiUpdateInstallationRequest,
-    userContext: UserContext
-  ): NineCardsServed[ApiUpdateInstallationResponse] =
+  private[this] def updateInstallation(request: ApiUpdateInstallationRequest, userContext: UserContext) =
     userProcesses
       .updateInstallation(toUpdateInstallationRequest(request, userContext))
-      .map(toApiUpdateInstallationResponse)
+      .map(response ⇒ response map toApiUpdateInstallationResponse)
 
   private[this] def getCollection(
     publicId: PublicIdentifier,
