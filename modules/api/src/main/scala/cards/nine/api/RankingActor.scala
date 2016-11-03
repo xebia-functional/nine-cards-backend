@@ -82,7 +82,6 @@ class RankingActor[F[_]](interpreter: F ~> Task)(implicit rankingProcesses: Rank
         log.error(message)
       case _ ⇒ Unit
     }
-    // TODO: for the OAuth
   }
 
   def receive = {
