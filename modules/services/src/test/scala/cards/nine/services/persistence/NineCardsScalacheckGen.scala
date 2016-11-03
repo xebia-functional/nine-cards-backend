@@ -21,23 +21,7 @@ object NineCardsGenEntities {
 
 trait NineCardsScalacheckGen {
 
-  def nonEmptyString(maxSize: Int) =
-    Gen.resize(
-      s = maxSize,
-      g = Gen.nonEmptyListOf(Gen.alphaNumChar).map(_.mkString)
-    )
-
-  def fixedLengthString(size: Int) = Gen.listOfN(size, Gen.alphaChar).map(_.mkString)
-
-  def fixedLengthNumericString(size: Int) = Gen.listOfN(size, Gen.numChar).map(_.mkString)
-
   val stringGenerator = Arbitrary.arbitrary[String]
-
-  val emailGenerator: Gen[Email] = for {
-    mailbox ← nonEmptyString(50)
-    topLevelDomain ← nonEmptyString(45)
-    domain ← fixedLengthString(3)
-  } yield Email(s"$mailbox@$topLevelDomain.$domain")
 
   val timestampGenerator: Gen[Timestamp] = Gen.choose(0l, 253402300799l) map { seconds ⇒
     Timestamp.from(Instant.ofEpochSecond(seconds))
@@ -77,8 +61,6 @@ trait NineCardsScalacheckGen {
   implicit val abApiKey: Arbitrary[ApiKey] = Arbitrary(Gen.uuid.map(u ⇒ ApiKey(u.toString)))
 
   implicit val abDeviceToken: Arbitrary[DeviceToken] = Arbitrary(Gen.uuid.map(u ⇒ DeviceToken(u.toString)))
-
-  implicit val abEmail: Arbitrary[Email] = Arbitrary(emailGenerator)
 
   implicit val abPublicIdentifier: Arbitrary[PublicIdentifier] = Arbitrary(Gen.uuid.map(u ⇒ PublicIdentifier(u.toString)))
 
