@@ -154,7 +154,7 @@ object TestData {
       appsInfo   = List.empty
     )
 
-    val apiGetAppsInfoRequest = ApiGetAppsInfoRequest(items = List("", "", "") map Package)
+    val apiGetAppsInfoRequest = ApiAppsInfoRequest(items = List("", "", "") map Package)
 
     val apiGetRecommendationsByCategoryRequest = ApiGetRecommendationsByCategoryRequest(
       excludePackages = excludePackages,

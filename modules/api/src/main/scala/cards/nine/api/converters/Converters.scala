@@ -124,22 +124,23 @@ object Converters {
       token        = googlePlayContext.googlePlayToken
     )
 
-  def toApiCategorizeAppsResponse(response: FullCardList): ApiCategorizeAppsResponse = {
-    def toCategorizedApp(appInfo: FullCard): CategorizedApp =
-      CategorizedApp(
-        packageName = appInfo.packageName,
-        categories  = appInfo.categories
-      )
-    ApiCategorizeAppsResponse(
-      items  = response.cards map toCategorizedApp,
-      errors = response.missing
+  def toApiAppsInfoResponse[A](toA: FullCard ⇒ A)(response: FullCardList): ApiAppsInfoResponse[A] =
+    ApiAppsInfoResponse(
+      errors = response.missing,
+      items  = response.cards map toA
     )
-  }
 
-  def toApiDetailAppsResponse(response: FullCardList): ApiDetailAppsResponse =
-    ApiDetailAppsResponse(
-      items  = response.cards map toApiDetailsApp,
-      errors = response.missing
+  def toApiCategorizedApp(appInfo: FullCard): ApiCategorizedApp =
+    ApiCategorizedApp(
+      packageName = appInfo.packageName,
+      categories  = appInfo.categories
+    )
+
+  def toApiIconApp(appInfo: FullCard): ApiIconApp =
+    ApiIconApp(
+      packageName = appInfo.packageName,
+      title       = appInfo.title,
+      icon        = appInfo.icon
     )
 
   def toApiDetailsApp(card: FullCard): ApiDetailsApp =

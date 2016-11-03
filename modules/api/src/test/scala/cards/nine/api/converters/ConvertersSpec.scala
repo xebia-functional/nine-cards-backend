@@ -4,7 +4,7 @@ import cards.nine.api.NineCardsHeaders.Domain._
 import cards.nine.api.messages.InstallationsMessages._
 import cards.nine.api.messages.UserMessages._
 import cards.nine.domain.account.{ AndroidId, SessionToken }
-import cards.nine.domain.application.{ FullCardList }
+import cards.nine.domain.application.{ FullCard, FullCardList }
 import cards.nine.domain.market.{ MarketToken, Localization }
 import cards.nine.processes.messages.InstallationsMessages._
 import cards.nine.processes.messages.SharedCollectionMessages._
@@ -77,7 +77,7 @@ class ConvertersSpec
     "convert an GetAppsInfoResponse to an ApiCategorizeAppsResponse object" in {
       prop { (response: FullCardList) ⇒
 
-        val apiResponse = Converters.toApiCategorizeAppsResponse(response)
+        val apiResponse = Converters.toApiAppsInfoResponse(Converters.toApiCategorizedApp)(response)
 
         apiResponse.errors must containTheSameElementsAs(response.missing)
 
@@ -94,12 +94,22 @@ class ConvertersSpec
     "convert an GetAppsInfoResponse to an ApiDetailAppsResponse object" in {
       prop { (response: FullCardList) ⇒
 
-        val apiResponse = Converters.toApiDetailAppsResponse(response)
+        val apiResponse = Converters.toApiAppsInfoResponse(Converters.toApiDetailsApp)(response)
 
         apiResponse.errors must_== response.missing
         apiResponse.items must_== (response.cards map Converters.toApiDetailsApp)
       }
     }
+  }
+
+  "toApiIconApp" should {
+    "convert a FullCard to an ApiAppIcon" in
+      prop { (card: FullCard) ⇒
+        val api = Converters.toApiIconApp(card)
+        api.packageName must_== card.packageName
+        api.title must_== card.title
+        api.icon must_== card.icon
+      }
   }
 
   "toMarketAuth" should {

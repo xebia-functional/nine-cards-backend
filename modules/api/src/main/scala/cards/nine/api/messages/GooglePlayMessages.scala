@@ -4,11 +4,20 @@ import cards.nine.domain.application.{ Package, Widget }
 
 object GooglePlayMessages {
 
-  case class CategorizedApp(packageName: Package, categories: List[String])
+  case class ApiCategorizedApp(
+    packageName: Package,
+    categories: List[String]
+  )
 
-  case class ApiGetAppsInfoRequest(items: List[Package])
+  case class ApiIconApp(
+    packageName: Package,
+    title: String,
+    icon: String
+  )
 
-  case class ApiCategorizeAppsResponse(errors: List[Package], items: List[CategorizedApp])
+  case class ApiAppsInfoRequest(items: List[Package])
+
+  case class ApiAppsInfoResponse[A](errors: List[Package], items: List[A])
 
   // ApiDetailsApp: FullCard without Screenshots
   case class ApiDetailsApp(
@@ -20,8 +29,6 @@ object GooglePlayMessages {
     downloads: String,
     categories: List[String]
   )
-
-  case class ApiDetailAppsResponse(errors: List[Package], items: List[ApiDetailsApp])
 
   case class ApiGetRecommendationsByCategoryRequest(excludePackages: List[Package], limit: Int)
 

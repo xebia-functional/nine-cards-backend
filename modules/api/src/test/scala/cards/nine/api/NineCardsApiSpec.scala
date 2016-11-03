@@ -19,7 +19,7 @@ import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
 import org.specs2.specification.Scope
 import spray.http.HttpHeaders.RawHeader
-import spray.http.{ HttpRequest, MediaTypes, StatusCodes }
+import spray.http.{ HttpRequest, MediaTypes, StatusCodes, Uri }
 import spray.routing.HttpService
 import spray.testkit.Specs2RouteTest
 
@@ -489,6 +489,23 @@ class NineCardsApiSpec
 
     val request = Post(
       uri     = Paths.details,
+      content = Messages.apiGetAppsInfoRequest
+    ) ~> addHeaders(Headers.googlePlayHeaders)
+
+    authenticatedBadRequestEmptyBody(Post(Paths.details))
+
+    unauthorizedNoHeaders(request)
+
+    successOk(request)
+  }
+
+  """POST /applications/details?slice=icon, the variant to get only title and icon""" should {
+
+    val request = Post(
+      uri     = Uri(
+        path  = Uri.Path(Paths.details),
+        query = Uri.Query("?slice=icon")
+      ),
       content = Messages.apiGetAppsInfoRequest
     ) ~> addHeaders(Headers.googlePlayHeaders)
 
