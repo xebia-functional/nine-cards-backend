@@ -308,6 +308,7 @@ object Domain {
   }
 
   case class RankingsConfiguration(
+    oauth: RankingsOAuthConfiguration,
     actorInterval: FiniteDuration,
     rankingPeriod: Period,
     countriesPerRequest: Int,
@@ -324,10 +325,36 @@ object Domain {
       val prefix = s"$parentPrefix.rankings"
 
       RankingsConfiguration(
+        RankingsOAuthConfiguration(config, prefix),
         convertToFiniteDuration(config.getString(s"$prefix.actorInterval")),
         PeriodFormat.getDefault.parsePeriod(config.getString(s"$prefix.rankingPeriod")),
         config.getInt(s"$prefix.countriesPerRequest"),
         config.getInt(s"$prefix.maxNumberOfAppsPerCategory")
+      )
+    }
+
+  }
+
+  case class RankingsOAuthConfiguration(
+    clientId: String,
+    clientEmail: String,
+    privateKey: String,
+    privateKeyId: String,
+    tokenUri: String,
+    scopes: List[String]
+  )
+
+  object RankingsOAuthConfiguration {
+
+    def apply(config: NineCardsConfig, parentPrefix: String): RankingsOAuthConfiguration = {
+      val prefix = s"$parentPrefix.oauth"
+      RankingsOAuthConfiguration(
+        clientId     = config.getString(s"$prefix.clientId"),
+        clientEmail  = config.getString(s"$prefix.clientEmail"),
+        privateKey   = config.getString(s"$prefix.privateKey"),
+        privateKeyId = config.getString(s"$prefix.privateKeyId"),
+        tokenUri     = config.getString(s"$prefix.tokenUri"),
+        scopes       = config.getStringList(s"$prefix.scopes")
       )
     }
   }

@@ -88,6 +88,15 @@ trait DummyConfig {
     val rankingPeriod = "30 days"
     val countriesPerRequest = 2
     val maxNumberOfAppsPerCategory = 100
+
+    object oauth {
+      val clientId = "12345"
+      val clientEmail = "client@ema.il"
+      val privateKey = """----BEGIN PRIVATE KEY----\nBASE64+=TEXT\n-----END PRIVATE KEY -----"""
+      val privateKeyId = "abcdef0123456789"
+      val tokenUri = ""
+      val scopes = List("http://www.nine.cards/auth/testing.only")
+    }
   }
 
   object test {
@@ -171,6 +180,14 @@ trait DummyConfig {
        |    rankingPeriod = ${rankings.rankingPeriod}
        |    countriesPerRequest = ${rankings.countriesPerRequest}
        |    maxNumberOfAppsPerCategory = ${rankings.maxNumberOfAppsPerCategory}
+       |    oauth {
+       |      clientId = "${rankings.oauth.clientId}"
+       |      clientEmail = "${rankings.oauth.clientEmail}"
+       |      privateKey = "${rankings.oauth.privateKey}"
+       |      privateKeyId = "${rankings.oauth.privateKeyId}"
+       |      tokenUri = "${rankings.oauth.tokenUri}"
+       |      scopes = [ "${rankings.oauth.scopes.head}" ]
+       |    }
        |  }
        |  redis {
        |    host = "${common.host}"

@@ -5,7 +5,6 @@ import cards.nine.commons.NineCardsService
 import cards.nine.commons.NineCardsService._
 import cards.nine.domain.analytics._
 import cards.nine.domain.application.{ Category, Moment, Package }
-import cards.nine.domain.pagination.Page
 import cards.nine.processes.converters.Converters._
 import cards.nine.processes.messages.rankings._
 import cards.nine.services.free.algebra
@@ -20,6 +19,7 @@ class RankingProcesses[F[_]](
   implicit
   analytics: GoogleAnalytics.Services[F],
   countryPersistence: algebra.Country.Services[F],
+  oauthServices: algebra.GoogleOAuth.Services[F],
   rankingServices: algebra.Ranking.Services[F]
 ) {
   private[this] val allCategories = Category.valuesName ++ Moment.valuesName ++ Moment.widgetValuesName
@@ -27,28 +27,35 @@ class RankingProcesses[F[_]](
   def getRanking(scope: GeoScope): Free[F, Result[Get.Response]] =
     (rankingServices.getRanking(scope) map Get.Response).value
 
-  def reloadRankingForCountries(params: RankingParams, pageParams: Page): Free[F, Result[Reload.SummaryResponse]] = {
+  def reloadRankingForCountries(request: Reload.Request): Free[F, Result[Reload.SummaryResponse]] = {
+    import request._
 
-    def generateRanking(countryCode: CountryIsoCode) = {
-      for {
-        ranking ← analytics.getRanking(Option(countryCode), allCategories, params)
-        summary ← rankingServices.updateRanking(CountryScope(countryCode), ranking)
-      } yield summary
-    }.value
+    def generateRankings(
+      countries: List[CountryIsoCode], params: RankingParams
+    ): NineCardsService[F, List[UpdateRankingSummary]] = {
 
-    def generateRankings(countries: List[CountryIsoCode]): NineCardsService[F, List[UpdateRankingSummary]] =
+      def generateRanking(countryCode: CountryIsoCode) = {
+        for {
+          ranking ← analytics.getRanking(Option(countryCode), allCategories, params)
+          summary ← rankingServices.updateRanking(CountryScope(countryCode), ranking)
+        } yield summary
+      }.value
+
       NineCardsService {
         countries
           .traverse[Free[F, ?], Result[UpdateRankingSummary]](generateRanking)
           .map(_.sequenceU)
       }
+    }
 
     for {
+      accessToken ← oauthServices.fetchAcessToken(serviceAccount)
+      params = RankingParams(dateRange, rankingLength, AnalyticsToken(accessToken.value))
       countries ← countryPersistence.getCountries(pageParams)
       countriesWithRanking ← analytics.getCountriesWithRanking(params)
       countriesCode = countries.map(c ⇒ CountryIsoCode(c.isoCode2))
       selectedCountries = countriesCode.intersect(countriesWithRanking.countries)
-      updateRankingsSummary ← generateRankings(selectedCountries)
+      updateRankingsSummary ← generateRankings(selectedCountries, params)
     } yield Reload.SummaryResponse(
       countriesWithoutRanking = countriesCode diff selectedCountries,
       countriesWithRanking    = updateRankingsSummary
@@ -168,6 +175,7 @@ object RankingProcesses {
     implicit
     analytics: GoogleAnalytics.Services[F],
     countryPersistence: algebra.Country.Services[F],
+    oauthServices: algebra.GoogleOAuth.Services[F],
     rankingServices: algebra.Ranking.Services[F]
   ) = new RankingProcesses
 
