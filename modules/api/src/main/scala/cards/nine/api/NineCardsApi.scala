@@ -19,6 +19,7 @@ import cards.nine.domain.pagination.Page
 import cards.nine.processes._
 import cards.nine.processes.NineCardsServices._
 import cats.data.Xor
+import cats.syntax.either._
 
 import scala.concurrent.ExecutionContext
 import spray.http.StatusCodes.NotFound
@@ -254,7 +255,7 @@ class NineCardsRoutes(
   private[this] def updateInstallation(request: ApiUpdateInstallationRequest, userContext: UserContext) =
     userProcesses
       .updateInstallation(toUpdateInstallationRequest(request, userContext))
-      .map(toApiUpdateInstallationResponse)
+      .map(response ⇒ response map toApiUpdateInstallationResponse)
 
   private[this] def getCollection(
     publicId: PublicIdentifier,

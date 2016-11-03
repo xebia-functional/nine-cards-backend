@@ -1,6 +1,6 @@
 package cards.nine.services.free.interpreter.user
 
-import cards.nine.commons.NineCardsErrors.{ InstallationNotFound, NineCardsError, UserNotFound }
+import cards.nine.commons.NineCardsErrors._
 import cards.nine.domain.account._
 import cards.nine.domain.ScalaCheck._
 import cards.nine.services.free.domain.{ Installation, SharedCollection, SharedCollectionSubscription, User }
