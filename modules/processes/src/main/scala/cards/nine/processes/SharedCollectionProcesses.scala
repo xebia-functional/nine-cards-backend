@@ -1,7 +1,8 @@
 package cards.nine.processes
 
 import cards.nine.commons.FreeUtils._
-import cards.nine.domain.account.DeviceToken
+import cards.nine.commons.NineCardsService
+import cards.nine.commons.NineCardsService.NineCardsService
 import cards.nine.domain.application.{ BasicCard, CardList, Package }
 import cards.nine.domain.market.MarketCredentials
 import cards.nine.domain.pagination.Page
@@ -12,7 +13,7 @@ import cards.nine.processes.utils.XorTSyntax._
 import cards.nine.services.free.algebra
 import cards.nine.services.free.algebra.{ Firebase, GooglePlay }
 import cards.nine.services.free.domain.Firebase._
-import cards.nine.services.free.domain.{ BaseSharedCollection, Installation, SharedCollectionSubscription }
+import cards.nine.services.free.domain.{ BaseSharedCollection, SharedCollectionSubscription }
 import cats.data.{ Xor, XorT }
 import cats.free.Free
 import cats.instances.list._
@@ -21,7 +22,7 @@ import cats.syntax.traverse._
 class SharedCollectionProcesses[F[_]](
   implicit
   collectionServices: algebra.SharedCollection.Services[F],
-  firebaseNotificationsServices: Firebase.Services[F],
+  notificationsServices: Firebase.Services[F],
   googlePlayServices: GooglePlay.Services[F],
   subscriptionServices: algebra.Subscription.Services[F],
   userServices: algebra.User.Services[F]
@@ -113,31 +114,23 @@ class SharedCollectionProcesses[F[_]](
   def sendNotifications(
     publicIdentifier: String,
     packagesName: List[Package]
-  ): Free[F, List[FirebaseError Xor NotificationResponse]] = {
-
-    def toUpdateCollectionNotificationInfoList(installations: List[Installation]) =
-      installations.flatMap(_.deviceToken).grouped(1000).toList
-
-    def sendNotificationsByDeviceTokenGroup(
-      publicIdentifier: String,
-      packagesName: List[Package]
-    )(
-      deviceTokens: List[DeviceToken]
-    ) =
-      firebaseNotificationsServices.sendUpdatedCollectionNotification(
-        UpdatedCollectionNotificationInfo(deviceTokens, publicIdentifier, packagesName)
-      )
+  ): NineCardsService[F, SendNotificationResponse] = {
 
     if (packagesName.isEmpty)
-      List.empty[FirebaseError Xor NotificationResponse].toFree
-    else
-      userServices.getSubscribedInstallationByCollection(publicIdentifier) flatMap {
-        installations ⇒
-          toUpdateCollectionNotificationInfoList(installations)
-            .traverse[Free[F, ?], FirebaseError Xor NotificationResponse] {
-              sendNotificationsByDeviceTokenGroup(publicIdentifier, packagesName)
-            }
-      }
+      NineCardsService.right[F, SendNotificationResponse](SendNotificationResponse.emptyResponse)
+    else {
+
+      for {
+        subscribers ← userServices.getSubscribedInstallationByCollection(publicIdentifier)
+        response ← notificationsServices.sendUpdatedCollectionNotification(
+          UpdatedCollectionNotificationInfo(
+            deviceTokens     = subscribers flatMap (_.deviceToken),
+            publicIdentifier = publicIdentifier,
+            packagesName     = packagesName
+          )
+        )
+      } yield response
+    }
   }
 
   def updateCollection(
@@ -172,7 +165,7 @@ class SharedCollectionProcesses[F[_]](
       for {
         updateInfo ← updateCollectionAndPackages(publicIdentifier, collectionInfo, packages).toXorT
         (addedPackages, removedPackages) = updateInfo
-        _ ← sendNotifications(publicIdentifier, addedPackages).rightXorT[Throwable]
+        _ ← sendNotifications(publicIdentifier, addedPackages).value.rightXorT[Throwable]
       } yield CreateOrUpdateCollectionResponse(
         publicIdentifier,
         packagesStats = (PackagesStats.apply _).tupled((addedPackages.size, Option(removedPackages.size)))

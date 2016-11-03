@@ -47,11 +47,15 @@ trait BasicDatabaseContext extends DummyConfig {
 
   def deleteItems(sql: String): ConnectionIO[Int] = Update0(sql, None).run
 
+  def getItem[A: Composite, B: Composite](sql: String, values: A): ConnectionIO[B] =
+    Query[A, B](sql).unique(values)
+
   def getItems[A: Composite](sql: String): ConnectionIO[List[A]] =
     Query[HNil, A](sql, None).toQuery0(HNil).to[List]
 
   implicit class Transacting[A](operation: ConnectionIO[A])(implicit transactor: Transactor[Task]) {
     def transactAndRun: A = operation.transact(transactor).unsafePerformSync
+
     def transactAndAttempt: \/[Throwable, A] = operation.transact(transactor).unsafePerformSyncAttempt
   }
 }

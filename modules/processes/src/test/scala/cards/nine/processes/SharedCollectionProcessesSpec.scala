@@ -1,7 +1,6 @@
 package cards.nine.processes
 
-import cats.data.Xor
-import cats.free.Free
+import cards.nine.commons.NineCardsService
 import cards.nine.processes.NineCardsServices._
 import cards.nine.processes.TestData.Exceptions._
 import cards.nine.processes.TestData.Messages._
@@ -11,6 +10,7 @@ import cards.nine.processes.messages.SharedCollectionMessages._
 import cards.nine.services.free.algebra
 import cards.nine.services.free.algebra.{ Firebase, GooglePlay }
 import cards.nine.services.free.domain._
+import cats.free.Free
 import org.mockito.Matchers.{ eq ⇒ mockEq }
 import org.specs2.ScalaCheck
 import org.specs2.matcher.{ Matchers, XorMatchers }
@@ -95,7 +95,8 @@ trait SharedCollectionProcessesSpecification
       packages   = updatePackagesName
     ) returns Free.pure(updatedPackages)
 
-    firebaseServices.sendUpdatedCollectionNotification(any) returns Free.pure(Xor.right(notificationResponse))
+    firebaseServices.sendUpdatedCollectionNotification(any) returns
+      NineCardsService.right(sendNotificationResponse)
 
     subscriptionServices
       .add(any, any, any) returns
@@ -109,7 +110,7 @@ trait SharedCollectionProcessesSpecification
     googlePlayServices.resolveManyBasic(any, any) returns Free.pure(appsInfoBasic)
 
     userServices.getSubscribedInstallationByCollection(any) returns
-      Free.pure(List(installation))
+      NineCardsService.right(List(installation))
   }
 
   trait SharedCollectionUnsuccessfulScope extends BasicScope {

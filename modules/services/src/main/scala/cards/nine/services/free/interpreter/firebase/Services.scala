@@ -1,11 +1,16 @@
 package cards.nine.services.free.interpreter.firebase
 
 import cards.nine.commons.config.Domain.GoogleFirebaseConfiguration
+import cards.nine.commons.NineCardsErrors._
+import cards.nine.commons.NineCardsService.Result
+import cards.nine.commons.TaskInstances._
 import cards.nine.services.free.algebra.Firebase._
 import cards.nine.services.free.domain.Firebase._
 import cards.nine.services.free.interpreter.firebase.Decoders._
 import cards.nine.services.free.interpreter.firebase.Encoders._
-import cats.data.Xor
+import cats.instances.all._
+import cats.syntax.either._
+import cats.syntax.traverse._
 import cats.~>
 import org.http4s.Http4s._
 import org.http4s.Uri.{ Authority, RegName }
@@ -32,32 +37,49 @@ class Services(config: GoogleFirebaseConfiguration) extends (Ops ~> Task) {
 
   private[this] val baseRequest = Request(Method.POST, uri = uri, headers = authHeaders)
 
-  def sendUpdatedCollectionNotification(
-    info: UpdatedCollectionNotificationInfo
-  ): Task[FirebaseError Xor NotificationResponse] = {
+  def sendUpdatedCollectionNotification(info: UpdatedCollectionNotificationInfo): Task[Result[SendNotificationResponse]] = {
 
-    val notificationRequest = SendNotificationRequest(
-      registration_ids = info.deviceTokens,
-      data             = SendNotificationPayload(
-        payloadType = "sharedCollection",
-        payload     = UpdateCollectionNotificationPayload(
-          publicIdentifier = info.publicIdentifier,
-          addedPackages    = info.packagesName
-        )
-      )
+    def toSendNotificationResponse(responses: List[NotificationResponse]) = SendNotificationResponse(
+      multicastIds = responses.map(_.multicast_id),
+      success      = responses.map(_.success).sum,
+      failure      = responses.map(_.failure).sum,
+      canonicalIds = responses.map(_.canonical_ids).sum,
+      results      = responses.flatMap(_.results.toList.flatten)
     )
 
-    val request = baseRequest
-      .withBody[SendNotificationRequest[UpdateCollectionNotificationPayload]](notificationRequest)
+    def doRequest(request: SendNotificationRequest[UpdateCollectionNotificationPayload]) = {
 
-    client.expect[NotificationResponse](request)
-      .map(Xor.right[FirebaseError, NotificationResponse])
-      .handle {
-        case e: UnexpectedStatus ⇒ e.status match {
-          case Status.BadRequest ⇒ Xor.left(FirebaseBadRequest)
-          case Status.Unauthorized ⇒ Xor.left(FirebaseUnauthorized)
+      val httpRequest: Task[Request] =
+        baseRequest.withBody[SendNotificationRequest[UpdateCollectionNotificationPayload]](request)
+
+      client.expect[NotificationResponse](httpRequest)
+        .map(Either.right)
+        .handle {
+          case e: UnexpectedStatus ⇒ e.status match {
+            case Status.BadRequest ⇒ Either.left(HttpBadRequest("Bad request while sending notifications"))
+            case Status.Unauthorized ⇒ Either.left(HttpUnauthorized("Wrong credentials while sending notifications"))
+            case _ ⇒ Either.left(FirebaseServerError("Unexpected error while sending notifications"))
+          }
         }
-      }
+    }
+
+    val notificationRequests = info.deviceTokens.grouped(1000) map { deviceTokens ⇒
+      SendNotificationRequest(
+        registration_ids = deviceTokens,
+        data             = SendNotificationPayload(
+          payloadType = "sharedCollection",
+          payload     = UpdateCollectionNotificationPayload(
+            publicIdentifier = info.publicIdentifier,
+            addedPackages    = info.packagesName
+          )
+        )
+      )
+    }
+
+    notificationRequests
+      .toList
+      .traverse(doRequest)
+      .map(responses ⇒ responses.sequenceU.map(toSendNotificationResponse))
   }
 
   def apply[A](fa: Ops[A]): Task[A] = fa match {
