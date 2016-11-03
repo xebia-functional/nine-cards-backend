@@ -7,29 +7,35 @@ import cards.nine.commons.NineCardsErrors._
 import cards.nine.commons.NineCardsService.Result
 import cards.nine.commons.TaskInstances._
 import cards.nine.commons.config.NineCardsConfig._
+import cards.nine.commons.config.Domain.RankingsOAuthConfiguration
 import cards.nine.domain.analytics._
+import cards.nine.domain.oauth.ServiceAccount
 import cards.nine.domain.pagination.Page
 import cards.nine.processes.RankingProcesses
 import cards.nine.processes.messages.rankings.Reload._
 import cats.~>
 import org.joda.time.{ DateTime, DateTimeZone }
-
 import scalaz.{ -\/, \/, \/- }
 import scalaz.concurrent.Task
+import shapeless.LabelledGeneric
 
 class RankingActor[F[_]](interpreter: F ~> Task)(implicit rankingProcesses: RankingProcesses[F]) extends Actor {
   implicit val system = ActorSystem("on-spray-can")
   val log = Logging(system, getClass)
 
   private[this] def generateRankings = {
-    val countriesPerRequest = nineCardsConfiguration.rankings.countriesPerRequest
-    val maxNumberOfAppsPerCategory = nineCardsConfiguration.rankings.maxNumberOfAppsPerCategory
-    val rankingPeriod = nineCardsConfiguration.rankings.rankingPeriod
+    import nineCardsConfiguration.rankings._
 
     val now = DateTime.now(DateTimeZone.UTC)
     val today = now.withTimeAtStartOfDay
 
     val pageNumber = ((now.getDayOfWeek - 1) * 24 + now.getHourOfDay) * countriesPerRequest
+
+    val serviceAccount = {
+      val oauthConfigLG = LabelledGeneric[RankingsOAuthConfiguration]
+      val serviceAccountLG = LabelledGeneric[ServiceAccount]
+      serviceAccountLG.from(oauthConfigLG.to(oauth))
+    }
 
     rankingProcesses.reloadRankingForCountries(
       Request(
@@ -38,7 +44,7 @@ class RankingActor[F[_]](interpreter: F ~> Task)(implicit rankingProcesses: Rank
           today
         ),
         maxNumberOfAppsPerCategory,
-        nineCardsConfiguration.rankings.oauth,
+        serviceAccount,
         Page(pageNumber, countriesPerRequest)
       )
     )

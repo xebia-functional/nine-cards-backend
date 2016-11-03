@@ -2,7 +2,6 @@ package cards.nine.commons.config
 
 import org.joda.time.Period
 import org.joda.time.format.PeriodFormat
-import cards.nine.domain.oauth.ServiceAccount
 
 import scala.concurrent.duration.{ Duration, FiniteDuration }
 
@@ -309,7 +308,7 @@ object Domain {
   }
 
   case class RankingsConfiguration(
-    oauth: ServiceAccount,
+    oauth: RankingsOAuthConfiguration,
     actorInterval: FiniteDuration,
     rankingPeriod: Period,
     countriesPerRequest: Int,
@@ -326,7 +325,7 @@ object Domain {
       val prefix = s"$parentPrefix.rankings"
 
       RankingsConfiguration(
-        loadServiceAccount(config, s"$prefix.oauth"),
+        RankingsOAuthConfiguration(config, prefix),
         convertToFiniteDuration(config.getString(s"$prefix.actorInterval")),
         PeriodFormat.getDefault.parsePeriod(config.getString(s"$prefix.rankingPeriod")),
         config.getInt(s"$prefix.countriesPerRequest"),
@@ -334,8 +333,22 @@ object Domain {
       )
     }
 
-    def loadServiceAccount(config: NineCardsConfig, prefix: String) =
-      ServiceAccount(
+  }
+
+  case class RankingsOAuthConfiguration(
+    clientId: String,
+    clientEmail: String,
+    privateKey: String,
+    privateKeyId: String,
+    tokenUri: String,
+    scopes: List[String]
+  )
+
+  object RankingsOAuthConfiguration {
+
+    def apply(config: NineCardsConfig, parentPrefix: String): RankingsOAuthConfiguration = {
+      val prefix = s"$parentPrefix.oauth"
+      RankingsOAuthConfiguration(
         clientId     = config.getString(s"$prefix.clientId"),
         clientEmail  = config.getString(s"$prefix.clientEmail"),
         privateKey   = config.getString(s"$prefix.privateKey"),
@@ -343,7 +356,7 @@ object Domain {
         tokenUri     = config.getString(s"$prefix.tokenUri"),
         scopes       = config.getStringList(s"$prefix.scopes")
       )
-
+    }
   }
 
   case class RedisConfiguration(

@@ -48,14 +48,9 @@ class RankingProcesses[F[_]](
       }
     }
 
-    val rankingParamsS: NineCardsService[F, RankingParams] =
-      for {
-        accessToken ← oauthServices.fetchAcessToken(serviceAccount)
-        token = AnalyticsToken(accessToken.value)
-      } yield RankingParams(dateRange, rankingLength, token)
-
     for {
-      params ← rankingParamsS
+      accessToken ← oauthServices.fetchAcessToken(serviceAccount)
+      params = RankingParams(dateRange, rankingLength, AnalyticsToken(accessToken.value))
       countries ← countryPersistence.getCountries(pageParams)
       countriesWithRanking ← analytics.getCountriesWithRanking(params)
       countriesCode = countries.map(c ⇒ CountryIsoCode(c.isoCode2))
