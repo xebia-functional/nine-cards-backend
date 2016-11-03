@@ -1,15 +1,15 @@
 package cards.nine.services.free.interpreter.user
 
+import cards.nine.commons.NineCardsErrors.{ InstallationNotFound, NineCardsError, UserNotFound }
 import cards.nine.domain.account._
 import cards.nine.domain.ScalaCheck._
 import cards.nine.services.free.domain.{ Installation, SharedCollection, SharedCollectionSubscription, User }
 import cards.nine.services.free.interpreter.collection.Services.SharedCollectionData
-import cards.nine.services.free.interpreter.user.Services.UserData
-import cards.nine.services.persistence.NineCardsGenEntities._
+import cards.nine.services.persistence.NineCardsGenEntities.PublicIdentifier
 import cards.nine.services.persistence.{ DomainDatabaseContext, NineCardsScalacheckGen }
 import doobie.contrib.postgresql.pgtypes._
 import org.specs2.ScalaCheck
-import org.specs2.matcher.DisjunctionMatchers
+import org.specs2.matcher.{ DisjunctionMatchers, MatchResult }
 import org.specs2.mutable.Specification
 import shapeless.syntax.std.product._
 
@@ -22,38 +22,75 @@ class ServicesSpec
 
   sequential
 
-  def generateSubscribedInstallation(
-    userData: UserData,
-    collectionData: SharedCollectionData,
-    androidId: AndroidId,
-    deviceToken: DeviceToken
-  ) = {
-    for {
-      _ ← deleteAllRows
-      u ← insertItem(User.Queries.insert, userData.toTuple)
-      i ← insertItem(Installation.Queries.insert, (u, Option(deviceToken.value), androidId.value))
-      c ← insertItem(SharedCollection.Queries.insert, collectionData.copy(userId = Option(u)).toTuple)
-      _ ← insertItemWithoutGeneratedKeys(
-        sql    = SharedCollectionSubscription.Queries.insert,
-        values = (c, u, collectionData.publicIdentifier)
-      )
-    } yield i
-  }.transactAndRun
+  object WithData {
+
+    def apply[A](apiKey: ApiKey, email: Email, sessionToken: SessionToken)(check: Long ⇒ MatchResult[A]) = {
+      val id = {
+        for {
+          _ ← deleteAllRows
+          id ← insertItem(User.Queries.insert, (email.value, sessionToken.value, apiKey.value))
+        } yield id
+      }.transactAndRun
+
+      check(id)
+    }
+
+    def apply[A](
+      apiKey: ApiKey,
+      email: Email,
+      sessionToken: SessionToken,
+      androidId: AndroidId
+    )(check: (Long, Long) ⇒ MatchResult[A]) = {
+      val (userId, installationId) = {
+        for {
+          _ ← deleteAllRows
+          u ← insertItem(User.Queries.insert, (email.value, sessionToken.value, apiKey.value))
+          i ← insertItem(Installation.Queries.insert, (u, emptyDeviceToken, androidId.value))
+        } yield (u, i)
+      }.transactAndRun
+
+      check(userId, installationId)
+    }
+
+    def apply[A](
+      apiKey: ApiKey,
+      email: Email,
+      sessionToken: SessionToken,
+      androidId: AndroidId,
+      deviceToken: DeviceToken,
+      collectionData: SharedCollectionData
+    )(check: ⇒ MatchResult[A]) = {
+      {
+        for {
+          _ ← deleteAllRows
+          u ← insertItem(User.Queries.insert, (email.value, sessionToken.value, apiKey.value))
+          i ← insertItem(Installation.Queries.insert, (u, Option(deviceToken.value), androidId.value))
+          c ← insertItem(SharedCollection.Queries.insert, collectionData.copy(userId = Option(u)).toTuple)
+          _ ← insertItemWithoutGeneratedKeys(
+            sql    = SharedCollectionSubscription.Queries.insert,
+            values = (c, u, collectionData.publicIdentifier)
+          )
+        } yield (u, i, c)
+      }.transactAndRun
+
+      check
+    }
+  }
 
   "addUser" should {
     "new users can be created" in {
       prop { (apiKey: ApiKey, email: Email, sessionToken: SessionToken) ⇒
         WithEmptyDatabase {
           userPersistenceServices.addUser[Long](
-            email        = email,
-            apiKey       = apiKey,
+            email = email,
+            apiKey = apiKey,
             sessionToken = sessionToken
           ).transactAndRun
 
-          val storeUser = userPersistenceServices.getUserByEmail(email).transactAndRun
+          val user = getItem[String, User](User.Queries.getByEmail, email.value).transactAndRun
 
-          storeUser should beSome[User].which {
-            user ⇒ user.email shouldEqual email
+          user should beLike {
+            case user: User ⇒ user.email shouldEqual email
           }
         }
       }
@@ -61,90 +98,88 @@ class ServicesSpec
   }
 
   "getUserByEmail" should {
-    "return None if the table is empty" in {
+    "return an UserNotFound error if the table is empty" in {
       prop { (email: Email) ⇒
         WithEmptyDatabase {
-          val storeUser = userPersistenceServices.getUserByEmail(email).transactAndRun
-          storeUser should beNone
+          val user = userPersistenceServices.getUserByEmail(email).transactAndRun
+
+          user should beLeft(UserNotFound(s"User with email ${email.value} not found"))
         }
       }
     }
     "return an user if there is an user with the given email in the database" in {
       prop { (apiKey: ApiKey, email: Email, sessionToken: SessionToken) ⇒
-        val id: Long = userPersistenceServices.addUser[Long](
-          email        = email,
-          apiKey       = apiKey,
-          sessionToken = sessionToken
-        ).transactAndRun
 
-        val storeUser = userPersistenceServices.getUserByEmail(email).transactAndRun
+        WithData(apiKey, email, sessionToken) { id ⇒
+          val user = userPersistenceServices.getUserByEmail(email).transactAndRun
 
-        storeUser should beSome[User].which {
-          user ⇒
-            val expectedUser = User(
-              id           = id,
-              email        = email,
-              apiKey       = apiKey,
-              sessionToken = sessionToken,
-              banned       = false
-            )
-
-            user shouldEqual expectedUser
+          user should beRight[User].which {
+            user ⇒
+              user.id must_== id
+              user.apiKey must_== apiKey
+              user.email must_== email
+              user.sessionToken must_== sessionToken
+          }
         }
       }
     }
-    "return None if there isn't any user with the given email in the database" in {
+    "return an UserNotFound error if there isn't any user with the given email in the database" in {
       prop { (email: Email, sessionToken: SessionToken, apiKey: ApiKey) ⇒
-        val id: Long = userPersistenceServices.addUser[Long](
-          email        = email,
-          apiKey       = apiKey,
-          sessionToken = sessionToken
-        ).transactAndRun
-        val storeUser = userPersistenceServices.getUserByEmail(Email(email.value.reverse)).transactAndRun
 
-        storeUser should beNone
+        WithData(apiKey, email, sessionToken) { id ⇒
+          val wrongEmail = Email(email.value.reverse)
+
+          val user = userPersistenceServices.getUserByEmail(wrongEmail).transactAndRun
+
+          user should beLeft(UserNotFound(s"User with email ${wrongEmail.value} not found"))
+        }
       }
     }
   }
 
   "getUserBySessionToken" should {
-    "return None if the table is empty" in {
+    "return an UserNotFound error if the table is empty" in {
       prop { (email: Email, sessionToken: SessionToken) ⇒
         WithEmptyDatabase {
           val user = userPersistenceServices.getUserBySessionToken(
             sessionToken = sessionToken
           ).transactAndRun
 
-          user should beNone
+          user should beLeft(UserNotFound(s"User with sessionToken ${sessionToken.value} not found"))
         }
       }
     }
+
     "return an user if there is an user with the given sessionToken in the database" in {
       prop { (email: Email, sessionToken: SessionToken, apiKey: ApiKey) ⇒
-        insertItem(
-          sql    = User.Queries.insert,
-          values = (email.value, sessionToken.value, apiKey.value)
-        ).transactAndRun
 
-        val user = userPersistenceServices.getUserBySessionToken(
-          sessionToken = sessionToken
-        ).transactAndRun
+        WithData(apiKey, email, sessionToken) { id ⇒
 
-        user should beSome[User]
+          val user = userPersistenceServices.getUserBySessionToken(
+            sessionToken = sessionToken
+          ).transactAndRun
+
+          user should beRight[User].which {
+            user ⇒
+              user.id must_== id
+              user.apiKey must_== apiKey
+              user.email must_== email
+              user.sessionToken must_== sessionToken
+          }
+        }
       }
     }
-    "return None if there isn't any user with the given sessionToken in the database" in {
+
+    "return an UserNotFound error if there isn't any user with the given sessionToken in the database" in {
       prop { (email: Email, sessionToken: SessionToken, apiKey: ApiKey) ⇒
-        insertItem(
-          sql    = User.Queries.insert,
-          values = (email.value, sessionToken.value, apiKey.value)
-        ).transactAndRun
 
-        val user = userPersistenceServices.getUserBySessionToken(
-          sessionToken = SessionToken(sessionToken.value.reverse)
-        ).transactAndRun
+        WithData(apiKey, email, sessionToken) { id ⇒
+          val wrongSessionToken = SessionToken(sessionToken.value.reverse)
 
-        user should beNone
+          val user = userPersistenceServices.getUserBySessionToken(wrongSessionToken).transactAndRun
+
+          user should beLeft(UserNotFound(s"User with sessionToken ${wrongSessionToken.value} not found"))
+        }
       }
     }
   }
@@ -152,119 +187,130 @@ class ServicesSpec
   "createInstallation" should {
     "new installation can be created" in {
       prop { (androidId: AndroidId, email: Email, sessionToken: SessionToken, apiKey: ApiKey) ⇒
-        val userId = insertItem(
-          sql    = User.Queries.insert,
-          values = (email.value, sessionToken.value, apiKey.value)
-        ).transactAndRun
 
-        userPersistenceServices.createInstallation[Long](
-          userId      = userId,
-          deviceToken = None,
-          androidId   = androidId
-        ).transactAndRun
+        WithData(apiKey, email, sessionToken) { userId ⇒
+          userPersistenceServices.createInstallation[Long](
+            userId      = userId,
+            deviceToken = None,
+            androidId   = androidId
+          ).transactAndRun
 
-        val storeInstallation = userPersistenceServices.getInstallationByUserAndAndroidId(
-          userId    = userId,
-          androidId = androidId
-        ).transactAndRun
+          val installation = getItem[(Long, String), Installation](
+            Installation.Queries.getByUserAndAndroidId,
+            (userId, androidId.value)
+          ).transactAndRun
 
-        storeInstallation should beSome[Installation].which { install ⇒
-          install.userId must_== userId
-          install.deviceToken must_== None
-          install.androidId must_== androidId
+          installation must beLike {
+            case install: Installation ⇒
+              install.userId must_== userId
+              install.deviceToken must_== None
+              install.androidId must_== androidId
+          }
         }
       }
     }
   }
 
   "getInstallationByUserAndAndroidId" should {
-    "return None if the table is empty" in {
+    "return an InstallationNotFound error if the table is empty" in {
       prop { (androidId: AndroidId, userId: Long) ⇒
         WithEmptyDatabase {
-          val storeInstallation = userPersistenceServices.getInstallationByUserAndAndroidId(
-            userId    = userId,
+          val installation = userPersistenceServices.getInstallationByUserAndAndroidId(
+            userId = userId,
             androidId = androidId
           ).transactAndRun
 
-          storeInstallation should beNone
+        installation must beLeft(InstallationNotFound(s"Installation for android id ${androidId.value} not found"))
         }
       }
     }
     "installations can be queried by their userId and androidId" in {
       prop { (androidId: AndroidId, email: Email, sessionToken: SessionToken, apiKey: ApiKey) ⇒
-        val userId = insertItem(
-          sql    = User.Queries.insert,
-          values = (email.value, sessionToken.value, apiKey.value)
-        ).transactAndRun
 
-        val id = insertItem(
-          sql    = Installation.Queries.insert,
-          values = (userId, emptyDeviceToken, androidId.value)
-        ).transactAndRun
+        WithData(apiKey, email, sessionToken, androidId) { (userId, installationId) ⇒
 
-        val storeInstallation = userPersistenceServices.getInstallationByUserAndAndroidId(
-          userId    = userId,
-          androidId = androidId
-        ).transactAndRun
+          val installation = userPersistenceServices.getInstallationByUserAndAndroidId(
+            userId    = userId,
+            androidId = androidId
+          ).transactAndRun
 
-        storeInstallation should beSome[Installation].which {
-          install ⇒ install.id shouldEqual id
+          installation should beRight[Installation].which {
+            install ⇒ install.id must_== installationId
+          }
         }
       }
     }
-    "return None if there isn't any installation with the given userId and androidId in the database" in {
-      prop { (androidId: AndroidId, email: Email, sessionToken: SessionToken, apiKey: ApiKey) ⇒
-        val userId = insertItem(
-          sql    = User.Queries.insert,
-          values = (email.value, sessionToken.value, apiKey.value)
-        ).transactAndRun
-        val id = insertItem(
-          sql    = Installation.Queries.insert,
-          values = (userId, emptyDeviceToken, androidId.value)
-        ).transactAndRun
+    "return an InstallationNotFound error if there isn't any installation with the given userId " +
+      "and androidId in the database" in {
+        prop { (androidId: AndroidId, email: Email, sessionToken: SessionToken, apiKey: ApiKey) ⇒
 
-        val storeInstallation = userPersistenceServices.getInstallationByUserAndAndroidId(
-          userId    = userId,
-          androidId = AndroidId(androidId.value.reverse)
-        ).transactAndRun
+          WithData(apiKey, email, sessionToken, androidId) { (userId, installationId) ⇒
 
-        storeInstallation should beNone
+            val wrongAndroidId = AndroidId(androidId.value.reverse)
+
+            val installation = userPersistenceServices.getInstallationByUserAndAndroidId(
+              userId    = userId,
+              androidId = wrongAndroidId
+            ).transactAndRun
+
+            installation must beLeft(InstallationNotFound(s"Installation for android id ${wrongAndroidId.value} not found"))
+          }
+        }
       }
-    }
   }
 
   "getSubscribedInstallationByCollection" should {
     "return an empty list if the table is empty" in {
       prop { (publicIdentifier: PublicIdentifier) ⇒
         WithEmptyDatabase {
-          val storeInstallation = userPersistenceServices.getSubscribedInstallationByCollection(
+          val installation = userPersistenceServices.getSubscribedInstallationByCollection(
             publicIdentifier = publicIdentifier.value
           ).transactAndRun
 
-          storeInstallation must beEmpty
+          installation must beRight[List[Installation]](Nil)
         }
       }
     }
     "return a list of installations that are subscribed to the collection" in {
-      prop { (userData: UserData, collectionData: SharedCollectionData, androidId: AndroidId, deviceToken: DeviceToken) ⇒
-        generateSubscribedInstallation(userData, collectionData, androidId, deviceToken)
+      prop { (
+        email: Email,
+        sessionToken: SessionToken,
+        apiKey: ApiKey,
+        collectionData: SharedCollectionData,
+        androidId: AndroidId,
+        deviceToken: DeviceToken
+      ) ⇒
 
-        val storeInstallation = userPersistenceServices.getSubscribedInstallationByCollection(
-          publicIdentifier = collectionData.publicIdentifier
-        ).transactAndRun
+        WithData(apiKey, email, sessionToken, androidId, deviceToken, collectionData) {
 
-        storeInstallation must haveSize(be_>(0))
+          val installation = userPersistenceServices.getSubscribedInstallationByCollection(
+            publicIdentifier = collectionData.publicIdentifier
+          ).transactAndRun
+
+          installation must beRight[List[Installation]].which { list ⇒
+            list must haveSize(be_>(0))
+          }
+        }
       }
     }
     "return an empty list if there is no installation subscribed to the collection" in {
-      prop { (userData: UserData, collectionData: SharedCollectionData, androidId: AndroidId, deviceToken: DeviceToken) ⇒
-        generateSubscribedInstallation(userData, collectionData, androidId, deviceToken)
+      prop { (
+        email: Email,
+        sessionToken: SessionToken,
+        apiKey: ApiKey,
+        collectionData: SharedCollectionData,
+        androidId: AndroidId,
+        deviceToken: DeviceToken
+      ) ⇒
 
-        val storeInstallation = userPersistenceServices.getSubscribedInstallationByCollection(
-          publicIdentifier = collectionData.publicIdentifier.reverse
-        ).transactAndRun
+        WithData(apiKey, email, sessionToken, androidId, deviceToken, collectionData) {
 
-        storeInstallation must beEmpty
+          val installation = userPersistenceServices.getSubscribedInstallationByCollection(
+            publicIdentifier = collectionData.publicIdentifier.reverse
+          ).transactAndRun
+
+          installation must beRight[List[Installation]](Nil)
+        }
       }
     }
   }
