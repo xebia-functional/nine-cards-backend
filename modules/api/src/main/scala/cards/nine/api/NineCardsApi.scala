@@ -20,7 +20,6 @@ import cards.nine.domain.pagination.Page
 import cards.nine.processes._
 import cards.nine.processes.NineCardsServices._
 import cats.data.Xor
-import cats.syntax.either._
 
 import scala.concurrent.ExecutionContext
 import spray.http.StatusCodes.NotFound
@@ -77,7 +76,7 @@ class NineCardsRoutes(
             complete {
               userProcesses
                 .signUpUser(toLoginRequest(request, sessionToken))
-                .map(result ⇒ result map toApiLoginResponse)
+                .map(toApiLoginResponse)
             }
           }
         }
@@ -144,7 +143,7 @@ class NineCardsRoutes(
             complete {
               userProcesses
                 .updateInstallation(toUpdateInstallationRequest(request, userContext))
-                .map(result ⇒ result map toApiUpdateInstallationResponse)
+                .map(toApiUpdateInstallationResponse)
             }
           }
         }
@@ -271,7 +270,7 @@ class NineCardsRoutes(
   private[this] def updateInstallation(request: ApiUpdateInstallationRequest, userContext: UserContext) =
     userProcesses
       .updateInstallation(toUpdateInstallationRequest(request, userContext))
-      .map(response ⇒ response map toApiUpdateInstallationResponse)
+      .map(toApiUpdateInstallationResponse)
 
   private[this] def getCollection(
     publicId: PublicIdentifier,

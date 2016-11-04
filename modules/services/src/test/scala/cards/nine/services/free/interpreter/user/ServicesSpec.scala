@@ -5,6 +5,7 @@ import cards.nine.domain.account._
 import cards.nine.domain.ScalaCheck._
 import cards.nine.services.free.domain.{ Installation, SharedCollection, SharedCollectionSubscription, User }
 import cards.nine.services.free.interpreter.collection.Services.SharedCollectionData
+import cards.nine.services.free.interpreter.user.Services.UserData
 import cards.nine.services.persistence.NineCardsGenEntities.PublicIdentifier
 import cards.nine.services.persistence.{ DomainDatabaseContext, NineCardsScalacheckGen }
 import doobie.contrib.postgresql.pgtypes._
@@ -24,27 +25,22 @@ class ServicesSpec
 
   object WithData {
 
-    def apply[A](apiKey: ApiKey, email: Email, sessionToken: SessionToken)(check: Long ⇒ MatchResult[A]) = {
+    def apply[A](userData: UserData)(check: Long ⇒ MatchResult[A]) = {
       val id = {
         for {
           _ ← deleteAllRows
-          id ← insertItem(User.Queries.insert, (email.value, sessionToken.value, apiKey.value))
+          id ← insertItem(User.Queries.insert, userData.toTuple)
         } yield id
       }.transactAndRun
 
       check(id)
     }
 
-    def apply[A](
-      apiKey: ApiKey,
-      email: Email,
-      sessionToken: SessionToken,
-      androidId: AndroidId
-    )(check: (Long, Long) ⇒ MatchResult[A]) = {
+    def apply[A](userData: UserData, androidId: AndroidId)(check: (Long, Long) ⇒ MatchResult[A]) = {
       val (userId, installationId) = {
         for {
           _ ← deleteAllRows
-          u ← insertItem(User.Queries.insert, (email.value, sessionToken.value, apiKey.value))
+          u ← insertItem(User.Queries.insert, userData.toTuple)
           i ← insertItem(Installation.Queries.insert, (u, emptyDeviceToken, androidId.value))
         } yield (u, i)
       }.transactAndRun
@@ -53,9 +49,7 @@ class ServicesSpec
     }
 
     def apply[A](
-      apiKey: ApiKey,
-      email: Email,
-      sessionToken: SessionToken,
+      userData: UserData,
       androidId: AndroidId,
       deviceToken: DeviceToken,
       collectionData: SharedCollectionData
@@ -63,7 +57,7 @@ class ServicesSpec
       {
         for {
           _ ← deleteAllRows
-          u ← insertItem(User.Queries.insert, (email.value, sessionToken.value, apiKey.value))
+          u ← insertItem(User.Queries.insert, userData.toTuple)
           i ← insertItem(Installation.Queries.insert, (u, Option(deviceToken.value), androidId.value))
           c ← insertItem(SharedCollection.Queries.insert, collectionData.copy(userId = Option(u)).toTuple)
           _ ← insertItemWithoutGeneratedKeys(
@@ -79,18 +73,18 @@ class ServicesSpec
 
   "addUser" should {
     "new users can be created" in {
-      prop { (apiKey: ApiKey, email: Email, sessionToken: SessionToken) ⇒
+      prop { userData: UserData ⇒
         WithEmptyDatabase {
           userPersistenceServices.addUser[Long](
-            email = email,
-            apiKey = apiKey,
-            sessionToken = sessionToken
+            email = Email(userData.email),
+            apiKey = ApiKey(userData.apiKey),
+            sessionToken = SessionToken(userData.sessionToken)
           ).transactAndRun
 
-          val user = getItem[String, User](User.Queries.getByEmail, email.value).transactAndRun
+          val user = getItem[String, User](User.Queries.getByEmail, userData.email).transactAndRun
 
-          user should beLike {
-            case user: User ⇒ user.email shouldEqual email
+          user must beLike {
+            case user: User ⇒ user.email.value must_== userData.email
           }
         }
       }
@@ -108,26 +102,26 @@ class ServicesSpec
       }
     }
     "return an user if there is an user with the given email in the database" in {
-      prop { (apiKey: ApiKey, email: Email, sessionToken: SessionToken) ⇒
+      prop { userData: UserData ⇒
 
-        WithData(apiKey, email, sessionToken) { id ⇒
-          val user = userPersistenceServices.getUserByEmail(email).transactAndRun
+        WithData(userData) { id ⇒
+          val user = userPersistenceServices.getUserByEmail(Email(userData.email)).transactAndRun
 
           user should beRight[User].which {
             user ⇒
               user.id must_== id
-              user.apiKey must_== apiKey
-              user.email must_== email
-              user.sessionToken must_== sessionToken
+              user.apiKey.value must_== userData.apiKey
+              user.email.value must_== userData.email
+              user.sessionToken.value must_== userData.sessionToken
           }
         }
       }
     }
     "return an UserNotFound error if there isn't any user with the given email in the database" in {
-      prop { (email: Email, sessionToken: SessionToken, apiKey: ApiKey) ⇒
+      prop { userData: UserData ⇒
 
-        WithData(apiKey, email, sessionToken) { id ⇒
-          val wrongEmail = Email(email.value.reverse)
+        WithData(userData) { id ⇒
+          val wrongEmail = Email(userData.email.reverse)
 
           val user = userPersistenceServices.getUserByEmail(wrongEmail).transactAndRun
 
@@ -151,30 +145,30 @@ class ServicesSpec
     }
 
     "return an user if there is an user with the given sessionToken in the database" in {
-      prop { (email: Email, sessionToken: SessionToken, apiKey: ApiKey) ⇒
+      prop { userData: UserData ⇒
 
-        WithData(apiKey, email, sessionToken) { id ⇒
+        WithData(userData) { id ⇒
 
           val user = userPersistenceServices.getUserBySessionToken(
-            sessionToken = sessionToken
+            sessionToken = SessionToken(userData.sessionToken)
           ).transactAndRun
 
           user should beRight[User].which {
             user ⇒
               user.id must_== id
-              user.apiKey must_== apiKey
-              user.email must_== email
-              user.sessionToken must_== sessionToken
+              user.apiKey.value must_== userData.apiKey
+              user.email.value must_== userData.email
+              user.sessionToken.value must_== userData.sessionToken
           }
         }
       }
     }
 
     "return an UserNotFound error if there isn't any user with the given sessionToken in the database" in {
-      prop { (email: Email, sessionToken: SessionToken, apiKey: ApiKey) ⇒
+      prop { userData: UserData ⇒
 
-        WithData(apiKey, email, sessionToken) { id ⇒
-          val wrongSessionToken = SessionToken(sessionToken.value.reverse)
+        WithData(userData) { id ⇒
+          val wrongSessionToken = SessionToken(userData.sessionToken.reverse)
 
           val user = userPersistenceServices.getUserBySessionToken(wrongSessionToken).transactAndRun
 
@@ -186,9 +180,9 @@ class ServicesSpec
 
   "createInstallation" should {
     "new installation can be created" in {
-      prop { (androidId: AndroidId, email: Email, sessionToken: SessionToken, apiKey: ApiKey) ⇒
+      prop { (androidId: AndroidId, userData: UserData) ⇒
 
-        WithData(apiKey, email, sessionToken) { userId ⇒
+        WithData(userData) { userId ⇒
           userPersistenceServices.createInstallation[Long](
             userId      = userId,
             deviceToken = None,
@@ -225,9 +219,9 @@ class ServicesSpec
       }
     }
     "installations can be queried by their userId and androidId" in {
-      prop { (androidId: AndroidId, email: Email, sessionToken: SessionToken, apiKey: ApiKey) ⇒
+      prop { (androidId: AndroidId, userData: UserData) ⇒
 
-        WithData(apiKey, email, sessionToken, androidId) { (userId, installationId) ⇒
+        WithData(userData, androidId) { (userId, installationId) ⇒
 
           val installation = userPersistenceServices.getInstallationByUserAndAndroidId(
             userId    = userId,
@@ -242,9 +236,9 @@ class ServicesSpec
     }
     "return an InstallationNotFound error if there isn't any installation with the given userId " +
       "and androidId in the database" in {
-        prop { (androidId: AndroidId, email: Email, sessionToken: SessionToken, apiKey: ApiKey) ⇒
+        prop { (androidId: AndroidId, userData: UserData) ⇒
 
-          WithData(apiKey, email, sessionToken, androidId) { (userId, installationId) ⇒
+          WithData(userData, androidId) { (userId, installationId) ⇒
 
             val wrongAndroidId = AndroidId(androidId.value.reverse)
 
@@ -272,16 +266,9 @@ class ServicesSpec
       }
     }
     "return a list of installations that are subscribed to the collection" in {
-      prop { (
-        email: Email,
-        sessionToken: SessionToken,
-        apiKey: ApiKey,
-        collectionData: SharedCollectionData,
-        androidId: AndroidId,
-        deviceToken: DeviceToken
-      ) ⇒
+      prop { (userData: UserData, collectionData: SharedCollectionData, androidId: AndroidId, deviceToken: DeviceToken) ⇒
 
-        WithData(apiKey, email, sessionToken, androidId, deviceToken, collectionData) {
+        WithData(userData, androidId, deviceToken, collectionData) {
 
           val installation = userPersistenceServices.getSubscribedInstallationByCollection(
             publicIdentifier = collectionData.publicIdentifier
@@ -294,16 +281,9 @@ class ServicesSpec
       }
     }
     "return an empty list if there is no installation subscribed to the collection" in {
-      prop { (
-        email: Email,
-        sessionToken: SessionToken,
-        apiKey: ApiKey,
-        collectionData: SharedCollectionData,
-        androidId: AndroidId,
-        deviceToken: DeviceToken
-      ) ⇒
+      prop { (userData: UserData, collectionData: SharedCollectionData, androidId: AndroidId, deviceToken: DeviceToken) ⇒
 
-        WithData(apiKey, email, sessionToken, androidId, deviceToken, collectionData) {
+        WithData(userData, androidId, deviceToken, collectionData) {
 
           val installation = userPersistenceServices.getSubscribedInstallationByCollection(
             publicIdentifier = collectionData.publicIdentifier.reverse
