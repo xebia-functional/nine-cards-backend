@@ -13,7 +13,7 @@ package object getcard {
 }
 
 object ResolveMany {
-  case class Response(notFound: List[Package], pending: List[Package], apps: List[FullCard])
+  case class Response[A](notFound: List[Package], pending: List[Package], apps: List[A])
 }
 
 object ResolvePending {

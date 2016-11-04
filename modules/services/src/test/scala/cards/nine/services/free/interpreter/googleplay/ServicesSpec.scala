@@ -144,7 +144,7 @@ class GooglePlayServicesSpec
       googlePlayProcesses.getCards(packages, AuthData.marketAuth) returns
         Free.pure(GooglePlayResponses.resolveManyResponse)
 
-      val response = services.resolveMany(packages, AuthData.marketAuth, true)
+      val response = services.resolveManyDetailed(packages, AuthData.marketAuth)
 
       response.unsafePerformSyncAttempt must be_\/-[FullCardList].which { appsInfo ⇒
         appsInfo.missing must containTheSameElementsAs(wrongPackages)

@@ -2,7 +2,7 @@ package cards.nine.processes
 
 import cards.nine.commons.FreeUtils._
 import cards.nine.domain.account.DeviceToken
-import cards.nine.domain.application.{ FullCardList, Package }
+import cards.nine.domain.application.{ BasicCardList, Package }
 import cards.nine.domain.market.MarketCredentials
 import cards.nine.processes.ProcessesExceptions.SharedCollectionNotFoundException
 import cards.nine.processes.converters.Converters._
@@ -191,7 +191,7 @@ class SharedCollectionProcesses[F[_]](
     collection: SharedCollection,
     marketAuth: MarketCredentials
   ): XorT[Free[F, ?], Throwable, GetCollectionByPublicIdentifierResponse] = {
-    googlePlayServices.resolveMany(collection.packages, marketAuth, true) map { appsInfo ⇒
+    googlePlayServices.resolveManyDetailed(collection.packages, marketAuth) map { appsInfo ⇒
       GetCollectionByPublicIdentifierResponse(
         toSharedCollectionWithAppsInfo(collection, appsInfo.cards)
       )
@@ -207,18 +207,17 @@ class SharedCollectionProcesses[F[_]](
     def getGooglePlayInfoForPackages(
       collections: List[SharedCollection],
       marketAuth: MarketCredentials
-    ): Free[F, FullCardList] = {
+    ): Free[F, BasicCardList] = {
       val packages = collections.flatMap(_.packages).distinct
-      googlePlayServices.resolveMany(packages, marketAuth, false)
+      googlePlayServices.resolveManyBasic(packages, marketAuth)
     }
 
     def fillGooglePlayInfoForPackages(
       collections: List[SharedCollection],
-      appsInfo: FullCardList
+      appsInfo: BasicCardList
     ) = GetCollectionsResponse {
       collections map { collection ⇒
         val foundAppInfo = appsInfo.cards.filter(a ⇒ collection.packages.contains(a.packageName))
-
         toSharedCollectionWithAppsInfo(collection, foundAppInfo)
       }
     }

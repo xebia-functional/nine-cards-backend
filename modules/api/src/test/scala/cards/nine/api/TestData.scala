@@ -149,9 +149,9 @@ object TestData {
       packages         = packagesName
     )
 
-    val sharedCollectionInfo = SharedCollectionWithAppsInfo(
+    def sharedCollectionInfo[A] = SharedCollectionWithAppsInfo[A](
       collection = sharedCollection,
-      appsInfo   = List.empty
+      appsInfo   = List.empty[A]
     )
 
     val apiGetAppsInfoRequest = ApiAppsInfoRequest(items = List("", "", "") map Package)

@@ -27,7 +27,7 @@ trait ApplicationProcessesSpecification
 
   trait SuccessfulScope extends BasicScope {
 
-    googlePlayServices.resolveMany(packagesName, marketAuth, true) returns Free.pure(appsInfo)
+    googlePlayServices.resolveManyDetailed(packagesName, marketAuth) returns Free.pure(appsInfo)
 
   }
 

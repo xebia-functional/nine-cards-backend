@@ -8,7 +8,7 @@ import cards.nine.api.messages.UserMessages._
 import cards.nine.commons.NineCardsService.Result
 import cards.nine.domain.account._
 import cards.nine.domain.analytics.{ RankedAppsByCategory, RankedWidgetsByMoment }
-import cards.nine.domain.application.{ FullCard, FullCardList, Package }
+import cards.nine.domain.application.{ BasicCard, BasicCardList, FullCard, FullCardList, Package }
 import cards.nine.domain.market.MarketCredentials
 import cards.nine.processes.messages.InstallationsMessages._
 import cards.nine.processes.messages.SharedCollectionMessages._
@@ -61,8 +61,7 @@ object Converters {
       packages   = request.packages
     )
 
-  @inline
-  def toApiSharedCollection(info: SharedCollectionWithAppsInfo): ApiSharedCollection =
+  def toApiSharedCollection[A](info: SharedCollectionWithAppsInfo[A])(toApiApp: A ⇒ ApiCollectionApp): ApiSharedCollection =
     ApiSharedCollection(
       publicIdentifier = info.collection.publicIdentifier,
       publishedOn      = info.collection.publishedOn,
@@ -75,7 +74,7 @@ object Converters {
       community        = info.collection.community,
       owned            = info.collection.owned,
       packages         = info.collection.packages,
-      appsInfo         = info.appsInfo map toApiCollectionApp,
+      appsInfo         = info.appsInfo map toApiApp,
       subscriptions    = info.collection.subscriptionsCount
     )
 
@@ -90,8 +89,19 @@ object Converters {
       categories  = card.categories
     )
 
+  def toApiCollectionApp(card: BasicCard): ApiCollectionApp =
+    ApiCollectionApp(
+      packageName = card.packageName,
+      title       = card.title,
+      free        = card.free,
+      icon        = card.icon,
+      stars       = card.stars,
+      downloads   = card.downloads,
+      categories  = Nil
+    )
+
   def toApiSharedCollectionList(response: GetCollectionsResponse): ApiSharedCollectionList =
-    ApiSharedCollectionList(response.collections map toApiSharedCollection)
+    ApiSharedCollectionList(response.collections map { col ⇒ toApiSharedCollection(col)(toApiCollectionApp) })
 
   def toUpdateInstallationRequest(
     request: ApiUpdateInstallationRequest,
@@ -165,6 +175,17 @@ object Converters {
       screenshots = card.screenshots
     )
 
+  def toApiRecommendation(card: BasicCard): ApiRecommendation =
+    ApiRecommendation(
+      packageName = card.packageName,
+      title       = card.title,
+      free        = card.free,
+      icon        = card.icon,
+      stars       = card.stars,
+      downloads   = card.downloads,
+      screenshots = Nil
+    )
+
   def toApiGetSubscriptionsByUser(response: GetSubscriptionsByUserResponse): ApiGetSubscriptionsByUser =
     ApiGetSubscriptionsByUser(
       subscriptions = response.subscriptions
@@ -175,7 +196,7 @@ object Converters {
       response.cards map toApiRecommendation
     )
 
-  def toApiSearchAppsResponse(response: FullCardList): ApiSearchAppsResponse =
+  def toApiSearchAppsResponse(response: BasicCardList): ApiSearchAppsResponse =
     ApiSearchAppsResponse(response.cards map toApiRecommendation)
 
   def toApiRankedAppsByCategory(ranking: RankedAppsByCategory) =

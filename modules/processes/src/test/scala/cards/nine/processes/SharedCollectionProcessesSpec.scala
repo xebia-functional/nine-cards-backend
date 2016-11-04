@@ -107,7 +107,8 @@ trait SharedCollectionProcessesSpecification
       .getByUser(any) returns
       Free.pure(List(subscription))
 
-    googlePlayServices.resolveMany(any, any, any) returns Free.pure(appsInfo)
+    googlePlayServices.resolveManyDetailed(any, any) returns Free.pure(appsInfo)
+    googlePlayServices.resolveManyBasic(any, any) returns Free.pure(appsInfoBasic)
 
     userServices.getSubscribedInstallationByCollection(any) returns
       Free.pure(List(installation))
@@ -163,7 +164,7 @@ class SharedCollectionProcessesSpec
   "getLatestCollectionsByCategory" should {
 
     "return a list of Shared collections of the given category" in new SharedCollectionSuccessfulScope {
-      val response = GetCollectionsResponse(List(sharedCollectionWithAppsInfo))
+      val response = GetCollectionsResponse(List(sharedCollectionWithAppsInfoBasic))
       val collectionsInfo = sharedCollectionProcesses.getLatestCollectionsByCategory(
         userId     = publisherId,
         category   = category,
@@ -213,7 +214,7 @@ class SharedCollectionProcessesSpec
   "getTopCollectionsByCategory" should {
 
     "return a list of Shared collections of the given category" in new SharedCollectionSuccessfulScope {
-      val response = GetCollectionsResponse(List(sharedCollectionWithAppsInfo))
+      val response = GetCollectionsResponse(List(sharedCollectionWithAppsInfoBasic))
       val collectionsInfo = sharedCollectionProcesses.getTopCollectionsByCategory(
         userId     = publisherId,
         category   = category,

@@ -1,6 +1,6 @@
 package cards.nine.googleplay.service.free.algebra
 
-import cards.nine.domain.application.{ FullCard, Package }
+import cards.nine.domain.application.{ FullCard, Package, BasicCard }
 import cards.nine.domain.market.MarketCredentials
 import cards.nine.googleplay.domain._
 import cards.nine.googleplay.domain.apigoogle._
@@ -12,7 +12,7 @@ object GoogleApi {
   sealed trait Ops[A]
 
   case class GetBulkDetails(packagesName: List[Package], marketAuth: MarketCredentials)
-    extends Ops[Failure Xor List[FullCard]]
+    extends Ops[Failure Xor List[BasicCard]]
 
   case class GetDetails(packageName: Package, marketAuth: MarketCredentials)
     extends Ops[Failure Xor FullCard]
@@ -31,7 +31,7 @@ object GoogleApi {
     def getBulkDetails(
       packagesName: List[Package],
       auth: MarketCredentials
-    ): Free[F, Failure Xor List[FullCard]] =
+    ): Free[F, Failure Xor List[BasicCard]] =
       Free.inject[Ops, F](GetBulkDetails(packagesName, auth))
 
     def getDetails(packageName: Package, auth: MarketCredentials): Free[F, Failure Xor FullCard] =

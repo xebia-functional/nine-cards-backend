@@ -275,7 +275,7 @@ class NineCardsRoutes(
         publicIdentifier = publicId.value,
         marketAuth       = toMarketAuth(googlePlayContext, userContext)
       )
-      .map(_.map(r ⇒ toApiSharedCollection(r.data)))
+      .map(_.map(r ⇒ toApiSharedCollection(r.data)(toApiCollectionApp)))
 
   private[this] def createCollection(
     request: ApiCreateCollectionRequest,

@@ -16,10 +16,9 @@ class ApplicationProcesses[F[_]](implicit services: GooglePlay.Services[F]) {
     if (packagesName.isEmpty)
       FullCardList(Nil, Nil).toFree
     else
-      services.resolveMany(
+      services.resolveManyDetailed(
         packageNames = packagesName,
-        auth         = marketAuth,
-        extendedInfo = true
+        auth         = marketAuth
       ) map filterCategorized
 }
 
