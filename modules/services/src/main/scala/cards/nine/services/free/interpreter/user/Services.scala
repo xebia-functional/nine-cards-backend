@@ -91,8 +91,8 @@ object Services {
 
   case class UserData(
     email: String,
-    apiKey: String,
-    sessionToken: String
+    sessionToken: String,
+    apiKey: String
   )
 
   def services(
