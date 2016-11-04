@@ -1,6 +1,6 @@
 package cards.nine.googleplay.util
 
-import cards.nine.domain.application.FullCard
+import cards.nine.domain.application.{ BasicCard, FullCard }
 import cards.nine.domain.ScalaCheck.arbPackage
 import cards.nine.domain.market.MarketCredentials
 import cards.nine.googleplay.domain._
@@ -69,6 +69,8 @@ object ScalaCheck_Aux {
       screenshots = List(),
       downloads   = ""
     )
+
+  val genBasicCard: Gen[BasicCard] = genFullCard.map(_.toBasic)
 
   val arbFullCard: Arbitrary[FullCard] = Arbitrary(genFullCard)
 

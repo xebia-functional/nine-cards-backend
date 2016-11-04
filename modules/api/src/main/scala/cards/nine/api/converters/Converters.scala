@@ -8,7 +8,7 @@ import cards.nine.api.messages.UserMessages._
 import cards.nine.commons.NineCardsService.Result
 import cards.nine.domain.account._
 import cards.nine.domain.analytics.{ RankedAppsByCategory, RankedWidgetsByMoment }
-import cards.nine.domain.application.{ BasicCard, BasicCardList, FullCard, FullCardList, Package }
+import cards.nine.domain.application._
 import cards.nine.domain.market.MarketCredentials
 import cards.nine.processes.messages.InstallationsMessages._
 import cards.nine.processes.messages.SharedCollectionMessages._
@@ -134,7 +134,7 @@ object Converters {
       token        = googlePlayContext.googlePlayToken
     )
 
-  def toApiAppsInfoResponse[A](toA: FullCard ⇒ A)(response: FullCardList): ApiAppsInfoResponse[A] =
+  def toApiAppsInfoResponse[Card, A](toA: Card ⇒ A)(response: CardList[Card]): ApiAppsInfoResponse[A] =
     ApiAppsInfoResponse(
       errors = response.missing,
       items  = response.cards map toA
@@ -146,7 +146,7 @@ object Converters {
       categories  = appInfo.categories
     )
 
-  def toApiIconApp(appInfo: FullCard): ApiIconApp =
+  def toApiIconApp(appInfo: BasicCard): ApiIconApp =
     ApiIconApp(
       packageName = appInfo.packageName,
       title       = appInfo.title,

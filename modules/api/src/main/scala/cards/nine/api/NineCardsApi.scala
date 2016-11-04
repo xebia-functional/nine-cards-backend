@@ -12,7 +12,7 @@ import cards.nine.api.utils.SprayMarshallers._
 import cards.nine.api.utils.SprayMatchers._
 import cards.nine.domain.account.SessionToken
 import cards.nine.domain.analytics._
-import cards.nine.domain.application.{ Category, FullCard, PriceFilter }
+import cards.nine.domain.application.{ BasicCard, Category, FullCard, PriceFilter }
 import cards.nine.commons.NineCardsService.Result
 import cards.nine.processes.NineCardsServices._
 import cards.nine.processes._
@@ -94,7 +94,7 @@ class NineCardsRoutes(
                 parameter("slice".?) { sliceOpt ⇒
                   sliceOpt match {
                     case Some("icon") ⇒
-                      complete(getAppsInfo(request, googlePlayContext, userContext)(toApiIconApp))
+                      complete(getAppsBasicInfo(request, googlePlayContext, userContext)(toApiIconApp))
                     case _ ⇒
                       complete(getAppsInfo(request, googlePlayContext, userContext)(toApiDetailsApp))
                   }
@@ -367,6 +367,15 @@ class NineCardsRoutes(
     applicationProcesses
       .getAppsInfo(request.items, toMarketAuth(googlePlayContext, userContext))
       .map(toApiAppsInfoResponse(converter))
+
+  private[this] def getAppsBasicInfo[T](
+    request: ApiAppsInfoRequest,
+    googlePlayContext: GooglePlayContext,
+    userContext: UserContext
+  )(converter: BasicCard ⇒ T): NineCardsServed[ApiAppsInfoResponse[T]] =
+    applicationProcesses
+      .getAppsBasicInfo(request.items, toMarketAuth(googlePlayContext, userContext))
+      .map(toApiAppsInfoResponse[BasicCard, T](converter))
 
   private[this] def getRecommendationsByCategory(
     request: ApiGetRecommendationsByCategoryRequest,
