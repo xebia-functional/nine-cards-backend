@@ -1,7 +1,7 @@
 package cards.nine.api.utils
 
 import cards.nine.api.NineCardsErrorHandler
-import cards.nine.commons.NineCardsService.Result
+import cards.nine.commons.NineCardsService.{ NineCardsService, Result }
 import cards.nine.processes.NineCardsServices._
 import cats.data.Xor
 import cats.free.Free
@@ -11,6 +11,15 @@ import spray.httpx.marshalling.ToResponseMarshaller
 import scalaz.concurrent.Task
 
 object SprayMarshallers {
+
+  implicit def nineCardsServiceMarshaller[A](
+    implicit
+    m: ToResponseMarshaller[Free[NineCardsServices, Result[A]]]
+  ): ToResponseMarshaller[NineCardsService[NineCardsServices, A]] =
+    ToResponseMarshaller[NineCardsService[NineCardsServices, A]] {
+      (result, ctx) ⇒
+        m(result.value, ctx)
+    }
 
   implicit def ninecardsResultMarshaller[A](
     implicit
