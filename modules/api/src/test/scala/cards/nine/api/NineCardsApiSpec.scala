@@ -61,17 +61,17 @@ trait NineCardsApiSpecification
       androidId    = AndroidId(mockEq(androidId.value)),
       authToken    = mockEq(authToken),
       requestUri   = any[String]
-    ) returns Free.pure(Either.right(userId))
+    ) returns NineCardsService.right(userId)
   }
 
   trait SuccessfulScope extends BasicScope {
 
     googleApiProcesses.checkGoogleTokenId(email, tokenId) returns Free.pure(true)
 
-    userProcesses.signUpUser(any[LoginRequest]) returns Free.pure(Either.right(Messages.loginResponse))
+    userProcesses.signUpUser(any[LoginRequest]) returns NineCardsService.right(Messages.loginResponse)
 
     userProcesses.updateInstallation(mockEq(Messages.updateInstallationRequest)) returns
-      Free.pure(Either.right(Messages.updateInstallationResponse))
+      NineCardsService.right(Messages.updateInstallationResponse)
 
     sharedCollectionProcesses.createCollection(any) returns
       Free.pure(Messages.createOrUpdateCollectionResponse)
@@ -133,7 +133,7 @@ trait NineCardsApiSpecification
       androidId    = AndroidId(mockEq(androidId.value)),
       authToken    = mockEq(failingAuthToken),
       requestUri   = any[String]
-    ) returns Free.pure(Either.left(AuthTokenNotValid("The provided auth token is not valid")))
+    ) returns NineCardsService.left(AuthTokenNotValid("The provided auth token is not valid"))
 
     sharedCollectionProcesses.getCollectionByPublicIdentifier(any, any[String], any) returns
       Free.pure(sharedCollectionNotFoundException.left)
@@ -157,12 +157,12 @@ trait NineCardsApiSpecification
       androidId    = AndroidId(mockEq(androidId.value)),
       authToken    = mockEq(failingAuthToken),
       requestUri   = any[String]
-    ) returns Free.pure(Either.right(userId))
+    ) returns NineCardsService.right(userId)
 
-    userProcesses.signUpUser(any[LoginRequest]) returns Free.pure(Either.right(Messages.loginResponse))
+    userProcesses.signUpUser(any[LoginRequest]) returns NineCardsService.right(Messages.loginResponse)
 
     userProcesses.updateInstallation(mockEq(Messages.updateInstallationRequest)) returns
-      Free.pure(Either.right(Messages.updateInstallationResponse))
+      NineCardsService.right(Messages.updateInstallationResponse)
 
     sharedCollectionProcesses.createCollection(any) returns
       Free.pure(Messages.createOrUpdateCollectionResponse)

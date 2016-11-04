@@ -1,7 +1,8 @@
 package cards.nine.processes
 
-import cards.nine.commons.NineCardsErrors.{ AuthTokenNotValid, InstallationNotFound, NineCardsError, UserNotFound }
+import cards.nine.commons.NineCardsErrors._
 import cards.nine.commons.NineCardsService
+import cards.nine.commons.NineCardsService._
 import cards.nine.domain.account._
 import cards.nine.processes.NineCardsServices._
 import cards.nine.processes.messages.InstallationsMessages._

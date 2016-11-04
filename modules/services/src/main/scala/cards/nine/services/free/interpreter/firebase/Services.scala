@@ -48,17 +48,19 @@ class Services(config: Configuration) extends (Ops ~> Task) {
 
     def doRequest(request: SendNotificationRequest[UpdateCollectionNotificationPayload]) = {
 
+      def toNineCardsError(status: Status) = status match {
+        case Status.BadRequest ⇒ HttpBadRequest("Bad request while sending notifications")
+        case Status.Unauthorized ⇒ HttpUnauthorized("Wrong credentials while sending notifications")
+        case _ ⇒ FirebaseServerError("Unexpected error while sending notifications")
+      }
+
       val httpRequest: Task[Request] =
         baseRequest.withBody[SendNotificationRequest[UpdateCollectionNotificationPayload]](request)
 
       client.expect[NotificationResponse](httpRequest)
         .map(Either.right)
         .handle {
-          case e: UnexpectedStatus ⇒ e.status match {
-            case Status.BadRequest ⇒ Either.left(HttpBadRequest("Bad request while sending notifications"))
-            case Status.Unauthorized ⇒ Either.left(HttpUnauthorized("Wrong credentials while sending notifications"))
-            case _ ⇒ Either.left(FirebaseServerError("Unexpected error while sending notifications"))
-          }
+          case e: UnexpectedStatus ⇒ Either.left(toNineCardsError(e.status))
         }
     }
 

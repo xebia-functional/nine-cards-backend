@@ -7,6 +7,7 @@ import cards.nine.api.NineCardsHeaders._
 import cards.nine.api.messages.UserMessages.ApiLoginRequest
 import cards.nine.api.utils.SprayMatchers.PriceFilterSegment
 import cards.nine.api.utils.TaskDirectives._
+import cards.nine.commons.NineCardsService._
 import cards.nine.domain.account._
 import cards.nine.domain.application.PriceFilter
 import cards.nine.domain.market.{ Localization, MarketToken }
