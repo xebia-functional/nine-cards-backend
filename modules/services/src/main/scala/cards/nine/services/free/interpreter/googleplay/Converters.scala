@@ -8,7 +8,7 @@ import cats.syntax.monadCombine._
 
 object Converters {
 
-  def ommitMissing[A](cardsList: CardList[A]): CardList[A] = cardsList.copy(missing = Nil)
+  def omitMissing[A](cardsList: CardList[A]): CardList[A] = cardsList.copy(missing = Nil)
 
   def toSearchAppsRequest(
     query: String,

@@ -41,7 +41,7 @@ class Services(implicit googlePlayProcesses: CardsProcesses[GooglePlayApp]) exte
       Converters.toRecommendByCategoryRequest(category, filter, excludedPackages, limit),
       auth
     ).foldMap(Wiring.interpreters).flatMap {
-        case Xor.Right(rec) ⇒ Task.delay(Converters.ommitMissing(rec))
+        case Xor.Right(rec) ⇒ Task.delay(Converters.omitMissing(rec))
         case Xor.Left(e) ⇒ Task.fail(new RuntimeException(e.message))
       }
 
@@ -55,7 +55,7 @@ class Services(implicit googlePlayProcesses: CardsProcesses[GooglePlayApp]) exte
     googlePlayProcesses.recommendationsByApps(
       Converters.toRecommendByAppsRequest(packageNames, limitByApp, excludedPackages, limit),
       auth
-    ).map(Converters.ommitMissing)
+    ).map(Converters.omitMissing)
       .foldMap(Wiring.interpreters)
 
   def searchApps(
@@ -67,7 +67,7 @@ class Services(implicit googlePlayProcesses: CardsProcesses[GooglePlayApp]) exte
     googlePlayProcesses.searchApps(
       Converters.toSearchAppsRequest(query, excludePackages, limit),
       auth
-    ).map(Converters.ommitMissing)
+    ).map(Converters.omitMissing)
       .foldMap(Wiring.interpreters)
 
   def apply[A](fa: Ops[A]): Task[A] = fa match {
