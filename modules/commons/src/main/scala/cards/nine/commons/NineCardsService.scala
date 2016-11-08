@@ -2,7 +2,7 @@ package cards.nine.commons
 
 import cards.nine.commons.NineCardsErrors.NineCardsError
 import cats.data.EitherT
-import cats.free.Free
+import cats.free.{ :<:, Free }
 import cats.syntax.either._
 
 object NineCardsService {
@@ -14,6 +14,9 @@ object NineCardsService {
   def apply[F[_], A](f: Free[F, Result[A]]): NineCardsService[F, A] = {
     EitherT[Free[F, ?], NineCardsError, A](f)
   }
+
+  def apply[Ops[_], F[_], A](op: Ops[Result[A]])(implicit inj: Ops :<: F): NineCardsService[F, A] =
+    apply[F, A](Free.inject[Ops, F](op))
 
   def fromEither[F[_], A](e: Result[A]) = NineCardsService[F, A](Free.pure(e))
 

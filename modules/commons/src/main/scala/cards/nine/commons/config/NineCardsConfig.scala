@@ -1,6 +1,7 @@
-package cards.nine.commons
+package cards.nine.commons.config
 
-import cards.nine.commons.NineCardsConfig._
+import cards.nine.commons.config.Domain.NineCardsConfiguration
+import cards.nine.commons.config.NineCardsConfig._
 import com.typesafe.config.{ Config, ConfigFactory }
 
 class NineCardsConfig(hocon: Option[String] = None) {
@@ -24,6 +25,11 @@ class NineCardsConfig(hocon: Option[String] = None) {
   def getOptionalString(
     key: String
   ) = sys.props.get(key).fold(config.getOptionalString(key))(Option(_))
+
+  def getStringList(key: String): List[String] = {
+    import scala.collection.JavaConversions._
+    config.getStringList(key).toList
+  }
 
   def getBoolean(key: String) = getSysPropKeyAsBoolean(key).getOrElse(config.getBoolean(key))
 
@@ -50,5 +56,7 @@ object NineCardsConfig {
     def getOptionalString(path: String): Option[String] = getOptionalValue(path)(config.getString)
   }
 
-  implicit val defaultConfig: NineCardsConfig = new NineCardsConfig
+  val defaultConfig: NineCardsConfig = new NineCardsConfig
+
+  implicit val nineCardsConfiguration: NineCardsConfiguration = NineCardsConfiguration(defaultConfig)
 }

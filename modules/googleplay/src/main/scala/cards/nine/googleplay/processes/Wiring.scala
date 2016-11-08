@@ -1,6 +1,6 @@
 package cards.nine.googleplay.processes
 
-import cards.nine.commons.NineCardsConfig._
+import cards.nine.commons.config.NineCardsConfig._
 import cards.nine.googleplay.processes.withTypes.{ HttpToTask, RedisToTask }
 import cards.nine.googleplay.service.free.algebra.{ Cache, GoogleApi, WebScraper }
 import cards.nine.googleplay.service.free.interpreter._
@@ -17,14 +17,11 @@ object Wiring {
   private[this] val apiHttpClient = PooledHttp1Client()
   private[this] val webHttpClient = PooledHttp1Client()
 
-  val redisClientPool: RedisClientPool = {
-    val baseConfig = "ninecards.google.play.redis"
-    new RedisClientPool(
-      host   = defaultConfig.getString(s"$baseConfig.host"),
-      port   = defaultConfig.getInt(s"$baseConfig.port"),
-      secret = defaultConfig.getOptionalString(s"$baseConfig.secret")
-    )
-  }
+  val redisClientPool: RedisClientPool = new RedisClientPool(
+    host   = nineCardsConfiguration.redis.host,
+    port   = nineCardsConfiguration.redis.port,
+    secret = nineCardsConfiguration.redis.secret
+  )
 
   val cacheInt: Cache.Ops ~> Task = {
     val toTask = new RedisToTask(redisClientPool)
@@ -32,13 +29,13 @@ object Wiring {
   }
 
   val googleApiInt: GoogleApi.Ops ~> Task = {
-    val interp = new googleapi.Interpreter(googleapi.Configuration.load())
+    val interp = new googleapi.Interpreter(nineCardsConfiguration.google.play.api)
     val toTask = new HttpToTask(apiHttpClient)
     interp andThen toTask
   }
 
   val webScrapperInt: WebScraper.Ops ~> Task = {
-    val interp = new webscrapper.Interpreter(webscrapper.Configuration.load)
+    val interp = new webscrapper.Interpreter(nineCardsConfiguration.google.play.web)
     val toTask = new HttpToTask(webHttpClient)
     interp andThen toTask
   }

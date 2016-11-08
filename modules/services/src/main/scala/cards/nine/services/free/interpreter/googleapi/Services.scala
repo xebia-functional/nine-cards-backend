@@ -1,5 +1,6 @@
 package cards.nine.services.free.interpreter.googleapi
 
+import cards.nine.commons.config.Domain.GoogleApiConfiguration
 import cards.nine.domain.account.GoogleIdToken
 import cards.nine.services.free.algebra.GoogleApi._
 import cats.data.Xor
@@ -11,7 +12,7 @@ import org.http4s.Uri.{ Authority, RegName }
 
 import scalaz.concurrent.Task
 
-class Services(config: Configuration) extends (Ops ~> Task) {
+class Services(config: GoogleApiConfiguration) extends (Ops ~> Task) {
 
   import Decoders._
 
@@ -21,8 +22,8 @@ class Services(config: Configuration) extends (Ops ~> Task) {
     val authority = Authority(host = RegName(config.host), port = config.port)
 
     val getTokenInfoUri = Uri(scheme = Option(config.protocol.ci), authority = Option(authority))
-      .withPath(config.tokenInfoUri)
-      .withQueryParam(config.tokenIdQueryParameter, tokenId.value)
+      .withPath(config.tokenInfo.path)
+      .withQueryParam(config.tokenInfo.tokenIdQueryParameter, tokenId.value)
 
     client.expect[WrongTokenInfo Xor TokenInfo](getTokenInfoUri)
   }
@@ -34,5 +35,5 @@ class Services(config: Configuration) extends (Ops ~> Task) {
 
 object Services {
 
-  implicit def services(implicit config: Configuration) = new Services(config)
+  implicit def services(implicit config: GoogleApiConfiguration) = new Services(config)
 }

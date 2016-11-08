@@ -10,17 +10,20 @@ import cards.nine.api.messages.SharedCollectionMessages._
 import cards.nine.api.messages.UserMessages._
 import cards.nine.api.utils.SprayMarshallers._
 import cards.nine.api.utils.SprayMatchers._
+import cards.nine.commons.NineCardsService.Result
+import cards.nine.commons.config.Domain.NineCardsConfiguration
+import cards.nine.commons.config.NineCardsConfig
 import cards.nine.domain.account.SessionToken
 import cards.nine.domain.analytics._
 import cards.nine.domain.application.{ Category, FullCardList, PriceFilter }
-import cards.nine.commons.NineCardsService.Result
+import cards.nine.domain.pagination.Page
 import cards.nine.processes.NineCardsServices._
 import cards.nine.processes._
 import cats.data.Xor
-
-import scala.concurrent.ExecutionContext
 import spray.http.StatusCodes.NotFound
 import spray.routing._
+
+import scala.concurrent.ExecutionContext
 
 class NineCardsApiActor
   extends Actor
@@ -31,6 +34,7 @@ class NineCardsApiActor
   override val actorRefFactory = context
 
   implicit val executionContext: ExecutionContext = actorRefFactory.dispatcher
+  implicit val config = NineCardsConfig.nineCardsConfiguration
 
   def receive = runRoute(new NineCardsRoutes().nineCardsRoutes)
 
@@ -38,6 +42,7 @@ class NineCardsApiActor
 
 class NineCardsRoutes(
   implicit
+  config: NineCardsConfiguration,
   userProcesses: UserProcesses[NineCardsServices],
   googleApiProcesses: GoogleApiProcesses[NineCardsServices],
   applicationProcesses: ApplicationProcesses[NineCardsServices],
@@ -315,8 +320,7 @@ class NineCardsRoutes(
         userId     = userContext.userId.value,
         category   = category.entryName,
         marketAuth = toMarketAuth(googlePlayContext, userContext),
-        pageNumber = pageNumber.value,
-        pageSize   = pageSize.value
+        pageParams = Page(pageNumber.value, pageSize.value)
       )
       .map(toApiSharedCollectionList)
 
@@ -347,8 +351,7 @@ class NineCardsRoutes(
         userId     = userContext.userId.value,
         category   = category.entryName,
         marketAuth = toMarketAuth(googlePlayContext, userContext),
-        pageNumber = pageNumber.value,
-        pageSize   = pageSize.value
+        pageParams = Page(pageNumber.value, pageSize.value)
       )
       .map(toApiSharedCollectionList)
 
@@ -430,10 +433,9 @@ class NineCardsRoutes(
 
   private[this] object rankings {
 
+    import NineCardsMarshallers._
     import cards.nine.api.converters.{ rankings ⇒ Converters }
     import cards.nine.api.messages.{ rankings ⇒ Api }
-    import io.circe.spray.JsonSupport._
-    import NineCardsMarshallers._
 
     lazy val route: Route =
       geographicScope { scope ⇒
@@ -464,7 +466,7 @@ class NineCardsRoutes(
       scope: GeoScope,
       params: RankingParams
     ): NineCardsServed[Result[Api.Reload.Response]] =
-      rankingProcesses.reloadRanking(scope, params).map(Converters.reload.toApiResponse)
+      rankingProcesses.reloadRankingByScope(scope, params).map(Converters.reload.toApiResponse)
 
     private[this] def getRanking(scope: GeoScope): NineCardsServed[Result[Api.Ranking]] =
       rankingProcesses.getRanking(scope).map(Converters.toApiRanking)

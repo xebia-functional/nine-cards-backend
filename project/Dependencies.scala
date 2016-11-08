@@ -18,6 +18,7 @@ object Dependencies {
   private val cats = "org.typelevel" %% "cats" % Versions.cats
   private val embeddedRedis = "com.orange.redis-embedded" % "embedded-redis" % Versions.embeddedRedis % "test"
   private val flywaydbCore = "org.flywaydb" % "flyway-core" % Versions.flywaydb
+  private val googleApiClient = "com.google.api-client" % "google-api-client" % Versions.googleApiClient exclude("com.google.guava", "*")
   private val hasher = "com.roundeights" %% "hasher" % Versions.hasher
   private val http4sClient = "org.http4s" %% "http4s-blaze-client" % Versions.http4s
   private val jodaConvert = "org.joda" % "joda-convert" % Versions.jodaConvert
@@ -25,6 +26,7 @@ object Dependencies {
   private val mockserver = "org.mock-server" % "mockserver-netty" % Versions.mockserver % "test"
   private val newRelic = "com.newrelic.agent.java" % "newrelic-agent" % Versions.newRelic
   private val redisClient = "net.debasishg" %% "redisclient" % Versions.redisClient
+  private val scalacheckDateTime  ="com.fortysevendeg" %% "scalacheck-datetime" % Versions.scalacheckDateTime % "test"
   private val scalacheckShapeless = "com.github.alexarchambault" %% "scalacheck-shapeless_1.13" % Versions.scalacheckShapeless % "test"
   private val specs2Core = specs2("-core") exclude("org.scalaz", "*")
   private val sprayJson = "io.spray" %% "spray-json" % Versions.sprayJson
@@ -69,6 +71,7 @@ object Dependencies {
     scalaz("-concurrent"),
     specs2Core,
     specs2("-scalacheck"),
+    scalacheckDateTime,
     scalacheckShapeless,
     typesafeConfig
   ))
@@ -86,6 +89,7 @@ object Dependencies {
     doobie("-core"),
     enumeratum(""),
     enumeratum("-circe"),
+    googleApiClient,
     flywaydbCore % "test",
     http4s("-blaze-client"),
     http4s("-circe"),

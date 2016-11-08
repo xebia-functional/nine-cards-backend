@@ -1,6 +1,6 @@
 package cards.nine.services.free.interpreter.analytics
 
-import cards.nine.domain.analytics.{ CountryName, DateRange }
+import cards.nine.domain.analytics.{ CountryIsoCode, DateRange }
 import enumeratum._
 
 object model {
@@ -20,8 +20,8 @@ object model {
     dimensions: List[Dimension],
     metrics: List[Metric],
     dateRanges: List[DateRange],
-    dimensionFilterClauses: DimensionFilter.Clauses = List(),
-    orderBys: order.OrderBys = List(),
+    dimensionFilterClauses: DimensionFilter.Clauses = Nil,
+    orderBys: order.OrderBys = Nil,
     includeEmptyRows: Boolean = true,
     pageSize: Int = maxPageSize,
     hideTotals: Boolean = true,
@@ -32,6 +32,7 @@ object model {
   case class Dimension(name: String)
   object Dimension {
     val country = apply("ga:country")
+    val countryIsoCode = apply("ga:countryIsoCode")
     val continent = apply("ga:continent")
     val category = apply("ga:eventCategory")
     val packageName = apply("ga:eventLabel")
@@ -99,14 +100,21 @@ object model {
     )
     object Filter {
 
-      def isCountry(name: CountryName): Filter = Filter(
-        dimensionName = Dimension.country.name,
+      def isCategory(category: String): Filter = Filter(
+        dimensionName = Dimension.category.name,
         not           = false,
         operator      = Operator.EXACT,
-        expressions   = List(name.value),
+        expressions   = List(category),
         caseSensitive = false
       )
 
+      def isCountry(code: CountryIsoCode): Filter = Filter(
+        dimensionName = Dimension.countryIsoCode.name,
+        not           = false,
+        operator      = Operator.EXACT,
+        expressions   = List(code.value.toUpperCase),
+        caseSensitive = false
+      )
     }
 
   }
@@ -133,6 +141,8 @@ object model {
       val category = alpha(Dimension.category)
 
       val country = alpha(Dimension.country)
+
+      val countryIsoCode = alpha(Dimension.countryIsoCode)
 
       val continent = alpha(Dimension.continent)
 
@@ -200,8 +210,9 @@ object model {
 
   /* https://developers.google.com/analytics/devguides/reporting/core/v4/rest/v4/reports/batchGet#reportdata */
   case class ReportData(
-    rows: List[ReportRow],
-    rowCount: Int
+    rows: Option[List[ReportRow]],
+    rowCount: Option[Int],
+    isDataGolden: Option[Boolean]
   )
 
   /* A ReportRow is a "cell", that contains the values of metrics for one point in the dimension-space.

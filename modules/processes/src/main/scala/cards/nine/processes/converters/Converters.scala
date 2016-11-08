@@ -3,12 +3,12 @@ package cards.nine.processes.converters
 import java.sql.Timestamp
 
 import cards.nine.domain.analytics._
-import cards.nine.domain.application.{FullCard, FullCardList, Moment, Package}
+import cards.nine.domain.application.{ FullCard, FullCardList, Moment, Package }
 import cards.nine.processes.messages.InstallationsMessages._
 import cards.nine.processes.messages.SharedCollectionMessages._
 import cards.nine.processes.messages.UserMessages.LoginResponse
-import cards.nine.services.free.domain.{BaseSharedCollection, SharedCollectionWithAggregatedInfo, Installation => InstallationServices, SharedCollection => SharedCollectionServices, SharedCollectionSubscription => SharedCollectionSubscriptionServices, User => UserAppServices}
-import cards.nine.services.free.interpreter.collection.Services.{SharedCollectionData => SharedCollectionDataServices}
+import cards.nine.services.free.domain.{ BaseSharedCollection, SharedCollectionWithAggregatedInfo, Installation ⇒ InstallationServices, SharedCollection ⇒ SharedCollectionServices, SharedCollectionSubscription ⇒ SharedCollectionSubscriptionServices, User ⇒ UserAppServices }
+import cards.nine.services.free.interpreter.collection.Services.{ SharedCollectionData ⇒ SharedCollectionDataServices }
 import org.joda.time.DateTime
 
 object Converters {

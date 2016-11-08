@@ -59,6 +59,8 @@ object Category extends Enum[Category] {
 
   val values = super.findValues
 
+  val valuesName = values.toList map (_.entryName)
+
   val sortedValues = List(
     COMMUNICATION,
     SOCIAL,

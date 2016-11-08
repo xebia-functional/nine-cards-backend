@@ -6,6 +6,8 @@ import cards.nine.api.NineCardsHeaders._
 import cards.nine.api.TestData.Exceptions._
 import cards.nine.api.TestData._
 import cards.nine.commons.NineCardsService
+import cards.nine.commons.config.Domain.NineCardsConfiguration
+import cards.nine.commons.config.NineCardsConfig
 import cards.nine.domain.account._
 import cards.nine.processes.NineCardsServices._
 import cards.nine.processes._
@@ -53,6 +55,8 @@ trait NineCardsApiSpecification
 
     implicit val sharedCollectionProcesses: SharedCollectionProcesses[NineCardsServices] = mock[SharedCollectionProcesses[NineCardsServices]]
 
+    implicit val config: NineCardsConfiguration = NineCardsConfig.nineCardsConfiguration
+
     val nineCardsApi = new NineCardsRoutes().nineCardsRoutes
 
     userProcesses.checkAuthToken(
@@ -84,7 +88,7 @@ trait NineCardsApiSpecification
     sharedCollectionProcesses.unsubscribe(any[String], any[Long]) returns
       Free.pure(Messages.unsubscribeResponse.right)
 
-    sharedCollectionProcesses.getLatestCollectionsByCategory(any, any, any, any, any) returns
+    sharedCollectionProcesses.getLatestCollectionsByCategory(any, any, any, any) returns
       Free.pure(Messages.getCollectionsResponse)
 
     sharedCollectionProcesses.getPublishedCollections(any[Long], any) returns
@@ -93,7 +97,7 @@ trait NineCardsApiSpecification
     sharedCollectionProcesses.getSubscriptionsByUser(any) returns
       Free.pure(Messages.getSubscriptionsByUserResponse)
 
-    sharedCollectionProcesses.getTopCollectionsByCategory(any, any, any, any, any) returns
+    sharedCollectionProcesses.getTopCollectionsByCategory(any, any, any, any) returns
       Free.pure(Messages.getCollectionsResponse)
 
     sharedCollectionProcesses.updateCollection(any, any, any) returns
@@ -104,7 +108,7 @@ trait NineCardsApiSpecification
 
     rankingProcesses.getRanking(any) returns Free.pure(Either.right(Messages.rankings.getResponse))
 
-    rankingProcesses.reloadRanking(any, any) returns
+    rankingProcesses.reloadRankingByScope(any, any) returns
       Free.pure(Either.right(Messages.rankings.reloadResponse))
 
     recommendationsProcesses.getRecommendationsByCategory(any, any, any, any, any) returns
@@ -169,7 +173,7 @@ trait NineCardsApiSpecification
     sharedCollectionProcesses.getCollectionByPublicIdentifier(any, any[String], any) returns
       Free.pure(Messages.getCollectionByPublicIdentifierResponse.right)
 
-    sharedCollectionProcesses.getLatestCollectionsByCategory(any, any, any, any, any) returns
+    sharedCollectionProcesses.getLatestCollectionsByCategory(any, any, any, any) returns
       Free.pure(Messages.getCollectionsResponse)
 
     sharedCollectionProcesses.getPublishedCollections(any[Long], any) returns
@@ -178,7 +182,7 @@ trait NineCardsApiSpecification
     sharedCollectionProcesses.getSubscriptionsByUser(any) returns
       Free.pure(Messages.getSubscriptionsByUserResponse)
 
-    sharedCollectionProcesses.getTopCollectionsByCategory(any, any, any, any, any) returns
+    sharedCollectionProcesses.getTopCollectionsByCategory(any, any, any, any) returns
       Free.pure(Messages.getCollectionsResponse)
 
     sharedCollectionProcesses.subscribe(any[String], any[Long]) returns
@@ -192,7 +196,7 @@ trait NineCardsApiSpecification
 
     rankingProcesses.getRanking(any) returns Free.pure(Either.right(Messages.rankings.getResponse))
 
-    rankingProcesses.reloadRanking(any, any) returns
+    rankingProcesses.reloadRankingByScope(any, any) returns
       Free.pure(Either.right(Messages.rankings.reloadResponse))
 
     rankingProcesses.getRankedDeviceApps(any, any) returns

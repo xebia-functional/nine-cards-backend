@@ -1,6 +1,6 @@
 package cards.nine.processes.utils
 
-import cards.nine.commons.NineCardsConfig
+import cards.nine.commons.config.Domain.NineCardsConfiguration
 import cards.nine.processes.utils.EncryptionAlgorithm._
 import com.roundeights.hasher.Hasher
 
@@ -22,10 +22,10 @@ object EncryptionAlgorithm {
 
 }
 
-class HashUtils(implicit config: NineCardsConfig) {
+class HashUtils(implicit config: NineCardsConfiguration) {
 
-  lazy val nineCardsSalt: Option[String] = config.getOptionalString("ninecards.salt")
-  lazy val nineCardsSecretKey: String = config.getString("ninecards.secretKey")
+  lazy val nineCardsSalt: Option[String] = config.salt
+  lazy val nineCardsSecretKey: String = config.secretKey
 
   def hashValue(
     text: String,
@@ -51,5 +51,5 @@ class HashUtils(implicit config: NineCardsConfig) {
 
 object HashUtils {
 
-  implicit def hashUtils(implicit config: NineCardsConfig) = new HashUtils
+  implicit def hashUtils(implicit config: NineCardsConfiguration) = new HashUtils
 }

@@ -4,37 +4,77 @@ import cards.nine.commons.NineCardsErrors.CountryNotFound
 import cards.nine.commons.NineCardsService
 import cards.nine.commons.NineCardsService._
 import cards.nine.domain.analytics._
-import cards.nine.domain.application.{ Category, Package }
+import cards.nine.domain.application.{ Category, Moment, Package }
 import cards.nine.processes.converters.Converters._
 import cards.nine.processes.messages.rankings._
 import cards.nine.services.free.algebra
 import cards.nine.services.free.algebra.GoogleAnalytics
+import cards.nine.services.free.domain.Ranking.GoogleAnalyticsRanking
 import cats.free.Free
-import cats.instances.list._
-import cats.instances.map._
+import cats.instances.all._
 import cats.syntax.semigroup._
+import cats.syntax.traverse._
 
 class RankingProcesses[F[_]](
   implicit
   analytics: GoogleAnalytics.Services[F],
   countryPersistence: algebra.Country.Services[F],
+  oauthServices: algebra.GoogleOAuth.Services[F],
   rankingServices: algebra.Ranking.Services[F]
 ) {
+  private[this] val allCategories = Category.valuesName ++ Moment.valuesName ++ Moment.widgetValuesName
 
   def getRanking(scope: GeoScope): Free[F, Result[Get.Response]] =
     (rankingServices.getRanking(scope) map Get.Response).value
 
-  def reloadRanking(scope: GeoScope, params: RankingParams): Free[F, Result[Reload.Response]] = {
+  def reloadRankingForCountries(request: Reload.Request): Free[F, Result[Reload.SummaryResponse]] = {
+    import request._
 
-    def getCountryName(scope: GeoScope): NineCardsService[F, Option[CountryName]] = scope match {
-      case WorldScope ⇒ NineCardsService.right[F, Option[CountryName]](None)
-      case CountryScope(code) ⇒
-        countryPersistence.getCountryByIsoCode2(code.value).map(c ⇒ Option(CountryName(c.name)))
+    def generateRankings(
+      countries: List[CountryIsoCode], params: RankingParams
+    ): NineCardsService[F, List[UpdateRankingSummary]] = {
+
+      def generateRanking(countryCode: CountryIsoCode) = {
+        for {
+          ranking ← analytics.getRanking(Option(countryCode), allCategories, params)
+          summary ← rankingServices.updateRanking(CountryScope(countryCode), ranking)
+        } yield summary
+      }.value
+
+      NineCardsService {
+        countries
+          .traverse[Free[F, ?], Result[UpdateRankingSummary]](generateRanking)
+          .map(_.sequenceU)
+      }
     }
 
     for {
-      countryName ← getCountryName(scope)
-      ranking ← analytics.getRanking(countryName, params)
+      accessToken ← oauthServices.fetchAcessToken(serviceAccount)
+      params = RankingParams(dateRange, rankingLength, AnalyticsToken(accessToken.value))
+      countries ← countryPersistence.getCountries(pageParams)
+      countriesWithRanking ← analytics.getCountriesWithRanking(params)
+      countriesCode = countries.map(c ⇒ CountryIsoCode(c.isoCode2))
+      selectedCountries = countriesCode.intersect(countriesWithRanking.countries)
+      updateRankingsSummary ← generateRankings(selectedCountries, params)
+    } yield Reload.SummaryResponse(
+      countriesWithoutRanking = countriesCode diff selectedCountries,
+      countriesWithRanking    = updateRankingsSummary
+    )
+  }.value
+
+  def reloadRankingByScope(scope: GeoScope, params: RankingParams): Free[F, Result[Reload.Response]] = {
+
+    def generateRanking(scope: GeoScope, countries: List[CountryIsoCode]) = scope match {
+      case WorldScope ⇒ analytics.getRanking(None, allCategories, params)
+      case CountryScope(code) if hasRankingInfo(code, countries) ⇒
+        analytics.getRanking(Option(code), allCategories, params)
+      case _ ⇒
+        NineCardsService.left[F, GoogleAnalyticsRanking](CountryNotFound("The country doesn't have ranking info"))
+    }
+
+    for {
+      countriesWithRanking ← analytics.getCountriesWithRanking(params)
+      ranking ← generateRanking(scope, countriesWithRanking.countries)
       _ ← rankingServices.updateRanking(scope, ranking)
     } yield Reload.Response()
   }.value
@@ -124,6 +164,9 @@ class RankingProcesses[F[_]](
         scope
       }
       .recover { case _: CountryNotFound ⇒ WorldScope }
+
+  private[this] def hasRankingInfo(code: CountryIsoCode, countries: List[CountryIsoCode]) =
+    countries.exists(_.value.equalsIgnoreCase(code.value))
 }
 
 object RankingProcesses {
@@ -132,6 +175,7 @@ object RankingProcesses {
     implicit
     analytics: GoogleAnalytics.Services[F],
     countryPersistence: algebra.Country.Services[F],
+    oauthServices: algebra.GoogleOAuth.Services[F],
     rankingServices: algebra.Ranking.Services[F]
   ) = new RankingProcesses
 

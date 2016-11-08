@@ -12,7 +12,8 @@ object NineCardsServices {
 
   implicit val taskMonadInstance: Monad[Task] with ApplicativeError[Task, Throwable] with RecursiveTailRecM[Task] = taskMonad
 
-  type NineCardsServicesC07[A] = Coproduct[Subscription.Ops, User.Ops, A]
+  type NineCardsServicesC08[A] = Coproduct[GoogleOAuth.Ops, User.Ops, A]
+  type NineCardsServicesC07[A] = Coproduct[Subscription.Ops, NineCardsServicesC08, A]
   type NineCardsServicesC06[A] = Coproduct[SharedCollection.Ops, NineCardsServicesC07, A]
   type NineCardsServicesC05[A] = Coproduct[Ranking.Ops, NineCardsServicesC06, A]
   type NineCardsServicesC04[A] = Coproduct[Country.Ops, NineCardsServicesC05, A]
@@ -23,7 +24,9 @@ object NineCardsServices {
 
   class NineCardsInterpreters[F[_]](int: Interpreters[F]) {
 
-    val interpretersC07: NineCardsServicesC07 ~> F = int.subscriptionInterpreter or int.userInterpreter
+    val interpretersC08: NineCardsServicesC08 ~> F = int.googleOAuthInterpreter or int.userInterpreter
+
+    val interpretersC07: NineCardsServicesC07 ~> F = int.subscriptionInterpreter or interpretersC08
 
     val interpretersC06: NineCardsServicesC06 ~> F = int.collectionInterpreter or interpretersC07
 
