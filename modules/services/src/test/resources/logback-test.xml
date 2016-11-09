@@ -6,7 +6,7 @@
             <pattern>%date{MM/dd HH:mm:ss} %-5level[%thread] %logger{1} - %msg%n</pattern>
         </encoder>
     </appender>
-    <root level="INFO">
+    <root level="WARN">
         <appender-ref ref="CONSOLE" />
     </root>
 </configuration>

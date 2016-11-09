@@ -70,7 +70,7 @@ trait NineCardsApiSpecification
 
   trait SuccessfulScope extends BasicScope {
 
-    googleApiProcesses.checkGoogleTokenId(email, tokenId) returns Free.pure(true)
+    googleApiProcesses.checkGoogleTokenId(email, tokenId) returns NineCardsService.right(true)
 
     userProcesses.signUpUser(any[LoginRequest]) returns NineCardsService.right(Messages.loginResponse)
 
@@ -130,7 +130,7 @@ trait NineCardsApiSpecification
 
   trait UnsuccessfulScope extends BasicScope {
 
-    googleApiProcesses.checkGoogleTokenId(email, tokenId) returns Free.pure(false)
+    googleApiProcesses.checkGoogleTokenId(email, tokenId) returns NineCardsService.right(false)
 
     userProcesses.checkAuthToken(
       sessionToken = SessionToken(mockEq(sessionToken.value)),
@@ -154,7 +154,7 @@ trait NineCardsApiSpecification
 
   trait FailingScope extends BasicScope {
 
-    googleApiProcesses.checkGoogleTokenId(email, tokenId) returns Free.pure(true)
+    googleApiProcesses.checkGoogleTokenId(email, tokenId) returns NineCardsService.right(true)
 
     userProcesses.checkAuthToken(
       sessionToken = SessionToken(mockEq(sessionToken.value)),
