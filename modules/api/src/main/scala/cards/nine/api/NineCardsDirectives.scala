@@ -59,8 +59,11 @@ class NineCardsDirectives(
         Task.now(Left(rejectionByCredentialsRejected))
       case _ ⇒
         googleApiProcesses.checkGoogleTokenId(email, tokenId).foldMap(prodInterpreters) map {
-          case true ⇒ Right(())
-          case _ ⇒ Left(rejectionByCredentialsRejected)
+          result ⇒
+            result.fold(
+              _ ⇒ Left(rejectionByCredentialsRejected),
+              isValidToken ⇒ if (isValidToken) Right(()) else Left(rejectionByCredentialsRejected)
+            )
         } handle {
           case _ ⇒ Left(rejectionByCredentialsRejected)
         }
