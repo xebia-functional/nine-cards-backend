@@ -1,6 +1,6 @@
 package cards.nine.processes
 
-import cards.nine.commons.NineCardsErrors.WrongGoogleAuthToken
+import cards.nine.commons.NineCardsErrors.{ WrongEmailAccount, WrongGoogleAuthToken }
 import cards.nine.commons.NineCardsService
 import cards.nine.commons.NineCardsService._
 import cards.nine.domain.account._
@@ -27,6 +27,8 @@ trait GoogleApiProcessesSpecification
 
   val tokenInfo = TokenInfo("true", email.value)
 
+  val wrongEmailAccountError = WrongEmailAccount(message = "The given email account is not valid")
+
   val wrongAuthTokenError = WrongGoogleAuthToken(message = "Invalid Value")
 
   trait BasicScope extends Scope {
@@ -50,7 +52,7 @@ class GoogleApiProcessesSpec
 
       googleApiProcesses
         .checkGoogleTokenId(email, tokenId)
-        .foldMap(testInterpreters) must beRight(true)
+        .foldMap(testInterpreters) must beRight[Unit]
     }
 
     "return false if the given tokenId is valid but the given email address is different" in new BasicScope {
@@ -59,7 +61,7 @@ class GoogleApiProcessesSpec
 
       googleApiProcesses
         .checkGoogleTokenId(wrongEmail, tokenId)
-        .foldMap(testInterpreters) must beRight(false)
+        .foldMap(testInterpreters) must beLeft(wrongEmailAccountError)
     }
 
     "return a WrongGoogleAuthToken error if the given tokenId is not valid" in new BasicScope {
