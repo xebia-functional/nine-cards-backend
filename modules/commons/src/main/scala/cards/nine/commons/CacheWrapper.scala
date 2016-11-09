@@ -22,8 +22,11 @@ class CacheWrapper[Key, Val](client: RedisClient)(implicit f: Format, pk: Parse[
   def findFirst(keys: List[Key]): Option[Val] = keys.toStream.map(get).find(_.isDefined).flatten
 
   def matchKeys(pattern: JsonPattern): List[Key] =
+    matchKeys(JsonPattern.print(pattern))
+
+  def matchKeys(pattern: String): List[Key] =
     client
-      .keys[Option[Key]](JsonPattern.print(pattern))
+      .keys[Option[Key]](pattern)
       .getOrElse(Nil)
       .flatMap(_.flatten.toList)
 

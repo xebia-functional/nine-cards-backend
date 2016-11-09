@@ -25,7 +25,6 @@ class InterpreterSpec
   import CirceCoders._
   import CustomArbitrary._
   import KeyType._
-  import io.circe.syntax._
 
   private[this] object setup {
     lazy val redisServer: RedisServer = new RedisServer()
@@ -39,18 +38,12 @@ class InterpreterSpec
 
     def evalWithDelay[A](op: Ops[A], delay: Duration) = interpreter(op)(redisClient).after(delay).unsafePerformSync
 
-    def keyPattern(p: String, t: String, d: String) =
-      s"""{"package":"$p","keyType":"$t","date":$d}""".trim
+    def pendingKey(pack: Package): String = s"${pack.value}:Pending"
+    def resolvedKey(pack: Package): String = s"${pack.value}:Resolved"
 
-    def writeKey(t: KeyType, p: String, d: String) = keyPattern(p, t.entryName, d)
-
-    def resolvedKey(p: Package): String = keyPattern(p.value, Resolved.entryName, "null")
-    def pendingKey(p: String): String = keyPattern(p, Pending.entryName, "null")
-    def errorKey(p: String, d: String) = keyPattern(p, Error.entryName, d)
-
-    def allByType(keyType: KeyType) = keyPattern("*", keyType.entryName, "*")
-    def allByPackage(p: Package): String = keyPattern(p.value, "*", "*")
-    def allByPackageAndType(p: Package, keyType: KeyType): String = keyPattern(p.value, keyType.entryName, "*")
+    def allByType(keyType: KeyType) = s"*:${keyType.entryName}*"
+    def allByPackage(pack: Package): String = s"${pack.value}:*"
+    def allByPackageAndType(pack: Package, keyType: KeyType): String = s"${pack.value}:${keyType.entryName}*"
 
     val date: DateTime = new DateTime(2016, 7, 23, 12, 0, 14, DateTimeZone.UTC)
     val dateJsonStr = s""" "16072312001400" """.trim
@@ -84,11 +77,14 @@ class InterpreterSpec
     case _ ⇒ Nil
   }
   private def getKeys(pattern: String) = redisClient.keys(pattern).getOrElse(Nil)
-  private def putEntry(e: CacheEntry) = redisClient.set(e._1.asJson.noSpaces, e._2.asJson.noSpaces)
+  private def putEntry(e: CacheEntry) =
+    redisClient.set(KeyFormat.format(e._1), cacheValE(e._2).noSpaces)
   private def putEntries(entries: List[CacheEntry]) = entries match {
     case Nil ⇒ Unit
-    case _ ⇒ redisClient.mset(entries map (e ⇒ (e._1.asJson.noSpaces, e._2.asJson.noSpaces)): _*)
+    case _ ⇒ redisClient.mset(entries map formatEntry: _*)
   }
+  private def formatEntry(e: CacheEntry): (String, String) =
+    (KeyFormat.format(e._1), cacheValE(e._2).noSpaces)
 
   "getValidCard" should {
 
@@ -246,7 +242,7 @@ class InterpreterSpec
         flush
         eval(MarkPending(pack))
 
-        getEntry(pendingKey(pack.value)) must beSome
+        getEntry(pendingKey(pack)) must beSome
       }
 
     "add no key as resolved or error" >>
@@ -265,7 +261,7 @@ class InterpreterSpec
         flush
         eval(MarkPendingMany(packages))
 
-        getEntries(packages map (p ⇒ pendingKey(p.value))) must haveSize(packages.size)
+        getEntries(packages map pendingKey) must haveSize(packages.size)
       }
 
     "add no key as resolved or error" >>
@@ -285,7 +281,7 @@ class InterpreterSpec
         putEntry(CacheEntry.pending(pack))
         eval(UnmarkPending(pack))
 
-        getEntry(pendingKey(pack.value)) must beNone
+        getEntry(pendingKey(pack)) must beNone
       }
   }
 
@@ -296,7 +292,7 @@ class InterpreterSpec
         putEntries(packages map CacheEntry.pending)
         eval(UnmarkPendingMany(packages))
 
-        getEntries(packages map (p ⇒ pendingKey(p.value))) must beEmpty
+        getEntries(packages map pendingKey) must beEmpty
       }
   }
 
