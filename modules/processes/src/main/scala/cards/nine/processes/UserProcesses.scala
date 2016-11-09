@@ -1,7 +1,7 @@
 package cards.nine.processes
 
 import cards.nine.commons.config.Domain.NineCardsConfiguration
-import cards.nine.commons.NineCardsErrors.{AuthTokenNotValid, InstallationNotFound, UserNotFound}
+import cards.nine.commons.NineCardsErrors.{ AuthTokenNotValid, InstallationNotFound, UserNotFound }
 import cards.nine.commons.NineCardsService
 import cards.nine.commons.NineCardsService.NineCardsService
 import cards.nine.domain.account._

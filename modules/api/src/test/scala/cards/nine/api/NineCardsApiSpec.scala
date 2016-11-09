@@ -5,7 +5,7 @@ import akka.testkit._
 import cards.nine.api.NineCardsHeaders._
 import cards.nine.api.TestData.Exceptions._
 import cards.nine.api.TestData._
-import cards.nine.commons.NineCardsErrors.AuthTokenNotValid
+import cards.nine.commons.NineCardsErrors.{ AuthTokenNotValid, WrongEmailAccount }
 import cards.nine.commons.NineCardsService
 import cards.nine.commons.config.Domain.NineCardsConfiguration
 import cards.nine.commons.config.NineCardsConfig
@@ -70,7 +70,7 @@ trait NineCardsApiSpecification
 
   trait SuccessfulScope extends BasicScope {
 
-    googleApiProcesses.checkGoogleTokenId(email, tokenId) returns NineCardsService.right(true)
+    googleApiProcesses.checkGoogleTokenId(email, tokenId) returns NineCardsService.right(Unit)
 
     userProcesses.signUpUser(any[LoginRequest]) returns NineCardsService.right(Messages.loginResponse)
 
@@ -130,7 +130,8 @@ trait NineCardsApiSpecification
 
   trait UnsuccessfulScope extends BasicScope {
 
-    googleApiProcesses.checkGoogleTokenId(email, tokenId) returns NineCardsService.right(false)
+    googleApiProcesses.checkGoogleTokenId(email, tokenId) returns
+      NineCardsService.left(WrongEmailAccount("The given email account is not valid"))
 
     userProcesses.checkAuthToken(
       sessionToken = SessionToken(mockEq(sessionToken.value)),
@@ -154,7 +155,7 @@ trait NineCardsApiSpecification
 
   trait FailingScope extends BasicScope {
 
-    googleApiProcesses.checkGoogleTokenId(email, tokenId) returns NineCardsService.right(true)
+    googleApiProcesses.checkGoogleTokenId(email, tokenId) returns NineCardsService.right(Unit)
 
     userProcesses.checkAuthToken(
       sessionToken = SessionToken(mockEq(sessionToken.value)),
