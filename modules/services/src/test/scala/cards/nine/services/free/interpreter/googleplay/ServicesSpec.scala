@@ -1,7 +1,9 @@
 package cards.nine.services.free.interpreter.googleplay
 
+import cards.nine.commons.NineCardsErrors.{ NineCardsError, PackageNotResolved }
+import cards.nine.commons.NineCardsService.Result
 import cards.nine.domain.account.AndroidId
-import cards.nine.domain.application.{ Category, CardList, FullCard, Package, PriceFilter }
+import cards.nine.domain.application.{ CardList, Category, FullCard, Package, PriceFilter }
 import cards.nine.domain.market.{ Localization, MarketCredentials, MarketToken }
 import cards.nine.googleplay.domain._
 import cards.nine.googleplay.processes.getcard.UnknownPackage
@@ -105,6 +107,7 @@ class ServicesSpec
 
       val resolveManyResponse = ResolveMany.Response(wrongPackages, Nil, fullCards)
     }
+
   }
 
   trait BasicScope extends Scope {
@@ -120,8 +123,8 @@ class ServicesSpec
 
       val response = services.resolveOne(onePackage, AuthData.marketAuth)
 
-      response.unsafePerformSyncAttempt must be_\/-[String Xor FullCard].which {
-        content ⇒ content must beXorRight[FullCard]
+      response.unsafePerformSyncAttempt must be_\/-[Result[FullCard]].which {
+        content ⇒ content must beRight[FullCard](GooglePlayResponses.fullCard)
       }
     }
 
@@ -132,8 +135,8 @@ class ServicesSpec
 
       val response = services.resolveOne(onePackage, AuthData.marketAuth)
 
-      response.unsafePerformSyncAttempt must be_\/-[String Xor FullCard].which {
-        content ⇒ content must beXorLeft[String](onePackageName)
+      response.unsafePerformSyncAttempt must be_\/-[Result[FullCard]].which {
+        content ⇒ content must beLeft(PackageNotResolved(onePackageName))
       }
     }
   }
@@ -146,9 +149,11 @@ class ServicesSpec
 
       val response = services.resolveManyDetailed(packages, AuthData.marketAuth)
 
-      response.unsafePerformSyncAttempt must be_\/-[CardList[FullCard]].which { appsInfo ⇒
-        appsInfo.missing must containTheSameElementsAs(wrongPackages)
-        appsInfo.cards must containTheSameElementsAs(fullCards)
+      response.unsafePerformSyncAttempt must be_\/-[Result[CardList[FullCard]]].which { response ⇒
+        response must beRight[CardList[FullCard]].which { appsInfo ⇒
+          appsInfo.missing must containTheSameElementsAs(wrongPackages)
+          appsInfo.cards must containTheSameElementsAs(fullCards)
+        }
       }
     }
   }
@@ -169,12 +174,14 @@ class ServicesSpec
         auth             = AuthData.marketAuth
       )
 
-      response.unsafePerformSyncAttempt must be_\/-[CardList[FullCard]].which { rec ⇒
-        rec.cards must containTheSameElementsAs(fullCards)
+      response.unsafePerformSyncAttempt must be_\/-[Result[CardList[FullCard]]].which { response ⇒
+        response must beRight[CardList[FullCard]].which { rec ⇒
+          rec.cards must containTheSameElementsAs(fullCards)
+        }
       }
     }
 
-    "fail if something went wrong while getting recommendations" in new BasicScope {
+    "return a RecommendationsServerError if something went wrong while getting recommendations" in new BasicScope {
 
       googlePlayProcesses.recommendationsByCategory(
         Requests.recommendByCategoryRequest,
@@ -189,10 +196,10 @@ class ServicesSpec
         auth             = AuthData.marketAuth
       )
 
-      // TODO: We shouldn't use Throwable to model this error
-      response.unsafePerformSyncAttempt must be_-\/[Throwable]
+      response.unsafePerformSyncAttempt must be_\/-[Result[CardList[FullCard]]].which { response ⇒
+        response must beLeft[NineCardsError]
+      }
     }
-
   }
 
   "recommendationsForApps" should {
@@ -210,8 +217,10 @@ class ServicesSpec
         auth             = AuthData.marketAuth
       )
 
-      response.unsafePerformSyncAttempt must be_\/-[CardList[FullCard]].which { rec ⇒
-        rec.cards must containTheSameElementsAs(fullCards)
+      response.unsafePerformSyncAttempt must be_\/-[Result[CardList[FullCard]]].which { response ⇒
+        response must beRight[CardList[FullCard]].which { rec ⇒
+          rec.cards must containTheSameElementsAs(fullCards)
+        }
       }
     }
   }

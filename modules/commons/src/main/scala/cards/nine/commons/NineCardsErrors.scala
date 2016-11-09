@@ -22,7 +22,11 @@ object NineCardsErrors {
 
   final case class InstallationNotFound(message: String) extends NineCardsError
 
+  final case class PackageNotResolved(message: String) extends NineCardsError
+
   final case class RankingNotFound(message: String) extends NineCardsError
+
+  final case class RecommendationsServerError(message: String) extends NineCardsError
 
   final case class ReportNotFound(message: String) extends NineCardsError
 

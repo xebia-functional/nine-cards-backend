@@ -1,22 +1,23 @@
 package cards.nine.services.free.algebra
 
+import cards.nine.commons.NineCardsService
+import cards.nine.commons.NineCardsService._
 import cards.nine.domain.application._
 import cards.nine.domain.market.MarketCredentials
-import cats.data.Xor
-import cats.free.{ Free, Inject }
+import cats.free.:<:
 
 object GooglePlay {
 
   sealed trait Ops[A]
 
   case class Resolve(packageName: Package, auth: MarketCredentials)
-    extends Ops[String Xor FullCard]
+    extends Ops[Result[FullCard]]
 
-  case class ResolveManyBasic[A](packageNames: List[Package], auth: MarketCredentials)
-    extends Ops[CardList[BasicCard]]
+  case class ResolveManyBasic(packageNames: List[Package], auth: MarketCredentials)
+    extends Ops[Result[CardList[BasicCard]]]
 
-  case class ResolveManyDetailed[A](packageNames: List[Package], auth: MarketCredentials)
-    extends Ops[CardList[FullCard]]
+  case class ResolveManyDetailed(packageNames: List[Package], auth: MarketCredentials)
+    extends Ops[Result[CardList[FullCard]]]
 
   case class RecommendationsByCategory(
     category: String,
@@ -24,7 +25,7 @@ object GooglePlay {
     excludesPackages: List[Package],
     limit: Int,
     auth: MarketCredentials
-  ) extends Ops[CardList[FullCard]]
+  ) extends Ops[Result[CardList[FullCard]]]
 
   case class RecommendationsForApps(
     packagesName: List[Package],
@@ -32,34 +33,34 @@ object GooglePlay {
     limitPerApp: Int,
     limit: Int,
     auth: MarketCredentials
-  ) extends Ops[CardList[FullCard]]
+  ) extends Ops[Result[CardList[FullCard]]]
 
   case class SearchApps(
     query: String,
     excludePackages: List[Package],
     limit: Int,
     auth: MarketCredentials
-  ) extends Ops[CardList[BasicCard]]
+  ) extends Ops[Result[CardList[BasicCard]]]
 
-  class Services[F[_]](implicit I: Inject[Ops, F]) {
+  class Services[F[_]](implicit I: Ops :<: F) {
 
     def resolve(
       packageName: Package,
       auth: MarketCredentials
-    ): Free[F, String Xor FullCard] =
-      Free.inject[Ops, F](Resolve(packageName, auth))
+    ): NineCardsService[F, FullCard] =
+      NineCardsService(Resolve(packageName, auth))
 
     def resolveManyBasic(
       packageNames: List[Package],
       auth: MarketCredentials
-    ): Free[F, CardList[BasicCard]] =
-      Free.inject[Ops, F](ResolveManyBasic(packageNames, auth))
+    ): NineCardsService[F, CardList[BasicCard]] =
+      NineCardsService(ResolveManyBasic(packageNames, auth))
 
     def resolveManyDetailed(
       packageNames: List[Package],
       auth: MarketCredentials
-    ): Free[F, CardList[FullCard]] =
-      Free.inject[Ops, F](ResolveManyDetailed(packageNames, auth))
+    ): NineCardsService[F, CardList[FullCard]] =
+      NineCardsService(ResolveManyDetailed(packageNames, auth))
 
     def recommendByCategory(
       category: String,
@@ -67,8 +68,8 @@ object GooglePlay {
       excludesPackages: List[Package],
       limit: Int,
       auth: MarketCredentials
-    ): Free[F, CardList[FullCard]] =
-      Free.inject[Ops, F](RecommendationsByCategory(category, priceFilter, excludesPackages, limit, auth))
+    ): NineCardsService[F, CardList[FullCard]] =
+      NineCardsService(RecommendationsByCategory(category, priceFilter, excludesPackages, limit, auth))
 
     def recommendationsForApps(
       packagesName: List[Package],
@@ -76,22 +77,22 @@ object GooglePlay {
       limitPerApp: Int,
       limit: Int,
       auth: MarketCredentials
-    ): Free[F, CardList[FullCard]] =
-      Free.inject[Ops, F](RecommendationsForApps(packagesName, excludesPackages, limitPerApp, limit, auth))
+    ): NineCardsService[F, CardList[FullCard]] =
+      NineCardsService(RecommendationsForApps(packagesName, excludesPackages, limitPerApp, limit, auth))
 
     def searchApps(
       query: String,
       excludesPackages: List[Package],
       limit: Int,
       auth: MarketCredentials
-    ): Free[F, CardList[BasicCard]] =
-      Free.inject[Ops, F](SearchApps(query, excludesPackages, limit, auth))
+    ): NineCardsService[F, CardList[BasicCard]] =
+      NineCardsService(SearchApps(query, excludesPackages, limit, auth))
 
   }
 
   object Services {
 
-    implicit def services[F[_]](implicit I: Inject[Ops, F]): Services[F] =
+    implicit def services[F[_]](implicit I: Ops :<: F): Services[F] =
       new Services
 
   }
