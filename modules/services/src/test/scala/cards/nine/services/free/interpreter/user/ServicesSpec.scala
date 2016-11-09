@@ -1,6 +1,7 @@
 package cards.nine.services.free.interpreter.user
 
 import cards.nine.domain.account._
+import cards.nine.domain.ScalaCheck._
 import cards.nine.services.free.domain.{ Installation, SharedCollection, SharedCollectionSubscription, User }
 import cards.nine.services.free.interpreter.collection.Services.SharedCollectionData
 import cards.nine.services.free.interpreter.user.Services.UserData

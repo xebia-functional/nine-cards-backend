@@ -13,6 +13,8 @@ import cats.instances.list._
 import cats.syntax.monadCombine._
 import cats.syntax.traverse._
 import java.net.URLEncoder
+
+import cards.nine.commons.config.Domain.GooglePlayApiConfiguration
 import org.http4s.Http4s._
 import org.http4s._
 import org.http4s.client.{ Client, UnexpectedStatus }
@@ -22,7 +24,7 @@ import collection.JavaConverters._
 import scalaz.concurrent.Task
 import scodec.bits.ByteVector
 
-class Interpreter(config: Configuration) extends (Ops ~> WithHttpClient) {
+class Interpreter(config: GooglePlayApiConfiguration) extends (Ops ~> WithHttpClient) {
 
   def apply[A](ops: Ops[A]): WithHttpClient[A] = ops match {
     case GetBulkDetails(packs, auth) ⇒ new BulkDetailsWithClient(packs, auth)
@@ -46,7 +48,7 @@ class Interpreter(config: Configuration) extends (Ops ~> WithHttpClient) {
     val httpRequest =
       new Request(
         method  = Method.POST,
-        uri     = baseUri.withPath(config.bulkDetailsPath),
+        uri     = baseUri.withPath(config.paths.bulkDetails),
         headers = headers.fullHeaders(auth, Option("application/x-protobuf"))
       ).withBody(builder.build().toByteArray)
 
@@ -79,7 +81,7 @@ class Interpreter(config: Configuration) extends (Ops ~> WithHttpClient) {
       new Request(
         method  = Method.GET,
         uri     = baseUri
-          .withPath(config.detailsPath)
+          .withPath(config.paths.details)
           .withQueryParam("doc", packageName.value),
         headers = headers.fullHeaders(auth)
       )
@@ -109,7 +111,7 @@ class Interpreter(config: Configuration) extends (Ops ~> WithHttpClient) {
       val httpRequest: Request = new Request(
         method  = Method.GET,
         uri     = baseUri
-          .withPath(config.recommendationsPath)
+          .withPath(config.paths.recommendations)
           .withQueryParam("c", 3)
           .withQueryParam("rt", "1")
           .withQueryParam("doc", pack.value),
@@ -159,7 +161,7 @@ class Interpreter(config: Configuration) extends (Ops ~> WithHttpClient) {
     val httpRequest: Request = new Request(
       method  = Method.GET,
       uri     = baseUri
-        .withPath(config.listPath)
+        .withPath(config.paths.list)
         .withQueryParam("c", "3")
         .withQueryParam("cat", request.category.entryName)
         .withQueryParam("ctr", subCategory),
@@ -183,7 +185,7 @@ class Interpreter(config: Configuration) extends (Ops ~> WithHttpClient) {
     val httpRequest: Request = new Request(
       method  = Method.GET,
       uri     = baseUri
-        .withPath(config.searchPath)
+        .withPath(config.paths.search)
         .withQueryParam("c", "3")
         .withQueryParam("rt", "1")
         .withQueryParam("q", URLEncoder.encode(request.word, "UTF-8")),

@@ -3,13 +3,15 @@ package cards.nine.googleplay.processes
 import cats.data.Xor
 import cats.~>
 import cards.nine.commons.TaskInstances._
+import cards.nine.commons.config.NineCardsConfig.nineCardsConfiguration
 import cards.nine.domain.application.{ FullCard, Package }
 import cards.nine.googleplay.domain._
-import cards.nine.googleplay.service.free.{ JoinServices, JoinInterpreter }
+import cards.nine.googleplay.service.free.{ JoinInterpreter, JoinServices }
 import cards.nine.googleplay.service.free.{ algebra ⇒ Alg, interpreter ⇒ Inter }
 import com.redis.{ RedisClient, RedisClientPool }
 import org.http4s.client.{ Client ⇒ HttpClient }
 import org.joda.time.{ DateTime, DateTimeZone }
+
 import scalaz.concurrent.Task
 
 case class AppServiceByProcess(
@@ -25,7 +27,7 @@ case class AppServiceByProcess(
 
   val googleApiInt: Alg.GoogleApi.Ops ~> Task = {
     import Inter.googleapi._
-    val interp = new Interpreter(Configuration.load)
+    val interp = new Interpreter(nineCardsConfiguration.google.play.api)
     val toTask = new HttpToTask(apiHttpClient)
     interp andThen toTask
   }
@@ -38,7 +40,7 @@ case class AppServiceByProcess(
 
   val webScrapperInt: Alg.WebScraper.Ops ~> Task = {
     import Inter.webscrapper._
-    val interp = new Interpreter(Configuration.load)
+    val interp = new Interpreter(nineCardsConfiguration.google.play.web)
     val toTask = new HttpToTask(webHttpClient)
     interp andThen toTask
   }

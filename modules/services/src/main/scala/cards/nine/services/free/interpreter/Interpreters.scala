@@ -1,7 +1,8 @@
 package cards.nine.services.free.interpreter
 
-import cards.nine.commons.NineCardsConfig._
+import cards.nine.commons.config.NineCardsConfig._
 import cards.nine.commons.TaskInstances
+import cards.nine.commons.config.Domain.{ GoogleAnalyticsConfiguration, GoogleApiConfiguration, GoogleFirebaseConfiguration }
 import cards.nine.googleplay.processes.withTypes.WithRedisClient
 import cats._
 import cards.nine.services.free.algebra._
@@ -10,6 +11,7 @@ import cards.nine.services.free.interpreter.collection.{ Services ⇒ Collection
 import cards.nine.services.free.interpreter.country.{ Services ⇒ CountryServices }
 import cards.nine.services.free.interpreter.firebase.{ Services ⇒ FirebaseServices }
 import cards.nine.services.free.interpreter.googleapi.{ Services ⇒ GoogleApiServices }
+import cards.nine.services.free.interpreter.googleoauth.{ Services ⇒ GoogleOAuthServices }
 import cards.nine.services.free.interpreter.googleplay.{ Services ⇒ GooglePlayServices }
 import cards.nine.services.free.interpreter.ranking.{ Services ⇒ RankingServices }
 import cards.nine.services.free.interpreter.ranking.Services._
@@ -25,14 +27,15 @@ abstract class Interpreters[M[_]](implicit A: ApplicativeError[M, Throwable], T:
 
   val task2M: (Task ~> M)
 
-  val redisClientPool: RedisClientPool = {
-    val baseConfig = "ninecards.google.play.redis"
-    new RedisClientPool(
-      host   = defaultConfig.getString(s"$baseConfig.host"),
-      port   = defaultConfig.getInt(s"$baseConfig.port"),
-      secret = defaultConfig.getOptionalString(s"$baseConfig.secret")
-    )
-  }
+  implicit val fanalyticsConfig: GoogleAnalyticsConfiguration = nineCardsConfiguration.google.analytics
+  implicit val firebaseConfig: GoogleFirebaseConfiguration = nineCardsConfiguration.google.firebase
+  implicit val googleApiConfig: GoogleApiConfiguration = nineCardsConfiguration.google.api
+
+  val redisClientPool: RedisClientPool = new RedisClientPool(
+    host   = nineCardsConfiguration.redis.host,
+    port   = nineCardsConfiguration.redis.port,
+    secret = nineCardsConfiguration.redis.secret
+  )
 
   val toTask = new (WithRedisClient ~> Task) {
 
@@ -52,6 +55,8 @@ abstract class Interpreters[M[_]](implicit A: ApplicativeError[M, Throwable], T:
   lazy val firebaseInterpreter: (Firebase.Ops ~> M) = FirebaseServices.services.andThen(task2M)
 
   lazy val googleApiInterpreter: (GoogleApi.Ops ~> M) = GoogleApiServices.services.andThen(task2M)
+
+  lazy val googleOAuthInterpreter: (GoogleOAuth.Ops ~> M) = GoogleOAuthServices.andThen(task2M)
 
   lazy val googlePlayInterpreter: (GooglePlay.Ops ~> M) = GooglePlayServices.services.andThen(task2M)
 

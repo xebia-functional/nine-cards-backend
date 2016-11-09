@@ -2,6 +2,7 @@ package cards.nine.services.free.interpreter.collection
 
 import cards.nine.domain.application.Package
 import cards.nine.domain.ScalaCheck.arbPackage
+import cards.nine.domain.pagination.Page
 import cards.nine.services.free.domain.{ SharedCollection, SharedCollectionPackage, SharedCollectionWithAggregatedInfo, User }
 import cards.nine.services.free.interpreter.collection.Services.SharedCollectionData
 import cards.nine.services.free.interpreter.user.Services.UserData
@@ -15,7 +16,6 @@ import shapeless.syntax.std.product._
 
 import scala.annotation.tailrec
 import scala.collection.immutable.List
-
 import scalaz.syntax.traverse.ToTraverseOps
 import scalaz.std.list._
 
@@ -26,6 +26,8 @@ trait SharedCollectionPersistenceServicesContext extends DomainDatabaseContext {
   val pageNumber = 0
 
   val pageSize = 25
+
+  val pageParams = Page(pageNumber, pageSize)
 
   val socialCategory = "SOCIAL"
 
@@ -253,7 +255,7 @@ class ServicesSpec
 
         val response: List[SharedCollection] =
           collectionPersistenceServices
-            .getLatestByCategory(category, pageNumber, pageSize)
+            .getLatestByCategory(category, pageParams)
             .transactAndRun
 
         response must beEmpty
@@ -276,7 +278,7 @@ class ServicesSpec
 
         val response: List[SharedCollection] =
           collectionPersistenceServices
-            .getLatestByCategory(communicationCategory, pageNumber, pageSize)
+            .getLatestByCategory(communicationCategory, pageParams)
             .transactAndRun
 
         response must beEmpty
@@ -307,8 +309,7 @@ class ServicesSpec
         val response = for {
           response ← collectionPersistenceServices.getLatestByCategory(
             category   = socialCategory,
-            pageNumber = pageNumber,
-            pageSize   = pageSize
+            pageParams = pageParams
           )
           _ ← deleteSharedCollections
         } yield response
@@ -330,7 +331,7 @@ class ServicesSpec
 
         val response: List[SharedCollection] =
           collectionPersistenceServices
-            .getLatestByCategory(socialCategory, pageNumber, pageSize)
+            .getLatestByCategory(socialCategory, pageParams)
             .transactAndRun
 
         response must beEmpty
@@ -349,7 +350,7 @@ class ServicesSpec
 
         val response: List[SharedCollection] =
           collectionPersistenceServices
-            .getTopByCategory(communicationCategory, pageNumber, pageSize)
+            .getTopByCategory(communicationCategory, pageParams)
             .transactAndRun
 
         response must beEmpty
@@ -380,8 +381,7 @@ class ServicesSpec
         val response = for {
           response ← collectionPersistenceServices.getTopByCategory(
             category   = socialCategory,
-            pageNumber = pageNumber,
-            pageSize   = pageSize
+            pageParams = pageParams
           )
           _ ← deleteSharedCollections
         } yield response

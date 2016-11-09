@@ -113,15 +113,17 @@ class Services(
       Task.delay {
         val wrap = CacheWrapper[CacheKey, CacheVal](client)
 
-        val key = scope match {
-          case WorldScope ⇒ CacheKey.worldScope
-          case CountryScope(code) ⇒ CacheKey.countryScope(code.value)
+        val (key, countryCode) = scope match {
+          case WorldScope ⇒
+            (CacheKey.worldScope, None)
+          case CountryScope(code) ⇒
+            (CacheKey.countryScope(code.value), Option(code))
         }
 
         val value = CacheVal(Option(ranking))
 
         wrap.put((key, value))
-        Either.right(UpdateRankingSummary(ranking.categories.values.size, 0))
+        Either.right(UpdateRankingSummary(countryCode, ranking.categories.values.size))
       }
   }
 }

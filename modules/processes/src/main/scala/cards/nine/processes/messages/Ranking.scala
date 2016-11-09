@@ -1,21 +1,29 @@
 package cards.nine.processes.messages
 
-import cards.nine.domain.analytics.{ GeoScope, RankingParams }
+import cards.nine.domain.analytics._
 import cards.nine.domain.application.Package
+import cards.nine.domain.oauth.ServiceAccount
+import cards.nine.domain.pagination.Page
 import cards.nine.services.free.domain.Ranking._
-import cats.data.Xor
 
 object rankings {
 
   object Reload {
 
-    case class Request(scope: GeoScope, params: RankingParams)
+    case class Request(
+      dateRange: DateRange,
+      rankingLength: Int,
+      serviceAccount: ServiceAccount,
+      pageParams: Page
+    )
 
     case class Response()
 
-    case class Error(code: Int, message: String, status: String) extends Throwable
+    case class SummaryResponse(
+      countriesWithoutRanking: List[CountryIsoCode],
+      countriesWithRanking: List[UpdateRankingSummary]
+    )
 
-    type XorResponse = Xor[Error, Response]
   }
 
   object Get {
@@ -27,7 +35,9 @@ object rankings {
   }
 
   object GetRankedDeviceApps {
+
     case class DeviceApp(packageName: Package)
+
   }
 
 }

@@ -4,6 +4,7 @@ import cards.nine.commons.FreeUtils._
 import cards.nine.domain.account.DeviceToken
 import cards.nine.domain.application.{ BasicCardList, Package }
 import cards.nine.domain.market.MarketCredentials
+import cards.nine.domain.pagination.Page
 import cards.nine.processes.ProcessesExceptions.SharedCollectionNotFoundException
 import cards.nine.processes.converters.Converters._
 import cards.nine.processes.messages.SharedCollectionMessages._
@@ -56,10 +57,9 @@ class SharedCollectionProcesses[F[_]](
     userId: Long,
     category: String,
     marketAuth: MarketCredentials,
-    pageNumber: Int,
-    pageSize: Int
+    pageParams: Page
   ): Free[F, GetCollectionsResponse] =
-    getCollections(collectionServices.getLatestByCategory(category, pageNumber, pageSize), userId, marketAuth)
+    getCollections(collectionServices.getLatestByCategory(category, pageParams), userId, marketAuth)
 
   def getPublishedCollections(
     userId: Long,
@@ -71,10 +71,9 @@ class SharedCollectionProcesses[F[_]](
     userId: Long,
     category: String,
     marketAuth: MarketCredentials,
-    pageNumber: Int,
-    pageSize: Int
+    pageParams: Page
   ): Free[F, GetCollectionsResponse] =
-    getCollections(collectionServices.getTopByCategory(category, pageNumber, pageSize), userId, marketAuth)
+    getCollections(collectionServices.getTopByCategory(category, pageParams), userId, marketAuth)
 
   /**
     * This process changes the application state to one where the user is subscribed to the collection.

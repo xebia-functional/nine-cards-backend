@@ -1,5 +1,6 @@
 package cards.nine.services.free.interpreter.firebase
 
+import cards.nine.commons.config.Domain.{ GoogleFirebaseConfiguration, GoogleFirebasePaths }
 import cats.data.Xor
 import cards.nine.domain.account.DeviceToken
 import cards.nine.domain.application.Package
@@ -82,12 +83,12 @@ class ServicesSpec
 
   import TestData._
 
-  val configuration: Configuration = Configuration(
-    protocol             = "http",
-    host                 = "localhost",
-    port                 = Option(mockServerPort),
-    sendNotificationPath = paths.sendNotification,
-    authorizationKey     = auth.valid_token
+  val configuration = GoogleFirebaseConfiguration(
+    protocol         = "http",
+    host             = "localhost",
+    port             = Option(mockServerPort),
+    authorizationKey = auth.valid_token,
+    paths            = GoogleFirebasePaths(paths.sendNotification)
   )
 
   val services = Services.services(configuration)
@@ -131,7 +132,7 @@ class ServicesSpec
       }
 
     "respond 401 Unauthorized and return a FirebaseError value if an invalid auth token is provided" in {
-      val badConfiguration: Configuration = configuration.copy(
+      val badConfiguration: GoogleFirebaseConfiguration = configuration.copy(
         authorizationKey = auth.invalid_token
       )
 

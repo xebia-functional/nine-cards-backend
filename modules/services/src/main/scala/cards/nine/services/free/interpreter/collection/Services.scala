@@ -3,6 +3,7 @@ package cards.nine.services.free.interpreter.collection
 import java.sql.Timestamp
 
 import cards.nine.domain.application.Package
+import cards.nine.domain.pagination.Page
 import cards.nine.services.free.algebra.SharedCollection._
 import cards.nine.services.free.domain.SharedCollection.{ Queries ⇒ CollectionQueries }
 import cards.nine.services.free.domain.SharedCollectionPackage.{ Queries ⇒ PackageQueries }
@@ -38,17 +39,21 @@ class Services(
 
   def getLatestByCategory(
     category: String,
-    pageNumber: Int,
-    pageSize: Int
+    pageParams: Page
   ): ConnectionIO[List[SharedCollection]] =
-    collectionPersistence.fetchList(CollectionQueries.getLatestByCategory, (category, pageSize, pageNumber))
+    collectionPersistence.fetchList(
+      sql    = CollectionQueries.getLatestByCategory,
+      values = (category, pageParams.pageSize, pageParams.pageNumber)
+    )
 
   def getTopByCategory(
     category: String,
-    pageNumber: Int,
-    pageSize: Int
+    pageParams: Page
   ): ConnectionIO[List[SharedCollection]] =
-    collectionPersistence.fetchList(CollectionQueries.getTopByCategory, (category, pageSize, pageNumber))
+    collectionPersistence.fetchList(
+      sql    = CollectionQueries.getTopByCategory,
+      values = (category, pageParams.pageSize, pageParams.pageNumber)
+    )
 
   def addPackage[K: Composite](collectionId: Long, packageName: Package): ConnectionIO[K] =
     packagePersistence.updateWithGeneratedKeys[K](
@@ -112,12 +117,12 @@ class Services(
       getByPublicIdentifier(publicId)
     case GetByUser(user) ⇒
       getByUser(user)
-    case GetLatestByCategory(category, pageNumber, pageSize) ⇒
-      getLatestByCategory(category, pageNumber, pageSize)
+    case GetLatestByCategory(category, paginationParams) ⇒
+      getLatestByCategory(category, paginationParams)
     case GetPackagesByCollection(collection) ⇒
       getPackagesByCollection(collection)
-    case GetTopByCategory(category, pageNumber, pageSize) ⇒
-      getTopByCategory(category, pageNumber, pageSize)
+    case GetTopByCategory(category, pageParams) ⇒
+      getTopByCategory(category, pageParams)
     case Update(id, title) ⇒
       updateCollectionInfo(id, title)
     case UpdatePackages(collection, packages) ⇒

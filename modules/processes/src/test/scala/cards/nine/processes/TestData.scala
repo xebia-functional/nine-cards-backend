@@ -9,6 +9,7 @@ import cards.nine.domain.account.{ AndroidId, DeviceToken }
 import cards.nine.domain.analytics._
 import cards.nine.domain.application.{ BasicCardList, FullCard, FullCardList, Package, Widget }
 import cards.nine.domain.market.{ Localization, MarketCredentials, MarketToken }
+import cards.nine.domain.pagination.Page
 import cards.nine.processes.NineCardsServices.NineCardsServices
 import cards.nine.processes.ProcessesExceptions.SharedCollectionNotFoundException
 import cards.nine.processes.converters.Converters
@@ -68,6 +69,8 @@ object TestData {
   val pageNumber = 0
 
   val pageSize = 25
+
+  val pageParams = Page(pageNumber, pageSize)
 
   val publicIdentifier = "40daf308-fecf-4228-9262-a712d783cf49"
 

@@ -2,8 +2,9 @@ package cards.nine.services.free.interpreter.analytics
 
 import cards.nine.commons.NineCardsErrors.NineCardsError
 import cards.nine.commons.NineCardsService.Result
+import cards.nine.commons.config.Domain.GoogleAnalyticsConfiguration
 import cards.nine.domain.analytics._
-import cards.nine.services.free.domain.Ranking.{ GoogleAnalyticsRanking }
+import cards.nine.services.free.domain.Ranking.GoogleAnalyticsRanking
 import cards.nine.services.utils.MockServerService
 import org.joda.time.{ DateTime, DateTimeZone }
 import org.mockserver.model.HttpRequest.{ request ⇒ mockRequest }
@@ -58,11 +59,11 @@ class ServicesSpec
 
   import TestData._
 
-  implicit val configuration: Configuration = Configuration(
+  implicit val configuration: GoogleAnalyticsConfiguration = GoogleAnalyticsConfiguration(
     protocol = "http",
     host     = "localhost",
     port     = Option(mockServerPort),
-    uri      = paths.batchGet,
+    path     = paths.batchGet,
     viewId   = TestData.viewId
   )
 
@@ -70,14 +71,9 @@ class ServicesSpec
 
   "getRanking" should {
 
-    "translate fine to json the answers" in {
-      val req = Converters.buildRequest(countryName, viewId, dateRange)
-      Encoders.requestBody.apply(req).toString shouldEqual requestBody
-    }
-
     "respond 200 OK and return the Rankings object if a valid access token is provided" in {
       val params = RankingParams(dateRange, 5, AnalyticsToken(auth.valid_token))
-      val response = services.getRanking(countryName, params)
+      val response = services.getRanking(countryCode, categories, params)
       response.unsafePerformSyncAttempt should be_\/-[Result[GoogleAnalyticsRanking]].which {
         content ⇒ content should beRight[GoogleAnalyticsRanking]
       }
@@ -86,7 +82,7 @@ class ServicesSpec
     /* Return a 401 error message if the auth token is wrong*/
     "respond 401 Unauthorized if the authToken is not authenticated" in {
       val params = RankingParams(dateRange, 5, AnalyticsToken(auth.invalid_token))
-      val response = services.getRanking(countryName, params)
+      val response = services.getRanking(countryCode, categories, params)
       response.unsafePerformSyncAttempt should be_\/-[Result[GoogleAnalyticsRanking]].which {
         content ⇒ content should beLeft[NineCardsError]
       }
@@ -98,7 +94,9 @@ class ServicesSpec
 
 object TestData {
 
-  val countryName = Option(CountryName("Spain"))
+  val categories = List("SOCIAL")
+
+  val countryCode = Option(CountryIsoCode("ES"))
 
   val viewId = "analytics_view_id"
 
@@ -113,9 +111,6 @@ object TestData {
         |    {
         |      "viewId" : "analytics_view_id",
         |      "dimensions" : [
-        |        {
-        |          "name" : "ga:country"
-        |        },
         |        {
         |          "name" : "ga:eventCategory"
         |        },
@@ -141,11 +136,25 @@ object TestData {
         |          "operator" : "OPERATOR_UNSPECIFIED",
         |          "filters" : [
         |            {
-        |              "dimensionName" : "ga:country",
+        |              "dimensionName" : "ga:eventCategory",
         |              "not" : false,
         |              "operator" : "EXACT",
         |              "expressions" : [
-        |                "Spain"
+        |                "SOCIAL"
+        |              ],
+        |              "caseSensitive" : false
+        |            }
+        |          ]
+        |        },
+        |        {
+        |          "operator" : "OPERATOR_UNSPECIFIED",
+        |          "filters" : [
+        |            {
+        |              "dimensionName" : "ga:countryIsoCode",
+        |              "not" : false,
+        |              "operator" : "EXACT",
+        |              "expressions" : [
+        |                "ES"
         |              ],
         |              "caseSensitive" : false
         |            }
@@ -165,7 +174,7 @@ object TestData {
         |        }
         |      ],
         |      "includeEmptyRows" : true,
-        |      "pageSize" : 10000,
+        |      "pageSize" : 5,
         |      "hideTotals" : true,
         |      "hideValueRanges" : true
         |    }
@@ -178,17 +187,17 @@ object TestData {
       |  "reports" : [
       |    {
       |      "columnHeader": {
-      |        "dimensions": [ "ga:country", "ga:eventCategory", "ga:eventLabel" ],
+      |        "dimensions": [ "ga:eventCategory", "ga:eventLabel" ],
       |        "metricHeader": { "metricHeaderEntries": [ { "name": "times_used", "type": "INTEGER" } ] }
       |      },
       |      "data": {
       |        "rows": [
       |          {
-      |            "dimensions": [ "Spain", "NIGHT", "bloody.mary" ],
+      |            "dimensions": [ "NIGHT", "bloody.mary" ],
       |            "metrics": [ { "values": [ "157" ] } ]
       |          },
       |          {
-      |            "dimensions": [ "Spain", "NIGHT", "" ],
+      |            "dimensions": [ "NIGHT", "" ],
       |            "metrics": [ { "values": [ "141" ] } ]
       |          }
       |        ],
