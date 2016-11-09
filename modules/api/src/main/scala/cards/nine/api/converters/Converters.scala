@@ -191,12 +191,12 @@ object Converters {
       subscriptions = response.subscriptions
     )
 
-  def toApiGetRecommendationsResponse(response: FullCardList): ApiGetRecommendationsResponse =
+  def toApiGetRecommendationsResponse(response: CardList[FullCard]): ApiGetRecommendationsResponse =
     ApiGetRecommendationsResponse(
       response.cards map toApiRecommendation
     )
 
-  def toApiSearchAppsResponse(response: BasicCardList): ApiSearchAppsResponse =
+  def toApiSearchAppsResponse(response: CardList[BasicCard]): ApiSearchAppsResponse =
     ApiSearchAppsResponse(response.cards map toApiRecommendation)
 
   def toApiRankedAppsByCategory(ranking: RankedAppsByCategory) =

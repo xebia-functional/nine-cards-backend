@@ -7,7 +7,7 @@ import cards.nine.commons.NineCardsErrors.{ CountryNotFound, RankingNotFound }
 import cards.nine.commons.NineCardsService
 import cards.nine.domain.account.{ AndroidId, DeviceToken }
 import cards.nine.domain.analytics._
-import cards.nine.domain.application.{ BasicCardList, FullCard, FullCardList, Package, Widget }
+import cards.nine.domain.application.{ CardList, FullCard, Package, Widget }
 import cards.nine.domain.market.{ Localization, MarketCredentials, MarketToken }
 import cards.nine.domain.pagination.Page
 import cards.nine.processes.NineCardsServices.NineCardsServices
@@ -144,8 +144,8 @@ object TestData {
       )
     }
 
-    val appsInfo = FullCardList(missing, apps)
-    val appsInfoBasic = BasicCardList(missing, apps.map(_.toBasic))
+    val appsInfo = CardList(missing, apps)
+    val appsInfoBasic = CardList(missing, apps.map(_.toBasic))
 
     val marketAuth = MarketCredentials(
       androidId    = androidId,

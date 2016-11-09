@@ -1,6 +1,6 @@
 package cards.nine.processes.converters
 
-import cards.nine.domain.application.{ FullCardList }
+import cards.nine.domain.application.{ CardList, FullCard }
 import cards.nine.services.free.domain._
 import org.scalacheck.Shapeless._
 import org.specs2.ScalaCheck
@@ -33,7 +33,7 @@ class ConvertersSpec
 
   "filterCategorized" should {
     "convert an AppsInfo to a GetAppsInfoResponse object" in {
-      prop { appsInfo: FullCardList ⇒
+      prop { appsInfo: CardList[FullCard] ⇒
 
         val appsWithoutCategories = appsInfo.cards.filter(app ⇒ app.categories.isEmpty)
 

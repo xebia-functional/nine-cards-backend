@@ -1,7 +1,7 @@
 package cards.nine.processes
 
 import cards.nine.domain.account.AndroidId
-import cards.nine.domain.application.{ FullCard, FullCardList, Package, PriceFilter }
+import cards.nine.domain.application.{ CardList, FullCard, Package, PriceFilter }
 import cards.nine.domain.market.{ Localization, MarketCredentials, MarketToken }
 import cards.nine.processes.NineCardsServices._
 import cards.nine.services.free.algebra.GooglePlay.Services
@@ -94,7 +94,7 @@ trait RecommendationsProcessesContext {
 
   val recommendationFilter = PriceFilter.ALL
 
-  val recommendations = FullCardList(Nil, recommendedApps)
+  val recommendations = CardList(Nil, recommendedApps)
 }
 
 class RecommendationsProcessesSpec extends RecommendationsProcessesSpecification {
@@ -110,7 +110,7 @@ class RecommendationsProcessesSpec extends RecommendationsProcessesSpecification
         auth.marketAuth
       )
 
-      response.foldMap(testInterpreters) must beLike[FullCardList] {
+      response.foldMap(testInterpreters) must beLike[CardList[FullCard]] {
         case r ⇒
           r.cards must_== googlePlayRecommendations
       }
@@ -128,7 +128,7 @@ class RecommendationsProcessesSpec extends RecommendationsProcessesSpecification
         auth.marketAuth
       )
 
-      response.foldMap(testInterpreters) must beLike[FullCardList] {
+      response.foldMap(testInterpreters) must beLike[CardList[FullCard]] {
         case r ⇒
           r.cards must beEmpty
           there was noCallsTo(googlePlayServices)
@@ -144,7 +144,7 @@ class RecommendationsProcessesSpec extends RecommendationsProcessesSpecification
         auth.marketAuth
       )
 
-      response.foldMap(testInterpreters) must beLike[FullCardList] {
+      response.foldMap(testInterpreters) must beLike[CardList[FullCard]] {
         case r ⇒
           r.cards must_== googlePlayRecommendations
       }

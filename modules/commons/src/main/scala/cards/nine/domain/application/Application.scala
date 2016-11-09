@@ -59,9 +59,6 @@ case class CardList[A](
   cards: List[A]
 )
 
-object BasicCardList {
-  def apply(missing: List[Package], cards: List[BasicCard]) = CardList(missing, cards)
-}
 object FullCardList {
   def apply(missing: List[Package], cards: List[FullCard]) = CardList(missing, cards)
 }
@@ -74,4 +71,3 @@ object PriceFilter extends Enum[PriceFilter] {
 
   val values = super.findValues
 }
-

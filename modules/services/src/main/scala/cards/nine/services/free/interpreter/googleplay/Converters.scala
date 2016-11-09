@@ -1,6 +1,6 @@
 package cards.nine.services.free.interpreter.googleplay
 
-import cards.nine.domain.application.{ Category, CardList, FullCardList, Package, PriceFilter }
+import cards.nine.domain.application.{ Category, CardList, FullCard, Package, PriceFilter }
 import cards.nine.googleplay.domain._
 import cards.nine.googleplay.processes.{ getcard, ResolveMany }
 import cats.instances.list._
@@ -48,10 +48,9 @@ object Converters {
       response.apps
     )
 
-  def toFullCardList(response: List[getcard.Response]): FullCardList = {
+  def toFullCardList(response: List[getcard.Response]): CardList[FullCard] = {
     val (errors, resolved) = response.separate
-
-    FullCardList(
+    CardList(
       errors map (_.packageName),
       resolved
     )

@@ -1,7 +1,7 @@
 package cards.nine.processes
 
 import cards.nine.domain.account.AndroidId
-import cards.nine.domain.application.{ FullCard, FullCardList, Package }
+import cards.nine.domain.application.{ CardList, FullCard, Package }
 import cards.nine.domain.market.{ MarketCredentials, MarketToken }
 import cards.nine.processes.NineCardsServices.NineCardsServices
 import cards.nine.services.free.algebra.GooglePlay.Services
@@ -24,10 +24,10 @@ trait GooglePlayProcessesSpecification
     implicit val applicationProcesses = new ApplicationProcesses[NineCardsServices]
 
     googlePlayServices.resolveManyDetailed(Nil, marketAuth) returns
-      Free.pure(FullCardList(Nil, Nil))
+      Free.pure(CardList(Nil, Nil))
 
     googlePlayServices.resolveManyDetailed(packageNames, marketAuth) returns
-      Free.pure(FullCardList(missing, apps))
+      Free.pure(CardList(missing, apps))
   }
 }
 

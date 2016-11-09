@@ -4,7 +4,7 @@ import cards.nine.api.NineCardsHeaders.Domain._
 import cards.nine.api.messages.InstallationsMessages._
 import cards.nine.api.messages.UserMessages._
 import cards.nine.domain.account.{ AndroidId, SessionToken }
-import cards.nine.domain.application.{ BasicCard, FullCardList }
+import cards.nine.domain.application.{ BasicCard, CardList, FullCard }
 import cards.nine.domain.market.{ MarketToken, Localization }
 import cards.nine.processes.messages.InstallationsMessages._
 import cards.nine.processes.messages.SharedCollectionMessages._
@@ -75,7 +75,7 @@ class ConvertersSpec
 
   "toApiCategorizeAppsResponse" should {
     "convert an GetAppsInfoResponse to an ApiCategorizeAppsResponse object" in {
-      prop { (response: FullCardList) ⇒
+      prop { (response: CardList[FullCard]) ⇒
 
         val apiResponse = Converters.toApiAppsInfoResponse(Converters.toApiCategorizedApp)(response)
 
@@ -92,7 +92,7 @@ class ConvertersSpec
 
   "toApiDetailAppsResponse" should {
     "convert an GetAppsInfoResponse to an ApiDetailAppsResponse object" in {
-      prop { (response: FullCardList) ⇒
+      prop { (response: CardList[FullCard]) ⇒
 
         val apiResponse = Converters.toApiAppsInfoResponse(Converters.toApiDetailsApp)(response)
 

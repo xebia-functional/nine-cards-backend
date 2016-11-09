@@ -1,6 +1,6 @@
 package cards.nine.processes
 
-import cards.nine.domain.application.{ BasicCardList, FullCardList, Package }
+import cards.nine.domain.application.{ BasicCard, CardList, FullCard, Package }
 import cards.nine.domain.market.MarketCredentials
 import cards.nine.processes.converters.Converters._
 import cards.nine.commons.FreeUtils._
@@ -12,9 +12,9 @@ class ApplicationProcesses[F[_]](implicit services: GooglePlay.Services[F]) {
   def getAppsInfo(
     packagesName: List[Package],
     marketAuth: MarketCredentials
-  ): Free[F, FullCardList] =
+  ): Free[F, CardList[FullCard]] =
     if (packagesName.isEmpty)
-      FullCardList(Nil, Nil).toFree
+      CardList(Nil, Nil).toFree
     else
       services.resolveManyDetailed(
         packageNames = packagesName,
@@ -24,9 +24,9 @@ class ApplicationProcesses[F[_]](implicit services: GooglePlay.Services[F]) {
   def getAppsBasicInfo(
     packagesName: List[Package],
     marketAuth: MarketCredentials
-  ): Free[F, BasicCardList] =
+  ): Free[F, CardList[BasicCard]] =
     if (packagesName.isEmpty)
-      BasicCardList(Nil, Nil).toFree
+      CardList(Nil, Nil).toFree
     else
       services.resolveManyBasic(packagesName, marketAuth) // WE CANNOT FILTER CATEGORIZED: NO CATEGORIES
 

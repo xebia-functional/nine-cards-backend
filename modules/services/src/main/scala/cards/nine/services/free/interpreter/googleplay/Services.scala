@@ -20,12 +20,12 @@ class Services(implicit googlePlayProcesses: CardsProcesses[GooglePlayApp]) exte
       }
   }
 
-  def resolveManyBasic(packages: List[Package], auth: MarketCredentials): Task[BasicCardList] =
+  def resolveManyBasic(packages: List[Package], auth: MarketCredentials): Task[CardList[BasicCard]] =
     googlePlayProcesses.getBasicCards(packages, auth)
       .map(Converters.toCardList)
       .foldMap(Wiring.interpreters)
 
-  def resolveManyDetailed(packages: List[Package], auth: MarketCredentials): Task[FullCardList] =
+  def resolveManyDetailed(packages: List[Package], auth: MarketCredentials): Task[CardList[FullCard]] =
     googlePlayProcesses.getCards(packages, auth)
       .map(Converters.toCardList)
       .foldMap(Wiring.interpreters)
@@ -36,7 +36,7 @@ class Services(implicit googlePlayProcesses: CardsProcesses[GooglePlayApp]) exte
     excludedPackages: List[Package],
     limit: Int,
     auth: MarketCredentials
-  ): Task[FullCardList] =
+  ): Task[CardList[FullCard]] =
     googlePlayProcesses.recommendationsByCategory(
       Converters.toRecommendByCategoryRequest(category, filter, excludedPackages, limit),
       auth
@@ -51,7 +51,7 @@ class Services(implicit googlePlayProcesses: CardsProcesses[GooglePlayApp]) exte
     limitByApp: Int,
     limit: Int,
     auth: MarketCredentials
-  ): Task[FullCardList] =
+  ): Task[CardList[FullCard]] =
     googlePlayProcesses.recommendationsByApps(
       Converters.toRecommendByAppsRequest(packageNames, limitByApp, excludedPackages, limit),
       auth
@@ -63,7 +63,7 @@ class Services(implicit googlePlayProcesses: CardsProcesses[GooglePlayApp]) exte
     excludePackages: List[Package],
     limit: Int,
     auth: MarketCredentials
-  ): Task[BasicCardList] =
+  ): Task[CardList[BasicCard]] =
     googlePlayProcesses.searchApps(
       Converters.toSearchAppsRequest(query, excludePackages, limit),
       auth

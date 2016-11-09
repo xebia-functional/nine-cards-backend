@@ -24,7 +24,7 @@ object GooglePlay {
     excludesPackages: List[Package],
     limit: Int,
     auth: MarketCredentials
-  ) extends Ops[FullCardList]
+  ) extends Ops[CardList[FullCard]]
 
   case class RecommendationsForApps(
     packagesName: List[Package],
@@ -32,14 +32,14 @@ object GooglePlay {
     limitPerApp: Int,
     limit: Int,
     auth: MarketCredentials
-  ) extends Ops[FullCardList]
+  ) extends Ops[CardList[FullCard]]
 
   case class SearchApps(
     query: String,
     excludePackages: List[Package],
     limit: Int,
     auth: MarketCredentials
-  ) extends Ops[BasicCardList]
+  ) extends Ops[CardList[BasicCard]]
 
   class Services[F[_]](implicit I: Inject[Ops, F]) {
 
@@ -52,13 +52,13 @@ object GooglePlay {
     def resolveManyBasic(
       packageNames: List[Package],
       auth: MarketCredentials
-    ): Free[F, BasicCardList] =
+    ): Free[F, CardList[BasicCard]] =
       Free.inject[Ops, F](ResolveManyBasic(packageNames, auth))
 
     def resolveManyDetailed(
       packageNames: List[Package],
       auth: MarketCredentials
-    ): Free[F, FullCardList] =
+    ): Free[F, CardList[FullCard]] =
       Free.inject[Ops, F](ResolveManyDetailed(packageNames, auth))
 
     def recommendByCategory(
@@ -67,7 +67,7 @@ object GooglePlay {
       excludesPackages: List[Package],
       limit: Int,
       auth: MarketCredentials
-    ): Free[F, FullCardList] =
+    ): Free[F, CardList[FullCard]] =
       Free.inject[Ops, F](RecommendationsByCategory(category, priceFilter, excludesPackages, limit, auth))
 
     def recommendationsForApps(
@@ -76,7 +76,7 @@ object GooglePlay {
       limitPerApp: Int,
       limit: Int,
       auth: MarketCredentials
-    ): Free[F, FullCardList] =
+    ): Free[F, CardList[FullCard]] =
       Free.inject[Ops, F](RecommendationsForApps(packagesName, excludesPackages, limitPerApp, limit, auth))
 
     def searchApps(
@@ -84,7 +84,7 @@ object GooglePlay {
       excludesPackages: List[Package],
       limit: Int,
       auth: MarketCredentials
-    ): Free[F, BasicCardList] =
+    ): Free[F, CardList[BasicCard]] =
       Free.inject[Ops, F](SearchApps(query, excludesPackages, limit, auth))
 
   }

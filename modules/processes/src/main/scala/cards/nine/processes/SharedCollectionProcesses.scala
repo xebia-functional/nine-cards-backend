@@ -2,7 +2,7 @@ package cards.nine.processes
 
 import cards.nine.commons.FreeUtils._
 import cards.nine.domain.account.DeviceToken
-import cards.nine.domain.application.{ BasicCardList, Package }
+import cards.nine.domain.application.{ BasicCard, CardList, Package }
 import cards.nine.domain.market.MarketCredentials
 import cards.nine.domain.pagination.Page
 import cards.nine.processes.ProcessesExceptions.SharedCollectionNotFoundException
@@ -206,14 +206,14 @@ class SharedCollectionProcesses[F[_]](
     def getGooglePlayInfoForPackages(
       collections: List[SharedCollection],
       marketAuth: MarketCredentials
-    ): Free[F, BasicCardList] = {
+    ): Free[F, CardList[BasicCard]] = {
       val packages = collections.flatMap(_.packages).distinct
       googlePlayServices.resolveManyBasic(packages, marketAuth)
     }
 
     def fillGooglePlayInfoForPackages(
       collections: List[SharedCollection],
-      appsInfo: BasicCardList
+      appsInfo: CardList[BasicCard]
     ) = GetCollectionsResponse {
       collections map { collection ⇒
         val foundAppInfo = appsInfo.cards.filter(a ⇒ collection.packages.contains(a.packageName))

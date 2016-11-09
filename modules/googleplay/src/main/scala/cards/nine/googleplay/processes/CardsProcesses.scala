@@ -6,7 +6,7 @@ import cats.instances.list._
 import cats.syntax.monadCombine._
 import cats.syntax.traverse._
 import cats.syntax.xor._
-import cards.nine.domain.application.{ BasicCard, CardList, FullCard, FullCardList, Package }
+import cards.nine.domain.application.{ BasicCard, CardList, FullCard, Package }
 import cards.nine.domain.market.MarketCredentials
 import cards.nine.googleplay.domain._
 import cards.nine.googleplay.domain.apigoogle.{ ResolvePackagesResult, Failure ⇒ ApiFailure, PackageNotFound ⇒ ApiNotFound }
@@ -91,7 +91,7 @@ class CardsProcesses[F[_]](
   def recommendationsByCategory(
     request: RecommendByCategoryRequest,
     auth: MarketCredentials
-  ): Free[F, InfoError Xor FullCardList] =
+  ): Free[F, InfoError Xor CardList[FullCard]] =
     googleApi.recommendationsByCategory(request, auth) flatMap {
       case ll @ Xor.Left(_) ⇒ Free.pure(ll)
       case Xor.Right(recommendations) ⇒
@@ -99,7 +99,7 @@ class CardsProcesses[F[_]](
         for {
           result ← resolvePackageList(packages, auth)
           _ ← storeResolvePackagesResultInCache(result)
-        } yield FullCardList(
+        } yield CardList(
           missing = result.notFoundPackages ++ result.pendingPackages,
           cards   = result.cachedPackages ++ result.resolvedPackages
         ).right[InfoError]
@@ -108,13 +108,13 @@ class CardsProcesses[F[_]](
   def recommendationsByApps(
     request: RecommendByAppsRequest,
     auth: MarketCredentials
-  ): Free[F, FullCardList] =
+  ): Free[F, CardList[FullCard]] =
     for {
       recommendations ← googleApi.recommendationsByApps(request, auth)
       packages = recommendations.diff(request.excludedApps).take(request.maxTotal)
       result ← resolvePackageList(packages, auth)
       _ ← storeResolvePackagesResultInCache(result)
-    } yield FullCardList(
+    } yield CardList(
       missing = result.notFoundPackages ++ result.pendingPackages,
       cards   = result.cachedPackages ++ result.resolvedPackages
     )
