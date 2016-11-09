@@ -105,7 +105,7 @@ trait NineCardsApiSpecification
       Free.pure(Messages.createOrUpdateCollectionResponse.right)
 
     applicationProcesses.getAppsInfo(any, any) returns
-      Free.pure(Messages.getAppsInfoResponse)
+      NineCardsService.right(Messages.getAppsInfoResponse)
 
     rankingProcesses.getRanking(any) returns Free.pure(Either.right(Messages.rankings.getResponse))
 
@@ -113,10 +113,10 @@ trait NineCardsApiSpecification
       Free.pure(Either.right(Messages.rankings.reloadResponse))
 
     recommendationsProcesses.getRecommendationsByCategory(any, any, any, any, any) returns
-      Free.pure(Messages.getRecommendationsByCategoryResponse)
+      NineCardsService.right(Messages.getRecommendationsByCategoryResponse)
 
     recommendationsProcesses.getRecommendationsForApps(any, any, any, any, any) returns
-      Free.pure(Messages.getRecommendationsByCategoryResponse)
+      NineCardsService.right(Messages.getRecommendationsByCategoryResponse)
 
     rankingProcesses.getRankedDeviceApps(any, any) returns
       NineCardsService.right(Messages.getRankedAppsResponse).value
