@@ -15,10 +15,10 @@ import cards.nine.commons.config.Domain.NineCardsConfiguration
 import cards.nine.commons.config.NineCardsConfig
 import cards.nine.domain.account.SessionToken
 import cards.nine.domain.analytics._
-import cards.nine.domain.application.{ Category, FullCardList, PriceFilter }
+import cards.nine.domain.application.{ BasicCard, Category, FullCard, PriceFilter }
 import cards.nine.domain.pagination.Page
-import cards.nine.processes.NineCardsServices._
 import cards.nine.processes._
+import cards.nine.processes.NineCardsServices._
 import cats.data.Xor
 import spray.http.StatusCodes.NotFound
 import spray.routing._
@@ -85,18 +85,25 @@ class NineCardsRoutes(
     nineCardsDirectives.authenticateUser { userContext ⇒
       path("categorize") {
         post {
-          entity(as[ApiGetAppsInfoRequest]) { request ⇒
+          entity(as[ApiAppsInfoRequest]) { request ⇒
             nineCardsDirectives.googlePlayInfo { googlePlayContext ⇒
-              complete(getAppsInfo(request, googlePlayContext, userContext)(toApiCategorizeAppsResponse))
+              complete(getAppsInfo(request, googlePlayContext, userContext)(toApiCategorizedApp))
             }
           }
         }
       } ~
         path("details") {
           post {
-            entity(as[ApiGetAppsInfoRequest]) { request ⇒
+            entity(as[ApiAppsInfoRequest]) { request ⇒
               nineCardsDirectives.googlePlayInfo { googlePlayContext ⇒
-                complete(getAppsInfo(request, googlePlayContext, userContext)(toApiDetailAppsResponse))
+                parameter("slice".?) { sliceOpt ⇒
+                  sliceOpt match {
+                    case Some("icon") ⇒
+                      complete(getAppsBasicInfo(request, googlePlayContext, userContext)(toApiIconApp))
+                    case _ ⇒
+                      complete(getAppsInfo(request, googlePlayContext, userContext)(toApiDetailsApp))
+                  }
+                }
               }
             }
           }
@@ -273,7 +280,7 @@ class NineCardsRoutes(
         publicIdentifier = publicId.value,
         marketAuth       = toMarketAuth(googlePlayContext, userContext)
       )
-      .map(_.map(r ⇒ toApiSharedCollection(r.data)))
+      .map(_.map(r ⇒ toApiSharedCollection(r.data)(toApiCollectionApp)))
 
   private[this] def createCollection(
     request: ApiCreateCollectionRequest,
@@ -356,13 +363,22 @@ class NineCardsRoutes(
       .map(toApiSharedCollectionList)
 
   private[this] def getAppsInfo[T](
-    request: ApiGetAppsInfoRequest,
+    request: ApiAppsInfoRequest,
     googlePlayContext: GooglePlayContext,
     userContext: UserContext
-  )(converter: FullCardList ⇒ T): NineCardsServed[T] =
+  )(converter: FullCard ⇒ T): NineCardsServed[ApiAppsInfoResponse[T]] =
     applicationProcesses
       .getAppsInfo(request.items, toMarketAuth(googlePlayContext, userContext))
-      .map(converter)
+      .map(toApiAppsInfoResponse(converter))
+
+  private[this] def getAppsBasicInfo[T](
+    request: ApiAppsInfoRequest,
+    googlePlayContext: GooglePlayContext,
+    userContext: UserContext
+  )(converter: BasicCard ⇒ T): NineCardsServed[ApiAppsInfoResponse[T]] =
+    applicationProcesses
+      .getAppsBasicInfo(request.items, toMarketAuth(googlePlayContext, userContext))
+      .map(toApiAppsInfoResponse[BasicCard, T](converter))
 
   private[this] def getRecommendationsByCategory(
     request: ApiGetRecommendationsByCategoryRequest,

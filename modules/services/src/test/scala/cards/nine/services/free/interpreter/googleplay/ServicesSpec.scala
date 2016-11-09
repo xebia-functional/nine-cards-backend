@@ -1,7 +1,7 @@
 package cards.nine.services.free.interpreter.googleplay
 
 import cards.nine.domain.account.AndroidId
-import cards.nine.domain.application.{ Category, FullCard, FullCardList, Package, PriceFilter }
+import cards.nine.domain.application.{ Category, CardList, FullCard, Package, PriceFilter }
 import cards.nine.domain.market.{ Localization, MarketCredentials, MarketToken }
 import cards.nine.googleplay.domain._
 import cards.nine.googleplay.processes.getcard.UnknownPackage
@@ -98,7 +98,7 @@ class ServicesSpec
 
       val recommendationsInfoError = InfoError("Something went wrong!")
 
-      val fullCardList = FullCardList(
+      val fullCardList = CardList[FullCard](
         missing = wrongPackages,
         cards   = fullCards
       )
@@ -144,9 +144,9 @@ class ServicesSpec
       googlePlayProcesses.getCards(packages, AuthData.marketAuth) returns
         Free.pure(GooglePlayResponses.resolveManyResponse)
 
-      val response = services.resolveMany(packages, AuthData.marketAuth, true)
+      val response = services.resolveManyDetailed(packages, AuthData.marketAuth)
 
-      response.unsafePerformSyncAttempt must be_\/-[FullCardList].which { appsInfo ⇒
+      response.unsafePerformSyncAttempt must be_\/-[CardList[FullCard]].which { appsInfo ⇒
         appsInfo.missing must containTheSameElementsAs(wrongPackages)
         appsInfo.cards must containTheSameElementsAs(fullCards)
       }
@@ -169,7 +169,7 @@ class ServicesSpec
         auth             = AuthData.marketAuth
       )
 
-      response.unsafePerformSyncAttempt must be_\/-[FullCardList].which { rec ⇒
+      response.unsafePerformSyncAttempt must be_\/-[CardList[FullCard]].which { rec ⇒
         rec.cards must containTheSameElementsAs(fullCards)
       }
     }
@@ -210,7 +210,7 @@ class ServicesSpec
         auth             = AuthData.marketAuth
       )
 
-      response.unsafePerformSyncAttempt must be_\/-[FullCardList].which { rec ⇒
+      response.unsafePerformSyncAttempt must be_\/-[CardList[FullCard]].which { rec ⇒
         rec.cards must containTheSameElementsAs(fullCards)
       }
     }

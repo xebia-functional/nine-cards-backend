@@ -1,7 +1,7 @@
 package cards.nine.processes
 
 import cards.nine.domain.account.AndroidId
-import cards.nine.domain.application.{ FullCard, FullCardList, Package }
+import cards.nine.domain.application.{ CardList, FullCard, Package }
 import cards.nine.domain.market.{ MarketCredentials, MarketToken }
 import cards.nine.processes.NineCardsServices.NineCardsServices
 import cards.nine.services.free.algebra.GooglePlay.Services
@@ -23,11 +23,11 @@ trait GooglePlayProcessesSpecification
     implicit val googlePlayServices: Services[NineCardsServices] = mock[Services[NineCardsServices]]
     implicit val applicationProcesses = new ApplicationProcesses[NineCardsServices]
 
-    googlePlayServices.resolveMany(Nil, marketAuth, true) returns
-      Free.pure(FullCardList(Nil, Nil))
+    googlePlayServices.resolveManyDetailed(Nil, marketAuth) returns
+      Free.pure(CardList(Nil, Nil))
 
-    googlePlayServices.resolveMany(packageNames, marketAuth, true) returns
-      Free.pure(FullCardList(missing, apps))
+    googlePlayServices.resolveManyDetailed(packageNames, marketAuth) returns
+      Free.pure(CardList(missing, apps))
   }
 }
 

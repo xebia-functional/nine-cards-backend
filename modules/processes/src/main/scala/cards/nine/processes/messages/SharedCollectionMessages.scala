@@ -1,6 +1,6 @@
 package cards.nine.processes.messages
 
-import cards.nine.domain.application.{ FullCard, Package }
+import cards.nine.domain.application.{ BasicCard, FullCard, Package }
 import cats.data.Xor
 import org.joda.time.DateTime
 
@@ -19,9 +19,9 @@ object SharedCollectionMessages {
     community: Boolean
   )
 
-  case class SharedCollectionWithAppsInfo(
+  case class SharedCollectionWithAppsInfo[A](
     collection: SharedCollection,
-    appsInfo: List[FullCard]
+    appsInfo: List[A]
   )
 
   case class SharedCollection(
@@ -55,7 +55,7 @@ object SharedCollectionMessages {
     packagesStats: PackagesStats
   )
 
-  case class GetCollectionByPublicIdentifierResponse(data: SharedCollectionWithAppsInfo)
+  case class GetCollectionByPublicIdentifierResponse(data: SharedCollectionWithAppsInfo[FullCard])
 
   case class GetSubscriptionsByUserResponse(subscriptions: List[String])
 
@@ -63,7 +63,7 @@ object SharedCollectionMessages {
 
   case class UnsubscribeResponse()
 
-  case class GetCollectionsResponse(collections: List[SharedCollectionWithAppsInfo])
+  case class GetCollectionsResponse(collections: List[SharedCollectionWithAppsInfo[BasicCard]])
 
   type XorGetCollectionByPublicId = Xor[Throwable, GetCollectionByPublicIdentifierResponse]
 

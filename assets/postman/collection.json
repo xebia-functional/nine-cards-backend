@@ -2,7 +2,7 @@
 	"variables": [],
 	"info": {
 		"name": "NineCardsV2",
-		"_postman_id": "4e7eaee0-9d97-63af-0282-63207db3fc43",
+		"_postman_id": "a7fbab51-5eba-1427-d340-2f3b013ff342",
 		"description": "",
 		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json"
 	},
@@ -207,6 +207,51 @@
 						"body": {
 							"mode": "raw",
 							"raw": "{\n\t\"location\" : \"ES\",\n\t\"items\" : {\n\t\t\"NEWS_AND_MAGAZINES\" : [ \"flipboard.app\", \"com.twitter.android\" ],\n\t\t\"VIDEO_PLAYER\" : [ \"com.google.android.videos\", \"com.google.android.youtube\"]\n\t}\n}"
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Icon and Name of Apps ",
+					"request": {
+						"url": "{{scheme}}://{{authority}}{{root_path}}/applications/details?slice=icon",
+						"method": "POST",
+						"header": [
+							{
+								"key": "X-Session-Token",
+								"value": "{{user_sessionToken}}",
+								"description": ""
+							},
+							{
+								"key": "X-Android-ID",
+								"value": "{{user_androidId}}",
+								"description": ""
+							},
+							{
+								"key": "X-Auth-Token",
+								"value": "{{COMPUTE_AUTH_TOKEN}}",
+								"description": ""
+							},
+							{
+								"key": "X-Google-Play-Token",
+								"value": "{{google_play_token}}",
+								"description": ""
+							},
+							{
+								"key": "Accept",
+								"value": "\"application/json\"",
+								"description": ""
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"description": ""
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"items\" : [\n\t\t\"com.google.android.youtube\",\n\t\t\"com.google.android.gm\",\n\t\t\"com.facebook.katana\",\n\t\t\"com.twitter.android\",\n\t\t\"flipboard.app\"\n\t]\n}"
 						},
 						"description": ""
 					},

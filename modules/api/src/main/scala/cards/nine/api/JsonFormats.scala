@@ -111,15 +111,16 @@ trait JsonFormats
 
   implicit val apiUpdateCollectionRequestFormat = jsonFormat2(ApiUpdateCollectionRequest)
 
-  implicit val apiCategorizeAppsRequestFormat = jsonFormat1(ApiGetAppsInfoRequest)
+  implicit val apiCategorizeAppsRequestFormat = jsonFormat1(ApiAppsInfoRequest)
 
-  implicit val categorizedAppFormat = jsonFormat2(CategorizedApp)
+  implicit val apiCategorizedAppFormat = jsonFormat2(ApiCategorizedApp)
 
-  implicit val apiCategorizeAppsResponseFormat = jsonFormat2(ApiCategorizeAppsResponse)
+  implicit val apiIconAppFormat = jsonFormat3(ApiIconApp)
+
+  implicit def apiAppsInfoResponse[A](implicit base: JsonFormat[A]): RootJsonFormat[ApiAppsInfoResponse[A]] =
+    jsonFormat2(ApiAppsInfoResponse[A])
 
   implicit val appGooglePlayInfoFormat = jsonFormat7(ApiDetailsApp)
-
-  implicit val apiDetailAppsResponseFormat = jsonFormat2(ApiDetailAppsResponse)
 
   implicit val apiGetSubscriptionsByUserResponseFormat = jsonFormat1(ApiGetSubscriptionsByUser)
 

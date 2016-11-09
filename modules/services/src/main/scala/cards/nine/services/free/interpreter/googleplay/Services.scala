@@ -1,7 +1,7 @@
 package cards.nine.services.free.interpreter.googleplay
 
 import cards.nine.commons.TaskInstances._
-import cards.nine.domain.application.{ FullCard, FullCardList, Package, PriceFilter }
+import cards.nine.domain.application._
 import cards.nine.domain.market.MarketCredentials
 import cards.nine.googleplay.processes.Wiring.GooglePlayApp
 import cards.nine.googleplay.processes.{ CardsProcesses, Wiring }
@@ -20,20 +20,15 @@ class Services(implicit googlePlayProcesses: CardsProcesses[GooglePlayApp]) exte
       }
   }
 
-  def resolveMany(
-    packages: List[Package],
-    auth: MarketCredentials,
-    extendedInfo: Boolean
-  ): Task[FullCardList] = {
-    if (extendedInfo)
-      googlePlayProcesses.getCards(packages, auth)
-        .foldMap(Wiring.interpreters)
-        .map(Converters.toFullCardList)
-    else
-      googlePlayProcesses.getBasicCards(packages, auth)
-        .foldMap(Wiring.interpreters)
-        .map(Converters.toFullCardList)
-  }
+  def resolveManyBasic(packages: List[Package], auth: MarketCredentials): Task[CardList[BasicCard]] =
+    googlePlayProcesses.getBasicCards(packages, auth)
+      .map(Converters.toCardList)
+      .foldMap(Wiring.interpreters)
+
+  def resolveManyDetailed(packages: List[Package], auth: MarketCredentials): Task[CardList[FullCard]] =
+    googlePlayProcesses.getCards(packages, auth)
+      .map(Converters.toCardList)
+      .foldMap(Wiring.interpreters)
 
   def recommendByCategory(
     category: String,
@@ -41,12 +36,12 @@ class Services(implicit googlePlayProcesses: CardsProcesses[GooglePlayApp]) exte
     excludedPackages: List[Package],
     limit: Int,
     auth: MarketCredentials
-  ): Task[FullCardList] =
+  ): Task[CardList[FullCard]] =
     googlePlayProcesses.recommendationsByCategory(
       Converters.toRecommendByCategoryRequest(category, filter, excludedPackages, limit),
       auth
     ).foldMap(Wiring.interpreters).flatMap {
-        case Xor.Right(rec) ⇒ Task.delay(Converters.toRecommendations(rec))
+        case Xor.Right(rec) ⇒ Task.delay(Converters.omitMissing(rec))
         case Xor.Left(e) ⇒ Task.fail(new RuntimeException(e.message))
       }
 
@@ -56,26 +51,30 @@ class Services(implicit googlePlayProcesses: CardsProcesses[GooglePlayApp]) exte
     limitByApp: Int,
     limit: Int,
     auth: MarketCredentials
-  ): Task[FullCardList] =
+  ): Task[CardList[FullCard]] =
     googlePlayProcesses.recommendationsByApps(
       Converters.toRecommendByAppsRequest(packageNames, limitByApp, excludedPackages, limit),
       auth
-    ).foldMap(Wiring.interpreters).map(Converters.toRecommendations)
+    ).map(Converters.omitMissing)
+      .foldMap(Wiring.interpreters)
 
   def searchApps(
     query: String,
     excludePackages: List[Package],
     limit: Int,
     auth: MarketCredentials
-  ): Task[FullCardList] =
+  ): Task[CardList[BasicCard]] =
     googlePlayProcesses.searchApps(
       Converters.toSearchAppsRequest(query, excludePackages, limit),
       auth
-    ).foldMap(Wiring.interpreters).map(Converters.toRecommendations)
+    ).map(Converters.omitMissing)
+      .foldMap(Wiring.interpreters)
 
   def apply[A](fa: Ops[A]): Task[A] = fa match {
-    case ResolveMany(packageNames, auth, basicInfo) ⇒
-      resolveMany(packageNames, auth, basicInfo)
+    case ResolveManyBasic(packageNames, auth) ⇒
+      resolveManyBasic(packageNames, auth)
+    case ResolveManyDetailed(packageNames, auth) ⇒
+      resolveManyDetailed(packageNames, auth)
     case Resolve(packageName, auth) ⇒
       resolveOne(packageName, auth)
     case RecommendationsByCategory(category, filter, excludesPackages, limit, auth) ⇒

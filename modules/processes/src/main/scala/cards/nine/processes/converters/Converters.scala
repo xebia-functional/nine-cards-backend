@@ -3,7 +3,7 @@ package cards.nine.processes.converters
 import java.sql.Timestamp
 
 import cards.nine.domain.analytics._
-import cards.nine.domain.application.{ FullCard, FullCardList, Moment, Package }
+import cards.nine.domain.application.{ CardList, FullCard, Moment, Package }
 import cards.nine.processes.messages.InstallationsMessages._
 import cards.nine.processes.messages.SharedCollectionMessages._
 import cards.nine.processes.messages.UserMessages.LoginResponse
@@ -75,18 +75,18 @@ object Converters {
       subscriptionsCount = subscriptionCount
     )
 
-  def toSharedCollectionWithAppsInfo(
+  def toSharedCollectionWithAppsInfo[A](
     collection: SharedCollection,
-    appsInfo: List[FullCard]
-  ): SharedCollectionWithAppsInfo =
+    appsInfo: List[A]
+  ): SharedCollectionWithAppsInfo[A] =
     SharedCollectionWithAppsInfo(
       collection = collection,
       appsInfo   = appsInfo
     )
 
-  def filterCategorized(info: FullCardList): FullCardList = {
+  def filterCategorized(info: CardList[FullCard]): CardList[FullCard] = {
     val (appsWithoutCategories, apps) = info.cards.partition(app ⇒ app.categories.isEmpty)
-    FullCardList(
+    CardList(
       missing = info.missing ++ appsWithoutCategories.map(_.packageName),
       cards   = apps
     )

@@ -1,7 +1,7 @@
 package cards.nine.processes
 
 import cards.nine.domain.account.AndroidId
-import cards.nine.domain.application.{ FullCard, FullCardList, Package }
+import cards.nine.domain.application.{ CardList, FullCard, Package }
 import cards.nine.domain.market.{ Localization, MarketCredentials, MarketToken }
 import cards.nine.processes.NineCardsServices._
 import cards.nine.services.free.algebra.GooglePlay.Services
@@ -27,7 +27,7 @@ trait ApplicationProcessesSpecification
 
   trait SuccessfulScope extends BasicScope {
 
-    googlePlayServices.resolveMany(packagesName, marketAuth, true) returns Free.pure(appsInfo)
+    googlePlayServices.resolveManyDetailed(packagesName, marketAuth) returns Free.pure(appsInfo)
 
   }
 
@@ -66,9 +66,9 @@ trait ApplicationProcessesContext {
 
   val marketAuth = MarketCredentials(AndroidId(androidId), MarketToken(token), Some(Localization(localization)))
 
-  val emptyGetAppsInfoResponse = FullCardList(Nil, Nil)
+  val emptyGetAppsInfoResponse = CardList(Nil, Nil)
 
-  val appsInfo = FullCardList(missing, apps)
+  val appsInfo = CardList(missing, apps)
 }
 
 class ApplicationProcessesSpec extends ApplicationProcessesSpecification {
@@ -84,7 +84,7 @@ class ApplicationProcessesSpec extends ApplicationProcessesSpecification {
     "return a valid response if a non empty list of packages name is passed" in new SuccessfulScope {
       val response = applicationProcesses.getAppsInfo(packagesName, marketAuth)
 
-      response.foldMap(testInterpreters) must beLike[FullCardList] {
+      response.foldMap(testInterpreters) must beLike[CardList[FullCard]] {
         case r ⇒
           r.missing must_== missing
           r.cards must_== apps

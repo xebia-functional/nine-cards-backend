@@ -1,6 +1,6 @@
 package cards.nine.googleplay.service.free.interpreter.googleapi
 
-import cards.nine.domain.application.{ FullCard, FullCardList, Package }
+import cards.nine.domain.application.{ CardList, FullCard, Package, BasicCard }
 import cards.nine.googleplay.proto.GooglePlay.{ ListResponse, DocV2, SearchResponse }
 import scala.collection.JavaConversions._
 
@@ -56,18 +56,28 @@ object Converters {
       categories  = categories
     )
 
+    def toBasicCard(): BasicCard = BasicCard(
+      packageName = Package(docid),
+      title       = title,
+      free        = isFree,
+      icon        = icon,
+      stars       = starRating,
+      downloads   = numDownloads
+    )
+
   }
 
   def toFullCard(docV2: DocV2): FullCard = new WrapperDocV2(docV2).toFullCard
+  def toBasicCard(docV2: DocV2): BasicCard = new WrapperDocV2(docV2).toBasicCard
 
-  def toFullCardList(docs: List[DocV2]): FullCardList = {
+  def toFullCardList(docs: List[DocV2]): CardList[FullCard] = {
     val apps: List[FullCard] = for /*List*/ {
       doc ← docs
       wr = new WrapperDocV2(doc)
       if (!wr.docid.isEmpty)
       // If a DocV2 corresponds to no app, it is a DefaultInstance and as such has an empty docId
     } yield wr.toFullCard
-    FullCardList(List(), apps)
+    CardList(List(), apps)
   }
 
 }

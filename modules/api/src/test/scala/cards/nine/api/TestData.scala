@@ -8,7 +8,7 @@ import cards.nine.api.messages.UserMessages.ApiLoginRequest
 import cards.nine.api.messages.{ rankings ⇒ Api }
 import cards.nine.domain.account._
 import cards.nine.domain.analytics.{ RankedAppsByCategory, RankedWidgetsByMoment }
-import cards.nine.domain.application.{ Category, FullCardList, Package }
+import cards.nine.domain.application.{ CardList, Category, FullCard, Package }
 import cards.nine.processes.ProcessesExceptions.SharedCollectionNotFoundException
 import cards.nine.processes.messages.InstallationsMessages._
 import cards.nine.processes.messages.SharedCollectionMessages._
@@ -149,12 +149,12 @@ object TestData {
       packages         = packagesName
     )
 
-    val sharedCollectionInfo = SharedCollectionWithAppsInfo(
+    def sharedCollectionInfo[A] = SharedCollectionWithAppsInfo[A](
       collection = sharedCollection,
-      appsInfo   = List.empty
+      appsInfo   = List.empty[A]
     )
 
-    val apiGetAppsInfoRequest = ApiGetAppsInfoRequest(items = List("", "", "") map Package)
+    val apiGetAppsInfoRequest = ApiAppsInfoRequest(items = List("", "", "") map Package)
 
     val apiGetRecommendationsByCategoryRequest = ApiGetRecommendationsByCategoryRequest(
       excludePackages = excludePackages,
@@ -184,7 +184,7 @@ object TestData {
 
     val getRankedWidgetsResponse = List.empty[RankedWidgetsByMoment]
 
-    val getRecommendationsByCategoryResponse = FullCardList(Nil, Nil)
+    val getRecommendationsByCategoryResponse = CardList[FullCard](Nil, Nil)
 
     val apiCreateCollectionRequest = ApiCreateCollectionRequest(
       author        = author,
@@ -206,7 +206,7 @@ object TestData {
 
     val apiUpdateInstallationRequest = ApiUpdateInstallationRequest(deviceToken)
 
-    val getAppsInfoResponse = FullCardList(Nil, Nil)
+    val getAppsInfoResponse = CardList[FullCard](Nil, Nil)
 
     val createOrUpdateCollectionResponse = CreateOrUpdateCollectionResponse(
       publicIdentifier = publicIdentifier,

@@ -32,17 +32,36 @@ case class FullCard(
   icon: String,
   screenshots: List[String],
   stars: Double
+) {
+  def toBasic: BasicCard = BasicCard(packageName, title, downloads, free, icon, stars)
+}
+
+/**
+  *  A BasicCard only contains the most important information about an existing Android App.
+  *  Unlike a FullCard, it lacks categories and screenshots.
+  */
+case class BasicCard(
+  packageName: Package,
+  title: String,
+  downloads: String,
+  free: Boolean,
+  icon: String,
+  stars: Double
 )
 
 /**
-  * A FullCardList carries the information known in the backend about a set of packages.
+  * A CardList carries the information known in the backend about a set of packages.
   * The `cards` field contains the FullCard for those packages for which one is available.
   * The `missing` field contains the name of those packages for which there is none.a
   */
-case class FullCardList(
+case class CardList[A](
   missing: List[Package],
-  cards: List[FullCard]
+  cards: List[A]
 )
+
+object FullCardList {
+  def apply(missing: List[Package], cards: List[FullCard]) = CardList(missing, cards)
+}
 
 sealed trait PriceFilter extends EnumEntry
 object PriceFilter extends Enum[PriceFilter] {
@@ -52,4 +71,3 @@ object PriceFilter extends Enum[PriceFilter] {
 
   val values = super.findValues
 }
-

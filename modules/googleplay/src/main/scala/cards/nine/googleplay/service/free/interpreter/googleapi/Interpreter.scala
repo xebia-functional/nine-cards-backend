@@ -1,7 +1,7 @@
 package cards.nine.googleplay.service.free.interpreter.googleapi
 
 import cards.nine.commons.TaskInstances._
-import cards.nine.domain.application.{ FullCard, Package, PriceFilter }
+import cards.nine.domain.application.{ FullCard, Package, PriceFilter, BasicCard }
 import cards.nine.domain.market.MarketCredentials
 import cards.nine.googleplay.domain._
 import cards.nine.googleplay.domain.apigoogle._
@@ -40,7 +40,7 @@ class Interpreter(config: GooglePlayApiConfiguration) extends (Ops ~> WithHttpCl
   )
 
   class BulkDetailsWithClient(packagesName: List[Package], auth: MarketCredentials)
-    extends (Client ⇒ Task[Failure Xor List[FullCard]]) {
+    extends (Client ⇒ Task[Failure Xor List[BasicCard]]) {
 
     val builder = BulkDetailsRequest.newBuilder()
     builder.addAllDocid(packagesName.map(_.value).asJava)
@@ -58,7 +58,7 @@ class Interpreter(config: GooglePlayApiConfiguration) extends (Ops ~> WithHttpCl
       case _ ⇒ GoogleApiServerError
     }
 
-    def apply(client: Client): Task[Failure Xor List[FullCard]] =
+    def apply(client: Client): Task[Failure Xor List[BasicCard]] =
       client.expect[ByteVector](httpRequest).map { bv ⇒
         Xor.right {
           ResponseWrapper
@@ -66,7 +66,7 @@ class Interpreter(config: GooglePlayApiConfiguration) extends (Ops ~> WithHttpCl
             .getPayload.getBulkDetailsResponse
             .getEntryList
             .toList
-            .map(entry ⇒ Converters.toFullCard(entry.getDoc))
+            .map(entry ⇒ Converters.toBasicCard(entry.getDoc))
             .filterNot(_.packageName.value.isEmpty)
         }
       }.handle {
