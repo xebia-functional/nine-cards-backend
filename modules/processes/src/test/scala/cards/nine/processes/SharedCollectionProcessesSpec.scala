@@ -97,8 +97,8 @@ trait SharedCollectionProcessesSpecification
       .getByUser(any) returns
       Free.pure(List(subscription))
 
-    googlePlayServices.resolveManyDetailed(any, any) returns Free.pure(appsInfo)
-    googlePlayServices.resolveManyBasic(any, any) returns Free.pure(appsInfoBasic)
+    googlePlayServices.resolveManyDetailed(any, any) returns NineCardsService.right(appsInfo)
+    googlePlayServices.resolveManyBasic(any, any) returns NineCardsService.right(appsInfoBasic)
 
     userServices.getSubscribedInstallationByCollection(any) returns
       NineCardsService.right(List(installation))

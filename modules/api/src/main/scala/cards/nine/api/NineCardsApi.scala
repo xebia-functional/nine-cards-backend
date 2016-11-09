@@ -10,7 +10,7 @@ import cards.nine.api.messages.SharedCollectionMessages._
 import cards.nine.api.messages.UserMessages._
 import cards.nine.api.utils.SprayMarshallers._
 import cards.nine.api.utils.SprayMatchers._
-import cards.nine.commons.NineCardsService.Result
+import cards.nine.commons.NineCardsService.{ NineCardsService, Result }
 import cards.nine.commons.config.Domain.NineCardsConfiguration
 import cards.nine.domain.account.SessionToken
 import cards.nine.domain.analytics._
@@ -353,7 +353,7 @@ class NineCardsRoutes(
     request: ApiAppsInfoRequest,
     googlePlayContext: GooglePlayContext,
     userContext: UserContext
-  )(converter: FullCard ⇒ T): NineCardsServed[ApiAppsInfoResponse[T]] =
+  )(converter: FullCard ⇒ T): NineCardsService[NineCardsServices, ApiAppsInfoResponse[T]] =
     applicationProcesses
       .getAppsInfo(request.items, toMarketAuth(googlePlayContext, userContext))
       .map(toApiAppsInfoResponse(converter))
@@ -362,7 +362,7 @@ class NineCardsRoutes(
     request: ApiAppsInfoRequest,
     googlePlayContext: GooglePlayContext,
     userContext: UserContext
-  )(converter: BasicCard ⇒ T): NineCardsServed[ApiAppsInfoResponse[T]] =
+  )(converter: BasicCard ⇒ T): NineCardsService[NineCardsServices, ApiAppsInfoResponse[T]] =
     applicationProcesses
       .getAppsBasicInfo(request.items, toMarketAuth(googlePlayContext, userContext))
       .map(toApiAppsInfoResponse[BasicCard, T](converter))
@@ -373,7 +373,7 @@ class NineCardsRoutes(
     priceFilter: PriceFilter,
     googlePlayContext: GooglePlayContext,
     userContext: UserContext
-  ): NineCardsServed[ApiGetRecommendationsResponse] =
+  ): NineCardsService[NineCardsServices, ApiGetRecommendationsResponse] =
     recommendationsProcesses
       .getRecommendationsByCategory(
         category.entryName,
@@ -388,7 +388,7 @@ class NineCardsRoutes(
     request: ApiGetRecommendationsForAppsRequest,
     googlePlayContext: GooglePlayContext,
     userContext: UserContext
-  ): NineCardsServed[ApiGetRecommendationsResponse] =
+  ): NineCardsService[NineCardsServices, ApiGetRecommendationsResponse] =
     recommendationsProcesses
       .getRecommendationsForApps(
         request.packages,
@@ -403,7 +403,7 @@ class NineCardsRoutes(
     request: ApiSearchAppsRequest,
     googlePlayContext: GooglePlayContext,
     userContext: UserContext
-  ): NineCardsServed[ApiSearchAppsResponse] =
+  ): NineCardsService[NineCardsServices, ApiSearchAppsResponse] =
     recommendationsProcesses
       .searchApps(
         request.query,

@@ -27,8 +27,12 @@ class NineCardsErrorHandler {
         (Unauthorized, message)
       case InstallationNotFound(message) ⇒
         (Unauthorized, message)
+      case PackageNotResolved(message) ⇒
+        (NotFound, message)
       case RankingNotFound(message) ⇒
         (NotFound, message)
+      case RecommendationsServerError(message) ⇒
+        (ServiceUnavailable, message)
       case ReportNotFound(message) ⇒
         (NotFound, message)
       case UserNotFound(message) ⇒

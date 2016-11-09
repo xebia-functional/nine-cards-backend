@@ -1,9 +1,10 @@
 package cards.nine.processes
 
+import cards.nine.commons.NineCardsService
+import cards.nine.commons.NineCardsService._
 import cards.nine.domain.application.{ BasicCard, CardList, FullCard, Package, PriceFilter }
 import cards.nine.domain.market.MarketCredentials
 import cards.nine.services.free.algebra.GooglePlay
-import cats.free.Free
 
 class RecommendationsProcesses[F[_]](implicit services: GooglePlay.Services[F]) {
 
@@ -13,7 +14,7 @@ class RecommendationsProcesses[F[_]](implicit services: GooglePlay.Services[F]) 
     excludePackages: List[Package],
     limit: Int,
     marketAuth: MarketCredentials
-  ): Free[F, CardList[FullCard]] =
+  ): NineCardsService[F, CardList[FullCard]] =
     services.recommendByCategory(
       category         = category,
       priceFilter      = filter,
@@ -28,9 +29,9 @@ class RecommendationsProcesses[F[_]](implicit services: GooglePlay.Services[F]) 
     limitPerApp: Int,
     limit: Int,
     marketAuth: MarketCredentials
-  ): Free[F, CardList[FullCard]] =
+  ): NineCardsService[F, CardList[FullCard]] =
     if (packagesName.isEmpty)
-      Free.pure(CardList(Nil, Nil))
+      NineCardsService.right(CardList(Nil, Nil))
     else
       services.recommendationsForApps(
         packagesName     = packagesName,
@@ -45,14 +46,13 @@ class RecommendationsProcesses[F[_]](implicit services: GooglePlay.Services[F]) 
     excludePackages: List[Package],
     limit: Int,
     marketAuth: MarketCredentials
-  ): Free[F, CardList[BasicCard]] =
+  ): NineCardsService[F, CardList[BasicCard]] =
     services.searchApps(
       query            = query,
       excludesPackages = excludePackages,
       limit            = limit,
       auth             = marketAuth
     )
-
 }
 
 object RecommendationsProcesses {

@@ -1,11 +1,12 @@
 package cards.nine.processes
 
+import cards.nine.commons.NineCardsService
+import cards.nine.commons.NineCardsService._
 import cards.nine.domain.account.AndroidId
 import cards.nine.domain.application.{ CardList, FullCard, Package }
 import cards.nine.domain.market.{ MarketCredentials, MarketToken }
 import cards.nine.processes.NineCardsServices.NineCardsServices
 import cards.nine.services.free.algebra.GooglePlay.Services
-import cats.free.Free
 import org.specs2.matcher.Matchers
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
@@ -22,12 +23,6 @@ trait GooglePlayProcessesSpecification
 
     implicit val googlePlayServices: Services[NineCardsServices] = mock[Services[NineCardsServices]]
     implicit val applicationProcesses = new ApplicationProcesses[NineCardsServices]
-
-    googlePlayServices.resolveManyDetailed(Nil, marketAuth) returns
-      Free.pure(CardList(Nil, Nil))
-
-    googlePlayServices.resolveManyDetailed(packageNames, marketAuth) returns
-      Free.pure(CardList(missing, apps))
   }
 }
 
@@ -64,22 +59,31 @@ class GooglePlayProcessesSpec extends GooglePlayProcessesSpecification {
 
   "categorizeApps" should {
     "return empty items and errors lists if an empty list of apps is provided" in new BasicScope {
-      val response = applicationProcesses.getAppsInfo(Nil, marketAuth).foldMap(testInterpreters)
 
-      response.missing should beEmpty
-      response.cards should beEmpty
+      googlePlayServices.resolveManyDetailed(Nil, marketAuth) returns
+        NineCardsService.right(CardList(Nil, Nil))
+
+      applicationProcesses
+        .getAppsInfo(Nil, marketAuth)
+        .foldMap(testInterpreters) must beRight[CardList[FullCard]].which { response ⇒
+
+          response.missing must beEmpty
+          response.cards must beEmpty
+        }
     }
 
     "return items and errors lists for a non empty list of apps" in new BasicScope {
-      val response = applicationProcesses.getAppsInfo(packageNames, marketAuth).foldMap(testInterpreters)
 
-      response.missing shouldEqual missing
-      forall(response.cards) { item ⇒
-        apps.exists(app ⇒
-          app.packageName == item.packageName &&
-            app.categories.nonEmpty &&
-            app.categories == item.categories) should beTrue
-      }
+      googlePlayServices.resolveManyDetailed(packageNames, marketAuth) returns
+        NineCardsService.right(CardList(missing, apps))
+
+      applicationProcesses
+        .getAppsInfo(packageNames, marketAuth)
+        .foldMap(testInterpreters) must beRight[CardList[FullCard]].which { response ⇒
+
+          response.missing must containTheSameElementsAs(missing)
+          response.cards must containTheSameElementsAs(apps)
+        }
     }
   }
 }

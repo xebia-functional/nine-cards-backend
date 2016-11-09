@@ -1,11 +1,12 @@
 package cards.nine.processes
 
+import cards.nine.commons.NineCardsService
+import cards.nine.commons.NineCardsService._
 import cards.nine.domain.account.AndroidId
 import cards.nine.domain.application.{ CardList, FullCard, Package, PriceFilter }
 import cards.nine.domain.market.{ Localization, MarketCredentials, MarketToken }
 import cards.nine.processes.NineCardsServices._
 import cards.nine.services.free.algebra.GooglePlay.Services
-import cats.free.Free
 import org.specs2.matcher.Matchers
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
@@ -24,26 +25,6 @@ trait RecommendationsProcessesSpecification
     implicit val recommendationsProcesses = new RecommendationsProcesses[NineCardsServices]
 
   }
-
-  trait SuccessfulScope extends BasicScope {
-
-    googlePlayServices.recommendByCategory(
-      category         = category,
-      priceFilter      = recommendationFilter,
-      excludesPackages = excludePackages,
-      limit            = limit,
-      auth             = auth.marketAuth
-    ) returns Free.pure(recommendations)
-
-    googlePlayServices.recommendationsForApps(
-      packagesName     = packagesName,
-      excludesPackages = excludePackages,
-      limitPerApp      = limitPerApp,
-      limit            = limit,
-      auth             = auth.marketAuth
-    ) returns Free.pure(recommendations)
-  }
-
 }
 
 trait RecommendationsProcessesContext {
@@ -101,52 +82,62 @@ class RecommendationsProcessesSpec extends RecommendationsProcessesSpecification
 
   "getRecommendationsByCategory" should {
 
-    "return a list of recommendations for the given category" in new SuccessfulScope {
-      val response = recommendationsProcesses.getRecommendationsByCategory(
+    "return a list of recommendations for the given category" in new BasicScope {
+
+      googlePlayServices.recommendByCategory(
+        category         = category,
+        priceFilter      = recommendationFilter,
+        excludesPackages = excludePackages,
+        limit            = limit,
+        auth             = auth.marketAuth
+      ) returns NineCardsService.right(recommendations)
+
+      recommendationsProcesses.getRecommendationsByCategory(
         category,
         recommendationFilter,
         excludePackages,
         limit,
         auth.marketAuth
-      )
-
-      response.foldMap(testInterpreters) must beLike[CardList[FullCard]] {
-        case r ⇒
-          r.cards must_== googlePlayRecommendations
+      ).foldMap(testInterpreters) must beRight[CardList[FullCard]].which { recommendations ⇒
+        recommendations.cards must_== googlePlayRecommendations
       }
     }
   }
 
   "getRecommendationsForApps" should {
 
-    "return an empty list of recommendations if no packages are given" in new SuccessfulScope {
-      val response = recommendationsProcesses.getRecommendationsForApps(
+    "return an empty list of recommendations if no packages are given" in new BasicScope {
+
+      recommendationsProcesses.getRecommendationsForApps(
         Nil,
         excludePackages,
         limitPerApp,
         limit,
         auth.marketAuth
-      )
-
-      response.foldMap(testInterpreters) must beLike[CardList[FullCard]] {
-        case r ⇒
-          r.cards must beEmpty
-          there was noCallsTo(googlePlayServices)
+      ).foldMap(testInterpreters) must beRight[CardList[FullCard]].which { recommendations ⇒
+        recommendations.cards must beEmpty
+        there was noCallsTo(googlePlayServices)
       }
     }
 
-    "return a list of recommendations for the given packages" in new SuccessfulScope {
-      val response = recommendationsProcesses.getRecommendationsForApps(
+    "return a list of recommendations for the given packages" in new BasicScope {
+
+      googlePlayServices.recommendationsForApps(
+        packagesName     = packagesName,
+        excludesPackages = excludePackages,
+        limitPerApp      = limitPerApp,
+        limit            = limit,
+        auth             = auth.marketAuth
+      ) returns NineCardsService.right(recommendations)
+
+      recommendationsProcesses.getRecommendationsForApps(
         packagesName,
         excludePackages,
         limitPerApp,
         limit,
         auth.marketAuth
-      )
-
-      response.foldMap(testInterpreters) must beLike[CardList[FullCard]] {
-        case r ⇒
-          r.cards must_== googlePlayRecommendations
+      ).foldMap(testInterpreters) must beRight[CardList[FullCard]].which { recommendations ⇒
+        recommendations.cards must_== googlePlayRecommendations
       }
     }
   }
