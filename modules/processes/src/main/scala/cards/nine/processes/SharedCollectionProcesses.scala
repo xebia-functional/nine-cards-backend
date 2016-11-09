@@ -183,9 +183,9 @@ class SharedCollectionProcesses[F[_]](
     collection: SharedCollection,
     marketAuth: MarketCredentials
   ): XorT[Free[F, ?], Throwable, GetCollectionByPublicIdentifierResponse] = {
-    googlePlayServices.resolveManyDetailed(collection.packages, marketAuth) map { appsInfo ⇒
+    googlePlayServices.resolveManyDetailed(collection.packages, marketAuth).value map { appsInfo ⇒
       GetCollectionByPublicIdentifierResponse(
-        toSharedCollectionWithAppsInfo(collection, appsInfo.cards)
+        toSharedCollectionWithAppsInfo(collection, appsInfo.fold(_ ⇒ Nil, _.cards))
       )
     }
   }.rightXorT[Throwable]
@@ -201,7 +201,9 @@ class SharedCollectionProcesses[F[_]](
       marketAuth: MarketCredentials
     ): Free[F, CardList[BasicCard]] = {
       val packages = collections.flatMap(_.packages).distinct
-      googlePlayServices.resolveManyBasic(packages, marketAuth)
+      googlePlayServices.resolveManyBasic(packages, marketAuth).value.map { r ⇒
+        r.fold(_ ⇒ CardList[BasicCard](Nil, Nil), v ⇒ v)
+      }
     }
 
     def fillGooglePlayInfoForPackages(
