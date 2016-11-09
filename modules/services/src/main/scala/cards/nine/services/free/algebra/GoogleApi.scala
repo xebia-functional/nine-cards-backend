@@ -1,28 +1,25 @@
 package cards.nine.services.free.algebra
 
-import cats.data.Xor
-import cats.free.{ Free, Inject }
+import cards.nine.commons.NineCardsService
+import cards.nine.commons.NineCardsService.{ NineCardsService, Result }
 import cards.nine.domain.account.GoogleIdToken
-import cards.nine.services.free.domain.{ TokenInfo, WrongTokenInfo }
+import cards.nine.services.free.domain.TokenInfo
+import cats.free.:<:
 
 object GoogleApi {
 
   sealed trait Ops[A]
 
-  case class GetTokenInfo(tokenId: GoogleIdToken) extends Ops[WrongTokenInfo Xor TokenInfo]
+  case class GetTokenInfo(tokenId: GoogleIdToken) extends Ops[Result[TokenInfo]]
 
-  class Services[F[_]](implicit I: Inject[Ops, F]) {
+  class Services[F[_]](implicit I: Ops :<: F) {
 
-    def getTokenInfo(tokenId: GoogleIdToken): Free[F, WrongTokenInfo Xor TokenInfo] =
-      Free.inject[Ops, F](GetTokenInfo(tokenId))
-
+    def getTokenInfo(tokenId: GoogleIdToken): NineCardsService[F, TokenInfo] =
+      NineCardsService(GetTokenInfo(tokenId))
   }
 
   object Services {
 
-    implicit def services[F[_]](implicit I: Inject[Ops, F]): Services[F] =
-      new Services
-
+    implicit def services[F[_]](implicit I: Ops :<: F): Services[F] = new Services
   }
-
 }
