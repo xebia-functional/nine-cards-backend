@@ -54,17 +54,17 @@ class NineCardsDirectives(
   } yield sessionToken
 
   def validateLoginRequest(email: Email, tokenId: GoogleIdToken): Task[Authentication[Unit]] =
-    (email, tokenId) match {
-      case (e, o) if e.value.isEmpty || o.value.isEmpty ⇒
-        Task.now(Left(rejectionByCredentialsRejected))
-      case _ ⇒
-        googleApiProcesses.checkGoogleTokenId(email, tokenId).foldMap(prodInterpreters) map {
-          case true ⇒ Right(())
-          case _ ⇒ Left(rejectionByCredentialsRejected)
-        } handle {
+    if (email.value.isEmpty || tokenId.value.isEmpty)
+      Task.now(Left(rejectionByCredentialsRejected))
+    else
+      googleApiProcesses
+        .checkGoogleTokenId(email, tokenId)
+        .leftMap(_ ⇒ rejectionByCredentialsRejected)
+        .value
+        .foldMap(prodInterpreters)
+        .handle {
           case _ ⇒ Left(rejectionByCredentialsRejected)
         }
-    }
 
   def authenticateUser: Directive1[UserContext] = for {
     uri ← requestUri

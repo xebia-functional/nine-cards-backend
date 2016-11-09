@@ -33,6 +33,10 @@ class NineCardsErrorHandler {
         (NotFound, message)
       case UserNotFound(message) ⇒
         (Unauthorized, message)
+      case WrongEmailAccount(message) ⇒
+        (Unauthorized, message)
+      case WrongGoogleAuthToken(message) ⇒
+        (Unauthorized, message)
     }
 
     ctx.marshalTo(HttpResponse(status = statusCode, entity = HttpEntity(errorMessage)))
