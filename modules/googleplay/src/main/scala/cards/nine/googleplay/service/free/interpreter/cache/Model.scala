@@ -2,7 +2,6 @@ package cards.nine.googleplay.service.free.interpreter.cache
 
 import cards.nine.domain.application.{ FullCard, Package }
 import enumeratum.{ Enum, EnumEntry }
-import org.joda.time.DateTime
 
 sealed trait KeyType extends EnumEntry
 object KeyType extends Enum[KeyType] {
@@ -14,34 +13,30 @@ object KeyType extends Enum[KeyType] {
   val values = super.findValues
 }
 
-case class CacheKey(`package`: Package, keyType: KeyType, date: Option[DateTime])
+case class CacheKey(`package`: Package, keyType: KeyType)
 
 object CacheKey {
   import KeyType._
 
-  def resolved(name: Package): CacheKey = CacheKey(name, Resolved, None)
+  def resolved(name: Package): CacheKey = CacheKey(name, Resolved)
 
-  def permanent(name: Package): CacheKey = CacheKey(name, Permanent, None)
+  def permanent(name: Package): CacheKey = CacheKey(name, Permanent)
 
-  def error(name: Package, date: DateTime): CacheKey = CacheKey(name, Error, Some(date))
+  def pending(name: Package): CacheKey = CacheKey(name, Pending)
 
-  def pending(name: Package): CacheKey = CacheKey(name, Pending, None)
-
+  def error(name: Package): CacheKey = CacheKey(name, Error)
 }
 
 case class CacheVal(card: Option[FullCard])
 
 object CacheEntry {
 
-  def resolved(card: FullCard): CacheEntry =
-    (CacheKey.resolved(card.packageName), CacheVal(Some(card)))
+  def resolved(card: FullCard): (CacheKey, CacheVal) =
+    CacheKey.resolved(card.packageName) → CacheVal(Some(card))
 
-  def pending(name: Package): CacheEntry =
-    (CacheKey.pending(name), CacheVal(None))
+  def pending(name: Package): (CacheKey, CacheVal) =
+    CacheKey.pending(name) → CacheVal(None)
 
-  def error(name: Package, date: DateTime): CacheEntry =
-    (CacheKey.error(name, date), CacheVal(None))
-
-  def permanent(name: Package, card: FullCard): CacheEntry =
-    (CacheKey.permanent(name), CacheVal(Some(card)))
+  def permanent(name: Package, card: FullCard): (CacheKey, CacheVal) =
+    CacheKey.permanent(name) → CacheVal(Some(card))
 }

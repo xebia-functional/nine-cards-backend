@@ -1,9 +1,13 @@
 package cards.nine.googleplay.service.free.interpreter.cache
 
+import cards.nine.commons.redis.CacheQueue
 import cards.nine.domain.application.{ FullCard, Package }
+import com.redis.RedisClient
+import com.redis.serialization.{ Format, Parse }
 import io.circe.{ Decoder, Encoder }
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
+import scala.util.Try
 
 object CirceCoders {
 
@@ -25,33 +29,60 @@ object CirceCoders {
   */
 object KeyFormat {
 
-  import KeyType._
+  // Cache Key Format: package name, colon, key type
+  private[this] val cacheKeyRegex = """([a-zA-Z0-9\.\_]+):([a-zA-Z]+)""".r
 
-  private[this] val dateFormatter = DateTimeFormat.forPattern("yyMMddHHmmssSSS").withZoneUTC
-  private[this] def parseDate(str: String): DateTime = DateTime.parse(str, dateFormatter)
-  private[this] def formatDate(date: DateTime): String = dateFormatter.print(date)
-
-  private[this] val regex = """([a-zA-Z0-9\.\_]+):([a-zA-Z0-9\.\_]+)(:[0-9]+)?""".r
-
-  def format(key: CacheKey): String = {
-    import key._
-    val dateStr = key.date match {
-      case None ⇒ ""
-      case Some(date) ⇒ s":${formatDate(date)}"
-    }
-    s"${`package`.value}:${keyType.entryName}$dateStr"
-  }
+  def format(key: CacheKey): String =
+    s"${key.`package`.value}:${key.keyType.entryName}"
 
   def parse(keyStr: String): Option[CacheKey] =
     for {
-      List(packStr, typeStr, dateNull) ← regex.unapplySeq(keyStr)
+      List(packStr, typeStr) ← cacheKeyRegex.unapplySeq(keyStr)
       keyType ← KeyType.withNameOption(typeStr)
-      date = Option(dateNull).map { str ⇒ parseDate(str.drop(1)) }
-    } yield CacheKey(Package(packStr), keyType, date)
-
-  object Pattern {
-    val allPending: String = s"*:${Pending.entryName}"
-    def errorsFor(pack: Package): String = s"${pack.value}:${Error.entryName}:*"
-  }
+    } yield CacheKey(Package(packStr), keyType)
 
 }
+
+object ErrorCache {
+
+  private[this] val dateFormatter = DateTimeFormat.forPattern("yyMMddHHmmssSSS").withZoneUTC
+  def parseDate(str: String): Option[DateTime] = Try(dateFormatter.parseDateTime(str)).toOption
+  def formatDate(date: DateTime): String = dateFormatter.print(date)
+
+  private[this] final val keyAndDateFormat: Format = Format {
+    case key: CacheKey ⇒ KeyFormat.format(key)
+    case date: DateTime ⇒ formatDate(date)
+  }
+
+  private[this] final val dateParse: Parse[Option[DateTime]] =
+    Parse(bv ⇒ parseDate(Parse.Implicits.parseString(bv)))
+
+  def apply(client: RedisClient): CacheQueue[CacheKey, DateTime] =
+    new CacheQueue[CacheKey, DateTime](client)(keyAndDateFormat, dateParse)
+
+}
+
+object PendingQueue {
+
+  object QueueKey
+
+  final val pendingQueueCode = "pending_packages"
+
+  private[this] val packageRegex = """[a-zA-Z0-9\.\_]+""".r
+
+  private[this] def parsePackage(value: String): Option[Package] =
+    packageRegex.unapplySeq(value).map(_ ⇒ Package(value))
+
+  private[this] val format: Format = Format {
+    case QueueKey ⇒ pendingQueueCode
+    case pack: Package ⇒ pack.value
+  }
+
+  private[this] val parse: Parse[Option[Package]] =
+    Parse(bv ⇒ parsePackage(Parse.Implicits.parseString(bv)))
+
+  def apply(client: RedisClient): CacheQueue[QueueKey.type, Package] =
+    new CacheQueue(client)(format, parse)
+
+}
+

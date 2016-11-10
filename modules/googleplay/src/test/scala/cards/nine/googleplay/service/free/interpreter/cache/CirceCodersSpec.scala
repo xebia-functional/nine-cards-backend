@@ -27,9 +27,9 @@ class CirceCodersSpec extends Specification {
     }
   }
 
-  checkKeyFormatParse(CacheKey.resolved(packageName), s"$fortysevenDeg:Resolved")
+  checkKeyFormatParse(CacheKey.resolved(packageName), s"com.fortyseven.deg:Resolved")
 
-  checkKeyFormatParse(CacheKey.error(packageName, date), s"$fortysevenDeg:Error:$dateStr")
+  checkKeyFormatParse(CacheKey.error(packageName), s"com.fortyseven.deg:Error")
 
   val fullCard = FullCard(
     packageName = Package(fortysevenDeg),

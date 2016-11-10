@@ -1,6 +1,6 @@
 package cards.nine.googleplay.service.free.interpreter.cache
 
-import cards.nine.commons._
+import cards.nine.commons.redis._
 import cards.nine.googleplay.service.free.algebra.Cache._
 import cats.~>
 import com.redis.RedisClient
@@ -12,7 +12,6 @@ import scalaz.concurrent.Task
 
 object CacheInterpreter extends (Ops ~> WithRedisClient) {
 
-  import KeyFormat._
   import CirceCoders._
 
   implicit val keyParse: Parse[Option[CacheKey]] =
@@ -68,16 +67,19 @@ object CacheInterpreter extends (Ops ~> WithRedisClient) {
       Task {
         val wrap = CacheWrapper[CacheKey, CacheVal](client)
         wrap.put(CacheEntry.pending(pack))
+        PendingQueue(client).enqueue(PendingQueue.QueueKey, pack)
       }
 
     case MarkPendingMany(packages) ⇒ client: RedisClient ⇒
       Task {
         val wrap = CacheWrapper[CacheKey, CacheVal](client)
         wrap.mput(packages map CacheEntry.pending)
+        PendingQueue(client).enqueueMany(PendingQueue.QueueKey, packages)
       }
 
     case UnmarkPending(pack) ⇒ client: RedisClient ⇒
       Task {
+        // We do not remove from PendingQueue: that would be too expensive
         val wrap = CacheWrapper[CacheKey, CacheVal](client)
         wrap.delete(CacheKey.pending(pack))
       }
@@ -89,33 +91,30 @@ object CacheInterpreter extends (Ops ~> WithRedisClient) {
       }
 
     case MarkError(pack) ⇒ client: RedisClient ⇒
+      val now = DateTime.now(DateTimeZone.UTC)
       Task {
-        val wrap = CacheWrapper[CacheKey, CacheVal](client)
-        wrap.put(CacheEntry.error(pack, DateTime.now(DateTimeZone.UTC)))
+        ErrorCache(client).enqueue(CacheKey.error(pack), now)
       }
 
     case MarkErrorMany(packages) ⇒ client: RedisClient ⇒
+      val now = DateTime.now(DateTimeZone.UTC)
       Task {
-        val wrap = CacheWrapper[CacheKey, CacheVal](client)
-        val values = packages map (p ⇒ CacheEntry.error(p, DateTime.now(DateTimeZone.UTC)))
-        wrap.mput(values)
+        ErrorCache(client)
+          .enqueueAtMany(packages map CacheKey.error, now)
       }
 
     case ClearInvalid(pack) ⇒ client: RedisClient ⇒
       Task {
-        val wrap = CacheWrapper[CacheKey, CacheVal](client)
-        val errorKeys = wrap.matchKeys(KeyFormat.Pattern.errorsFor(pack))
-        wrap.delete(CacheKey.pending(pack) :: errorKeys)
+        CacheWrapper[CacheKey, CacheVal](client)
+          .delete(CacheKey.pending(pack))
+        ErrorCache(client).delete(CacheKey.error(pack))
       }
 
     case ClearInvalidMany(packages) ⇒ client: RedisClient ⇒
       Task {
         val wrap = CacheWrapper[CacheKey, CacheVal](client)
-        val invalidKeys: List[CacheKey] = packages flatMap { pack ⇒
-          val errs = wrap.matchKeys(KeyFormat.Pattern.errorsFor(pack))
-          CacheKey.pending(pack) :: errs
-        }
-        wrap.delete(invalidKeys)
+        wrap.delete(packages map CacheKey.pending)
+        ErrorCache(client).delete(packages map CacheKey.error)
       }
 
     case IsPending(pack) ⇒ client: RedisClient ⇒
@@ -127,8 +126,11 @@ object CacheInterpreter extends (Ops ~> WithRedisClient) {
     case ListPending(num) ⇒ client: RedisClient ⇒
       Task {
         val wrap = CacheWrapper[CacheKey, CacheVal](client)
-        wrap.matchKeys(KeyFormat.Pattern.allPending)
-          .take(num).map(_.`package`)
+        val queue = PendingQueue(client)
+        val packs = queue.takeMany(PendingQueue.QueueKey, num)
+        queue.dequeueMany(PendingQueue.QueueKey, num)
+        wrap.delete(packs map CacheKey.pending)
+        packs
       }
   }
 
