@@ -1,4 +1,4 @@
-package cards.nine.commons
+package cards.nine.commons.redis
 
 sealed trait JsonPattern
 

@@ -1,6 +1,6 @@
 package cards.nine.services.free.interpreter.ranking
 
-import cards.nine.commons.CacheWrapper
+import cards.nine.commons.redis.CacheWrapper
 import cards.nine.commons.NineCardsErrors.{ NineCardsError, RankingNotFound }
 import cards.nine.domain.analytics._
 import cards.nine.domain.application.{ Moment, Package, Widget }

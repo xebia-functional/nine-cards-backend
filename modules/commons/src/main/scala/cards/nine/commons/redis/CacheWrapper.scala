@@ -1,4 +1,4 @@
-package cards.nine.commons
+package cards.nine.commons.redis
 
 import com.redis.RedisClient
 import com.redis.serialization.{ Format, Parse }
