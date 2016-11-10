@@ -67,7 +67,7 @@ trait RedisScope extends RedisTestDomain {
 
   def getAllKeys: List[TestCacheKey] =
     redisClient
-      .keys[Option[TestCacheKey]](JsonPattern.print(PObject(List(PString("key") → PStar))))
+      .keys[Option[TestCacheKey]]("*")
       .getOrElse(Nil)
       .flatMap(_.flatten.toList)
 }
@@ -310,28 +310,4 @@ class CacheWrapperSpec
     }
   }
 
-  "matchKeys" should {
-    "return an empty list if there are no keys for the given pattern" in {
-      prop { (key: TestCacheKey, value: TestCacheVal) ⇒
-
-        val pattern = PObject(List(PString("key") → PStar))
-
-        val foundKeys = wrapper.matchKeys(pattern)
-
-        foundKeys must beEmpty
-      }
-    }
-    "return a list with the keys that match the given pattern" in {
-      prop { batch: TestCacheEntryBatch ⇒
-
-        val pattern = PObject(List(PString("key") → PString("*a*")))
-
-        WithCachedData(batch.entries) {
-          val foundKeys = wrapper.matchKeys(pattern)
-
-          foundKeys must contain { k: TestCacheKey ⇒ k.key must contain("a") }.forall
-        }
-      }
-    }
-  }
 }
