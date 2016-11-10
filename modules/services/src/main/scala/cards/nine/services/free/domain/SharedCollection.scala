@@ -17,7 +17,8 @@ case class SharedCollection(
   views: Int,
   category: String,
   icon: String,
-  community: Boolean
+  community: Boolean,
+  packages: List[String]
 ) extends BaseSharedCollection {
   override def sharedCollectionId: Long = id
 }
@@ -29,12 +30,6 @@ case class SharedCollectionWithAggregatedInfo(
   override def sharedCollectionId: Long = sharedCollectionData.id
 }
 
-case class SharedCollectionPackage(
-  id: Long,
-  sharedCollectionId: Long,
-  packageName: String
-)
-
 case class SharedCollectionSubscription(
   sharedCollectionId: Long,
   userId: Long,
@@ -43,7 +38,7 @@ case class SharedCollectionSubscription(
 
 object SharedCollection {
   val fields = List("publicidentifier", "userid", "publishedon", "author", "name",
-    "installations", "views", "category", "icon", "community")
+    "installations", "views", "category", "icon", "community", "packages")
   val allFields = "id" +: fields
 
   val insertFields = fields.mkString(",")
@@ -63,21 +58,7 @@ object SharedCollection {
     val getTopByCategory = "select * from sharedcollections where category=? order by installations desc limit ? offset ?"
     val insert = s"insert into sharedcollections($insertFields) values($insertWildCards)"
     val update = "update sharedcollections set name=? where id=?"
-  }
-}
-
-object SharedCollectionPackage {
-  val fields = List("sharedcollectionid", "packagename")
-  val allFields = "id" +: fields
-
-  val insertFields = fields.mkString(",")
-  val insertWildCards = fields.map(_ ⇒ "?").mkString(",")
-
-  object Queries {
-    val delete = "delete from sharedcollectionpackages where sharedcollectionid=? and packagename=?"
-    val getById = "select * from sharedcollectionpackages where id=?"
-    val getBySharedCollection = "select * from sharedcollectionpackages where sharedcollectionid=?"
-    val insert = s"insert into sharedcollectionpackages($insertFields) values($insertWildCards)"
+    val updatePackages = "update sharedcollections set packages=? where id=?"
   }
 }
 

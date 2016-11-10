@@ -164,7 +164,8 @@ object TestData {
       views            = views,
       category         = category,
       icon             = icon,
-      community        = community
+      community        = community,
+      packages         = packagesName map (_.value)
     )
 
     val collectionWithSubscriptions = SharedCollectionWithAggregatedInfo(
@@ -183,12 +184,7 @@ object TestData {
 
     val nonExistentSharedCollection: Option[SharedCollectionServices] = None
 
-    val packages = packagesName.zip(1l to packagesName.size.toLong) map {
-      case (n, id) ⇒
-        SharedCollectionPackage(id, collectionId, n.value)
-    }
-
-    val createPackagesStats = PackagesStats(addedPackagesCount, None)
+    val createPackagesStats = PackagesStats(packagesName.size, None)
 
     val updatePackagesStats = PackagesStats(addedPackagesCount, Option(removedPackagesCount))
 
@@ -227,7 +223,8 @@ object TestData {
       views            = views,
       category         = category,
       icon             = icon,
-      community        = community
+      community        = community,
+      packages         = packagesName map (_.value)
     )
 
     val sharedCollectionData = SharedCollectionData(
@@ -240,7 +237,8 @@ object TestData {
       views            = Option(views),
       category         = category,
       icon             = icon,
-      community        = community
+      community        = community,
+      packages         = packagesName
     )
 
     val sharedCollection = SharedCollection(
@@ -305,8 +303,7 @@ object TestData {
     import Values._
 
     val createCollectionRequest: CreateCollectionRequest = CreateCollectionRequest(
-      collection = sharedCollectionData,
-      packages   = packagesName
+      collection = sharedCollectionData
     )
 
     val createCollectionResponse = CreateOrUpdateCollectionResponse(

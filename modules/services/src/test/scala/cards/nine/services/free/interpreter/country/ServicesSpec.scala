@@ -7,21 +7,14 @@ import cards.nine.services.persistence.NineCardsGenEntities.WrongIsoCode2
 import cards.nine.services.persistence.{ DomainDatabaseContext, NineCardsScalacheckGen }
 import org.specs2.ScalaCheck
 import org.specs2.mutable.Specification
-import org.specs2.specification.BeforeEach
 
 class ServicesSpec
   extends Specification
-  with BeforeEach
   with ScalaCheck
   with DomainDatabaseContext
   with NineCardsScalacheckGen {
 
   sequential
-
-  def before = {
-    flywaydb.clean()
-    flywaydb.migrate()
-  }
 
   "getCountryByIsoCode2" should {
     "return a CountryNotFound error if a non-existing ISO code is provided" in {

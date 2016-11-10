@@ -1,6 +1,8 @@
 
 trait Settings {
 
+  import org.flywaydb.sbt.FlywayPlugin._
+  import org.flywaydb.sbt.FlywayPlugin.autoImport._
   import CustomSettings._
   import sbt.Keys._
   import sbt._
@@ -37,10 +39,24 @@ trait Settings {
     unmanagedClasspath in Test += apiResourcesFolder.value
   )
 
+  lazy val flywayTestSettings9C = {
+    flywayBaseSettings(Test) ++ Seq(
+      flywayDriver := "org.postgresql.Driver",
+      flywayUrl := "jdbc:postgresql://localhost/ninecards_travis_ci_test",
+      flywayUser := "postgres",
+      flywayPassword := "",
+      flywayLocations := Seq("filesystem:" + apiResourcesFolder.value.getPath + "/db/migration")
+    )
+  }
+
   lazy val serviceSettings = projectSettings ++ Seq(
     apiResourcesFolder := apiResourcesFolderDef.value,
-    unmanagedClasspath in Test += apiResourcesFolder.value
-  )
+    unmanagedClasspath in Test += apiResourcesFolder.value,
+    parallelExecution in Test := false,
+    test <<= test in Test dependsOn flywayMigrate,
+    testOnly <<= testOnly in Test dependsOn flywayMigrate,
+    testQuick <<= testQuick in Test dependsOn flywayMigrate
+  ) ++ flywayTestSettings9C
 
   lazy val googleplaySettings = {
     val protoBufSettings = {

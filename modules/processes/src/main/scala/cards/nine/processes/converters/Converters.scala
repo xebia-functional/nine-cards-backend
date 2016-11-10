@@ -44,19 +44,22 @@ object Converters {
       views            = data.views.getOrElse(0),
       category         = data.category,
       icon             = data.icon,
-      community        = data.community
+      community        = data.community,
+      packages         = data.packages map (_.value)
     )
 
-  def toSharedCollection: (BaseSharedCollection, List[Package], Long) ⇒ SharedCollection = {
-    case (collection: SharedCollectionWithAggregatedInfo, packages, userId) ⇒
-      toSharedCollection(collection.sharedCollectionData, packages, Option(collection.subscriptionsCount), userId)
-    case (collection: SharedCollectionServices, packages, userId) ⇒
-      toSharedCollection(collection, packages, None, userId)
+  def toSharedCollectionList(userId: Long)(collections: List[BaseSharedCollection]): List[SharedCollection] =
+    collections map (col ⇒ toSharedCollection(col, userId))
+
+  def toSharedCollection: (BaseSharedCollection, Long) ⇒ SharedCollection = {
+    case (collection: SharedCollectionWithAggregatedInfo, userId) ⇒
+      toSharedCollection(collection.sharedCollectionData, Option(collection.subscriptionsCount), userId)
+    case (collection: SharedCollectionServices, userId) ⇒
+      toSharedCollection(collection, None, userId)
   }
 
   def toSharedCollection(
     collection: SharedCollectionServices,
-    packages: List[Package],
     subscriptionCount: Option[Long],
     userId: Long
   ) =
@@ -71,7 +74,7 @@ object Converters {
       icon               = collection.icon,
       community          = collection.community,
       owned              = collection.userId.fold(false)(user ⇒ user == userId),
-      packages           = packages,
+      packages           = collection.packages map Package,
       subscriptionsCount = subscriptionCount
     )
 

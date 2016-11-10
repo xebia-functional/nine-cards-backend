@@ -4,15 +4,14 @@ import cards.nine.services.free.domain.{ SharedCollection, SharedCollectionSubsc
 import cards.nine.services.free.interpreter.collection.Services.SharedCollectionData
 import cards.nine.services.free.interpreter.user.Services.UserData
 import cards.nine.services.persistence.{ DomainDatabaseContext, NineCardsScalacheckGen }
+import doobie.contrib.postgresql.pgtypes._
 import org.specs2.ScalaCheck
 import org.specs2.matcher.DisjunctionMatchers
 import org.specs2.mutable.Specification
-import org.specs2.specification.BeforeEach
 import shapeless.syntax.std.product._
 
 class ServicesSpec
   extends Specification
-  with BeforeEach
   with ScalaCheck
   with DomainDatabaseContext
   with DisjunctionMatchers
@@ -20,13 +19,9 @@ class ServicesSpec
 
   sequential
 
-  def before = {
-    flywaydb.clean()
-    flywaydb.migrate()
-  }
-
   def generateSubscription(userData: UserData, collectionData: SharedCollectionData) = {
     for {
+      _ ← deleteAllRows
       u ← insertItem(User.Queries.insert, userData.toTuple)
       c ← insertItem(SharedCollection.Queries.insert, collectionData.copy(userId = Option(u)).toTuple)
       _ ← insertItemWithoutGeneratedKeys(
@@ -40,6 +35,7 @@ class ServicesSpec
     "create a new subscriptions when an existing user and shared collection is given" in {
       prop { (userData: UserData, collectionData: SharedCollectionData) ⇒
         val (userId: Long, collectionId: Long) = (for {
+          _ ← deleteAllRows
           u ← insertItem(User.Queries.insert, userData.toTuple)
           c ← insertItem(SharedCollection.Queries.insert, collectionData.copy(userId = Option(u)).toTuple)
         } yield (u, c)).transactAndRun
@@ -67,12 +63,14 @@ class ServicesSpec
   "getSubscriptionByCollection" should {
     "return an empty list if the table is empty" in {
       prop { (collectionId: Long) ⇒
-        val subscriptions =
-          subscriptionPersistenceServices.getByCollection(
-            collectionId = collectionId
-          ).transactAndRun
+        WithEmptyDatabase {
+          val subscriptions =
+            subscriptionPersistenceServices.getByCollection(
+              collectionId = collectionId
+            ).transactAndRun
 
-        subscriptions must beEmpty
+          subscriptions must beEmpty
+        }
       }
     }
     "return a list of subscriptions associated with the given collection" in {
@@ -105,12 +103,14 @@ class ServicesSpec
   "getSubscriptionByCollectionAndUser" should {
     "return None if the table is empty" in {
       prop { (userId: Long, collectionId: Long) ⇒
-        val subscription = subscriptionPersistenceServices.getByCollectionAndUser(
-          collectionId = collectionId,
-          userId       = userId
-        ).transactAndRun
+        WithEmptyDatabase {
+          val subscription = subscriptionPersistenceServices.getByCollectionAndUser(
+            collectionId = collectionId,
+            userId       = userId
+          ).transactAndRun
 
-        subscription must beNone
+          subscription must beNone
+        }
       }
     }
     "return a subscription if there is a record for the given user and collection in the database" in {
@@ -145,11 +145,13 @@ class ServicesSpec
   "getSubscriptionByUser" should {
     "return an empty list if the table is empty" in {
       prop { (userId: Long) ⇒
-        val subscriptions = subscriptionPersistenceServices.getByUser(
-          userId = userId
-        ).transactAndRun
+        WithEmptyDatabase {
+          val subscriptions = subscriptionPersistenceServices.getByUser(
+            userId = userId
+          ).transactAndRun
 
-        subscriptions must beEmpty
+          subscriptions must beEmpty
+        }
       }
     }
     "return a list of subscriptions associated for the given user" in {
@@ -181,12 +183,14 @@ class ServicesSpec
   "removeSubscriptionByCollectionAndUser" should {
     "return 0 there isn't any subscription for the given user and collection in the database" in {
       prop { (userId: Long, collectionId: Long) ⇒
-        val deleted = subscriptionPersistenceServices.removeByCollectionAndUser(
-          collectionId = collectionId,
-          userId       = userId
-        ).transactAndRun
+        WithEmptyDatabase {
+          val deleted = subscriptionPersistenceServices.removeByCollectionAndUser(
+            collectionId = collectionId,
+            userId       = userId
+          ).transactAndRun
 
-        deleted must_== 0
+          deleted must_== 0
+        }
       }
     }
     "return 1 if there is a subscription for the given user and collection in the database" in {
