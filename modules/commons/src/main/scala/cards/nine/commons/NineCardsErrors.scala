@@ -30,6 +30,8 @@ object NineCardsErrors {
 
   final case class ReportNotFound(message: String) extends NineCardsError
 
+  final case class SharedCollectionNotFound(message: String) extends NineCardsError
+
   final case class UserNotFound(message: String) extends NineCardsError
 
   final case class WrongEmailAccount(message: String) extends NineCardsError

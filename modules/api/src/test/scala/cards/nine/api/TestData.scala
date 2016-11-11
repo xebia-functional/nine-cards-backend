@@ -6,10 +6,10 @@ import cards.nine.api.messages.InstallationsMessages.ApiUpdateInstallationReques
 import cards.nine.api.messages.SharedCollectionMessages._
 import cards.nine.api.messages.UserMessages.ApiLoginRequest
 import cards.nine.api.messages.{ rankings ⇒ Api }
+import cards.nine.commons.NineCardsErrors.SharedCollectionNotFound
 import cards.nine.domain.account._
 import cards.nine.domain.analytics.{ RankedAppsByCategory, RankedWidgetsByMoment }
 import cards.nine.domain.application.{ CardList, Category, FullCard, Package }
-import cards.nine.processes.ProcessesExceptions.SharedCollectionNotFoundException
 import cards.nine.processes.messages.InstallationsMessages._
 import cards.nine.processes.messages.SharedCollectionMessages._
 import cards.nine.processes.messages.UserMessages.{ LoginRequest, LoginResponse }
@@ -90,16 +90,13 @@ object TestData {
 
   val views = 1
 
+  val sharedCollectionNotFoundError = SharedCollectionNotFound("Shared collection not found")
+
   object Exceptions {
 
     val http4sException = org.http4s.InvalidResponseException(msg = "Test error")
 
     val persistenceException = PersistenceException(
-      message = "Test error",
-      cause   = None
-    )
-
-    val sharedCollectionNotFoundException = SharedCollectionNotFoundException(
       message = "Test error",
       cause   = None
     )
