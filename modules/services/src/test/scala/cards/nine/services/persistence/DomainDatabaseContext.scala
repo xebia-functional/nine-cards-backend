@@ -54,6 +54,12 @@ trait BasicDatabaseContext extends DummyConfig {
   def getItems[A: Composite](sql: String): ConnectionIO[List[A]] =
     Query[HNil, A](sql, None).toQuery0(HNil).to[List]
 
+  def getItems[A: Composite, B: Composite](sql: String, values: A): ConnectionIO[List[B]] =
+    Query[A, B](sql).to[List](values)
+
+  def getOptionalItem[A: Composite, B: Composite](sql: String, values: A): ConnectionIO[Option[B]] =
+    Query[A, B](sql).option(values)
+
   implicit class Transacting[A](operation: ConnectionIO[A])(implicit transactor: Transactor[Task]) {
     def transactAndRun: A = operation.transact(transactor).unsafePerformSync
 

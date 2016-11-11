@@ -1,23 +1,16 @@
 package cards.nine.processes
 
-import cards.nine.commons.FreeUtils._
 import cards.nine.commons.NineCardsService
 import cards.nine.commons.NineCardsService.NineCardsService
 import cards.nine.domain.application.{ BasicCard, CardList, Package }
 import cards.nine.domain.market.MarketCredentials
 import cards.nine.domain.pagination.Page
-import cards.nine.processes.ProcessesExceptions.SharedCollectionNotFoundException
 import cards.nine.processes.converters.Converters._
 import cards.nine.processes.messages.SharedCollectionMessages._
-import cards.nine.processes.utils.XorTSyntax._
 import cards.nine.services.free.algebra
 import cards.nine.services.free.algebra.{ Firebase, GooglePlay }
 import cards.nine.services.free.domain.Firebase._
 import cards.nine.services.free.domain.{ BaseSharedCollection, SharedCollectionSubscription }
-import cats.data.{ Xor, XorT }
-import cats.free.Free
-import cats.instances.list._
-import cats.syntax.traverse._
 
 class SharedCollectionProcesses[F[_]](
   implicit
@@ -28,11 +21,7 @@ class SharedCollectionProcesses[F[_]](
   userServices: algebra.User.Services[F]
 ) {
 
-  val sharedCollectionNotFoundException = SharedCollectionNotFoundException(
-    message = "The required shared collection doesn't exist"
-  )
-
-  def createCollection(request: CreateCollectionRequest): Free[F, CreateOrUpdateCollectionResponse] =
+  def createCollection(request: CreateCollectionRequest): NineCardsService[F, CreateOrUpdateCollectionResponse] =
     collectionServices.add(request.collection) map { collection ⇒
       CreateOrUpdateCollectionResponse(
         publicIdentifier = collection.publicIdentifier,
@@ -44,26 +33,27 @@ class SharedCollectionProcesses[F[_]](
     userId: Long,
     publicIdentifier: String,
     marketAuth: MarketCredentials
-  ): Free[F, XorGetCollectionByPublicId] = {
+  ): NineCardsService[F, GetCollectionByPublicIdentifierResponse] =
     for {
-      sharedCollection ← findCollection(publicIdentifier)
-      sharedCollectionInfo = toSharedCollection(sharedCollection, userId)
-      resolvedSharedCollection ← getAppsInfoForCollection(sharedCollectionInfo, marketAuth)
-    } yield resolvedSharedCollection
-  }.value
+      sharedCollection ← collectionServices.getByPublicId(publicIdentifier)
+      collection = toSharedCollection(sharedCollection, userId)
+      appsInfo ← googlePlayServices.resolveManyDetailed(collection.packages, marketAuth)
+    } yield GetCollectionByPublicIdentifierResponse(
+      toSharedCollectionWithAppsInfo(collection, appsInfo.cards)
+    )
 
   def getLatestCollectionsByCategory(
     userId: Long,
     category: String,
     marketAuth: MarketCredentials,
     pageParams: Page
-  ): Free[F, GetCollectionsResponse] =
+  ): NineCardsService[F, GetCollectionsResponse] =
     getCollections(collectionServices.getLatestByCategory(category, pageParams), userId, marketAuth)
 
   def getPublishedCollections(
     userId: Long,
     marketAuth: MarketCredentials
-  ): Free[F, GetCollectionsResponse] =
+  ): NineCardsService[F, GetCollectionsResponse] =
     getCollections(collectionServices.getByUser(userId), userId, marketAuth)
 
   def getTopCollectionsByCategory(
@@ -71,53 +61,42 @@ class SharedCollectionProcesses[F[_]](
     category: String,
     marketAuth: MarketCredentials,
     pageParams: Page
-  ): Free[F, GetCollectionsResponse] =
+  ): NineCardsService[F, GetCollectionsResponse] =
     getCollections(collectionServices.getTopByCategory(category, pageParams), userId, marketAuth)
 
-  /**
-    * This process changes the application state to one where the user is subscribed to the collection.
-    */
-
-  def getSubscriptionsByUser(user: Long): Free[F, GetSubscriptionsByUserResponse] =
+  def getSubscriptionsByUser(user: Long): NineCardsService[F, GetSubscriptionsByUserResponse] =
     subscriptionServices.getByUser(user) map toGetSubscriptionsByUserResponse
 
-  def subscribe(publicIdentifier: String, user: Long): Free[F, Xor[Throwable, SubscribeResponse]] = {
+  def subscribe(publicIdentifier: String, user: Long): NineCardsService[F, SubscribeResponse] = {
 
-    def addSubscription(
-      subscription: Option[SharedCollectionSubscription],
-      collectionId: Long,
-      collectionPublicId: String
-    ) = {
+    def addSubscription(subscription: Option[SharedCollectionSubscription], collectionId: Long) = {
       val subscriptionCount = 1
 
       subscription
-        .fold(subscriptionServices.add(collectionId, user, collectionPublicId))(_ ⇒ subscriptionCount.toFree)
+        .fold(subscriptionServices.add(collectionId, user, publicIdentifier))(_ ⇒ NineCardsService.right(subscriptionCount))
         .map(_ ⇒ SubscribeResponse())
     }
 
     for {
-      collection ← findCollection(publicIdentifier)
-      subscription ← subscriptionServices.getByCollectionAndUser(collection.id, user).rightXorT[Throwable]
-      subscriptionInfo ← addSubscription(subscription, collection.id, collection.publicIdentifier).rightXorT[Throwable]
+      collection ← collectionServices.getByPublicId(publicIdentifier)
+      subscription ← subscriptionServices.getByCollectionAndUser(collection.id, user)
+      subscriptionInfo ← addSubscription(subscription, collection.id)
     } yield subscriptionInfo
-  }.value
+  }
 
-  def unsubscribe(publicIdentifier: String, userId: Long): Free[F, Xor[Throwable, UnsubscribeResponse]] = {
+  def unsubscribe(publicIdentifier: String, userId: Long): NineCardsService[F, UnsubscribeResponse] =
     for {
-      collection ← findCollection(publicIdentifier)
-      _ ← subscriptionServices.removeByCollectionAndUser(collection.id, userId).rightXorT[Throwable]
+      collection ← collectionServices.getByPublicId(publicIdentifier)
+      _ ← subscriptionServices.removeByCollectionAndUser(collection.id, userId)
     } yield UnsubscribeResponse()
-  }.value
 
   def sendNotifications(
     publicIdentifier: String,
     packagesName: List[Package]
-  ): NineCardsService[F, SendNotificationResponse] = {
-
+  ): NineCardsService[F, SendNotificationResponse] =
     if (packagesName.isEmpty)
       NineCardsService.right[F, SendNotificationResponse](SendNotificationResponse.emptyResponse)
     else {
-
       for {
         subscribers ← userServices.getSubscribedInstallationByCollection(publicIdentifier)
         response ← notificationsServices.sendUpdatedCollectionNotification(
@@ -129,97 +108,53 @@ class SharedCollectionProcesses[F[_]](
         )
       } yield response
     }
-  }
 
   def updateCollection(
     publicIdentifier: String,
     collectionInfo: Option[SharedCollectionUpdateInfo],
     packages: Option[List[Package]]
-  ): Free[F, Xor[Throwable, CreateOrUpdateCollectionResponse]] = {
+  ): NineCardsService[F, CreateOrUpdateCollectionResponse] = {
 
     def updateCollectionInfo(collectionId: Long, info: Option[SharedCollectionUpdateInfo]) =
       info
         .map(c ⇒ collectionServices.update(collectionId, c.title))
-        .getOrElse(0.toFree)
+        .getOrElse(NineCardsService.right(0))
 
     def updatePackages(collectionId: Long, packagesName: Option[List[Package]]) =
       packagesName
         .map(p ⇒ collectionServices.updatePackages(collectionId, p))
-        .getOrElse((List.empty[Package], List.empty[Package]).toFree)
+        .getOrElse(NineCardsService.right((List.empty[Package], List.empty[Package])))
 
-    def updateCollectionAndPackages(
-      publicIdentifier: String,
-      collectionInfo: Option[SharedCollectionUpdateInfo],
-      packages: Option[List[Package]]
-    ): Free[F, Throwable Xor (List[Package], List[Package])] = {
-      for {
-        collection ← findCollection(publicIdentifier)
-        _ ← updateCollectionInfo(collection.id, collectionInfo).rightXorT[Throwable]
-        info ← updatePackages(collection.id, packages).rightXorT[Throwable]
-      } yield info
-    }.value
-
-    {
-      for {
-        updateInfo ← updateCollectionAndPackages(publicIdentifier, collectionInfo, packages).toXorT
-        (addedPackages, removedPackages) = updateInfo
-        _ ← sendNotifications(publicIdentifier, addedPackages).value.rightXorT[Throwable]
-      } yield CreateOrUpdateCollectionResponse(
-        publicIdentifier,
-        packagesStats = (PackagesStats.apply _).tupled((addedPackages.size, Option(removedPackages.size)))
-      )
-    }.value
+    for {
+      collection ← collectionServices.getByPublicId(publicIdentifier)
+      _ ← updateCollectionInfo(collection.id, collectionInfo)
+      packagesStats ← updatePackages(collection.id, packages)
+      (addedPackages, removedPackages) = packagesStats
+      _ ← sendNotifications(publicIdentifier, addedPackages)
+    } yield CreateOrUpdateCollectionResponse(
+      publicIdentifier,
+      packagesStats = (PackagesStats.apply _).tupled((addedPackages.size, Option(removedPackages.size)))
+    )
   }
 
-  private[this] def findCollection(publicId: String) =
-    collectionServices
-      .getByPublicId(publicId)
-      .map(Xor.fromOption(_, sharedCollectionNotFoundException))
-      .toXorT
-
-  private def getAppsInfoForCollection(
-    collection: SharedCollection,
-    marketAuth: MarketCredentials
-  ): XorT[Free[F, ?], Throwable, GetCollectionByPublicIdentifierResponse] = {
-    googlePlayServices.resolveManyDetailed(collection.packages, marketAuth).value map { appsInfo ⇒
-      GetCollectionByPublicIdentifierResponse(
-        toSharedCollectionWithAppsInfo(collection, appsInfo.fold(_ ⇒ Nil, _.cards))
-      )
-    }
-  }.rightXorT[Throwable]
-
   private def getCollections[T <: BaseSharedCollection](
-    sharedCollections: Free[F, List[T]],
+    sharedCollections: NineCardsService[F, List[T]],
     userId: Long,
     marketAuth: MarketCredentials
   ) = {
 
-    def getGooglePlayInfoForPackages(
-      collections: List[SharedCollection],
-      marketAuth: MarketCredentials
-    ): Free[F, CardList[BasicCard]] = {
-      val packages = collections.flatMap(_.packages).distinct
-      googlePlayServices.resolveManyBasic(packages, marketAuth).value.map { r ⇒
-        r.fold(_ ⇒ CardList[BasicCard](Nil, Nil), v ⇒ v)
-      }
+    def fillGooglePlayInfoForPackages(appsInfo: CardList[BasicCard])(collection: SharedCollection) = {
+      val foundAppInfo = appsInfo.cards.filter(a ⇒ collection.packages.contains(a.packageName))
+      toSharedCollectionWithAppsInfo(collection, foundAppInfo)
     }
-
-    def fillGooglePlayInfoForPackages(
-      collections: List[SharedCollection],
-      appsInfo: CardList[BasicCard]
-    ) = GetCollectionsResponse {
-      collections map { collection ⇒
-        val foundAppInfo = appsInfo.cards.filter(a ⇒ collection.packages.contains(a.packageName))
-        toSharedCollectionWithAppsInfo(collection, foundAppInfo)
-      }
-    }
-
-    val collectionsWithPackages = sharedCollections map toSharedCollectionList(userId)
 
     for {
-      collections ← collectionsWithPackages
-      appsInfo ← getGooglePlayInfoForPackages(collections, marketAuth)
-    } yield fillGooglePlayInfoForPackages(collections, appsInfo)
+      collections ← sharedCollections map toSharedCollectionList(userId)
+      packages = collections.flatMap(_.packages).distinct
+      appsInfo ← googlePlayServices.resolveManyBasic(packages, marketAuth)
+    } yield GetCollectionsResponse(
+      collections map fillGooglePlayInfoForPackages(appsInfo)
+    )
   }
 }
 
@@ -228,7 +163,7 @@ object SharedCollectionProcesses {
   implicit def processes[F[_]](
     implicit
     collectionServices: algebra.SharedCollection.Services[F],
-    firebaseNotificationsServices: Firebase.Services[F],
+    notificationsServices: Firebase.Services[F],
     googlePlayServices: GooglePlay.Services[F],
     subscriptionServices: algebra.Subscription.Services[F],
     userServices: algebra.User.Services[F]

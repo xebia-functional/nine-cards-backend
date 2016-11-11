@@ -1,8 +1,9 @@
 package cards.nine.services.free.interpreter.user
 
 import cards.nine.commons.NineCardsErrors.{ InstallationNotFound, UserNotFound }
-import cards.nine.commons.NineCardsService.Result
 import cards.nine.domain.account._
+import cards.nine.services.common.PersistenceService
+import cards.nine.services.common.PersistenceService._
 import cards.nine.services.free.algebra.User._
 import cards.nine.services.free.domain.Installation.{ Queries ⇒ InstallationQueries }
 import cards.nine.services.free.domain.User.{ Queries ⇒ UserQueries }
@@ -17,19 +18,21 @@ class Services(
   installationPersistence: Persistence[Installation]
 ) extends (Ops ~> ConnectionIO) {
 
-  def addUser[K: Composite](email: Email, apiKey: ApiKey, sessionToken: SessionToken): ConnectionIO[Result[K]] =
-    userPersistence.updateWithGeneratedKeys[K](
-      sql    = UserQueries.insert,
-      fields = User.allFields,
-      values = (email, sessionToken, apiKey)
-    ) map Either.right
+  def addUser[K: Composite](email: Email, apiKey: ApiKey, sessionToken: SessionToken): PersistenceService[K] =
+    PersistenceService {
+      userPersistence.updateWithGeneratedKeys[K](
+        sql    = UserQueries.insert,
+        fields = User.allFields,
+        values = (email, sessionToken, apiKey)
+      )
+    }
 
-  def getUserByEmail(email: Email): ConnectionIO[Result[User]] =
+  def getUserByEmail(email: Email): PersistenceService[User] =
     userPersistence.fetchOption(UserQueries.getByEmail, email) map {
       Either.fromOption(_, UserNotFound(s"User with email ${email.value} not found"))
     }
 
-  def getUserBySessionToken(sessionToken: SessionToken): ConnectionIO[Result[User]] =
+  def getUserBySessionToken(sessionToken: SessionToken): PersistenceService[User] =
     userPersistence.fetchOption(UserQueries.getBySessionToken, sessionToken) map {
       Either.fromOption(_, UserNotFound(s"User with sessionToken ${sessionToken.value} not found"))
     }
@@ -38,17 +41,19 @@ class Services(
     userId: Long,
     deviceToken: Option[DeviceToken],
     androidId: AndroidId
-  ): ConnectionIO[Result[K]] =
-    userPersistence.updateWithGeneratedKeys[K](
-      sql    = InstallationQueries.insert,
-      fields = Installation.allFields,
-      values = (userId, deviceToken, androidId)
-    ) map Either.right
+  ): PersistenceService[K] =
+    PersistenceService {
+      userPersistence.updateWithGeneratedKeys[K](
+        sql    = InstallationQueries.insert,
+        fields = Installation.allFields,
+        values = (userId, deviceToken, androidId)
+      )
+    }
 
   def getInstallationByUserAndAndroidId(
     userId: Long,
     androidId: AndroidId
-  ): ConnectionIO[Result[Installation]] =
+  ): PersistenceService[Installation] =
     installationPersistence.fetchOption(
       sql    = InstallationQueries.getByUserAndAndroidId,
       values = (userId, androidId)
@@ -56,18 +61,22 @@ class Services(
       Either.fromOption(_, InstallationNotFound(s"Installation for android id ${androidId.value} not found"))
     }
 
-  def getSubscribedInstallationByCollection(publicIdentifier: String): ConnectionIO[Result[List[Installation]]] =
-    installationPersistence.fetchList(
-      sql    = InstallationQueries.getSubscribedByCollection,
-      values = publicIdentifier
-    ) map Either.right
+  def getSubscribedInstallationByCollection(publicIdentifier: String): PersistenceService[List[Installation]] =
+    PersistenceService {
+      installationPersistence.fetchList(
+        sql    = InstallationQueries.getSubscribedByCollection,
+        values = publicIdentifier
+      )
+    }
 
-  def updateInstallation[K: Composite](userId: Long, deviceToken: Option[DeviceToken], androidId: AndroidId): ConnectionIO[Result[K]] =
-    userPersistence.updateWithGeneratedKeys[K](
-      sql    = InstallationQueries.updateDeviceToken,
-      fields = Installation.allFields,
-      values = (deviceToken, userId, androidId)
-    ) map Either.right
+  def updateInstallation[K: Composite](userId: Long, deviceToken: Option[DeviceToken], androidId: AndroidId): PersistenceService[K] =
+    PersistenceService {
+      userPersistence.updateWithGeneratedKeys[K](
+        sql    = InstallationQueries.updateDeviceToken,
+        fields = Installation.allFields,
+        values = (deviceToken, userId, androidId)
+      )
+    }
 
   def apply[A](fa: Ops[A]): ConnectionIO[A] = fa match {
     case Add(email, apiKey, sessionToken) ⇒

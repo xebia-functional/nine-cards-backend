@@ -19,7 +19,6 @@ import cards.nine.domain.application.{ BasicCard, Category, FullCard, PriceFilte
 import cards.nine.domain.pagination.Page
 import cards.nine.processes._
 import cards.nine.processes.NineCardsServices._
-import cats.data.Xor
 
 import scala.concurrent.ExecutionContext
 import spray.http.StatusCodes.NotFound
@@ -276,20 +275,20 @@ class NineCardsRoutes(
     publicId: PublicIdentifier,
     googlePlayContext: GooglePlayContext,
     userContext: UserContext
-  ): NineCardsServed[XorApiGetCollectionByPublicId] =
+  ): NineCardsService[NineCardsServices, ApiSharedCollection] =
     sharedCollectionProcesses
       .getCollectionByPublicIdentifier(
         userId           = userContext.userId.value,
         publicIdentifier = publicId.value,
         marketAuth       = toMarketAuth(googlePlayContext, userContext)
       )
-      .map(_.map(r ⇒ toApiSharedCollection(r.data)(toApiCollectionApp)))
+      .map(r ⇒ toApiSharedCollection(r.data)(toApiCollectionApp))
 
   private[this] def createCollection(
     request: ApiCreateCollectionRequest,
     collectionInfo: NewSharedCollectionInfo,
     userContext: UserContext
-  ): NineCardsServed[ApiCreateOrUpdateCollectionResponse] =
+  ): NineCardsService[NineCardsServices, ApiCreateOrUpdateCollectionResponse] =
     sharedCollectionProcesses
       .createCollection(toCreateCollectionRequest(request, collectionInfo, userContext))
       .map(toApiCreateOrUpdateCollectionResponse)
@@ -297,26 +296,26 @@ class NineCardsRoutes(
   private[this] def subscribe(
     publicId: PublicIdentifier,
     userContext: UserContext
-  ): NineCardsServed[Xor[Throwable, ApiSubscribeResponse]] =
+  ): NineCardsService[NineCardsServices, ApiSubscribeResponse] =
     sharedCollectionProcesses
       .subscribe(publicId.value, userContext.userId.value)
-      .map(_.map(toApiSubscribeResponse))
+      .map(toApiSubscribeResponse)
 
   private[this] def updateCollection(
     publicId: PublicIdentifier,
     request: ApiUpdateCollectionRequest
-  ): NineCardsServed[Xor[Throwable, ApiCreateOrUpdateCollectionResponse]] =
+  ): NineCardsService[NineCardsServices, ApiCreateOrUpdateCollectionResponse] =
     sharedCollectionProcesses
       .updateCollection(publicId.value, request.collectionInfo, request.packages)
-      .map(_.map(toApiCreateOrUpdateCollectionResponse))
+      .map(toApiCreateOrUpdateCollectionResponse)
 
   private[this] def unsubscribe(
     publicId: PublicIdentifier,
     userContext: UserContext
-  ): NineCardsServed[Xor[Throwable, ApiUnsubscribeResponse]] =
+  ): NineCardsService[NineCardsServices, ApiUnsubscribeResponse] =
     sharedCollectionProcesses
       .unsubscribe(publicId.value, userContext.userId.value)
-      .map(_.map(toApiUnsubscribeResponse))
+      .map(toApiUnsubscribeResponse)
 
   private[this] def getLatestCollectionsByCategory(
     category: Category,
@@ -324,7 +323,7 @@ class NineCardsRoutes(
     userContext: UserContext,
     pageNumber: PageNumber,
     pageSize: PageSize
-  ): NineCardsServed[ApiSharedCollectionList] =
+  ): NineCardsService[NineCardsServices, ApiSharedCollectionList] =
     sharedCollectionProcesses
       .getLatestCollectionsByCategory(
         userId     = userContext.userId.value,
@@ -337,14 +336,14 @@ class NineCardsRoutes(
   private[this] def getPublishedCollections(
     googlePlayContext: GooglePlayContext,
     userContext: UserContext
-  ): NineCardsServed[ApiSharedCollectionList] =
+  ): NineCardsService[NineCardsServices, ApiSharedCollectionList] =
     sharedCollectionProcesses
       .getPublishedCollections(userContext.userId.value, toMarketAuth(googlePlayContext, userContext))
       .map(toApiSharedCollectionList)
 
   private[this] def getSubscriptionsByUser(
     userContext: UserContext
-  ): NineCardsServed[ApiGetSubscriptionsByUser] =
+  ): NineCardsService[NineCardsServices, ApiGetSubscriptionsByUser] =
     sharedCollectionProcesses
       .getSubscriptionsByUser(userContext.userId.value)
       .map(toApiGetSubscriptionsByUser)
@@ -355,7 +354,7 @@ class NineCardsRoutes(
     userContext: UserContext,
     pageNumber: PageNumber,
     pageSize: PageSize
-  ): NineCardsServed[ApiSharedCollectionList] =
+  ): NineCardsService[NineCardsServices, ApiSharedCollectionList] =
     sharedCollectionProcesses
       .getTopCollectionsByCategory(
         userId     = userContext.userId.value,

@@ -35,6 +35,8 @@ class NineCardsErrorHandler {
         (ServiceUnavailable, message)
       case ReportNotFound(message) ⇒
         (NotFound, message)
+      case SharedCollectionNotFound(message) ⇒
+        (NotFound, message)
       case UserNotFound(message) ⇒
         (Unauthorized, message)
       case WrongEmailAccount(message) ⇒
