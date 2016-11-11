@@ -3,7 +3,7 @@ package cards.nine.processes
 import java.sql.Timestamp
 import java.time.Instant
 
-import cards.nine.commons.NineCardsErrors.{ CountryNotFound, RankingNotFound }
+import cards.nine.commons.NineCardsErrors.{ CountryNotFound, RankingNotFound, SharedCollectionNotFound }
 import cards.nine.commons.NineCardsService
 import cards.nine.domain.account.{ AndroidId, DeviceToken }
 import cards.nine.domain.analytics._
@@ -11,7 +11,6 @@ import cards.nine.domain.application.{ CardList, FullCard, Package, Widget }
 import cards.nine.domain.market.{ Localization, MarketCredentials, MarketToken }
 import cards.nine.domain.pagination.Page
 import cards.nine.processes.NineCardsServices.NineCardsServices
-import cards.nine.processes.ProcessesExceptions.SharedCollectionNotFoundException
 import cards.nine.processes.converters.Converters
 import cards.nine.processes.messages.SharedCollectionMessages._
 import cards.nine.services.free.domain.Firebase.{ NotificationIndividualResult, SendNotificationResponse }
@@ -179,7 +178,7 @@ object TestData {
 
     val countryNotFoundError = CountryNotFound(s"Country with ISO code2 US doesn't exist")
 
-    val nonExistentSharedCollection: Option[SharedCollectionServices] = None
+    val sharedCollectionNotFoundError = SharedCollectionNotFound("Shared collection not found")
 
     val createPackagesStats = PackagesStats(packagesName.size, None)
 
@@ -306,13 +305,6 @@ object TestData {
       data = sharedCollectionWithAppsInfo
     )
 
-  }
-
-  object Exceptions {
-
-    val sharedCollectionNotFoundException = SharedCollectionNotFoundException(
-      message = "The required shared collection doesn't exist"
-    )
   }
 
   object rankings {

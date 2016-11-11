@@ -3,7 +3,6 @@ package cards.nine.api
 import akka.actor.ActorSystem
 import akka.testkit._
 import cards.nine.api.NineCardsHeaders._
-import cards.nine.api.TestData.Exceptions._
 import cards.nine.api.TestData._
 import cards.nine.commons.NineCardsErrors.{ AuthTokenNotValid, WrongEmailAccount }
 import cards.nine.commons.NineCardsService
@@ -78,31 +77,31 @@ trait NineCardsApiSpecification
       NineCardsService.right(Messages.updateInstallationResponse)
 
     sharedCollectionProcesses.createCollection(any) returns
-      Free.pure(Messages.createOrUpdateCollectionResponse)
+      NineCardsService.right(Messages.createOrUpdateCollectionResponse)
 
     sharedCollectionProcesses.getCollectionByPublicIdentifier(any, any[String], any) returns
-      Free.pure(Messages.getCollectionByPublicIdentifierResponse.right)
+      NineCardsService.right(Messages.getCollectionByPublicIdentifierResponse)
 
     sharedCollectionProcesses.subscribe(any[String], any[Long]) returns
-      Free.pure(Messages.subscribeResponse.right)
+      NineCardsService.right(Messages.subscribeResponse)
 
     sharedCollectionProcesses.unsubscribe(any[String], any[Long]) returns
-      Free.pure(Messages.unsubscribeResponse.right)
+      NineCardsService.right(Messages.unsubscribeResponse)
 
     sharedCollectionProcesses.getLatestCollectionsByCategory(any, any, any, any) returns
-      Free.pure(Messages.getCollectionsResponse)
+      NineCardsService.right(Messages.getCollectionsResponse)
 
     sharedCollectionProcesses.getPublishedCollections(any[Long], any) returns
-      Free.pure(Messages.getCollectionsResponse)
+      NineCardsService.right(Messages.getCollectionsResponse)
 
     sharedCollectionProcesses.getSubscriptionsByUser(any) returns
-      Free.pure(Messages.getSubscriptionsByUserResponse)
+      NineCardsService.right(Messages.getSubscriptionsByUserResponse)
 
     sharedCollectionProcesses.getTopCollectionsByCategory(any, any, any, any) returns
-      Free.pure(Messages.getCollectionsResponse)
+      NineCardsService.right(Messages.getCollectionsResponse)
 
     sharedCollectionProcesses.updateCollection(any, any, any) returns
-      Free.pure(Messages.createOrUpdateCollectionResponse.right)
+      NineCardsService.right(Messages.createOrUpdateCollectionResponse)
 
     applicationProcesses.getAppsInfo(any, any) returns
       NineCardsService.right(Messages.getAppsInfoResponse)
@@ -141,16 +140,16 @@ trait NineCardsApiSpecification
     ) returns NineCardsService.left(AuthTokenNotValid("The provided auth token is not valid"))
 
     sharedCollectionProcesses.getCollectionByPublicIdentifier(any, any[String], any) returns
-      Free.pure(sharedCollectionNotFoundException.left)
+      NineCardsService.left(sharedCollectionNotFoundError)
 
     sharedCollectionProcesses.subscribe(any[String], any[Long]) returns
-      Free.pure(sharedCollectionNotFoundException.left)
+      NineCardsService.left(sharedCollectionNotFoundError)
 
     sharedCollectionProcesses.unsubscribe(any[String], any[Long]) returns
-      Free.pure(sharedCollectionNotFoundException.left)
+      NineCardsService.left(sharedCollectionNotFoundError)
 
     sharedCollectionProcesses.updateCollection(any, any, any) returns
-      Free.pure(sharedCollectionNotFoundException.left)
+      NineCardsService.left(sharedCollectionNotFoundError)
   }
 
   trait FailingScope extends BasicScope {
@@ -170,31 +169,31 @@ trait NineCardsApiSpecification
       NineCardsService.right(Messages.updateInstallationResponse)
 
     sharedCollectionProcesses.createCollection(any) returns
-      Free.pure(Messages.createOrUpdateCollectionResponse)
+      NineCardsService.right(Messages.createOrUpdateCollectionResponse)
 
     sharedCollectionProcesses.getCollectionByPublicIdentifier(any, any[String], any) returns
-      Free.pure(Messages.getCollectionByPublicIdentifierResponse.right)
+      NineCardsService.right(Messages.getCollectionByPublicIdentifierResponse)
 
     sharedCollectionProcesses.getLatestCollectionsByCategory(any, any, any, any) returns
-      Free.pure(Messages.getCollectionsResponse)
+      NineCardsService.right(Messages.getCollectionsResponse)
 
     sharedCollectionProcesses.getPublishedCollections(any[Long], any) returns
-      Free.pure(Messages.getCollectionsResponse)
+      NineCardsService.right(Messages.getCollectionsResponse)
 
     sharedCollectionProcesses.getSubscriptionsByUser(any) returns
-      Free.pure(Messages.getSubscriptionsByUserResponse)
+      NineCardsService.right(Messages.getSubscriptionsByUserResponse)
 
     sharedCollectionProcesses.getTopCollectionsByCategory(any, any, any, any) returns
-      Free.pure(Messages.getCollectionsResponse)
+      NineCardsService.right(Messages.getCollectionsResponse)
 
     sharedCollectionProcesses.subscribe(any[String], any[Long]) returns
-      Free.pure(Messages.subscribeResponse.right)
+      NineCardsService.right(Messages.subscribeResponse)
 
     sharedCollectionProcesses.unsubscribe(any[String], any[Long]) returns
-      Free.pure(Messages.unsubscribeResponse.right)
+      NineCardsService.right(Messages.unsubscribeResponse)
 
     sharedCollectionProcesses.updateCollection(any, any, any) returns
-      Free.pure(Messages.createOrUpdateCollectionResponse.right)
+      NineCardsService.right(Messages.createOrUpdateCollectionResponse)
 
     rankingProcesses.getRanking(any) returns Free.pure(Either.right(Messages.rankings.getResponse))
 

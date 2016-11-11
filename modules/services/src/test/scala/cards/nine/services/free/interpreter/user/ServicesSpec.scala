@@ -76,8 +76,8 @@ class ServicesSpec
       prop { userData: UserData ⇒
         WithEmptyDatabase {
           userPersistenceServices.addUser[Long](
-            email = Email(userData.email),
-            apiKey = ApiKey(userData.apiKey),
+            email        = Email(userData.email),
+            apiKey       = ApiKey(userData.apiKey),
             sessionToken = SessionToken(userData.sessionToken)
           ).transactAndRun
 
@@ -210,11 +210,11 @@ class ServicesSpec
       prop { (androidId: AndroidId, userId: Long) ⇒
         WithEmptyDatabase {
           val installation = userPersistenceServices.getInstallationByUserAndAndroidId(
-            userId = userId,
+            userId    = userId,
             androidId = androidId
           ).transactAndRun
 
-        installation must beLeft(InstallationNotFound(s"Installation for android id ${androidId.value} not found"))
+          installation must beLeft(InstallationNotFound(s"Installation for android id ${androidId.value} not found"))
         }
       }
     }
