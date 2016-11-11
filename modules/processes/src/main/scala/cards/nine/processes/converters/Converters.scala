@@ -51,12 +51,13 @@ object Converters {
   def toSharedCollectionList(userId: Long)(collections: List[BaseSharedCollection]): List[SharedCollection] =
     collections map (col ⇒ toSharedCollection(col, userId))
 
-  def toSharedCollection: (BaseSharedCollection, Long) ⇒ SharedCollection = {
-    case (collection: SharedCollectionWithAggregatedInfo, userId) ⇒
-      toSharedCollection(collection.sharedCollectionData, Option(collection.subscriptionsCount), userId)
-    case (collection: SharedCollectionServices, userId) ⇒
-      toSharedCollection(collection, None, userId)
-  }
+  def toSharedCollection(collection: BaseSharedCollection, userId: Long): SharedCollection =
+    collection match {
+      case (c: SharedCollectionWithAggregatedInfo) ⇒
+        toSharedCollection(c.sharedCollectionData, Option(c.subscriptionsCount), userId)
+      case (c: SharedCollectionServices) ⇒
+        toSharedCollection(c, None, userId)
+    }
 
   def toSharedCollection(
     collection: SharedCollectionServices,

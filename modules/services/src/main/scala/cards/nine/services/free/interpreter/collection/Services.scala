@@ -62,18 +62,24 @@ class Services(
       values = (title, id)
     )
 
-  def updatePackages(collectionId: Long, packages: List[Package]): ConnectionIO[(List[Package], List[Package])] =
+  def updatePackages(collectionId: Long, packages: List[Package]): ConnectionIO[(List[Package], List[Package])] = {
+    val emptyResponse = (List.empty[Package], List.empty[Package]).point[ConnectionIO]
+
     collectionPersistence.fetchOption(Queries.getById, collectionId) flatMap {
-      case None => (List.empty[Package], List.empty[Package]).point[ConnectionIO]
-      case Some(collection) =>
+      case None ⇒ emptyResponse
+      case Some(collection) ⇒
         val existingPackages = collection.packages map Package
         val newPackages = packages diff existingPackages
         val removedPackages = existingPackages diff packages
 
-        collectionPersistence.update(Queries.updatePackages, (packages map (_.value), collectionId)) map {
-          _ => (newPackages, removedPackages)
-        }
+        if (newPackages.nonEmpty || removedPackages.nonEmpty)
+          collectionPersistence.update(Queries.updatePackages, (packages map (_.value), collectionId)) map {
+            _ ⇒ (newPackages, removedPackages)
+          }
+        else
+          emptyResponse
     }
+  }
 
   def apply[A](fa: Ops[A]): ConnectionIO[A] = fa match {
     case Add(collection) ⇒
