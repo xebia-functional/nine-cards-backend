@@ -1,7 +1,7 @@
 package cards.nine.api
 
-import akka.actor.{ Actor, ActorSystem }
-import akka.event.Logging
+import akka.actor.Actor
+import akka.event.LoggingAdapter
 import cards.nine.api.RankingActor.RankingByCategory
 import cards.nine.commons.NineCardsErrors._
 import cards.nine.commons.NineCardsService.Result
@@ -14,16 +14,15 @@ import cards.nine.domain.pagination.Page
 import cards.nine.processes.RankingProcesses
 import cards.nine.processes.messages.rankings.Reload._
 import cats.~>
+import cats.free.Free
 import org.joda.time.{ DateTime, DateTimeZone }
 import scalaz.{ -\/, \/, \/- }
 import scalaz.concurrent.Task
 import shapeless.LabelledGeneric
 
-class RankingActor[F[_]](interpreter: F ~> Task)(implicit rankingProcesses: RankingProcesses[F]) extends Actor {
-  implicit val system = ActorSystem("on-spray-can")
-  val log = Logging(system, getClass)
+class RankingActor[F[_]](interpreter: F ~> Task, log: LoggingAdapter)(implicit rankingProcesses: RankingProcesses[F]) extends Actor {
 
-  private[this] def generateRankings = {
+  private[this] def generateRankings: Free[F, Result[SummaryResponse]] = {
     import nineCardsConfiguration.rankings._
 
     val now = DateTime.now(DateTimeZone.UTC)

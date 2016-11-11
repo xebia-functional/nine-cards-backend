@@ -71,3 +71,9 @@ object PriceFilter extends Enum[PriceFilter] {
 
   val values = super.findValues
 }
+
+case class ResolvePendingStats(
+  resolved: Int,
+  pending: Int,
+  errors: Int
+)

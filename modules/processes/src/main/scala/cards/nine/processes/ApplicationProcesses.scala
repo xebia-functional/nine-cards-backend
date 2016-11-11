@@ -1,9 +1,9 @@
 package cards.nine.processes
 
-import cards.nine.domain.application.{ BasicCard, CardList, FullCard, Package }
+import cards.nine.commons.FreeUtils._
+import cards.nine.domain.application.{ BasicCard, CardList, FullCard, Package, ResolvePendingStats }
 import cards.nine.domain.market.MarketCredentials
 import cards.nine.processes.converters.Converters._
-import cards.nine.commons.FreeUtils._
 import cards.nine.services.free.algebra.GooglePlay
 import cats.free.Free
 
@@ -29,6 +29,9 @@ class ApplicationProcesses[F[_]](implicit services: GooglePlay.Services[F]) {
       CardList(Nil, Nil).toFree
     else
       services.resolveManyBasic(packagesName, marketAuth) // WE CANNOT FILTER CATEGORIZED: NO CATEGORIES
+
+  def resolvePendingApps(numPackages: Int): Free[F, ResolvePendingStats] =
+    services.resolvePendingApps(numPackages)
 
 }
 

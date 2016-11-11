@@ -1,6 +1,6 @@
 package cards.nine.api
 
-import akka.actor.{ Actor, ActorRefFactory }
+import akka.actor.ActorRefFactory
 import cards.nine.api.NineCardsDirectives._
 import cards.nine.api.NineCardsHeaders.Domain._
 import cards.nine.api.converters.Converters._
@@ -12,7 +12,6 @@ import cards.nine.api.utils.SprayMarshallers._
 import cards.nine.api.utils.SprayMatchers._
 import cards.nine.commons.NineCardsService.Result
 import cards.nine.commons.config.Domain.NineCardsConfiguration
-import cards.nine.commons.config.NineCardsConfig
 import cards.nine.domain.account.SessionToken
 import cards.nine.domain.analytics._
 import cards.nine.domain.application.{ BasicCard, Category, FullCard, PriceFilter }
@@ -24,21 +23,6 @@ import spray.http.StatusCodes.NotFound
 import spray.routing._
 
 import scala.concurrent.ExecutionContext
-
-class NineCardsApiActor
-  extends Actor
-  with AuthHeadersRejectionHandler
-  with HttpService
-  with NineCardsExceptionHandler {
-
-  override val actorRefFactory = context
-
-  implicit val executionContext: ExecutionContext = actorRefFactory.dispatcher
-  implicit val config = NineCardsConfig.nineCardsConfiguration
-
-  def receive = runRoute(new NineCardsRoutes().nineCardsRoutes)
-
-}
 
 class NineCardsRoutes(
   implicit

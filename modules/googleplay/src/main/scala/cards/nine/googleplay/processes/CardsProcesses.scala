@@ -12,7 +12,6 @@ import cards.nine.googleplay.domain._
 import cards.nine.googleplay.domain.apigoogle.{ ResolvePackagesResult, Failure ⇒ ApiFailure, PackageNotFound ⇒ ApiNotFound }
 import cards.nine.googleplay.domain.webscrapper._
 import cards.nine.googleplay.service.free.algebra.{ Cache, GoogleApi, WebScraper }
-import org.joda.time.DateTime
 
 class CardsProcesses[F[_]](
   googleApi: GoogleApi.Services[F],
@@ -147,7 +146,7 @@ class CardsProcesses[F[_]](
       _ ← InCache.storeAsPendingMany(result.pendingPackages)
     } yield Unit
 
-  def searchAndResolvePending(numApps: Int, date: DateTime): Free[F, ResolvePending.Response] = {
+  def resolvePendingApps(numApps: Int): Free[F, ResolvePending.Response] = {
     import ResolvePending._
 
     def splitStatus(status: List[(Package, PackageStatus)]): Response = {
@@ -160,7 +159,7 @@ class CardsProcesses[F[_]](
     for {
       list ← cacheService.listPending(numApps)
       status ← list.traverse[Free[F, ?], (Package, PackageStatus)] { pack ⇒
-        for (status ← resolvePendingPackage(pack, date)) yield (pack, status)
+        for (status ← resolvePendingPackage(pack)) yield (pack, status)
       }
     } yield splitStatus(status)
 
@@ -219,7 +218,7 @@ class CardsProcesses[F[_]](
     }
   }
 
-  def resolvePendingPackage(pack: Package, date: DateTime): Free[F, ResolvePending.PackageStatus] = {
+  def resolvePendingPackage(pack: Package): Free[F, ResolvePending.PackageStatus] = {
     import ResolvePending._
 
     webScrapper.getDetails(pack) flatMap {
