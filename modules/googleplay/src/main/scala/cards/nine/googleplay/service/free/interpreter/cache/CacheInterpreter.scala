@@ -79,15 +79,16 @@ object CacheInterpreter extends (Ops ~> WithRedisClient) {
 
     case UnmarkPending(pack) ⇒ client: RedisClient ⇒
       Task {
-        // We do not remove from PendingQueue: that would be too expensive
         val wrap = CacheWrapper[CacheKey, CacheVal](client)
         wrap.delete(CacheKey.pending(pack))
+        PendingQueue(client).purge(PendingQueue.QueueKey, pack)
       }
 
     case UnmarkPendingMany(packages) ⇒ client: RedisClient ⇒
       Task {
         val wrap = CacheWrapper[CacheKey, CacheVal](client)
         wrap.delete(packages map CacheKey.pending)
+        PendingQueue(client).purgeMany(PendingQueue.QueueKey, packages)
       }
 
     case MarkError(pack) ⇒ client: RedisClient ⇒

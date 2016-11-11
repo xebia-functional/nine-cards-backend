@@ -23,14 +23,10 @@ class CacheQueue[Key, Val](client: RedisClient)(implicit f: Format, pv: Parse[Op
   }
 
   def enqueueAtMany(keys: List[Key], value: Val): Unit = {
-    import scala.concurrent.Await // FIXME
-    import scala.concurrent.duration.Duration.Inf
     def commandForKey(key: Key): (() ⇒ Any) = {
       () ⇒ client.rpush(key, value)
     }
-    client
-      .pipelineNoMulti(keys map commandForKey)
-      .map(a ⇒ Await.result(a.future, Inf))
+    asyncAwait(keys map commandForKey)
   }
 
   def dequeue(key: Key): Option[Val] = client.lpop(key).flatten
@@ -62,6 +58,24 @@ class CacheQueue[Key, Val](client: RedisClient)(implicit f: Format, pv: Parse[Op
     case head :: tail ⇒ client.del(head, tail: _*)
     case _ ⇒ Nil
   }
+
+  def purge(key: Key, value: Val): Unit =
+    client.lrem(key, 0, value)
+
+  def purgeMany(key: Key, values: List[Val]): Unit = {
+    def doPurge(value: Val) = () ⇒ client.lrem(key, 0, value)
+    asyncAwait(values map doPurge)
+  }
+
+  private[this] def asyncAwait(commands: Seq[() ⇒ Any]): Unit = {
+    import scala.concurrent.Await // FIXME
+    import scala.concurrent.duration.Duration.Inf
+
+    client
+      .pipelineNoMulti(commands)
+      .map(a ⇒ Await.result(a.future, Inf))
+  }
+
 }
 
 object CacheQueue {
