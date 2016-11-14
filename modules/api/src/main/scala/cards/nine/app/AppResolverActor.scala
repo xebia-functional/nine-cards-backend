@@ -13,7 +13,7 @@ import scalaz.concurrent.Task
 class AppResolverActor[F[_]](interpreter: F ~> Task, log: LoggingAdapter)(implicit process: ApplicationProcesses[F]) extends Actor {
 
   import AppResolverMessages._
-  final val numAppsToResolve = nineCardsConfiguration.google.play.resolveBatchSize
+  val numAppsToResolve = nineCardsConfiguration.google.play.resolveBatchSize
 
   def receive = {
     case ResolveApps ⇒

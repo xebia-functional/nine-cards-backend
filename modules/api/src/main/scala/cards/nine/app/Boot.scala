@@ -27,7 +27,7 @@ object Boot extends App {
   val interpreter: NineCardsServices ~> Task = NineCardsServices.prodInterpreters
 
   val rankingActor = system.actorOf(
-    props = Props(new RankingActor[NineCardsServices](NineCardsServices.prodInterpreters, log)),
+    props = Props(new RankingActor[NineCardsServices](interpreter, log)),
     name  = "ninecards-server-ranking"
   )
 
@@ -36,7 +36,6 @@ object Boot extends App {
     name  = "ninecards-server-apps-resolver"
   )
 
-  // create and start our
   val apiActor = system.actorOf(Props[NineCardsApiActor], "ninecards-server")
 
   val cancellable =
