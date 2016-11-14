@@ -31,15 +31,13 @@ class SharedCollectionProcesses[F[_]](
     message = "The required shared collection doesn't exist"
   )
 
-  def createCollection(request: CreateCollectionRequest): Free[F, CreateOrUpdateCollectionResponse] = {
-    for {
-      collection ← collectionServices.add(request.collection)
-      addedPackages ← collectionServices.addPackages(collection.id, request.packages)
-    } yield CreateOrUpdateCollectionResponse(
-      publicIdentifier = collection.publicIdentifier,
-      packagesStats    = PackagesStats(added = addedPackages)
-    )
-  }
+  def createCollection(request: CreateCollectionRequest): Free[F, CreateOrUpdateCollectionResponse] =
+    collectionServices.add(request.collection) map { collection ⇒
+      CreateOrUpdateCollectionResponse(
+        publicIdentifier = collection.publicIdentifier,
+        packagesStats    = PackagesStats(added = collection.packages.size)
+      )
+    }
 
   def getCollectionByPublicIdentifier(
     userId: Long,
@@ -48,7 +46,7 @@ class SharedCollectionProcesses[F[_]](
   ): Free[F, XorGetCollectionByPublicId] = {
     for {
       sharedCollection ← findCollection(publicIdentifier)
-      sharedCollectionInfo ← getCollectionPackages(userId)(sharedCollection).rightXorT[Throwable]
+      sharedCollectionInfo = toSharedCollection(sharedCollection, userId)
       resolvedSharedCollection ← getAppsInfoForCollection(sharedCollectionInfo, marketAuth)
     } yield resolvedSharedCollection
   }.value
@@ -221,20 +219,13 @@ class SharedCollectionProcesses[F[_]](
       }
     }
 
-    val collectionsWithPackages = sharedCollections flatMap { collections ⇒
-      collections.traverse[Free[F, ?], SharedCollection](getCollectionPackages(userId))
-    }
+    val collectionsWithPackages = sharedCollections map toSharedCollectionList(userId)
 
     for {
       collections ← collectionsWithPackages
       appsInfo ← getGooglePlayInfoForPackages(collections, marketAuth)
     } yield fillGooglePlayInfoForPackages(collections, appsInfo)
   }
-
-  private[this] def getCollectionPackages(userId: Long)(collection: BaseSharedCollection) =
-    collectionServices.getPackagesByCollection(collection.sharedCollectionId) map { packages ⇒
-      toSharedCollection(collection, packages map (p ⇒ Package(p.packageName)), userId)
-    }
 }
 
 object SharedCollectionProcesses {

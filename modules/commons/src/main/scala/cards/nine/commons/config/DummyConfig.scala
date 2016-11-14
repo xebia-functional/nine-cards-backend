@@ -22,9 +22,9 @@ trait DummyConfig {
     }
 
     object domain {
-      val driver = "org.h2.Driver"
-      val url = s"jdbc:h2:mem:test-${Random.nextFloat()};DB_CLOSE_DELAY=-1"
-      val user = "sa"
+      val driver = "org.postgresql.Driver"
+      val url = "jdbc:postgresql://localhost/ninecards_travis_ci_test"
+      val user = "postgres"
       val password = ""
     }
 

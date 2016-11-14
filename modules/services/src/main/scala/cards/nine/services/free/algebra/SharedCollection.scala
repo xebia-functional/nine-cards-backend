@@ -12,8 +12,6 @@ object SharedCollection {
 
   case class Add(collection: SharedCollectionData) extends Ops[domain.SharedCollection]
 
-  case class AddPackages(collection: Long, packages: List[Package]) extends Ops[Int]
-
   case class GetById(id: Long) extends Ops[Option[domain.SharedCollection]]
 
   case class GetByPublicId(publicId: String) extends Ops[Option[domain.SharedCollection]]
@@ -24,8 +22,6 @@ object SharedCollection {
 
   case class GetTopByCategory(category: String, pageParams: Page) extends Ops[List[domain.SharedCollection]]
 
-  case class GetPackagesByCollection(collection: Long) extends Ops[List[domain.SharedCollectionPackage]]
-
   case class Update(id: Long, title: String) extends Ops[Int]
 
   case class UpdatePackages(collection: Long, packages: List[Package]) extends Ops[(List[Package], List[Package])]
@@ -34,9 +30,6 @@ object SharedCollection {
 
     def add(collection: SharedCollectionData): Free[F, domain.SharedCollection] =
       Free.inject[Ops, F](Add(collection))
-
-    def addPackages(collection: Long, packages: List[Package]): Free[F, Int] =
-      Free.inject[Ops, F](AddPackages(collection, packages))
 
     def getById(id: Long): Free[F, Option[domain.SharedCollection]] = Free.inject[Ops, F](GetById(id))
 
@@ -51,9 +44,6 @@ object SharedCollection {
 
     def getTopByCategory(category: String, pageParams: Page): Free[F, List[domain.SharedCollection]] =
       Free.inject[Ops, F](GetTopByCategory(category, pageParams))
-
-    def getPackagesByCollection(collection: Long): Free[F, List[domain.SharedCollectionPackage]] =
-      Free.inject[Ops, F](GetPackagesByCollection(collection))
 
     def update(id: Long, title: String): Free[F, Int] = Free.inject[Ops, F](Update(id, title))
 

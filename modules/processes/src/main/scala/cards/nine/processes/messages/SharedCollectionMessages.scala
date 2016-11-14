@@ -16,7 +16,8 @@ object SharedCollectionMessages {
     views: Option[Int] = None,
     category: String,
     icon: String,
-    community: Boolean
+    community: Boolean,
+    packages: List[Package]
   )
 
   case class SharedCollectionWithAppsInfo[A](
@@ -44,8 +45,7 @@ object SharedCollectionMessages {
   )
 
   case class CreateCollectionRequest(
-    collection: SharedCollectionData,
-    packages: List[Package]
+    collection: SharedCollectionData
   )
 
   case class PackagesStats(added: Int, removed: Option[Int] = None)

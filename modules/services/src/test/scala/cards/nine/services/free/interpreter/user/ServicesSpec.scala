@@ -7,26 +7,20 @@ import cards.nine.services.free.interpreter.collection.Services.SharedCollection
 import cards.nine.services.free.interpreter.user.Services.UserData
 import cards.nine.services.persistence.NineCardsGenEntities._
 import cards.nine.services.persistence.{ DomainDatabaseContext, NineCardsScalacheckGen }
+import doobie.contrib.postgresql.pgtypes._
 import org.specs2.ScalaCheck
 import org.specs2.matcher.DisjunctionMatchers
 import org.specs2.mutable.Specification
-import org.specs2.specification.BeforeEach
 import shapeless.syntax.std.product._
 
 class ServicesSpec
   extends Specification
-  with BeforeEach
   with ScalaCheck
   with DomainDatabaseContext
   with DisjunctionMatchers
   with NineCardsScalacheckGen {
 
   sequential
-
-  def before = {
-    flywaydb.clean()
-    flywaydb.migrate()
-  }
 
   def generateSubscribedInstallation(
     userData: UserData,
@@ -35,6 +29,7 @@ class ServicesSpec
     deviceToken: DeviceToken
   ) = {
     for {
+      _ ← deleteAllRows
       u ← insertItem(User.Queries.insert, userData.toTuple)
       i ← insertItem(Installation.Queries.insert, (u, Option(deviceToken.value), androidId.value))
       c ← insertItem(SharedCollection.Queries.insert, collectionData.copy(userId = Option(u)).toTuple)
@@ -48,16 +43,18 @@ class ServicesSpec
   "addUser" should {
     "new users can be created" in {
       prop { (apiKey: ApiKey, email: Email, sessionToken: SessionToken) ⇒
-        val id: Long = userPersistenceServices.addUser[Long](
-          email        = email,
-          apiKey       = apiKey,
-          sessionToken = sessionToken
-        ).transactAndRun
+        WithEmptyDatabase {
+          userPersistenceServices.addUser[Long](
+            email        = email,
+            apiKey       = apiKey,
+            sessionToken = sessionToken
+          ).transactAndRun
 
-        val storeUser = userPersistenceServices.getUserByEmail(email).transactAndRun
+          val storeUser = userPersistenceServices.getUserByEmail(email).transactAndRun
 
-        storeUser should beSome[User].which {
-          user ⇒ user.email shouldEqual email
+          storeUser should beSome[User].which {
+            user ⇒ user.email shouldEqual email
+          }
         }
       }
     }
@@ -66,8 +63,10 @@ class ServicesSpec
   "getUserByEmail" should {
     "return None if the table is empty" in {
       prop { (email: Email) ⇒
-        val storeUser = userPersistenceServices.getUserByEmail(email).transactAndRun
-        storeUser should beNone
+        WithEmptyDatabase {
+          val storeUser = userPersistenceServices.getUserByEmail(email).transactAndRun
+          storeUser should beNone
+        }
       }
     }
     "return an user if there is an user with the given email in the database" in {
@@ -77,6 +76,7 @@ class ServicesSpec
           apiKey       = apiKey,
           sessionToken = sessionToken
         ).transactAndRun
+
         val storeUser = userPersistenceServices.getUserByEmail(email).transactAndRun
 
         storeUser should beSome[User].which {
@@ -110,12 +110,13 @@ class ServicesSpec
   "getUserBySessionToken" should {
     "return None if the table is empty" in {
       prop { (email: Email, sessionToken: SessionToken) ⇒
+        WithEmptyDatabase {
+          val user = userPersistenceServices.getUserBySessionToken(
+            sessionToken = sessionToken
+          ).transactAndRun
 
-        val user = userPersistenceServices.getUserBySessionToken(
-          sessionToken = sessionToken
-        ).transactAndRun
-
-        user should beNone
+          user should beNone
+        }
       }
     }
     "return an user if there is an user with the given sessionToken in the database" in {
@@ -179,12 +180,14 @@ class ServicesSpec
   "getInstallationByUserAndAndroidId" should {
     "return None if the table is empty" in {
       prop { (androidId: AndroidId, userId: Long) ⇒
-        val storeInstallation = userPersistenceServices.getInstallationByUserAndAndroidId(
-          userId    = userId,
-          androidId = androidId
-        ).transactAndRun
+        WithEmptyDatabase {
+          val storeInstallation = userPersistenceServices.getInstallationByUserAndAndroidId(
+            userId    = userId,
+            androidId = androidId
+          ).transactAndRun
 
-        storeInstallation should beNone
+          storeInstallation should beNone
+        }
       }
     }
     "installations can be queried by their userId and androidId" in {
@@ -233,11 +236,13 @@ class ServicesSpec
   "getSubscribedInstallationByCollection" should {
     "return an empty list if the table is empty" in {
       prop { (publicIdentifier: PublicIdentifier) ⇒
-        val storeInstallation = userPersistenceServices.getSubscribedInstallationByCollection(
-          publicIdentifier = publicIdentifier.value
-        ).transactAndRun
+        WithEmptyDatabase {
+          val storeInstallation = userPersistenceServices.getSubscribedInstallationByCollection(
+            publicIdentifier = publicIdentifier.value
+          ).transactAndRun
 
-        storeInstallation must beEmpty
+          storeInstallation must beEmpty
+        }
       }
     }
     "return a list of installations that are subscribed to the collection" in {
