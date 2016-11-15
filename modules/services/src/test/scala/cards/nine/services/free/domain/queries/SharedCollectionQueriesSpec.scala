@@ -3,11 +3,13 @@ package cards.nine.services.free.domain.queries
 import java.sql.Timestamp
 import java.time.LocalDateTime
 
+import cards.nine.domain.pagination.Page
 import cards.nine.services.free.domain.SharedCollection.Queries._
 import cards.nine.services.free.domain.SharedCollectionWithAggregatedInfo
 import cards.nine.services.free.interpreter.collection.Services.SharedCollectionData
 import cards.nine.services.persistence.DomainDatabaseContext
 import doobie.contrib.specs2.analysisspec.AnalysisSpec
+import doobie.contrib.postgresql.pgtypes._
 import org.specs2.mutable.Specification
 import shapeless.syntax.std.product._
 
@@ -19,8 +21,7 @@ class SharedCollectionQueriesSpec
   val category = "SOCIAL"
   val id = 12345l
   val now = Timestamp.valueOf(LocalDateTime.now)
-  val pageNumber = 25
-  val pageSize = 25
+  val pageParams = Page(25l, 25l)
   val publicIdentifier = "7a2a4c1c-5260-40a5-ba06-db009a3ef7c4"
   val userId = Option(23456l)
 
@@ -34,7 +35,8 @@ class SharedCollectionQueriesSpec
     views            = 1,
     category         = category,
     icon             = "path-to-icon",
-    community        = true
+    community        = true,
+    packages         = List("com.package.name")
   )
 
   val getCollectionByIdQuery = collectionPersistence.generateQuery(
@@ -58,13 +60,13 @@ class SharedCollectionQueriesSpec
 
   val getLatestCollectionsByCategoryQuery = collectionPersistence.generateQuery(
     sql    = getLatestByCategory,
-    values = (category, pageSize.toString, pageNumber.toString)
+    values = (category, pageParams.pageSize, pageParams.pageNumber)
   )
   check(getLatestCollectionsByCategoryQuery)
 
   val getTopCollectionsByCategoryQuery = collectionPersistence.generateQuery(
     sql    = getTopByCategory,
-    values = (category, pageSize.toString, pageNumber.toString)
+    values = (category, pageParams.pageSize, pageParams.pageNumber)
   )
   check(getTopCollectionsByCategoryQuery)
 

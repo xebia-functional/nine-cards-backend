@@ -56,9 +56,9 @@ object Converters {
         views            = request.views,
         category         = request.category,
         icon             = request.icon,
-        community        = request.community
-      ),
-      packages   = request.packages
+        community        = request.community,
+        packages         = request.packages
+      )
     )
 
   def toApiSharedCollection[A](info: SharedCollectionWithAppsInfo[A])(toApiApp: A ⇒ ApiCollectionApp): ApiSharedCollection =

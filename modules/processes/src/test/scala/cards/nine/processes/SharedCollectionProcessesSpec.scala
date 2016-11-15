@@ -54,18 +54,9 @@ trait SharedCollectionProcessesSpecification
     collectionServices.add(collection = mockEq(sharedCollectionDataServices)) returns
       Free.pure(collection)
 
-    collectionServices.addPackages(
-      collection = collectionId,
-      packages   = packagesName
-    ) returns Free.pure(addedPackagesCount)
-
     collectionServices.getByPublicId(
       publicId = publicIdentifier
     ) returns Free.pure(Option(collection))
-
-    collectionServices.getPackagesByCollection(
-      collection = collectionId
-    ) returns Free.pure(packages)
 
     collectionServices.getLatestByCategory(
       category   = category,

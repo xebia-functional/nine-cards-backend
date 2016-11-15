@@ -19,6 +19,7 @@ import cards.nine.services.free.interpreter.subscription.{ Services ⇒ Subscrip
 import cards.nine.services.free.interpreter.user.{ Services ⇒ UserServices }
 import cards.nine.services.persistence.DatabaseTransactor._
 import com.redis.RedisClientPool
+import doobie.contrib.postgresql.pgtypes._
 import doobie.imports._
 
 import scalaz.concurrent.Task
