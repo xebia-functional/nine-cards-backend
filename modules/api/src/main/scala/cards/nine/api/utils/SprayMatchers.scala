@@ -1,11 +1,11 @@
 package cards.nine.api.utils
 
-import cards.nine.domain.application.{ Category, PriceFilter }
+import cards.nine.domain.application.{ Category, Package, PackageRegex, PriceFilter }
 import enumeratum.{ Enum, EnumEntry }
 import shapeless._
 import spray.http.Uri.Path
 import spray.routing.PathMatcher.{ Matched, Unmatched }
-import spray.routing.PathMatchers.IntNumber
+import spray.routing.PathMatchers.{ IntNumber, Segment }
 import spray.routing._
 
 object SprayMatchers {
@@ -41,5 +41,7 @@ object SprayMatchers {
   object TypedIntSegment {
     def apply[T](implicit gen: Generic.Aux[T, Int :: HNil]) = new TypedIntSegment[T]
   }
+
+  val PackageSegment: PathMatcher1[Package] = Segment flatMap PackageRegex.parse
 
 }

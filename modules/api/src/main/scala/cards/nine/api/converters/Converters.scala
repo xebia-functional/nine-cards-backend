@@ -89,6 +89,18 @@ object Converters {
       categories  = card.categories
     )
 
+  def toFullCard(packageName: Package, apiDetails: ApiSetAppInfoRequest): FullCard =
+    FullCard(
+      packageName = packageName,
+      title       = apiDetails.title,
+      free        = apiDetails.free,
+      icon        = apiDetails.icon,
+      stars       = apiDetails.stars,
+      downloads   = apiDetails.downloads,
+      categories  = apiDetails.categories,
+      screenshots = apiDetails.screenshots
+    )
+
   def toApiCollectionApp(card: BasicCard): ApiCollectionApp =
     ApiCollectionApp(
       packageName = card.packageName,
@@ -218,5 +230,7 @@ object Converters {
     }
 
   def toDeviceAppList(items: List[Package]) = items map DeviceApp.apply
+
+  def toApiSetAppInfoResponse(result: Unit) = ApiSetAppInfoResponse()
 
 }

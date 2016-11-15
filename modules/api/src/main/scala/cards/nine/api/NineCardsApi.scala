@@ -14,7 +14,7 @@ import cards.nine.commons.NineCardsService.Result
 import cards.nine.commons.config.Domain.NineCardsConfiguration
 import cards.nine.domain.account.SessionToken
 import cards.nine.domain.analytics._
-import cards.nine.domain.application.{ BasicCard, Category, FullCard, PriceFilter }
+import cards.nine.domain.application.{ BasicCard, Category, FullCard, Package, PriceFilter }
 import cards.nine.domain.pagination.Page
 import cards.nine.processes._
 import cards.nine.processes.NineCardsServices._
@@ -76,21 +76,32 @@ class NineCardsRoutes(
           }
         }
       } ~
-        path("details") {
-          post {
-            entity(as[ApiAppsInfoRequest]) { request ⇒
-              nineCardsDirectives.googlePlayInfo { googlePlayContext ⇒
-                parameter("slice".?) { sliceOpt ⇒
-                  sliceOpt match {
-                    case Some("icon") ⇒
-                      complete(getAppsBasicInfo(request, googlePlayContext, userContext)(toApiIconApp))
-                    case _ ⇒
-                      complete(getAppsInfo(request, googlePlayContext, userContext)(toApiDetailsApp))
+        pathPrefix("details") {
+          pathEndOrSingleSlash {
+            post {
+              entity(as[ApiAppsInfoRequest]) { request ⇒
+                nineCardsDirectives.googlePlayInfo { googlePlayContext ⇒
+                  parameter("slice".?) { sliceOpt ⇒
+                    sliceOpt match {
+                      case Some("icon") ⇒
+                        complete(getAppsBasicInfo(request, googlePlayContext, userContext)(toApiIconApp))
+                      case _ ⇒
+                        complete(getAppsInfo(request, googlePlayContext, userContext)(toApiDetailsApp))
+                    }
                   }
                 }
               }
             }
-          }
+          } ~
+            path(PackageSegment) { packageId ⇒
+              put {
+                authenticate(nineCardsDirectives.editorAuth) { userName ⇒
+                  entity(as[ApiSetAppInfoRequest]) { details ⇒
+                    complete(setAppInfo(packageId, details))
+                  }
+                }
+              }
+            }
         } ~
         path("rank") {
           post {
@@ -363,6 +374,14 @@ class NineCardsRoutes(
     applicationProcesses
       .getAppsBasicInfo(request.items, toMarketAuth(googlePlayContext, userContext))
       .map(toApiAppsInfoResponse[BasicCard, T](converter))
+
+  private[this] def setAppInfo(
+    packageId: Package,
+    apiDetails: ApiSetAppInfoRequest
+  ): NineCardsServed[ApiSetAppInfoResponse] =
+    applicationProcesses
+      .storeCard(toFullCard(packageId, apiDetails))
+      .map(toApiSetAppInfoResponse)
 
   private[this] def getRecommendationsByCategory(
     request: ApiGetRecommendationsByCategoryRequest,
