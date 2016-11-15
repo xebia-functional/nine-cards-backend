@@ -1,12 +1,14 @@
 package cards.nine.commons.config
 
 import cards.nine.commons.config.Domain.NineCardsConfiguration
-import cards.nine.commons.config.NineCardsConfig._
-import com.typesafe.config.{ Config, ConfigFactory }
+import com.typesafe.config.{ Config, ConfigFactory, ConfigValue, ConfigValueType }
+import java.util.Map.Entry
 
 class NineCardsConfig(hocon: Option[String] = None) {
 
-  val config = hocon.fold(ConfigFactory.load)(ConfigFactory.parseString)
+  import ConfigOps._
+
+  val config: Config = hocon.fold(ConfigFactory.load)(ConfigFactory.parseString)
 
   def getSysPropKeyAsBoolean(key: String): Option[Boolean] =
     sys.props.get(key).map(_.toBoolean)
@@ -36,11 +38,27 @@ class NineCardsConfig(hocon: Option[String] = None) {
   def getOptionalBoolean(
     key: String
   ) = getSysPropKeyAsBoolean(key).fold(config.getOptionalBoolean(key))(Option(_))
+
+  def getMap(key: String): Map[String, String] = {
+    import collection.JavaConverters._
+    def getStringValue(entry: Entry[String, ConfigValue]): Option[(String, String)] = {
+      val value = entry.getValue()
+      if (value.valueType() == ConfigValueType.STRING)
+        Some(entry.getKey() → value.unwrapped().asInstanceOf[String])
+      else None
+    }
+
+    def getEntry(entry: Entry[String, ConfigValue]): (String, String) =
+      entry.getKey() → entry.getValue().render()
+
+    config.getConfig(key).entrySet().asScala.toList.flatMap(getStringValue).toMap
+  }
+
 }
 
-object NineCardsConfig {
+object ConfigOps {
 
-  implicit class ConfigOps(val config: Config) {
+  implicit class Ops(val config: Config) {
 
     def getOptionalValue[T](path: String)(f: String ⇒ T) =
       if (config.hasPath(path)) {
@@ -55,6 +73,10 @@ object NineCardsConfig {
 
     def getOptionalString(path: String): Option[String] = getOptionalValue(path)(config.getString)
   }
+
+}
+
+object NineCardsConfig {
 
   val defaultConfig: NineCardsConfig = new NineCardsConfig
 

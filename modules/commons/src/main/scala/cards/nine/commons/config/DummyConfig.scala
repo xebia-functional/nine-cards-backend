@@ -2,8 +2,6 @@ package cards.nine.commons.config
 
 import cards.nine.commons.config.Domain.NineCardsConfiguration
 
-import scala.util.Random
-
 trait DummyConfig {
 
   object common {
@@ -101,6 +99,12 @@ trait DummyConfig {
     }
   }
 
+  val editors: Map[String, String] = Map(
+    "karl" → "microsoft",
+    "marx" → "made",
+    "gave" → "no"
+  )
+
   object test {
     val androidId = "65H9fv28456fj939"
     val token = "kfh4343JGi39034LS98fi34"
@@ -124,6 +128,11 @@ trait DummyConfig {
        |    }
        |  }
        |  debugMode = $debugMode
+       |  editors {
+       |    karl = microsoft
+       |    marx = made
+       |    gave = no
+       |  }
        |  google {
        |    analytics {
        |      host = "${common.host}"
