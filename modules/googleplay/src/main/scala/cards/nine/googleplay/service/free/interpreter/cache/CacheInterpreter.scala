@@ -63,6 +63,12 @@ object CacheInterpreter extends (Ops ~> WithRedisClient) {
         wrap.mput(cards map CacheEntry.resolved)
       }
 
+    case PutPermanent(card) ⇒ client: RedisClient ⇒
+      Task {
+        val wrap = CacheWrapper[CacheKey, CacheVal](client)
+        wrap.put(CacheEntry.permanent(card))
+      }
+
     case MarkPending(pack) ⇒ client: RedisClient ⇒
       Task {
         val wrap = CacheWrapper[CacheKey, CacheVal](client)

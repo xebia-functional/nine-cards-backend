@@ -42,6 +42,12 @@ class CardsProcesses[F[_]](
           } yield Unit
       }
 
+    def storeAsPermanent(card: FullCard): Free[F, Unit] =
+      for {
+        _ ← cacheService.putPermanent(card)
+        _ ← cacheService.clearInvalid(card.packageName)
+      } yield Unit
+
     def storeAsPendingMany(packages: List[Package]): Free[F, Unit] =
       for {
         _ ← cacheService.clearInvalidMany(packages)
@@ -86,6 +92,9 @@ class CardsProcesses[F[_]](
       pending  = result.pendingPackages,
       apps     = result.resolvedPackages ++ result.cachedPackages
     )
+
+  def storeCard(card: FullCard): Free[F, Unit] =
+    InCache.storeAsPermanent(card)
 
   def recommendationsByCategory(
     request: RecommendByCategoryRequest,
