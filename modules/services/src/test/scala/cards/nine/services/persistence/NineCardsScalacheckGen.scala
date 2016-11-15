@@ -21,8 +21,6 @@ object NineCardsGenEntities {
 
 trait NineCardsScalacheckGen {
 
-  val stringGenerator = Arbitrary.arbitrary[String]
-
   val timestampGenerator: Gen[Timestamp] = Gen.choose(0l, 253402300799l) map { seconds ⇒
     Timestamp.from(Instant.ofEpochSecond(seconds))
   }
@@ -30,13 +28,14 @@ trait NineCardsScalacheckGen {
   val sharedCollectionDataGenerator: Gen[SharedCollectionData] = for {
     publicIdentifier ← Gen.uuid
     publishedOn ← timestampGenerator
-    author ← stringGenerator
-    name ← stringGenerator
+    author ← Gen.alphaStr
+    name ← Gen.alphaStr
     installations ← Gen.posNum[Int]
     views ← Gen.posNum[Int]
     category ← nonEmptyString(64)
     icon ← nonEmptyString(64)
     community ← Gen.oneOf(true, false)
+    packages ← Gen.listOf(arbPackage.arbitrary)
   } yield SharedCollectionData(
     publicIdentifier = publicIdentifier.toString,
     userId           = None,
@@ -47,7 +46,8 @@ trait NineCardsScalacheckGen {
     views            = views,
     category         = category,
     icon             = icon,
-    community        = community
+    community        = community,
+    packages         = packages map (_.value)
   )
 
   val userDataGenerator: Gen[UserData] = for {

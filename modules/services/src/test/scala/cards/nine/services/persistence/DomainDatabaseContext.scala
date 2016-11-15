@@ -8,9 +8,10 @@ import cards.nine.services.free.interpreter.collection.{ Services ⇒ Collection
 import cards.nine.services.free.interpreter.country.{ Services ⇒ CountryServices }
 import cards.nine.services.free.interpreter.subscription.{ Services ⇒ SubscriptionServices }
 import cards.nine.services.free.interpreter.user.{ Services ⇒ UserServices }
+import doobie.contrib.postgresql.pgtypes._
 import doobie.free.{ drivermanager ⇒ FD }
 import doobie.imports._
-import org.flywaydb.core.Flyway
+import org.specs2.matcher.MatchResult
 import shapeless.HNil
 
 import scalaz.{ Foldable, \/ }
@@ -82,23 +83,25 @@ trait DomainDatabaseContext extends BasicDatabaseContext {
       pass   = db.domain.password
     )
 
-  val flywaydb = new Flyway
+  val deleteAllRows = for {
+    _ ← deleteItems("delete from sharedcollectionsubscriptions")
+    _ ← deleteItems("delete from sharedcollections")
+    _ ← deleteItems("delete from installations")
+    _ ← deleteItems("delete from users")
+  } yield Unit
 
-  flywaydb.setDataSource(
-    db.domain.url,
-    db.domain.user,
-    db.domain.password
-  )
-
-  flywaydb.migrate()
+  object WithEmptyDatabase {
+    def apply[A](check: ⇒ MatchResult[A]) = {
+      deleteAllRows.transactAndRun
+      check
+    }
+  }
 
   implicit val userPersistence = new Persistence[User](supportsSelectForUpdate = false)
   implicit val installationPersistence =
     new Persistence[Installation](supportsSelectForUpdate = false)
   implicit val collectionPersistence =
     new Persistence[SharedCollection](supportsSelectForUpdate = false)
-  implicit val collectionPackagePersistence =
-    new Persistence[SharedCollectionPackage](supportsSelectForUpdate = false)
   implicit val collectionSubscriptionPersistence =
     new Persistence[SharedCollectionSubscription](supportsSelectForUpdate = false)
   implicit val countryPersistence =
