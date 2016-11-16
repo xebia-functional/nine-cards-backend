@@ -229,7 +229,7 @@ class CardsProcesses[F[_]](
       case Xor.Left(PackageNotFound(_)) ⇒
         for (_ ← InCache.storeAsError(pack)) yield Unknown
       case Xor.Left(WebPageServerError) ⇒
-        Free.pure(Pending)
+        for (_ ← InCache.storeAsPending(pack)) yield Pending
     }
   }
 }
