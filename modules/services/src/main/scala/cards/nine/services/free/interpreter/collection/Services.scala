@@ -2,10 +2,10 @@ package cards.nine.services.free.interpreter.collection
 
 import java.sql.Timestamp
 
+import cards.nine.commons.ScalazInstances
 import cards.nine.commons.NineCardsErrors.SharedCollectionNotFound
 import cards.nine.domain.application.Package
 import cards.nine.domain.pagination.Page
-import cards.nine.services.common.ConnectionIOInstances._
 import cards.nine.services.common.PersistenceService
 import cards.nine.services.common.PersistenceService._
 import cards.nine.services.free.algebra.SharedCollection._
@@ -14,14 +14,14 @@ import cards.nine.services.free.domain._
 import cards.nine.services.free.interpreter.collection.Services.SharedCollectionData
 import cards.nine.services.persistence.Persistence
 import cats.syntax.either._
-import cats.~>
+import cats.{ Monad, ~> }
 import doobie.contrib.postgresql.pgtypes._
 import doobie.imports.{ Composite, ConnectionIO }
 import shapeless.syntax.std.product._
 
 class Services(
   collectionPersistence: Persistence[SharedCollection]
-) extends (Ops ~> ConnectionIO) {
+)(implicit connectionIOMonad: Monad[ConnectionIO]) extends (Ops ~> ConnectionIO) {
 
   def add[K: Composite](data: SharedCollectionData): PersistenceService[K] =
     PersistenceService {
@@ -131,9 +131,9 @@ object Services {
     packages: List[String]
   )
 
-  def services(
-    implicit
-    collectionPersistence: Persistence[SharedCollection]
-  ) = new Services(collectionPersistence)
+  implicit val connectionIOMonad: Monad[ConnectionIO] = ScalazInstances[ConnectionIO].monadInstance
+
+  def services(implicit collectionPersistence: Persistence[SharedCollection]) =
+    new Services(collectionPersistence)
 }
 

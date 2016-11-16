@@ -1,12 +1,13 @@
 package cards.nine.services.free.interpreter.subscription
 
+import cards.nine.commons.ScalazInstances
 import cards.nine.services.free.domain.SharedCollectionSubscription.Queries.{ insert ⇒ subscriptionInsert }
 import cards.nine.services.free.domain.{ SharedCollection, SharedCollectionSubscription, User }
 import cards.nine.services.free.interpreter.collection.Services.SharedCollectionData
 import cards.nine.services.free.interpreter.user.Services.UserData
 import cards.nine.services.persistence.{ DomainDatabaseContext, NineCardsScalacheckGen }
+import cats.Applicative
 import doobie.contrib.postgresql.pgtypes._
-import cards.nine.services.common.ConnectionIOInstances._
 import cats.instances.list._
 import cats.syntax.traverse._
 import doobie.imports.ConnectionIO
@@ -22,7 +23,8 @@ class ServicesSpec
   with DisjunctionMatchers
   with NineCardsScalacheckGen {
 
-  sequential
+  implicit val connectionIOApplicative: Applicative[ConnectionIO] =
+    ScalazInstances[ConnectionIO].applicativeInstance
 
   object WithData {
 
@@ -85,6 +87,8 @@ class ServicesSpec
       check(user, subscriptionCount)
     }
   }
+
+  sequential
 
   "addSubscription" should {
     "create a new subscriptions when an existing user and shared collection is given" in {

@@ -2,8 +2,6 @@ package cards.nine.commons.config
 
 import cards.nine.commons.config.Domain.NineCardsConfiguration
 
-import scala.util.Random
-
 trait DummyConfig {
 
   object common {

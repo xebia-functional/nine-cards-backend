@@ -74,14 +74,13 @@ class SharedCollectionProcesses[F[_]](
 
       subscription
         .fold(subscriptionServices.add(collectionId, user, publicIdentifier))(_ ⇒ NineCardsService.right(subscriptionCount))
-        .map(_ ⇒ SubscribeResponse())
     }
 
     for {
       collection ← collectionServices.getByPublicId(publicIdentifier)
       subscription ← subscriptionServices.getByCollectionAndUser(collection.id, user)
-      subscriptionInfo ← addSubscription(subscription, collection.id)
-    } yield subscriptionInfo
+      _ ← addSubscription(subscription, collection.id)
+    } yield SubscribeResponse()
   }
 
   def unsubscribe(publicIdentifier: String, userId: Long): NineCardsService[F, UnsubscribeResponse] =
@@ -117,13 +116,15 @@ class SharedCollectionProcesses[F[_]](
 
     def updateCollectionInfo(collectionId: Long, info: Option[SharedCollectionUpdateInfo]) =
       info
-        .map(c ⇒ collectionServices.update(collectionId, c.title))
-        .getOrElse(NineCardsService.right(0))
+        .fold(NineCardsService.right[F, Int](0))(
+          updateInfo ⇒ collectionServices.update(collectionId, updateInfo.title)
+        )
 
     def updatePackages(collectionId: Long, packagesName: Option[List[Package]]) =
       packagesName
-        .map(p ⇒ collectionServices.updatePackages(collectionId, p))
-        .getOrElse(NineCardsService.right((List.empty[Package], List.empty[Package])))
+        .fold(NineCardsService.right[F, (List[Package], List[Package])]((Nil, Nil)))(
+          packages ⇒ collectionServices.updatePackages(collectionId, packages)
+        )
 
     for {
       collection ← collectionServices.getByPublicId(publicIdentifier)
@@ -133,7 +134,7 @@ class SharedCollectionProcesses[F[_]](
       _ ← sendNotifications(publicIdentifier, addedPackages)
     } yield CreateOrUpdateCollectionResponse(
       publicIdentifier,
-      packagesStats = (PackagesStats.apply _).tupled((addedPackages.size, Option(removedPackages.size)))
+      packagesStats = PackagesStats(addedPackages.size, Option(removedPackages.size))
     )
   }
 
