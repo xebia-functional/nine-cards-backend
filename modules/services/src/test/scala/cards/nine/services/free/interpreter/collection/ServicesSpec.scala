@@ -5,7 +5,7 @@ import cards.nine.domain.pagination.Page
 import cards.nine.services.free.domain.{ SharedCollection, SharedCollectionWithAggregatedInfo, User }
 import cards.nine.services.free.interpreter.collection.Services.SharedCollectionData
 import cards.nine.services.free.interpreter.user.Services.UserData
-import cards.nine.services.persistence.NineCardsGenEntities.CollectionTitle
+import cards.nine.services.persistence.NineCardsGenEntities.{ CollectionTitle, PublicIdentifier }
 import cards.nine.services.persistence.{ DomainDatabaseContext, NineCardsScalacheckGen }
 import doobie.contrib.postgresql.pgtypes._
 import doobie.imports._
@@ -258,10 +258,10 @@ class ServicesSpec
 
   "getByPublicIdentifier" should {
     "return a SharedCollectionNotFound error if the table is empty" in {
-      prop { (publicIdentifier: String) ⇒
+      prop { (publicIdentifier: PublicIdentifier) ⇒
         WithEmptyDatabase {
           val collection = collectionPersistenceServices.getByPublicIdentifier(
-            publicIdentifier = publicIdentifier
+            publicIdentifier = publicIdentifier.value
           ).transactAndRun
 
           collection must beLeft[NineCardsError]
