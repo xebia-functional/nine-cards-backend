@@ -18,9 +18,9 @@ class Services(
   installationPersistence: Persistence[Installation]
 ) extends (Ops ~> ConnectionIO) {
 
-  def addUser[K: Composite](email: Email, apiKey: ApiKey, sessionToken: SessionToken): PersistenceService[K] =
+  def addUser(email: Email, apiKey: ApiKey, sessionToken: SessionToken): PersistenceService[User] =
     PersistenceService {
-      userPersistence.updateWithGeneratedKeys[K](
+      userPersistence.updateWithGeneratedKeys(
         sql    = UserQueries.insert,
         fields = User.allFields,
         values = (email, sessionToken, apiKey)
@@ -37,13 +37,13 @@ class Services(
       Either.fromOption(_, UserNotFound(s"User with sessionToken ${sessionToken.value} not found"))
     }
 
-  def createInstallation[K: Composite](
+  def createInstallation(
     userId: Long,
     deviceToken: Option[DeviceToken],
     androidId: AndroidId
-  ): PersistenceService[K] =
+  ): PersistenceService[Installation] =
     PersistenceService {
-      userPersistence.updateWithGeneratedKeys[K](
+      installationPersistence.updateWithGeneratedKeys(
         sql    = InstallationQueries.insert,
         fields = Installation.allFields,
         values = (userId, deviceToken, androidId)
@@ -69,9 +69,9 @@ class Services(
       )
     }
 
-  def updateInstallation[K: Composite](userId: Long, deviceToken: Option[DeviceToken], androidId: AndroidId): PersistenceService[K] =
+  def updateInstallation(userId: Long, deviceToken: Option[DeviceToken], androidId: AndroidId): PersistenceService[Installation] =
     PersistenceService {
-      userPersistence.updateWithGeneratedKeys[K](
+      installationPersistence.updateWithGeneratedKeys(
         sql    = InstallationQueries.updateDeviceToken,
         fields = Installation.allFields,
         values = (deviceToken, userId, androidId)
@@ -80,9 +80,9 @@ class Services(
 
   def apply[A](fa: Ops[A]): ConnectionIO[A] = fa match {
     case Add(email, apiKey, sessionToken) ⇒
-      addUser[User](email, apiKey, sessionToken)
+      addUser(email, apiKey, sessionToken)
     case AddInstallation(user, deviceToken, androidId) ⇒
-      createInstallation[Installation](user, deviceToken, androidId)
+      createInstallation(user, deviceToken, androidId)
     case GetByEmail(email) ⇒
       getUserByEmail(email)
     case GetBySessionToken(sessionToken) ⇒
@@ -92,7 +92,7 @@ class Services(
     case GetSubscribedInstallationByCollection(collectionPublicId) ⇒
       getSubscribedInstallationByCollection(collectionPublicId)
     case UpdateInstallation(user, deviceToken, androidId) ⇒
-      updateInstallation[Installation](user, deviceToken, androidId)
+      updateInstallation(user, deviceToken, androidId)
   }
 }
 

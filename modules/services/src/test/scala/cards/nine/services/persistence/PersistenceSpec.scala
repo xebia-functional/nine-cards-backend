@@ -1,256 +1,252 @@
 package cards.nine.services.persistence
 
-import doobie.imports._
 import org.scalacheck.{ Arbitrary, Gen }
 import org.specs2._
-import org.specs2.matcher.DisjunctionMatchers
+import org.specs2.matcher.{ DisjunctionMatchers, MatchResult }
 import org.specs2.mutable.Specification
+import org.specs2.specification.BeforeAfterAll
 
 import scalaz.std.iterable._
 
 trait DatabaseContext extends PersistenceDatabaseContext {
 
-  case class PersistenceItem(id: Long, name: String, active: Boolean)
+  object WithEmptyTable {
 
-  val fetchAllSql = "SELECT id,name,active FROM persistence"
-  val fetchAllActiveSql = "SELECT id,name,active FROM persistence WHERE active=true"
-  val fetchByIdSql = "SELECT id,name,active FROM persistence WHERE id=?"
-  val fetchByIdAndStatusSql = "SELECT id,name,active FROM persistence WHERE id=? AND active=?"
-  val fetchByStatusSql = "SELECT id,name,active FROM persistence WHERE active=?"
-  val insertSql = "INSERT INTO persistence (name,active) VALUES (?,?)"
-  val updateAllSql = "UPDATE persistence SET active=false"
-  val updateAllActiveSql = "UPDATE persistence SET active=false WHERE active=true"
-  val updateByIdSql = "UPDATE persistence SET name=?,active=? WHERE id=?"
-  val updateByStatusSql = "UPDATE persistence SET active=? WHERE active=?"
-
-  def fetchAll: ConnectionIO[List[(String, Boolean, Long)]] =
-    sql"SELECT name,active,id FROM persistence".query[(String, Boolean, Long)].list
-
-  def fetchItemById(id: Long): ConnectionIO[PersistenceItem] =
-    sql"SELECT id,name,active FROM persistence WHERE id=$id".query[PersistenceItem].unique
-
-  object WithData {
-
-    def apply[A: Composite, B](data: List[A])(f: ⇒ ConnectionIO[B]) = {
-      for {
-        _ ← insertItems(insertSql, data)
-        result ← f
-      } yield result
-    }
-
-    def apply[A: Composite, B](data: A)(f: Long ⇒ ConnectionIO[B]) = {
-      for {
-        id ← insertItem(insertSql, data)
-        result ← f(id)
-      } yield result
+    def apply[A](check: ⇒ MatchResult[A]) = {
+      deleteItems(deleteAllSql).transactAndRun
+      check
     }
   }
 
-  val persistence = new Persistence[PersistenceItem]
+  object WithData {
 
-  def genBoundedList[T](minSize: Int = 1, maxSize: Int = 100, gen: Gen[T]): Gen[List[T]] =
-    Gen.choose(minSize, maxSize) flatMap { size ⇒ Gen.listOfN(size, gen) }
+    def apply[A](data: List[PersistenceItemData])(check: ⇒ MatchResult[A]) = {
+      {
+        for {
+          _ ← deleteItems(deleteAllSql)
+          _ ← insertItems(insertSql, data)
+        } yield Unit
+      }.transactAndRun
 
-  implicit val dataWithId: Arbitrary[List[(Long, String, Boolean)]] =
-    Arbitrary(
-      genBoundedList(
-        minSize = 2,
-        maxSize = 10,
-        gen     = Gen.resultOf((l: Long, s: String, b: Boolean) ⇒ (l, s, b))
-      )
-    )
+      check
+    }
 
-  implicit val data: Arbitrary[List[(String, Boolean)]] =
-    Arbitrary(genBoundedList(
-      minSize = 2,
-      maxSize = 10,
-      gen     = Gen.resultOf((s: String, b: Boolean) ⇒ (s, b))
-    ))
+    def apply[A](data: PersistenceItemData)(check: Long ⇒ MatchResult[A]) = {
+      val id = {
+        for {
+          _ ← deleteItems(deleteAllSql)
+          id ← insertItem(insertSql, data)
+        } yield id
+      }.transactAndRun
 
-  implicit val stringList: Arbitrary[List[String]] =
-    Arbitrary(genBoundedList(minSize = 2, gen = Gen.resultOf((s: String) ⇒ s)))
+      check(id)
+    }
+  }
+
+  implicit val arbPersistenceItem: Arbitrary[PersistenceItem] = Arbitrary {
+    for {
+      id ← Gen.posNum[Long]
+      name ← Gen.alphaStr
+      status ← Gen.oneOf(true, false)
+    } yield PersistenceItem(id = id, name = name, active = status)
+  }
+
+  implicit val arbPersistenceItemData: Arbitrary[PersistenceItemData] = Arbitrary {
+    for {
+      name ← Gen.alphaStr
+      status ← Gen.oneOf(true, false)
+    } yield PersistenceItemData(name = name, active = status)
+  }
+
+  implicit val arbPersistenceItemDataList: Arbitrary[List[PersistenceItemData]] = Arbitrary {
+    for {
+      size ← Gen.chooseNum(2, 100)
+      items ← Gen.listOfN(size, arbPersistenceItemData.arbitrary)
+    } yield items
+  }
 }
 
 class PersistenceSpec
   extends Specification
   with DatabaseContext
   with DisjunctionMatchers
-  with ScalaCheck {
+  with ScalaCheck
+  with BeforeAfterAll {
+
+  def beforeAll = runDDLQuery(createTableSql).transactAndRun
+
+  def afterAll = runDDLQuery(dropTableSql).transactAndRun
+
+  sequential
 
   "fetchList (SQL without parameters)" should {
     "return an empty list if the table is empty" in {
-      prop { (i: Int) ⇒
+      prop { i: Int ⇒
 
-        val list = persistence.fetchList(sql = fetchAllSql).transactAndRun
-
-        list must beEmpty
-      }
-    }
-
-    "return a list of PersistenceItem if there are some elements in the table " +
-      "that meet the criteria" in {
-        prop { (data: List[(String, Boolean)]) ⇒
-
-          val list = WithData(data) {
-            persistence.fetchList(sql = fetchAllSql)
-          }.transactAndRun
-
-          list must not be empty
+        WithEmptyTable {
+          persistence
+            .fetchList(sql = fetchAllSql)
+            .transactAndRun must beEmpty
         }
       }
-
+    }
     "return a list of PersistenceItem if there are some elements in the table " +
       "that meet the criteria" in {
-        prop { (names: List[String]) ⇒
-          val namesWithStatus = names map ((_, false))
+        prop { data: List[PersistenceItemData] ⇒
 
-          val list = WithData(namesWithStatus) {
-            persistence.fetchList(sql = fetchAllActiveSql)
-          }.transactAndRun
+          WithData(data) {
+            persistence
+              .fetchList(sql = fetchAllSql)
+              .transactAndRun must haveSize(data.size)
+          }
+        }
+      }
+    "return a list of PersistenceItem if there are some elements in the table " +
+      "that meet the criteria" in {
+        prop { data: List[PersistenceItemData] ⇒
+          val namesWithStatus = data map (_.copy(active = false))
 
-          list must beEmpty
+          WithData(namesWithStatus) {
+            persistence
+              .fetchList(sql = fetchAllActiveSql)
+              .transactAndRun must beEmpty
+          }
         }
       }
   }
 
   "fetchList" should {
     "return an empty list if the table is empty" in {
-      prop { (status: Boolean) ⇒
-        val list = persistence.fetchList(
-          sql    = fetchByStatusSql,
-          values = status
-        ).transactAndRun
+      prop { status: Boolean ⇒
 
-        list must beEmpty
+        WithEmptyTable {
+          persistence
+            .fetchList(fetchByStatusSql, status)
+            .transactAndRun must beEmpty
+        }
       }
     }
     "return a list of PersistenceItem if there are some elements in the table that meet the criteria" in {
-      prop { (names: List[String]) ⇒
-        val namesWithStatus = names map ((_, true))
+      prop { data: List[PersistenceItemData] ⇒
 
-        val list = WithData(namesWithStatus) {
-          persistence.fetchList(sql = fetchByStatusSql, values = true)
-        }.transactAndRun
+        val activeItems = data map (_.copy(active = true))
 
-        list must not be empty
-        list.forall(item ⇒ item.active) must beTrue
+        WithData(activeItems) {
+          val list = persistence.fetchList(sql = fetchByStatusSql, values = true).transactAndRun
+
+          list must haveSize(data.size)
+          list must contain { item: PersistenceItem ⇒ item.active must beTrue }.forall
+        }
       }
     }
     "return an empty list if there aren't any elements in the table that meet the criteria" in {
-      prop { (names: List[String]) ⇒
-        val namesWithStatus = names map ((_, true))
+      prop { data: List[PersistenceItemData] ⇒
 
-        val list = WithData(namesWithStatus) {
-          persistence.fetchList(sql = fetchByStatusSql, values = false)
-        }.transactAndRun
+        val activeItems = data map (_.copy(active = true))
 
-        list must beEmpty
+        WithData(activeItems) {
+          persistence
+            .fetchList(sql = fetchByStatusSql, values = false)
+            .transactAndRun must beEmpty
+        }
       }
     }
   }
 
   "fetchOption" should {
     "return None if the table is empty" in {
-      prop { (status: Boolean) ⇒
-        val persistenceItem = persistence.fetchOption(
-          sql    = fetchByStatusSql,
-          values = status
-        ).transactAndRun
+      prop { status: Boolean ⇒
 
-        persistenceItem must beEmpty
+        WithEmptyTable {
+          persistence
+            .fetchOption(fetchByStatusSql, status)
+            .transactAndRun must beEmpty
+        }
       }
     }
     "return a PersistenceItem if there is an element in the table that meets the criteria" in {
-      prop { (data: (String, Boolean)) ⇒
-        val (name, active) = data
+      prop { data: PersistenceItemData ⇒
 
-        val persistenceItem = WithData(data) { id ⇒
-          persistence.fetchOption(
+        WithData(data) { id ⇒
+          val persistenceItem = persistence.fetchOption(
             sql    = fetchByIdAndStatusSql,
-            values = (id, active)
-          )
-        }.transactAndRun
+            values = (id, data.active)
+          ).transactAndRun
 
-        persistenceItem must beSome[PersistenceItem].which {
-          item ⇒
-            item.name mustEqual name
-            item.active mustEqual active
+          persistenceItem must beSome[PersistenceItem].which {
+            item ⇒
+              item.name must_== data.name
+              item.active must_== data.active
+          }
         }
       }
     }
     "return None if there isn't any element in the table that meets the criteria" in {
-      prop { (data: (String, Boolean)) ⇒
-        val (name, active) = data
+      prop { data: PersistenceItemData ⇒
 
-        val persistenceItem = WithData(data) { id ⇒
-          persistence.fetchOption(
-            sql    = fetchByIdAndStatusSql,
-            values = (id, !active)
-          )
-        }.transactAndRun
-
-        persistenceItem must beEmpty
+        WithData(data) { id ⇒
+          persistence
+            .fetchOption(fetchByIdAndStatusSql, (id, !data.active))
+            .transactAndRun must beNone
+        }
       }
-    }
-    "throw an exception if there are more than one element in the table that meet the criteria" in {
-      prop { (names: List[String]) ⇒
-        val namesWithStatus = names map ((_, true))
+      "throw an exception if there are more than one element in the table that meet the criteria" in {
+        prop { data: List[PersistenceItemData] ⇒
+          val activeItems = data map (_.copy(active = true))
 
-        WithData(namesWithStatus) {
-          persistence.fetchOption(
-            sql    = fetchByStatusSql,
-            values = true
-          )
-        }.transactAndAttempt must be_-\/[Throwable]
+          WithData(activeItems) {
+            persistence.fetchOption(
+              sql    = fetchByStatusSql,
+              values = true
+            ).transactAndAttempt must be_-\/[Throwable]
+          }
+        }
       }
     }
   }
 
   "fetchUnique" should {
     "throw an exception if the table is empty" in {
-      prop { (id: Long) ⇒
-        persistence.fetchUnique(
-          sql    = fetchByIdSql,
-          values = id
-        ).transactAndAttempt must be_-\/[Throwable]
-      }
-    }
-    "return a PersistenceItem if there is an element in the table with the given id" in {
-      prop { (data: (String, Boolean)) ⇒
-        val (name, active) = data
+      prop { id: Long ⇒
 
-        val item = WithData(data) { id ⇒
+        WithEmptyTable {
           persistence.fetchUnique(
             sql    = fetchByIdSql,
             values = id
-          )
-        }.transactAndRun
+          ).transactAndAttempt must be_-\/[Throwable]
+        }
+      }
+    }
+    "return a PersistenceItem if there is an element in the table with the given id" in {
+      prop { data: PersistenceItemData ⇒
 
-        item.name mustEqual name
+        WithData(data) { id ⇒
+          val item = persistence.fetchUnique(fetchByIdSql, id).transactAndRun
+
+          item.name must_== data.name
+          item.active must_== data.active
+        }
       }
     }
     "throw an exception if there isn't any element in the table that meet the criteria" in {
-      prop { (data: (String, Boolean)) ⇒
-        val (name, active) = data
+      prop { data: PersistenceItemData ⇒
 
         WithData(data) { id ⇒
-          persistence.fetchUnique(
-            sql    = fetchByIdAndStatusSql,
-            values = (id, !active)
-          )
-        }.transactAndAttempt must be_-\/[Throwable]
+          persistence
+            .fetchUnique(fetchByIdAndStatusSql, (id, !data.active))
+            .transactAndAttempt must be_-\/[Throwable]
+        }
       }
     }
     "throw an exception if there are more than one element in the table that meet the criteria" in {
-      prop { (names: List[String]) ⇒
-        val namesWithStatus = names map ((_, true))
+      prop { data: List[PersistenceItemData] ⇒
+        val activeItems = data map (_.copy(active = true))
 
-        WithData(namesWithStatus) {
-          persistence.fetchUnique(
-            sql    = fetchByStatusSql,
-            values = true
-          )
-        }.transactAndAttempt must be_-\/[Throwable]
+        WithData(activeItems) {
+          persistence
+            .fetchUnique(fetchByStatusSql, true)
+            .transactAndAttempt must be_-\/[Throwable]
+        }
       }
     }
   }
@@ -258,30 +254,37 @@ class PersistenceSpec
   "update (SQL without parameters)" should {
     "return the number of affected rows equals to 0 after updating items in the table " +
       "if the table is empty" in {
-        prop { (i: Int) ⇒
-          persistence.update(
-            sql = updateAllSql
-          ).transactAndRun must_== 0
+        prop { i: Int ⇒
+
+          WithEmptyTable {
+            persistence.update(
+              sql = updateAllSql
+            ).transactAndRun must_== 0
+          }
         }
       }
     "return the number of affected rows after updating items in the table " +
       "if there are some elements that meet the criteria" in {
-        prop { (names: List[String]) ⇒
-          val namesWithStatus = names map ((_, true))
+        prop { data: List[PersistenceItemData] ⇒
+          val activeItems = data map (_.copy(active = true))
 
-          WithData(namesWithStatus) {
-            persistence.update(updateAllActiveSql)
-          }.transactAndRun must be_>(0)
+          WithData(activeItems) {
+            persistence
+              .update(updateAllActiveSql)
+              .transactAndRun must_== activeItems.size
+          }
         }
       }
     "return the number of affected rows equals to 0 after updating items in the table " +
       "if there aren't any elements that meet the criteria" in {
-        prop { (names: List[String]) ⇒
-          val namesWithStatus = names map ((_, false))
+        prop { data: List[PersistenceItemData] ⇒
+          val inactiveItems = data map (_.copy(active = false))
 
-          WithData(namesWithStatus) {
-            persistence.update(updateAllActiveSql)
-          }.transactAndRun must_== 0
+          WithData(inactiveItems) {
+            persistence
+              .update(updateAllActiveSql)
+              .transactAndRun must_== 0
+          }
         }
       }
   }
@@ -289,127 +292,133 @@ class PersistenceSpec
   "update" should {
     "return the number of affected rows equals to 0 after updating items in the table " +
       "if the table is empty" in {
-        prop { (active: Boolean) ⇒
-          persistence.update(
-            sql    = updateByStatusSql,
-            values = (!active, active)
-          ).transactAndRun must_== 0
+        prop { active: Boolean ⇒
+
+          WithEmptyTable {
+            persistence.update(
+              sql    = updateByStatusSql,
+              values = (!active, active)
+            ).transactAndRun must_== 0
+          }
         }
       }
     "return the number of affected rows equals to 1 after updating a single item in the table " in {
-      prop { (data: (String, Boolean)) ⇒
-        val (name, active) = data
+      prop { data: PersistenceItemData ⇒
 
-        val (affectedRows, item) = WithData(data) { id ⇒
+        WithData(data) { id ⇒
+          val (affectedRows, item) = {
+            for {
+              affectedRows ← persistence.update(updateByIdSql, (data.name, !data.active, id))
+              item ← getItem[Long, PersistenceItem](fetchByIdSql, id)
+            } yield (affectedRows, item)
 
-          for {
-            affectedRows ← persistence.update(updateByIdSql, (name, !active, id))
-            item ← fetchItemById(id)
-          } yield (affectedRows, item)
+          }.transactAndRun
 
-        }.transactAndRun
+          affectedRows must_== 1
 
-        affectedRows must_== 1
-
-        item.name mustEqual name
-        item.active mustEqual !active
+          item.name must_== data.name
+          item.active must_== !data.active
+        }
       }
     }
     "return the number of affected rows after updating items in the table " +
       "if there are some elements that meet the criteria" in {
-        prop { (names: List[String]) ⇒
-          val namesWithStatus = names map ((_, true))
+        prop { data: List[PersistenceItemData] ⇒
+          val activeItems = data map (_.copy(active = true))
 
-          WithData(namesWithStatus) {
-            persistence.update(
-              sql    = updateByStatusSql,
-              values = (false, true)
-            )
-          }.transactAndRun must be_>(0)
+          WithData(activeItems) {
+            persistence
+              .update(updateByStatusSql, (false, true))
+              .transactAndRun must be_>(0)
+          }
         }
       }
     "return the number of affected rows equals to 0 after updating items in the table " +
       "if there aren't any elements that meet the criteria" in {
-        prop { (names: List[String]) ⇒
-          val namesWithStatus = names map ((_, false))
+        prop { data: List[PersistenceItemData] ⇒
+          val inactiveItems = data map (_.copy(active = false))
 
-          WithData(namesWithStatus) {
-            persistence.update(
-              sql    = updateByStatusSql,
-              values = (false, true)
-            )
-          }.transactAndRun must_== 0
+          WithData(inactiveItems) {
+            persistence
+              .update(updateByStatusSql, (false, true))
+              .transactAndRun must_== 0
+          }
         }
       }
     "return the number of affected rows equals to 1 after inserting a new item in the table" in {
-      prop { (name: String, active: Boolean) ⇒
+      prop { data: PersistenceItemData ⇒
 
-        persistence.update(
-          sql    = insertSql,
-          values = (name, active)
-        ).transactAndRun must_== 1
+        WithEmptyTable {
+          persistence.update(
+            sql    = insertSql,
+            values = (data.name, data.active)
+          ).transactAndRun must_== 1
+        }
       }
     }
   }
 
   "updateWithGeneratedKeys" should {
     "insert a new PersistenceItem into the table" in {
-      prop { (data: (String, Boolean)) ⇒
-        val (name, active) = data
+      prop { data: PersistenceItemData ⇒
 
-        val (id, item) = (for {
-          id ← persistence.updateWithGeneratedKeys[Long](
+        WithEmptyTable {
+          val item = persistence.updateWithGeneratedKeys(
             sql    = insertSql,
-            fields = List("id"),
+            fields = allFields,
             values = data
-          )
-          item ← fetchItemById(id)
-        } yield (id, item)).transactAndRun
+          ).transactAndRun
 
-        item.id mustEqual id
-        item.name mustEqual name
-        item.active mustEqual active
-
+          item.name must_== data.name
+          item.active must_== data.active
+        }
       }
     }
   }
 
   "updateMany" should {
     "return the number of affected rows after inserting a batch of items in the table" in {
-      prop { (data: List[(String, Boolean)]) ⇒
+      prop { data: List[PersistenceItemData] ⇒
 
-        persistence.updateMany(
-          sql    = insertSql,
-          values = data
-        ).transactAndRun must_== data.size
+        WithEmptyTable {
+          persistence.updateMany(
+            sql    = insertSql,
+            values = data
+          ).transactAndRun must_== data.size
+        }
       }
     }
 
     "return the number of affected rows equals to 0 after updating a batch of items " +
       "in the table if the table is empty" in {
-        prop { (data: List[(String, Boolean, Long)]) ⇒
-          persistence.updateMany(
-            sql    = updateByIdSql,
-            values = data
-          ).transactAndRun must_== 0
+        prop { data: List[PersistenceItem] ⇒
+
+          WithEmptyTable {
+            persistence.updateMany(
+              sql    = updateByIdSql,
+              values = data map (item ⇒ (item.name, item.active, item.id))
+            ).transactAndRun must_== 0
+          }
         }
       }
     "return the number of affected rows after updating a batch of items in the table " +
       "if the items exist" in {
-        prop { (data: List[(String, Boolean)]) ⇒
+        prop { data: List[PersistenceItemData] ⇒
 
-          val affectedRows = WithData(data) {
-            for {
-              result ← fetchAll
-              updateData = result map { case (name, active, id) ⇒ (name, !active, id) }
-              affectedRows ← persistence.updateMany(
-                sql    = updateByIdSql,
-                values = updateData
-              )
-            } yield affectedRows
-          }.transactAndRun
+          WithData(data) {
+            val affectedRows = {
+              for {
+                result ← getItems[(String, Boolean, Long)](getAllSql)
+                updateData = result map { case (name, active, id) ⇒ (name, !active, id) }
+                affectedRows ← persistence.updateMany(
+                  sql    = updateByIdSql,
+                  values = updateData
+                )
+              } yield affectedRows
+            }.transactAndRun
 
-          affectedRows must_== data.size
+            affectedRows must_== data.size
+          }
         }
       }
   }

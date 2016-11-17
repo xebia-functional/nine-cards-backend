@@ -2,15 +2,16 @@ package cards.nine.services.free.interpreter.collection
 
 import cards.nine.commons.NineCardsErrors.NineCardsError
 import cards.nine.domain.pagination.Page
-import cards.nine.services.free.domain.{ SharedCollection, SharedCollectionWithAggregatedInfo, User }
+import cards.nine.services.free.domain.{SharedCollection, SharedCollectionWithAggregatedInfo, User}
 import cards.nine.services.free.interpreter.collection.Services.SharedCollectionData
 import cards.nine.services.free.interpreter.user.Services.UserData
-import cards.nine.services.persistence.NineCardsGenEntities.{ CollectionTitle, PublicIdentifier }
-import cards.nine.services.persistence.{ DomainDatabaseContext, NineCardsScalacheckGen }
+import cards.nine.services.persistence.NineCardsGenEntities.{CollectionTitle, PublicIdentifier}
+import cards.nine.services.persistence.{DomainDatabaseContext, NineCardsScalacheckGen}
 import doobie.contrib.postgresql.pgtypes._
 import doobie.imports._
+import org.scalacheck.{Arbitrary, Gen}
 import org.specs2.ScalaCheck
-import org.specs2.matcher.{ DisjunctionMatchers, MatchResult }
+import org.specs2.matcher.{DisjunctionMatchers, MatchResult}
 import org.specs2.mutable.Specification
 import shapeless.syntax.std.product._
 
@@ -51,8 +52,7 @@ trait SharedCollectionPersistenceServicesContext extends DomainDatabaseContext {
       values = collectionsData.map(_.copy(category = category, userId = userId))
     )
 
-  def createUser(userData: UserData): ConnectionIO[Long] =
-    insertItem(User.Queries.insert, userData.toTuple)
+  def createUser(userData: UserData): ConnectionIO[Long] = insertItem(User.Queries.insert, userData)
 
   def deleteSharedCollections: ConnectionIO[Int] = deleteItems(deleteSharedCollectionsQuery)
 
@@ -162,6 +162,7 @@ trait SharedCollectionPersistenceServicesContext extends DomainDatabaseContext {
     }
   }
 
+  implicit val arbString: Arbitrary[String] = Arbitrary(Gen.alphaStr)
 }
 
 class ServicesSpec
@@ -178,18 +179,13 @@ class ServicesSpec
       prop { (userData: UserData, collectionData: SharedCollectionData) ⇒
 
         WithData(userData) { user ⇒
-          val collectionId = collectionPersistenceServices.add[Long](
+          val insertedCollection = collectionPersistenceServices.add(
             collectionData.copy(userId = Option(user))
           ).transactAndRun
 
-          collectionId must beRight[Long].which {
-            id ⇒
-              val collection = getItem[Long, SharedCollection](SharedCollection.Queries.getById, id).transactAndRun
-
-              collection must beLike {
-                case c: SharedCollection ⇒
-                  c.publicIdentifier must_== collectionData.publicIdentifier
-              }
+          insertedCollection must beRight[SharedCollection].which { collection ⇒
+            collection.publicIdentifier must_== collectionData.publicIdentifier
+            collection.userId must beSome(user)
           }
         }
       }
@@ -197,18 +193,13 @@ class ServicesSpec
     "create a new shared collection without a defined user id" in {
       prop { (collectionData: SharedCollectionData) ⇒
         WithEmptyDatabase {
-          val collectionId = collectionPersistenceServices.add[Long](
+          val insertedCollection = collectionPersistenceServices.add(
             collectionData.copy(userId = None)
           ).transactAndRun
 
-          collectionId must beRight[Long].which {
-            id ⇒
-              val collection = getItem[Long, SharedCollection](SharedCollection.Queries.getById, id).transactAndRun
-
-              collection must beLike {
-                case c: SharedCollection ⇒
-                  c.publicIdentifier must_== collectionData.publicIdentifier
-              }
+          insertedCollection must beRight[SharedCollection].which { collection ⇒
+            collection.publicIdentifier must_== collectionData.publicIdentifier
+            collection.userId must beNone
           }
         }
       }
