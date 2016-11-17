@@ -78,10 +78,10 @@ class Services(implicit googlePlayProcesses: CardsProcesses[GooglePlayApp]) exte
       .map(r ⇒ Either.right(Converters.omitMissing(r)))
       .foldMap(Wiring.interpreters)
 
-  def resolvePendingApps(numPackages: Int): Task[ResolvePendingStats] =
+  def resolvePendingApps(numPackages: Int): Task[Result[ResolvePendingStats]] =
     googlePlayProcesses
       .resolvePendingApps(numPackages)
-      .map(Converters.toResolvePendingStats)
+      .map(r ⇒ Either.right(Converters.toResolvePendingStats(r)))
       .foldMap(Wiring.interpreters)
 
   def apply[A](fa: Ops[A]): Task[A] = fa match {

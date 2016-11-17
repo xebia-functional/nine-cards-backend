@@ -1,7 +1,8 @@
-package cards.nine.api
+package cards.nine.app
 
 import akka.actor.Actor
 import akka.event.LoggingAdapter
+import cards.nine.commons.NineCardsService._
 import cards.nine.commons.TaskInstances._
 import cards.nine.commons.config.NineCardsConfig._
 import cards.nine.domain.application.ResolvePendingStats
@@ -24,10 +25,11 @@ class AppResolverActor[F[_]](interpreter: F ~> Task, log: LoggingAdapter)(implic
         .unsafePerformAsync(showAppResolutionInfo)
   }
 
-  private[this] def showAppResolutionInfo(result: Throwable \/ ResolvePendingStats) =
+  private[this] def showAppResolutionInfo(result: Throwable \/ Result[ResolvePendingStats]) =
     result match {
       case -\/(e) ⇒ log.error(e, "An error was found while resolving pending packages")
-      case \/-(stats) ⇒
+      case \/-(Left(_)) ⇒ log.error("An error was found while resolving pending packages")
+      case \/-(Right(stats)) ⇒
         log.info(s"The server resolved ${stats.resolved} packages from the pending queue to an App")
         log.info(s"The server resolved ${stats.errors} pending packages not to exist in the App Store")
         log.info(s"The server returned ${stats.pending} packages to the pending queue")
