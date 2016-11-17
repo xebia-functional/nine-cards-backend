@@ -1,4 +1,4 @@
-package cards.nine.commons
+package cards.nine.commons.redis
 
 import com.redis.RedisClient
 import com.redis.serialization.{ Format, Parse }
@@ -20,12 +20,6 @@ class CacheWrapper[Key, Val](client: RedisClient)(implicit f: Format, pk: Parse[
   }
 
   def findFirst(keys: List[Key]): Option[Val] = keys.toStream.map(get).find(_.isDefined).flatten
-
-  def matchKeys(pattern: JsonPattern): List[Key] =
-    client
-      .keys[Option[Key]](JsonPattern.print(pattern))
-      .getOrElse(Nil)
-      .flatMap(_.flatten.toList)
 
   def delete(key: Key): Unit = client.del(key)
 

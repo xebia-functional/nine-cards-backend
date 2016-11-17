@@ -12,34 +12,24 @@ class CirceCodersSpec extends Specification {
 
   import CirceCoders._
 
-  def checkCoders[A](typeName: String, obj: A, jsonStr: String)(implicit dec: Decoder[A], enc: Encoder[A]) = {
-    s"The Coders for $typeName" should {
-
-      s"encode a $typeName into a full string " in (obj.asJson.noSpaces must_=== (jsonStr))
-      s"parse a string into a $typeName" in (decode[A](jsonStr) must_=== (Xor.Right(obj)))
-
-    }
-  }
-
   val date: DateTime = new DateTime(2016, 7, 23, 12, 0, 14, DateTimeZone.UTC)
-  val dateJsonStr = s""" "160723120014000" """.trim
+  val dateStr: String = "160723120014000"
 
   val fortysevenDeg = "com.fortyseven.deg"
   val packageName = Package(fortysevenDeg)
 
-  val resolvedKey = CacheKey.resolved(packageName)
-  val resolvedStr = """
-    | { "package" : "com.fortyseven.deg",
-    |   "keyType" : "Resolved",
-    |   "date" : null }
-    """.stripMargin.filter(_ > ' ').trim // to remove whitespace
+  def checkKeyFormatParse(key: CacheKey, keyStr: String) = {
+    val keyType = key.keyType.entryName
 
-  val errorKey = CacheKey.error(packageName, date)
-  val errorJsonStr = """
-    | { "package" : "com.fortyseven.deg",
-    |   "keyType" : "Error",
-    |   "date" : "160723120014000" }
-  """.stripMargin.filter(_ > ' ').trim
+    s"The Coders for a CacheKey of type $keyType" should {
+      "format a $keyType key into a full string " in (KeyFormat.format(key) must_=== keyStr)
+      "parse a string into a $keyType Key" in (KeyFormat.parse(keyStr) must_=== Some(key))
+    }
+  }
+
+  checkKeyFormatParse(CacheKey.resolved(packageName), s"com.fortyseven.deg:Resolved")
+
+  checkKeyFormatParse(CacheKey.error(packageName), s"com.fortyseven.deg:Error")
 
   val fullCard = FullCard(
     packageName = Package(fortysevenDeg),
@@ -63,11 +53,14 @@ class CirceCodersSpec extends Specification {
   |   "stars" : 3.14  }
   """.stripMargin.filter(_ > ' ').replaceAll("_", " ").trim
 
-  checkCoders[DateTime]("date in the cache keys", date, dateJsonStr)
+  def checkCoders[A](typeName: String, obj: A, jsonStr: String)(implicit dec: Decoder[A], enc: Encoder[A]) = {
+    s"The Coders for $typeName" should {
 
-  checkCoders[CacheKey]("Cache Keys for Resolved Packages", resolvedKey, resolvedStr)
+      s"encode a $typeName into a full string " in (obj.asJson.noSpaces must_=== (jsonStr))
+      s"parse a string into a $typeName" in (decode[A](jsonStr) must_=== (Xor.Right(obj)))
 
-  checkCoders[CacheKey]("Cache keys for an Error package", errorKey, errorJsonStr)
+    }
+  }
 
   checkCoders[FullCard]("A Full Card", fullCard, fullCardJsonStr)
 
