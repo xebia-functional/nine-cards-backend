@@ -76,6 +76,8 @@ trait DummyConfig {
 
     }
 
+    val resolveInterval = "1 second"
+    val resolveBatchSize = 1
   }
 
   object ninecards {
@@ -169,6 +171,8 @@ trait DummyConfig {
        |          details = "${googleplay.web.paths.details}"
        |        }
        |      }
+       |      resolveInterval = ${googleplay.resolveInterval}
+       |      resolveBatchSize = ${googleplay.resolveBatchSize}
        |    }
        |  }
        |    http {

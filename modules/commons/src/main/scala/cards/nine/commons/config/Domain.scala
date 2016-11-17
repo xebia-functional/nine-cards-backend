@@ -203,7 +203,9 @@ object Domain {
 
   case class GooglePlayConfiguration(
     api: GooglePlayApiConfiguration,
-    web: GooglePlayWebConfiguration
+    web: GooglePlayWebConfiguration,
+    resolveInterval: FiniteDuration,
+    resolveBatchSize: Int
   )
 
   object GooglePlayConfiguration {
@@ -212,7 +214,9 @@ object Domain {
 
       GooglePlayConfiguration(
         GooglePlayApiConfiguration(config, prefix),
-        GooglePlayWebConfiguration(config, prefix)
+        GooglePlayWebConfiguration(config, prefix),
+        convertToFiniteDuration(config.getString(s"$prefix.resolveInterval")),
+        config.getInt(s"$prefix.resolveBatchSize")
       )
     }
   }
@@ -316,10 +320,6 @@ object Domain {
   )
 
   object RankingsConfiguration {
-    def convertToFiniteDuration(value: String) = {
-      val duration = Duration(value)
-      FiniteDuration(duration._1, duration._2)
-    }
 
     def apply(config: NineCardsConfig, parentPrefix: String): RankingsConfiguration = {
       val prefix = s"$parentPrefix.rankings"
@@ -396,6 +396,11 @@ object Domain {
 
       )
     }
+  }
+
+  private[this] def convertToFiniteDuration(value: String) = {
+    val duration = Duration(value)
+    FiniteDuration(duration._1, duration._2)
   }
 
 }

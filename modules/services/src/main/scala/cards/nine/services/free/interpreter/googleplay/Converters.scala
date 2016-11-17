@@ -1,8 +1,8 @@
 package cards.nine.services.free.interpreter.googleplay
 
-import cards.nine.domain.application.{ Category, CardList, FullCard, Package, PriceFilter }
+import cards.nine.domain.application._
 import cards.nine.googleplay.domain._
-import cards.nine.googleplay.processes.{ getcard, ResolveMany }
+import cards.nine.googleplay.processes.{ getcard, ResolveMany, ResolvePending }
 import cats.instances.list._
 import cats.syntax.monadCombine._
 
@@ -55,5 +55,12 @@ object Converters {
       resolved
     )
   }
+
+  def toResolvePendingStats(response: ResolvePending.Response): ResolvePendingStats =
+    ResolvePendingStats(
+      resolved = response.solved.length,
+      pending  = response.pending.length,
+      errors   = response.unknown.length
+    )
 
 }

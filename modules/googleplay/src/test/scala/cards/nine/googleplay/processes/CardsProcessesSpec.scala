@@ -154,8 +154,8 @@ class CardsProcessesSpec
 
   "resolvePendingPackage" should {
 
-    def runResolvePending(pack: Package, date: DateTime): ResolvePending.PackageStatus =
-      processes.resolvePendingPackage(pack, date).foldMap(interpreter)
+    def runResolvePending(pack: Package): ResolvePending.PackageStatus =
+      processes.resolvePendingPackage(pack).foldMap(interpreter)
 
     "when the WebScrapper gives back a full card" >> {
 
@@ -169,14 +169,14 @@ class CardsProcessesSpec
         prop { card: FullCard ⇒
           val pack = card.packageName
           setup(pack, card)
-          runResolvePending(pack, testDate) must_=== ResolvePending.Resolved
+          runResolvePending(pack) must_=== ResolvePending.Resolved
         }
 
       "store the result of the web scrape in the cache" >>
         prop { card: FullCard ⇒
           val pack = card.packageName
           setup(pack, card)
-          runResolvePending(pack, testDate)
+          runResolvePending(pack)
           there was one(cacheIntServer).putResolved(card)
         }
 
@@ -192,12 +192,12 @@ class CardsProcessesSpec
 
       "it reports the package as Unknown" >> prop { pack: Package ⇒
         setup(pack, testDate)
-        runResolvePending(pack, testDate) must_=== ResolvePending.Unknown
+        runResolvePending(pack) must_=== ResolvePending.Unknown
       }
 
       "it stores the package as an error" >> prop { pack: Package ⇒
         setup(pack, testDate)
-        runResolvePending(pack, testDate)
+        runResolvePending(pack)
         there was one(cacheIntServer).markError(pack)
       }
 
@@ -213,7 +213,7 @@ class CardsProcessesSpec
 
       "it reports the package as (still) pending" >> prop { pack: Package ⇒
         setup(pack)
-        runResolvePending(pack, testDate) must_=== ResolvePending.Pending
+        runResolvePending(pack) must_=== ResolvePending.Pending
       }
 
     }

@@ -41,6 +41,8 @@ object GooglePlay {
     auth: MarketCredentials
   ) extends Ops[CardList[BasicCard]]
 
+  case class ResolvePendingApps(numPackages: Int) extends Ops[ResolvePendingStats]
+
   class Services[F[_]](implicit I: Inject[Ops, F]) {
 
     def resolve(
@@ -87,6 +89,8 @@ object GooglePlay {
     ): Free[F, CardList[BasicCard]] =
       Free.inject[Ops, F](SearchApps(query, excludesPackages, limit, auth))
 
+    def resolvePendingApps(numPackages: Int): Free[F, ResolvePendingStats] =
+      Free.inject[Ops, F](ResolvePendingApps(numPackages))
   }
 
   object Services {
