@@ -1,11 +1,11 @@
-package cards.nine.api
+package cards.nine.app
 
 import akka.actor.{ ActorSystem, Props }
 import akka.event.Logging
 import akka.io.IO
 import akka.pattern.ask
 import akka.util.Timeout
-import cards.nine.api.RankingActor.RankingByCategory
+import cards.nine.app.RankingActor.RankingByCategory
 import cards.nine.commons.config.NineCardsConfig._
 import cards.nine.processes.NineCardsServices
 import cards.nine.processes.NineCardsServices.NineCardsServices

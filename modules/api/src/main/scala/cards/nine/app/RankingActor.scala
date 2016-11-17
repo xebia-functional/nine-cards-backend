@@ -1,8 +1,8 @@
-package cards.nine.api
+package cards.nine.app
 
 import akka.actor.Actor
 import akka.event.LoggingAdapter
-import cards.nine.api.RankingActor.RankingByCategory
+import cards.nine.app.RankingActor.RankingByCategory
 import cards.nine.commons.NineCardsErrors._
 import cards.nine.commons.NineCardsService.Result
 import cards.nine.commons.TaskInstances._
