@@ -1,6 +1,6 @@
 package cards.nine.commons
 
-import cats.{ Applicative, Monad }
+import cats.{ Applicative, Monad, RecursiveTailRecM }
 
 class ScalazInstances[F[_]](implicit A: scalaz.Applicative[F], M: scalaz.Monad[F]) {
 
@@ -11,7 +11,7 @@ class ScalazInstances[F[_]](implicit A: scalaz.Applicative[F], M: scalaz.Monad[F
     override def ap[A, B](ff: F[(A) ⇒ B])(fa: F[A]): F[B] = A.ap(fa)(ff)
   }
 
-  val monadInstance: Monad[F] = new Monad[F] {
+  val monadInstance: Monad[F] with RecursiveTailRecM[F] = new Monad[F] with RecursiveTailRecM[F] {
 
     override def pure[A](x: A): F[A] = M.pure(x)
 

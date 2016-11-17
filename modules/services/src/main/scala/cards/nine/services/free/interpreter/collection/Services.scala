@@ -16,16 +16,16 @@ import cards.nine.services.persistence.Persistence
 import cats.syntax.either._
 import cats.{ Monad, ~> }
 import doobie.contrib.postgresql.pgtypes._
-import doobie.imports.{ Composite, ConnectionIO }
+import doobie.imports.ConnectionIO
 import shapeless.syntax.std.product._
 
 class Services(
   collectionPersistence: Persistence[SharedCollection]
 )(implicit connectionIOMonad: Monad[ConnectionIO]) extends (Ops ~> ConnectionIO) {
 
-  def add[K: Composite](data: SharedCollectionData): PersistenceService[K] =
+  def add(data: SharedCollectionData): PersistenceService[SharedCollection] =
     PersistenceService {
-      collectionPersistence.updateWithGeneratedKeys[K](
+      collectionPersistence.updateWithGeneratedKeys(
         sql    = Queries.insert,
         fields = SharedCollection.allFields,
         values = data.toTuple
@@ -97,7 +97,7 @@ class Services(
 
   def apply[A](fa: Ops[A]): ConnectionIO[A] = fa match {
     case Add(collection) ⇒
-      add[SharedCollection](collection)
+      add(collection)
     case GetById(id) ⇒
       getById(id)
     case GetByPublicId(publicId) ⇒

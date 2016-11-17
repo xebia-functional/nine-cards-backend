@@ -6,32 +6,24 @@ import scalaz.concurrent.Task
 
 trait TaskInstances {
 
-  implicit val taskMonad: Monad[Task] with ApplicativeError[Task, Throwable] with RecursiveTailRecM[Task] =
-    new Monad[Task] with ApplicativeError[Task, Throwable] with RecursiveTailRecM[Task] {
+  implicit val taskApplicative: Applicative[Task] = ScalazInstances[Task].applicativeInstance
 
-      def pure[A](x: A): Task[A] = Task.delay(x)
+  implicit val taskMonad: Monad[Task] with RecursiveTailRecM[Task] with ApplicativeError[Task, Throwable] =
+    new Monad[Task] with RecursiveTailRecM[Task] with ApplicativeError[Task, Throwable] {
 
-      override def map[A, B](fa: Task[A])(f: A ⇒ B): Task[B] =
-        fa map f
+      val monadInstance = ScalazInstances[Task].monadInstance
 
-      override def flatMap[A, B](fa: Task[A])(f: A ⇒ Task[B]): Task[B] =
-        fa flatMap f
+      override def raiseError[A](e: Throwable): Task[A] = Task.fail(e)
 
-      override def raiseError[A](e: Throwable): Task[A] =
-        Task.fail(e)
-
-      override def handleErrorWith[A](fa: Task[A])(f: Throwable ⇒ Task[A]): Task[A] =
+      override def handleErrorWith[A](fa: Task[A])(f: (Throwable) ⇒ Task[A]): Task[A] =
         fa.handleWith({ case x ⇒ f(x) })
 
-      override def tailRecM[A, B](a: A)(f: (A) ⇒ Task[Either[A, B]]): Task[B] =
-        defaultTailRecM(a)(f)
+      override def flatMap[A, B](fa: Task[A])(f: (A) ⇒ Task[B]): Task[B] = monadInstance.flatMap(fa)(f)
+
+      override def tailRecM[A, B](a: A)(f: (A) ⇒ Task[Either[A, B]]): Task[B] = monadInstance.tailRecM(a)(f)
+
+      override def pure[A](x: A): Task[A] = monadInstance.pure(x)
     }
-
-  implicit val taskApplicative: Applicative[Task] = new Applicative[Task] {
-    override def pure[A](x: A): Task[A] = Task.delay(x)
-
-    override def ap[A, B](ff: Task[(A) ⇒ B])(fa: Task[A]): Task[B] = scalaz.Applicative[Task].ap(fa)(ff)
-  }
 }
 
 object TaskInstances extends TaskInstances

@@ -1,7 +1,5 @@
 package cards.nine.services.persistence
 
-import java.sql.Connection
-
 import cards.nine.commons.config.DummyConfig
 import cards.nine.services.free.domain._
 import cards.nine.services.free.interpreter.collection.{ Services ⇒ CollectionServices }
@@ -9,33 +7,14 @@ import cards.nine.services.free.interpreter.country.{ Services ⇒ CountryServic
 import cards.nine.services.free.interpreter.subscription.{ Services ⇒ SubscriptionServices }
 import cards.nine.services.free.interpreter.user.{ Services ⇒ UserServices }
 import doobie.contrib.postgresql.pgtypes._
-import doobie.free.{ drivermanager ⇒ FD }
 import doobie.imports._
 import org.specs2.matcher.MatchResult
 import shapeless.HNil
 
-import scalaz.{ Foldable, \/ }
 import scalaz.concurrent.Task
-import scalaz.syntax.apply._
+import scalaz.{ Foldable, \/ }
 
 trait BasicDatabaseContext extends DummyConfig {
-
-  val dbPrefix = "ninecards.db"
-
-  class CustomTransactor[B](
-    implicit
-    beforeActions: ConnectionIO[B]
-  ) extends Transactor[Task] {
-    val driver = config.db.default.driver
-    def url = config.db.default.url
-    val user = config.db.default.user
-    val pass = config.db.default.password
-
-    val connect: Task[Connection] =
-      Task.delay(Class.forName(driver)) *> FD.getConnection(url, user, pass).trans[Task]
-
-    override val before = super.before <* beforeActions
-  }
 
   def insertItem[A: Composite](sql: String, values: A): ConnectionIO[Long] =
     Update[A](sql).toUpdate0(values).withUniqueGeneratedKeys[Long]("id")
@@ -60,30 +39,13 @@ trait BasicDatabaseContext extends DummyConfig {
   def getOptionalItem[A: Composite, B: Composite](sql: String, values: A): ConnectionIO[Option[B]] =
     Query[A, B](sql).option(values)
 
+  def runDDLQuery(sql: String): ConnectionIO[Int] = Update0(sql, None).run
+
   implicit class Transacting[A](operation: ConnectionIO[A])(implicit transactor: Transactor[Task]) {
     def transactAndRun: A = operation.transact(transactor).unsafePerformSync
 
     def transactAndAttempt: \/[Throwable, A] = operation.transact(transactor).unsafePerformSyncAttempt
   }
-}
-
-trait PersistenceDatabaseContext extends BasicDatabaseContext {
-  def createTable: ConnectionIO[Int] =
-    sql"""
-          CREATE TABLE IF NOT EXISTS persistence (
-          id   BIGINT AUTO_INCREMENT,
-          name VARCHAR NOT NULL,
-          active BOOL NOT NULL)""".update.run
-
-  implicit val before: ConnectionIO[Int] = createTable
-
-  implicit val transactor: Transactor[Task] = new CustomTransactor
-}
-
-trait DomainDatabaseContext extends BasicDatabaseContext {
-
-  val deviceToken: Option[String] = Option("d9f48907-0374-4b3a-89ec-433bd64de2e5")
-  val emptyDeviceToken: Option[String] = None
 
   implicit val transactor: Transactor[Task] =
     DriverManagerTransactor[Task](
@@ -92,8 +54,46 @@ trait DomainDatabaseContext extends BasicDatabaseContext {
       user   = db.domain.user,
       pass   = db.domain.password
     )
+}
 
-  val deleteAllRows = for {
+trait PersistenceDatabaseContext extends BasicDatabaseContext {
+
+  val allFields = List("id", "name", "active")
+
+  val deleteAllSql = "DELETE FROM persistence"
+  val fetchAllSql = "SELECT id,name,active FROM persistence"
+  val getAllSql = "SELECT name,active,id FROM persistence"
+  val fetchAllActiveSql = "SELECT id,name,active FROM persistence WHERE active=true"
+  val fetchByIdSql = "SELECT id,name,active FROM persistence WHERE id=?"
+  val fetchByIdAndStatusSql = "SELECT id,name,active FROM persistence WHERE id=? AND active=?"
+  val fetchByStatusSql = "SELECT id,name,active FROM persistence WHERE active=?"
+  val insertSql = "INSERT INTO persistence (name,active) VALUES (?,?)"
+  val updateAllSql = "UPDATE persistence SET active=false"
+  val updateAllActiveSql = "UPDATE persistence SET active=false WHERE active=true"
+  val updateByIdSql = "UPDATE persistence SET name=?,active=? WHERE id=?"
+  val updateByStatusSql = "UPDATE persistence SET active=? WHERE active=?"
+  val dropTableSql = "drop table if exists persistence"
+  val createTableSql =
+    """
+      |create table if not exists persistence(
+      |id bigserial not null primary key,
+      |name character varying(256) not null,
+      |active boolean not null)
+    """.stripMargin
+
+  case class PersistenceItem(id: Long, name: String, active: Boolean)
+
+  case class PersistenceItemData(name: String, active: Boolean)
+
+  val persistence = new Persistence[PersistenceItem]
+}
+
+trait DomainDatabaseContext extends BasicDatabaseContext {
+
+  val deviceToken: Option[String] = Option("d9f48907-0374-4b3a-89ec-433bd64de2e5")
+  val emptyDeviceToken: Option[String] = None
+
+  val deleteAllRows: ConnectionIO[Unit] = for {
     _ ← deleteItems("delete from sharedcollectionsubscriptions")
     _ ← deleteItems("delete from sharedcollections")
     _ ← deleteItems("delete from installations")
@@ -107,15 +107,11 @@ trait DomainDatabaseContext extends BasicDatabaseContext {
     }
   }
 
-  implicit val userPersistence = new Persistence[User](supportsSelectForUpdate = false)
-  implicit val installationPersistence =
-    new Persistence[Installation](supportsSelectForUpdate = false)
-  implicit val collectionPersistence =
-    new Persistence[SharedCollection](supportsSelectForUpdate = false)
-  implicit val collectionSubscriptionPersistence =
-    new Persistence[SharedCollectionSubscription](supportsSelectForUpdate = false)
-  implicit val countryPersistence =
-    new Persistence[Country](supportsSelectForUpdate = false)
+  implicit val userPersistence = new Persistence[User]
+  implicit val installationPersistence = new Persistence[Installation]
+  implicit val collectionPersistence = new Persistence[SharedCollection]
+  implicit val collectionSubscriptionPersistence = new Persistence[SharedCollectionSubscription]
+  implicit val countryPersistence = new Persistence[Country]
 
   val collectionPersistenceServices = CollectionServices.services
   val countryPersistenceServices = CountryServices.services

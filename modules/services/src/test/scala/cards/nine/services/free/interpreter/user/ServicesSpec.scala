@@ -75,16 +75,14 @@ class ServicesSpec
     "new users can be created" in {
       prop { userData: UserData ⇒
         WithEmptyDatabase {
-          userPersistenceServices.addUser[Long](
+          val insertedUser = userPersistenceServices.addUser(
             email        = Email(userData.email),
             apiKey       = ApiKey(userData.apiKey),
             sessionToken = SessionToken(userData.sessionToken)
           ).transactAndRun
 
-          val user = getItem[String, User](User.Queries.getByEmail, userData.email).transactAndRun
-
-          user must beLike {
-            case user: User ⇒ user.email.value must_== userData.email
+          insertedUser must beRight[User].which { user ⇒
+            user.email.value must_== userData.email
           }
         }
       }
@@ -183,22 +181,16 @@ class ServicesSpec
       prop { (androidId: AndroidId, userData: UserData) ⇒
 
         WithData(userData) { userId ⇒
-          userPersistenceServices.createInstallation[Long](
+          val insertedInstallation = userPersistenceServices.createInstallation(
             userId      = userId,
             deviceToken = None,
             androidId   = androidId
           ).transactAndRun
 
-          val installation = getItem[(Long, String), Installation](
-            Installation.Queries.getByUserAndAndroidId,
-            (userId, androidId.value)
-          ).transactAndRun
-
-          installation must beLike {
-            case install: Installation ⇒
-              install.userId must_== userId
-              install.deviceToken must_== None
-              install.androidId must_== androidId
+          insertedInstallation must beRight[Installation].which { installation ⇒
+            installation.userId must_== userId
+            installation.deviceToken must_== None
+            installation.androidId must_== androidId
           }
         }
       }
