@@ -1,7 +1,7 @@
 package cards.nine.services.free.interpreter
 
 import cards.nine.commons.config.NineCardsConfig._
-import cards.nine.commons.TaskInstances
+import cards.nine.commons.catscalaz.TaskInstances
 import cards.nine.commons.config.Domain.{ GoogleAnalyticsConfiguration, GoogleApiConfiguration, GoogleFirebaseConfiguration }
 import cards.nine.googleplay.processes.withTypes.WithRedisClient
 import cats._
