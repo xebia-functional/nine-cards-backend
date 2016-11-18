@@ -554,8 +554,8 @@ class NineCardsApiSpec
     }
 
     "respond OK if the Basic Http Credentials are in the config " in new SuccessfulScope {
-      val userPass = config.editors.head
-      val credentials = BasicHttpCredentials(userPass._1, userPass._2)
+      val (user, password) = config.editors.head
+      val credentials = BasicHttpCredentials(user, password)
       request(validPackage) ~> addCredentials(credentials) ~> sealRoute(nineCardsApi) ~> check {
         status.intValue shouldEqual StatusCodes.OK.intValue
       }

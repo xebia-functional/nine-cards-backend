@@ -122,8 +122,8 @@ trait JsonFormats
 
   implicit val appGooglePlayInfoFormat = jsonFormat7(ApiDetailsApp)
 
-  implicit val apiSetAppInfoRequestJF = jsonFormat7(ApiSetAppInfoRequest)
-  implicit val apiSetAppInfoResponseJF = jsonFormat0(ApiSetAppInfoResponse)
+  implicit val apiSetAppInfoRequestFormat = jsonFormat7(ApiSetAppInfoRequest)
+  implicit val apiSetAppInfoResponseFormat = jsonFormat0(ApiSetAppInfoResponse)
 
   implicit val apiGetSubscriptionsByUserResponseFormat = jsonFormat1(ApiGetSubscriptionsByUser)
 

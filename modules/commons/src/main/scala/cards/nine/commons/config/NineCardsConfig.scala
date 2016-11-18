@@ -58,7 +58,7 @@ class NineCardsConfig(hocon: Option[String] = None) {
 
 object ConfigOps {
 
-  implicit class Ops(val config: Config) {
+  implicit class ConfigWrapper(val config: Config) {
 
     def getOptionalValue[T](path: String)(f: String ⇒ T) =
       if (config.hasPath(path)) {
