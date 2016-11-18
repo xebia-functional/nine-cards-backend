@@ -1,7 +1,7 @@
 package cards.nine.services.free.interpreter
 
 import cards.nine.commons.config.NineCardsConfig._
-import cards.nine.commons.TaskInstances
+import cards.nine.commons.catscalaz.TaskInstances
 import cards.nine.googleplay.processes.Wiring.WithRedisClient
 import cards.nine.services.free.algebra._
 import cards.nine.services.free.interpreter.analytics.{ Services ⇒ AnalyticsServices }
