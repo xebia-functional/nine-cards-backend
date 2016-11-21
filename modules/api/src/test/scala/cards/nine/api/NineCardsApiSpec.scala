@@ -104,7 +104,7 @@ trait NineCardsApiSpecification
       NineCardsService.right(Messages.createOrUpdateCollectionResponse)
 
     sharedCollectionProcesses.increaseViewsCountByOne(any) returns
-      Free.pure(Messages.increaseViewsCountByOneResponse.right)
+      NineCardsService.right(Messages.increaseViewsCountByOneResponse)
 
     applicationProcesses.getAppsInfo(any, any) returns
       NineCardsService.right(Messages.getAppsInfoResponse)
@@ -202,7 +202,7 @@ trait NineCardsApiSpecification
       NineCardsService.right(Messages.createOrUpdateCollectionResponse)
 
     sharedCollectionProcesses.increaseViewsCountByOne(any) returns
-      Free.pure(Messages.increaseViewsCountByOneResponse.right)
+      NineCardsService.right(Messages.increaseViewsCountByOneResponse)
 
     rankingProcesses.getRanking(any) returns Free.pure(Either.right(Messages.rankings.getResponse))
 
@@ -412,9 +412,9 @@ class NineCardsApiSpec
     successOk(request)
   }
 
-  "PUT /collections/collectionId/views" should {
+  "POST /collections/collectionId/views" should {
 
-    val request = Put(Paths.increaseViews)
+    val request = Post(Paths.increaseViews)
 
     notFoundSharedCollection(request)
 

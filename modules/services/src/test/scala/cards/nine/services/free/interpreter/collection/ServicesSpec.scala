@@ -4,11 +4,11 @@ import cards.nine.commons.NineCardsErrors.NineCardsError
 import cards.nine.domain.application.Package
 import cards.nine.domain.ScalaCheck._
 import cards.nine.domain.pagination.Page
-import cards.nine.services.free.domain.{SharedCollection, SharedCollectionWithAggregatedInfo, User}
+import cards.nine.services.free.domain.{ SharedCollection, SharedCollectionWithAggregatedInfo, User }
 import cards.nine.services.free.interpreter.collection.Services.SharedCollectionData
 import cards.nine.services.free.interpreter.user.Services.UserData
-import cards.nine.services.persistence.NineCardsGenEntities.{CollectionTitle, PublicIdentifier}
-import cards.nine.services.persistence.{DomainDatabaseContext, NineCardsScalacheckGen}
+import cards.nine.services.persistence.NineCardsGenEntities.{ CollectionTitle, PublicIdentifier }
+import cards.nine.services.persistence.{ DomainDatabaseContext, NineCardsScalacheckGen }
 import doobie.contrib.postgresql.pgtypes._
 import doobie.imports._
 import org.scalacheck.{ Arbitrary, Gen }
@@ -396,11 +396,11 @@ class ServicesSpec
             pageParams = pageParams
           ).transactAndRun
 
-        val maxViews =
-          if (socialCollections.isEmpty)
-            None
-          else
-            Option(socialCollections.map(_.views).max)
+          val maxViews =
+            if (socialCollections.isEmpty)
+              None
+            else
+              Option(socialCollections.map(_.views).max)
 
           collections must beRight[List[SharedCollection]].which { list ⇒
             list.size must be_<=(pageSize)
@@ -419,36 +419,36 @@ class ServicesSpec
             id = id
           ).transactAndRun
 
-          updatedCollectionCount must_== 0
+          updatedCollectionCount must beRight(0)
         }
       }
     }
     "increase the number of views of a collection by 1 if there is a collection with the given " +
       "id in the database" in {
-      prop { (userData: UserData, collectionData: SharedCollectionData) ⇒
+        prop { (userData: UserData, collectionData: SharedCollectionData) ⇒
 
-        WithData(userData, collectionsData) { collectionId ⇒
-          collectionPersistenceServices.increaseViewsByOne(collectionId).transactAndRun
+          WithData(userData, collectionData) { collectionId ⇒
+            collectionPersistenceServices.increaseViewsByOne(collectionId).transactAndRun
 
-          val collection = getItem[Long, SharedCollection](
-            sql = SharedCollection.Queries.getById,
-            values = collectionId
-          ).transactAndRun
+            val collection = getItem[Long, SharedCollection](
+              sql    = SharedCollection.Queries.getById,
+              values = collectionId
+            ).transactAndRun
 
-          collection.views must_== collectionData.views + 1
+            collection.views must_== collectionData.views + 1
+          }
         }
       }
-    }
     "return 0 updated rows if there isn't any collection with the given id in the database" in {
       prop { (userData: UserData, collectionData: SharedCollectionData) ⇒
 
-        WithData(userData, collectionsData) { collectionId ⇒
+        WithData(userData, collectionData) { collectionId ⇒
 
           val updatedCollectionCount = collectionPersistenceServices.increaseViewsByOne(
             id = collectionId * -1
           ).transactAndRun
 
-          updatedCollectionCount must_== 0
+          updatedCollectionCount must beRight(0)
         }
       }
     }
@@ -508,7 +508,7 @@ class ServicesSpec
         WithEmptyDatabase {
           val packagesStats = collectionPersistenceServices.updatePackages(
             collectionId = id,
-            packages = packages
+            packages     = packages
           ).transactAndRun
 
           packagesStats must beLeft[NineCardsError]
@@ -517,33 +517,33 @@ class ServicesSpec
     }
     "return two lists for the recently added and removed packages if there is a collection " +
       "with the given id in the database" in {
-      prop { (userData: UserData, collectionData: SharedCollectionData, packages: List[Package]) ⇒
+        prop { (userData: UserData, collectionData: SharedCollectionData, packages: List[Package]) ⇒
 
-        WithData(userData, collectionData) { collectionId ⇒
+          WithData(userData, collectionData) { collectionId ⇒
 
-          val (remainingPackages, packagesPendingRemoving) = collectionData.packages.map(Package).splitAt(5)
-          val newPackages = remainingPackages ++ packages
+            val (remainingPackages, packagesPendingRemoving) = collectionData.packages.map(Package).splitAt(5)
+            val newPackages = remainingPackages ++ packages
 
-          val packagesStats = collectionPersistenceServices.updatePackages(
-            collectionId = collectionId,
-            packages = newPackages
-          ).transactAndRun
+            val packagesStats = collectionPersistenceServices.updatePackages(
+              collectionId = collectionId,
+              packages     = newPackages
+            ).transactAndRun
 
-          packagesStats must beRight[(List[Package], List[Package])].which {
-            case (addedPackages, removedPackages) ⇒
-              addedPackages must containTheSameElementsAs(packages)
-              removedPackages must containTheSameElementsAs(packagesPendingRemoving)
+            packagesStats must beRight[(List[Package], List[Package])].which {
+              case (addedPackages, removedPackages) ⇒
+                addedPackages must containTheSameElementsAs(packages)
+                removedPackages must containTheSameElementsAs(packagesPendingRemoving)
+            }
           }
         }
       }
-    }
     "return a SharedCollectionNotFound error if there isn't any collection with the given id in the database" in {
       prop { (userData: UserData, collectionData: SharedCollectionData, packages: List[Package]) ⇒
 
         WithData(userData, collectionData) { collectionId ⇒
           val packagesStats = collectionPersistenceServices.updatePackages(
-            collectionId = id * -1,
-            packages = packages
+            collectionId = collectionId * -1,
+            packages     = packages
           ).transactAndRun
 
           packagesStats must beLeft[NineCardsError]

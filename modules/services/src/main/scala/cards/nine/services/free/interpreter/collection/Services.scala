@@ -74,7 +74,7 @@ class Services(
   ): PersistenceService[Int] =
     PersistenceService {
       collectionPersistence.update(
-        sql = Queries.increaseViewsByOne,
+        sql    = Queries.increaseViewsByOne,
         values = id
       )
     }

@@ -222,8 +222,8 @@ class SharedCollectionProcessesSpec
 
         val collectionInfo = sharedCollectionProcesses.increaseViewsCountByOne(publicIdentifier)
 
-        collectionInfo.foldMap(testInterpreters) must beXorRight[IncreaseViewsCountByOneResponse].which {
-          response => response.publicIdentifier must_== publicIdentifier
+        collectionInfo.foldMap(testInterpreters) must beRight[IncreaseViewsCountByOneResponse].which {
+          response ⇒ response.publicIdentifier must_== publicIdentifier
         }
       }
 
@@ -235,7 +235,7 @@ class SharedCollectionProcessesSpec
 
         val collectionInfo = sharedCollectionProcesses.increaseViewsCountByOne(publicIdentifier)
 
-        collectionInfo.foldMap(testInterpreters) must beXorLeft(sharedCollectionNotFoundException)
+        collectionInfo.foldMap(testInterpreters) must beLeft(sharedCollectionNotFoundError)
       }
   }
 

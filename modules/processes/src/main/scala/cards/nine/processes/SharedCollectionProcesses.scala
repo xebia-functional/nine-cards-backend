@@ -108,12 +108,13 @@ class SharedCollectionProcesses[F[_]](
       } yield response
     }
 
-  def increaseViewsCountByOne(publicIdentifier: String): Free[F, Xor[Throwable, IncreaseViewsCountByOneResponse]] = {
+  def increaseViewsCountByOne(
+    publicIdentifier: String
+  ): NineCardsService[F, IncreaseViewsCountByOneResponse] =
     for {
-      collection ← findCollection(publicIdentifier)
-      _ ← collectionServices.increaseViewsByOne(collection.id).rightXorT[Throwable]
+      collection ← collectionServices.getByPublicId(publicIdentifier)
+      _ ← collectionServices.increaseViewsByOne(collection.id)
     } yield IncreaseViewsCountByOneResponse(collection.publicIdentifier)
-  }.value
 
   def updateCollection(
     publicIdentifier: String,

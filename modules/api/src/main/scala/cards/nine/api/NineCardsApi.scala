@@ -226,7 +226,7 @@ class NineCardsRoutes(
               }
           } ~
             path("views") {
-              put {
+              post {
                 complete(increaseViewsCountByOne(publicIdentifier))
               }
             }
@@ -284,10 +284,10 @@ class NineCardsRoutes(
 
   private[this] def increaseViewsCountByOne(
     publicId: PublicIdentifier
-  ): NineCardsServed[Xor[Throwable, ApiIncreaseViewsCountByOneResponse]] =
+  ): NineCardsService[NineCardsServices, ApiIncreaseViewsCountByOneResponse] =
     sharedCollectionProcesses
       .increaseViewsCountByOne(publicId.value)
-      .map(_.map(toApiIncreaseViewsCountByOneResponse))
+      .map(toApiIncreaseViewsCountByOneResponse)
 
   private[this] def subscribe(
     publicId: PublicIdentifier,
