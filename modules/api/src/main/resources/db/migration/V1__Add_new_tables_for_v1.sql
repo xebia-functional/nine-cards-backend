@@ -21,7 +21,6 @@ CREATE TABLE SharedCollections (
   publishedOn timestamp NOT NULL,
   author character varying(100) NOT NULL,
   name character varying(100) NOT NULL,
-  installations INTEGER NOT NULL DEFAULT 0,
   views INTEGER NOT NULL DEFAULT 0,
   category character varying(64) NOT NULL,
   icon character varying(64) NOT NULL,

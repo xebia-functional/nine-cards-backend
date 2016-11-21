@@ -28,7 +28,6 @@ object SharedCollectionMessages {
     publishedOn: DateTime,
     author: String,
     name: String,
-    installations: Int,
     views: Int,
     category: String,
     icon: String,

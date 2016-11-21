@@ -13,7 +13,6 @@ case class SharedCollection(
   publishedOn: Timestamp,
   author: String,
   name: String,
-  installations: Int,
   views: Int,
   category: String,
   icon: String,
@@ -37,8 +36,8 @@ case class SharedCollectionSubscription(
 )
 
 object SharedCollection {
-  val fields = List("publicidentifier", "userid", "publishedon", "author", "name",
-    "installations", "views", "category", "icon", "community", "packages")
+  val fields = List("publicidentifier", "userid", "publishedon", "author", "name", "views",
+    "category", "icon", "community", "packages")
   val allFields = "id" +: fields
 
   val insertFields = fields.mkString(",")
@@ -55,7 +54,7 @@ object SharedCollection {
         |where C.userid=?
         |group by C.id""".stripMargin
     val getLatestByCategory = "select * from sharedcollections where category=? order by publishedon desc limit ? offset ?"
-    val getTopByCategory = "select * from sharedcollections where category=? order by installations desc limit ? offset ?"
+    val getTopByCategory = "select * from sharedcollections where category=? order by views desc limit ? offset ?"
     val insert = s"insert into sharedcollections($insertFields) values($insertWildCards)"
     val update = "update sharedcollections set name=? where id=?"
     val updatePackages = "update sharedcollections set packages=? where id=?"

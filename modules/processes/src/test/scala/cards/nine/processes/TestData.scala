@@ -54,8 +54,6 @@ object TestData {
 
   val installationId = 10l
 
-  val installations = 1
-
   val localization = Localization("en-EN")
 
   val messageId = "a000dcbd-5419-446f-b2c6-6eaefd88480c"
@@ -160,7 +158,6 @@ object TestData {
       publishedOn      = publishedOnTimestamp,
       author           = author,
       name             = name,
-      installations    = installations,
       views            = views,
       category         = category,
       icon             = icon,
@@ -219,7 +216,6 @@ object TestData {
       publishedOn      = publishedOnTimestamp,
       author           = author,
       name             = name,
-      installations    = installations,
       views            = views,
       category         = category,
       icon             = icon,
@@ -233,7 +229,6 @@ object TestData {
       publishedOn      = publishedOnDatetime,
       author           = author,
       name             = name,
-      installations    = Option(installations),
       views            = Option(views),
       category         = category,
       icon             = icon,
@@ -246,7 +241,6 @@ object TestData {
       publishedOn      = new DateTime(publishedOnTimestamp.getTime),
       author           = author,
       name             = name,
-      installations    = installations,
       views            = views,
       category         = category,
       icon             = icon,
@@ -260,7 +254,6 @@ object TestData {
       publishedOn        = new DateTime(publishedOnTimestamp.getTime),
       author             = author,
       name               = name,
-      installations      = installations,
       views              = views,
       category           = category,
       icon               = icon,
