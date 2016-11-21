@@ -30,7 +30,6 @@ trait NineCardsScalacheckGen {
     publishedOn ← timestampGenerator
     author ← Gen.alphaStr
     name ← Gen.alphaStr
-    installations ← Gen.posNum[Int]
     views ← Gen.posNum[Int]
     category ← nonEmptyString(64)
     icon ← nonEmptyString(64)
@@ -42,7 +41,6 @@ trait NineCardsScalacheckGen {
     publishedOn      = publishedOn,
     author           = author,
     name             = name,
-    installations    = installations,
     views            = views,
     category         = category,
     icon             = icon,

@@ -20,7 +20,9 @@ class SharedCollectionQueriesSpec
 
   val category = "SOCIAL"
   val id = 12345l
+  val name = "The best social apps"
   val now = Timestamp.valueOf(LocalDateTime.now)
+  val packages = List("com.package.one", "com.package.two", "com.package.three")
   val pageParams = Page(25l, 25l)
   val publicIdentifier = "7a2a4c1c-5260-40a5-ba06-db009a3ef7c4"
   val userId = Option(23456l)
@@ -31,7 +33,6 @@ class SharedCollectionQueriesSpec
     publishedOn      = now,
     author           = "John Doe",
     name             = "The name of the collection",
-    installations    = 1,
     views            = 1,
     category         = category,
     icon             = "path-to-icon",
@@ -76,4 +77,15 @@ class SharedCollectionQueriesSpec
   )
   check(insertCollectionQuery)
 
+  val updateCollectionQuery = collectionPersistence.generateUpdateWithGeneratedKeys(
+    sql    = update,
+    values = (name, id)
+  )
+  check(updateCollectionQuery)
+
+  val updatePackagesQuery = collectionPersistence.generateUpdateWithGeneratedKeys(
+    sql    = updatePackages,
+    values = (packages, id)
+  )
+  check(updatePackagesQuery)
 }

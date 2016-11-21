@@ -140,7 +140,6 @@ object TestData {
       publishedOn      = now,
       author           = author,
       name             = name,
-      installations    = installations,
       views            = views,
       category         = category,
       icon             = icon,

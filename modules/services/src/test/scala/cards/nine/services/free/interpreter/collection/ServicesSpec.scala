@@ -385,14 +385,14 @@ class ServicesSpec
 
         val collections: List[SharedCollection] = response.transactAndRun
 
-        val maxInstallations =
+        val maxViews =
           if (socialCollections.isEmpty)
             None
           else
-            Option(socialCollections.map(_.installations).max)
+            Option(socialCollections.map(_.views).max)
 
         collections.size must be_<=(pageSize)
-        collections.headOption.map(_.installations) must_== maxInstallations
+        collections.headOption.map(_.views) must_== maxViews
       }
     }
   }
