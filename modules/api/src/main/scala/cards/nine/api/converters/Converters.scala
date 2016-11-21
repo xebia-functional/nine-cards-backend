@@ -60,6 +60,13 @@ object Converters {
       )
     )
 
+  def toApiIncreaseViewsCountByOneResponse(
+    response: IncreaseViewsCountByOneResponse
+  ): ApiIncreaseViewsCountByOneResponse =
+    ApiIncreaseViewsCountByOneResponse(
+      publicIdentifier = response.publicIdentifier
+    )
+
   def toApiSharedCollection[A](info: SharedCollectionWithAppsInfo[A])(toApiApp: A ⇒ ApiCollectionApp): ApiSharedCollection =
     ApiSharedCollection(
       publicIdentifier = info.collection.publicIdentifier,

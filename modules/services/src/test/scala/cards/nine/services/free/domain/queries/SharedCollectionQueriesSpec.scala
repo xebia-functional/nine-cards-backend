@@ -77,6 +77,12 @@ class SharedCollectionQueriesSpec
   )
   check(insertCollectionQuery)
 
+  val increaseViewsByOneQuery = collectionPersistence.generateUpdateWithGeneratedKeys(
+    sql    = increaseViewsByOne,
+    values = id
+  )
+  check(increaseViewsByOneQuery)
+
   val updateCollectionQuery = collectionPersistence.generateUpdateWithGeneratedKeys(
     sql    = update,
     values = (name, id)

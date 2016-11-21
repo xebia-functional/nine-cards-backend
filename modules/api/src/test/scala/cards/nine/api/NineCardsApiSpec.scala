@@ -103,6 +103,9 @@ trait NineCardsApiSpecification
     sharedCollectionProcesses.updateCollection(any, any, any) returns
       NineCardsService.right(Messages.createOrUpdateCollectionResponse)
 
+    sharedCollectionProcesses.increaseViewsCountByOne(any) returns
+      Free.pure(Messages.increaseViewsCountByOneResponse.right)
+
     applicationProcesses.getAppsInfo(any, any) returns
       NineCardsService.right(Messages.getAppsInfoResponse)
 
@@ -150,6 +153,9 @@ trait NineCardsApiSpecification
 
     sharedCollectionProcesses.updateCollection(any, any, any) returns
       NineCardsService.left(sharedCollectionNotFoundError)
+
+    sharedCollectionProcesses.increaseViewsCountByOne(any) returns
+      NineCardsService.left(sharedCollectionNotFoundError)
   }
 
   trait FailingScope extends BasicScope {
@@ -194,6 +200,9 @@ trait NineCardsApiSpecification
 
     sharedCollectionProcesses.updateCollection(any, any, any) returns
       NineCardsService.right(Messages.createOrUpdateCollectionResponse)
+
+    sharedCollectionProcesses.increaseViewsCountByOne(any) returns
+      Free.pure(Messages.increaseViewsCountByOneResponse.right)
 
     rankingProcesses.getRanking(any) returns Free.pure(Either.right(Messages.rankings.getResponse))
 
@@ -393,6 +402,19 @@ class NineCardsApiSpec
     val request = Put(Paths.collectionById, Messages.apiUpdateCollectionRequest)
 
     authenticatedBadRequestEmptyBody(Put(Paths.collectionById))
+
+    notFoundSharedCollection(request)
+
+    unauthorizedNoHeaders(request)
+
+    internalServerError(request)
+
+    successOk(request)
+  }
+
+  "PUT /collections/collectionId/views" should {
+
+    val request = Put(Paths.increaseViews)
 
     notFoundSharedCollection(request)
 

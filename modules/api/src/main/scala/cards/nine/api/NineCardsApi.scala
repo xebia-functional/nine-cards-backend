@@ -224,7 +224,12 @@ class NineCardsRoutes(
                   complete(updateCollection(publicIdentifier, request))
                 }
               }
-          }
+          } ~
+            path("views") {
+              put {
+                complete(increaseViewsCountByOne(publicIdentifier))
+              }
+            }
         }
     }
 
@@ -276,6 +281,13 @@ class NineCardsRoutes(
     sharedCollectionProcesses
       .createCollection(toCreateCollectionRequest(request, collectionInfo, userContext))
       .map(toApiCreateOrUpdateCollectionResponse)
+
+  private[this] def increaseViewsCountByOne(
+    publicId: PublicIdentifier
+  ): NineCardsServed[Xor[Throwable, ApiIncreaseViewsCountByOneResponse]] =
+    sharedCollectionProcesses
+      .increaseViewsCountByOne(publicId.value)
+      .map(_.map(toApiIncreaseViewsCountByOneResponse))
 
   private[this] def subscribe(
     publicId: PublicIdentifier,

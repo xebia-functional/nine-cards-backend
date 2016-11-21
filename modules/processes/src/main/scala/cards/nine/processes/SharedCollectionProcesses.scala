@@ -108,6 +108,13 @@ class SharedCollectionProcesses[F[_]](
       } yield response
     }
 
+  def increaseViewsCountByOne(publicIdentifier: String): Free[F, Xor[Throwable, IncreaseViewsCountByOneResponse]] = {
+    for {
+      collection ← findCollection(publicIdentifier)
+      _ ← collectionServices.increaseViewsByOne(collection.id).rightXorT[Throwable]
+    } yield IncreaseViewsCountByOneResponse(collection.publicIdentifier)
+  }.value
+
   def updateCollection(
     publicIdentifier: String,
     collectionInfo: Option[SharedCollectionUpdateInfo],

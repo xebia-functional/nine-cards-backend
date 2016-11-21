@@ -56,6 +56,8 @@ object SharedCollectionMessages {
 
   case class GetSubscriptionsByUserResponse(subscriptions: List[String])
 
+  case class IncreaseViewsCountByOneResponse(publicIdentifier: String)
+
   case class SubscribeResponse()
 
   case class UnsubscribeResponse()

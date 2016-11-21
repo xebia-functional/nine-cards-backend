@@ -209,6 +209,10 @@ object TestData {
       packagesStats    = packagesStats
     )
 
+    val increaseViewsCountByOneResponse = IncreaseViewsCountByOneResponse(
+      publicIdentifier = publicIdentifier
+    )
+
     val getCollectionByPublicIdentifierResponse = GetCollectionByPublicIdentifierResponse(
       data = sharedCollectionInfo
     )
@@ -261,6 +265,8 @@ object TestData {
     val collections = "/collections"
 
     val collectionById = "/collections/40daf308-fecf-4228-9262-a712d783cf49"
+
+    val increaseViews = "/collections/40daf308-fecf-4228-9262-a712d783cf49/views"
 
     val details = "/applications/details"
 

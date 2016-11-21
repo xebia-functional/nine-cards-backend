@@ -58,6 +58,7 @@ object SharedCollection {
     val insert = s"insert into sharedcollections($insertFields) values($insertWildCards)"
     val update = "update sharedcollections set name=? where id=?"
     val updatePackages = "update sharedcollections set packages=? where id=?"
+    val increaseViewsByOne = "update sharedcollections set views=views+1 where id=?"
   }
 }
 

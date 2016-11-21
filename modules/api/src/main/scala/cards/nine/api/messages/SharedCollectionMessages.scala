@@ -23,6 +23,10 @@ object SharedCollectionMessages {
     packagesStats: PackagesStats
   )
 
+  case class ApiIncreaseViewsCountByOneResponse(
+    publicIdentifier: String
+  )
+
   case class ApiSharedCollection(
     publicIdentifier: String,
     publishedOn: DateTime,

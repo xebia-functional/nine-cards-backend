@@ -1,6 +1,8 @@
 package cards.nine.services.free.interpreter.collection
 
 import cards.nine.commons.NineCardsErrors.NineCardsError
+import cards.nine.domain.application.Package
+import cards.nine.domain.ScalaCheck._
 import cards.nine.domain.pagination.Page
 import cards.nine.services.free.domain.{SharedCollection, SharedCollectionWithAggregatedInfo, User}
 import cards.nine.services.free.interpreter.collection.Services.SharedCollectionData
@@ -9,9 +11,9 @@ import cards.nine.services.persistence.NineCardsGenEntities.{CollectionTitle, Pu
 import cards.nine.services.persistence.{DomainDatabaseContext, NineCardsScalacheckGen}
 import doobie.contrib.postgresql.pgtypes._
 import doobie.imports._
-import org.scalacheck.{Arbitrary, Gen}
+import org.scalacheck.{ Arbitrary, Gen }
 import org.specs2.ScalaCheck
-import org.specs2.matcher.{DisjunctionMatchers, MatchResult}
+import org.specs2.matcher.{ DisjunctionMatchers, MatchResult }
 import org.specs2.mutable.Specification
 import shapeless.syntax.std.product._
 
@@ -409,6 +411,49 @@ class ServicesSpec
     }
   }
 
+  "increaseViewsByOne" should {
+    "return 0 updated rows if the table is empty" in {
+      prop { id: Long ⇒
+        WithEmptyDatabase {
+          val updatedCollectionCount = collectionPersistenceServices.increaseViewsByOne(
+            id = id
+          ).transactAndRun
+
+          updatedCollectionCount must_== 0
+        }
+      }
+    }
+    "increase the number of views of a collection by 1 if there is a collection with the given " +
+      "id in the database" in {
+      prop { (userData: UserData, collectionData: SharedCollectionData) ⇒
+
+        WithData(userData, collectionsData) { collectionId ⇒
+          collectionPersistenceServices.increaseViewsByOne(collectionId).transactAndRun
+
+          val collection = getItem[Long, SharedCollection](
+            sql = SharedCollection.Queries.getById,
+            values = collectionId
+          ).transactAndRun
+
+          collection.views must_== collectionData.views + 1
+        }
+      }
+    }
+    "return 0 updated rows if there isn't any collection with the given id in the database" in {
+      prop { (userData: UserData, collectionData: SharedCollectionData) ⇒
+
+        WithData(userData, collectionsData) { collectionId ⇒
+
+          val updatedCollectionCount = collectionPersistenceServices.increaseViewsByOne(
+            id = collectionId * -1
+          ).transactAndRun
+
+          updatedCollectionCount must_== 0
+        }
+      }
+    }
+  }
+
   "updateCollectionInfo" should {
     "return 0 updated rows if the table is empty" in {
       prop { (id: Long, title: CollectionTitle) ⇒
@@ -452,6 +497,56 @@ class ServicesSpec
           ).transactAndRun
 
           updatedCollectionCount must beRight[Int](0)
+        }
+      }
+    }
+  }
+
+  "updatePackages" should {
+    "return a SharedCollectionNotFound error if the table is empty" in {
+      prop { (id: Long, packages: List[Package]) ⇒
+        WithEmptyDatabase {
+          val packagesStats = collectionPersistenceServices.updatePackages(
+            collectionId = id,
+            packages = packages
+          ).transactAndRun
+
+          packagesStats must beLeft[NineCardsError]
+        }
+      }
+    }
+    "return two lists for the recently added and removed packages if there is a collection " +
+      "with the given id in the database" in {
+      prop { (userData: UserData, collectionData: SharedCollectionData, packages: List[Package]) ⇒
+
+        WithData(userData, collectionData) { collectionId ⇒
+
+          val (remainingPackages, packagesPendingRemoving) = collectionData.packages.map(Package).splitAt(5)
+          val newPackages = remainingPackages ++ packages
+
+          val packagesStats = collectionPersistenceServices.updatePackages(
+            collectionId = collectionId,
+            packages = newPackages
+          ).transactAndRun
+
+          packagesStats must beRight[(List[Package], List[Package])].which {
+            case (addedPackages, removedPackages) ⇒
+              addedPackages must containTheSameElementsAs(packages)
+              removedPackages must containTheSameElementsAs(packagesPendingRemoving)
+          }
+        }
+      }
+    }
+    "return a SharedCollectionNotFound error if there isn't any collection with the given id in the database" in {
+      prop { (userData: UserData, collectionData: SharedCollectionData, packages: List[Package]) ⇒
+
+        WithData(userData, collectionData) { collectionId ⇒
+          val packagesStats = collectionPersistenceServices.updatePackages(
+            collectionId = id * -1,
+            packages = packages
+          ).transactAndRun
+
+          packagesStats must beLeft[NineCardsError]
         }
       }
     }
