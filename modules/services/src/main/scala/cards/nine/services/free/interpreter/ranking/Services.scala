@@ -8,7 +8,10 @@ import cards.nine.googleplay.processes.withTypes.WithRedisClient
 import cards.nine.services.free.algebra.Ranking._
 import cards.nine.services.free.domain.Ranking._
 import cats.~>
+import cats.instances.list._
+import cats.instances.map._
 import cats.syntax.either._
+import cats.syntax.semigroup._
 import com.redis.RedisClient
 import com.redis.serialization.{ Format, Parse }
 import io.circe.{ Decoder, Encoder }
@@ -30,23 +33,42 @@ class Services(
     case CountryScope(code) ⇒ CacheKey.countryScope(code.value)
   }
 
+  private[this] def getRankingByScope(scope: GeoScope, wrap: CacheWrapper[CacheKey, CacheVal]) =
+    wrap
+      .get(generateCacheKey(scope))
+      .flatMap(_.ranking)
+      .getOrElse(GoogleAnalyticsRanking(Map.empty))
+
+  private[this] def generateRanking(scope: GeoScope, wrap: CacheWrapper[CacheKey, CacheVal]) =
+    scope match {
+      case WorldScope ⇒
+        getRankingByScope(scope, wrap)
+      case CountryScope(_) ⇒
+        val countryRanking = getRankingByScope(scope, wrap)
+        val worldRanking = getRankingByScope(WorldScope, wrap)
+
+        GoogleAnalyticsRanking(
+          countryRanking.categories.combine(worldRanking.categories).mapValues(_.distinct)
+        )
+    }
+
   def apply[A](fa: Ops[A]): WithRedisClient[A] = fa match {
     case GetRanking(scope) ⇒ client: RedisClient ⇒
       Task.delay {
         val wrap = CacheWrapper[CacheKey, CacheVal](client)
 
-        val value = wrap.get(generateCacheKey(scope))
+        val value = wrap
+          .get(generateCacheKey(scope))
+          .flatMap(_.ranking)
 
-        Either.fromOption(value.flatMap(_.ranking), RankingNotFound(s"Ranking not found for $scope"))
+        Either.fromOption(value, RankingNotFound(s"Ranking not found for $scope"))
       }
 
     case GetRankingForApps(scope, apps) ⇒ client: RedisClient ⇒
       Task.delay {
         val wrap = CacheWrapper[CacheKey, CacheVal](client)
 
-        val rankings = wrap.get(generateCacheKey(scope))
-          .flatMap(_.ranking)
-          .getOrElse(GoogleAnalyticsRanking(Map.empty))
+        val rankings = generateRanking(scope, wrap)
 
         val rankingsByCategory = rankings.categories.filterKeys(c ⇒ !Moment.isMoment(c))
 
@@ -67,9 +89,7 @@ class Services(
       Task.delay {
         val wrap = CacheWrapper[CacheKey, CacheVal](client)
 
-        val rankings = wrap.get(generateCacheKey(scope))
-          .flatMap(_.ranking)
-          .getOrElse(GoogleAnalyticsRanking(Map.empty))
+        val rankings = generateRanking(scope, wrap)
 
         val rankingsByMoment = rankings.categories.filterKeys(moment ⇒ moments.contains(moment))
 
@@ -88,9 +108,7 @@ class Services(
       Task.delay {
         val wrap = CacheWrapper[CacheKey, CacheVal](client)
 
-        val rankings = wrap.get(generateCacheKey(scope))
-          .flatMap(_.ranking)
-          .getOrElse(GoogleAnalyticsRanking(Map.empty))
+        val rankings = generateRanking(scope, wrap)
 
         val rankingsByMoment =
           rankings

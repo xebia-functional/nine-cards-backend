@@ -1,49 +1,51 @@
 package cards.nine.services.free.algebra
 
+import cards.nine.commons.NineCardsService
+import cards.nine.commons.NineCardsService._
 import cards.nine.domain.account._
 import cards.nine.services.free.domain
-import cats.free.{ Free, Inject }
+import cats.free.Inject
 
 object User {
 
   sealed trait Ops[A]
 
-  case class Add(email: Email, apiKey: ApiKey, sessionToken: SessionToken) extends Ops[domain.User]
+  case class Add(email: Email, apiKey: ApiKey, sessionToken: SessionToken) extends Ops[Result[domain.User]]
 
-  case class AddInstallation(user: Long, deviceToken: Option[DeviceToken], androidId: AndroidId) extends Ops[domain.Installation]
+  case class AddInstallation(user: Long, deviceToken: Option[DeviceToken], androidId: AndroidId) extends Ops[Result[domain.Installation]]
 
-  case class GetByEmail(email: Email) extends Ops[Option[domain.User]]
+  case class GetByEmail(email: Email) extends Ops[Result[domain.User]]
 
-  case class GetBySessionToken(sessionToken: SessionToken) extends Ops[Option[domain.User]]
+  case class GetBySessionToken(sessionToken: SessionToken) extends Ops[Result[domain.User]]
 
-  case class GetInstallationByUserAndAndroidId(user: Long, androidId: AndroidId) extends Ops[Option[domain.Installation]]
+  case class GetInstallationByUserAndAndroidId(user: Long, androidId: AndroidId) extends Ops[Result[domain.Installation]]
 
-  case class GetSubscribedInstallationByCollection(collectionPublicId: String) extends Ops[List[domain.Installation]]
+  case class GetSubscribedInstallationByCollection(collectionPublicId: String) extends Ops[Result[List[domain.Installation]]]
 
-  case class UpdateInstallation(user: Long, deviceToken: Option[DeviceToken], androidId: AndroidId) extends Ops[domain.Installation]
+  case class UpdateInstallation(user: Long, deviceToken: Option[DeviceToken], androidId: AndroidId) extends Ops[Result[domain.Installation]]
 
   class Services[F[_]](implicit I: Inject[Ops, F]) {
 
-    def add(email: Email, apiKey: ApiKey, sessionToken: SessionToken): Free[F, domain.User] =
-      Free.inject[Ops, F](Add(email, apiKey, sessionToken))
+    def add(email: Email, apiKey: ApiKey, sessionToken: SessionToken): NineCardsService[F, domain.User] =
+      NineCardsService(Add(email, apiKey, sessionToken))
 
-    def addInstallation(user: Long, deviceToken: Option[DeviceToken], androidId: AndroidId): Free[F, domain.Installation] =
-      Free.inject[Ops, F](AddInstallation(user, deviceToken, androidId))
+    def addInstallation(user: Long, deviceToken: Option[DeviceToken], androidId: AndroidId): NineCardsService[F, domain.Installation] =
+      NineCardsService(AddInstallation(user, deviceToken, androidId))
 
-    def getByEmail(email: Email): Free[F, Option[domain.User]] =
-      Free.inject[Ops, F](GetByEmail(email))
+    def getByEmail(email: Email): NineCardsService[F, domain.User] =
+      NineCardsService(GetByEmail(email))
 
-    def getBySessionToken(sessionToken: SessionToken): Free[F, Option[domain.User]] =
-      Free.inject[Ops, F](GetBySessionToken(sessionToken))
+    def getBySessionToken(sessionToken: SessionToken): NineCardsService[F, domain.User] =
+      NineCardsService(GetBySessionToken(sessionToken))
 
-    def getInstallationByUserAndAndroidId(user: Long, androidId: AndroidId): Free[F, Option[domain.Installation]] =
-      Free.inject[Ops, F](GetInstallationByUserAndAndroidId(user, androidId))
+    def getInstallationByUserAndAndroidId(user: Long, androidId: AndroidId): NineCardsService[F, domain.Installation] =
+      NineCardsService(GetInstallationByUserAndAndroidId(user, androidId))
 
-    def getSubscribedInstallationByCollection(collectionPublicId: String): Free[F, List[domain.Installation]] =
-      Free.inject[Ops, F](GetSubscribedInstallationByCollection(collectionPublicId))
+    def getSubscribedInstallationByCollection(collectionPublicId: String): NineCardsService[F, List[domain.Installation]] =
+      NineCardsService(GetSubscribedInstallationByCollection(collectionPublicId))
 
-    def updateInstallation(user: Long, deviceToken: Option[DeviceToken], androidId: AndroidId): Free[F, domain.Installation] =
-      Free.inject[Ops, F](UpdateInstallation(user, deviceToken, androidId))
+    def updateInstallation(user: Long, deviceToken: Option[DeviceToken], androidId: AndroidId): NineCardsService[F, domain.Installation] =
+      NineCardsService(UpdateInstallation(user, deviceToken, androidId))
   }
 
   object Services {

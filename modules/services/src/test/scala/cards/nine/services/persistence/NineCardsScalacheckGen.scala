@@ -17,6 +17,8 @@ object NineCardsGenEntities {
   case class PublicIdentifier(value: String) extends AnyVal
 
   case class WrongIsoCode2(value: String) extends AnyVal
+
+  case class CollectionTitle(value: String) extends AnyVal
 }
 
 trait NineCardsScalacheckGen {
@@ -30,7 +32,6 @@ trait NineCardsScalacheckGen {
     publishedOn ← timestampGenerator
     author ← Gen.alphaStr
     name ← Gen.alphaStr
-    installations ← Gen.posNum[Int]
     views ← Gen.posNum[Int]
     category ← nonEmptyString(64)
     icon ← nonEmptyString(64)
@@ -42,7 +43,6 @@ trait NineCardsScalacheckGen {
     publishedOn      = publishedOn,
     author           = author,
     name             = name,
-    installations    = installations,
     views            = views,
     category         = category,
     icon             = icon,
@@ -59,6 +59,8 @@ trait NineCardsScalacheckGen {
   implicit val abAndroidId: Arbitrary[AndroidId] = Arbitrary(Gen.uuid.map(u ⇒ AndroidId(u.toString)))
 
   implicit val abApiKey: Arbitrary[ApiKey] = Arbitrary(Gen.uuid.map(u ⇒ ApiKey(u.toString)))
+
+  implicit val abCollectionTitle: Arbitrary[CollectionTitle] = Arbitrary(Gen.alphaStr.map(CollectionTitle))
 
   implicit val abDeviceToken: Arbitrary[DeviceToken] = Arbitrary(Gen.uuid.map(u ⇒ DeviceToken(u.toString)))
 

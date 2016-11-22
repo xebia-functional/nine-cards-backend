@@ -2,88 +2,102 @@ package cards.nine.services.free.interpreter.collection
 
 import java.sql.Timestamp
 
+import cards.nine.commons.ScalazInstances
+import cards.nine.commons.NineCardsErrors.SharedCollectionNotFound
 import cards.nine.domain.application.Package
 import cards.nine.domain.pagination.Page
+import cards.nine.services.common.PersistenceService
+import cards.nine.services.common.PersistenceService._
 import cards.nine.services.free.algebra.SharedCollection._
 import cards.nine.services.free.domain.SharedCollection.Queries
 import cards.nine.services.free.domain._
 import cards.nine.services.free.interpreter.collection.Services.SharedCollectionData
 import cards.nine.services.persistence.Persistence
-import cats.~>
+import cats.syntax.either._
+import cats.{ Monad, ~> }
 import doobie.contrib.postgresql.pgtypes._
-import doobie.imports.{ Composite, ConnectionIO }
+import doobie.imports.ConnectionIO
 import shapeless.syntax.std.product._
-import scalaz.Scalaz._
 
 class Services(
   collectionPersistence: Persistence[SharedCollection]
-) extends (Ops ~> ConnectionIO) {
+)(implicit connectionIOMonad: Monad[ConnectionIO]) extends (Ops ~> ConnectionIO) {
 
-  def add[K: Composite](data: SharedCollectionData): ConnectionIO[K] =
-    collectionPersistence.updateWithGeneratedKeys[K](
-      sql    = Queries.insert,
-      fields = SharedCollection.allFields,
-      values = data.toTuple
-    )
-
-  def getById(id: Long): ConnectionIO[Option[SharedCollection]] =
-    collectionPersistence.fetchOption(Queries.getById, id)
-
-  def getByPublicIdentifier(publicIdentifier: String): ConnectionIO[Option[SharedCollection]] =
-    collectionPersistence.fetchOption(Queries.getByPublicIdentifier, publicIdentifier)
-
-  def getByUser(user: Long): ConnectionIO[List[SharedCollectionWithAggregatedInfo]] =
-    collectionPersistence.fetchListAs(Queries.getByUser, user)
-
-  def getLatestByCategory(
-    category: String,
-    pageParams: Page
-  ): ConnectionIO[List[SharedCollection]] =
-    collectionPersistence.fetchList(
-      sql    = Queries.getLatestByCategory,
-      values = (category, pageParams.pageSize, pageParams.pageNumber)
-    )
-
-  def getTopByCategory(
-    category: String,
-    pageParams: Page
-  ): ConnectionIO[List[SharedCollection]] =
-    collectionPersistence.fetchList(
-      sql    = Queries.getTopByCategory,
-      values = (category, pageParams.pageSize, pageParams.pageNumber)
-    )
-
-  def updateCollectionInfo(
-    id: Long,
-    title: String
-  ): ConnectionIO[Int] =
-    collectionPersistence.update(
-      sql    = Queries.update,
-      values = (title, id)
-    )
-
-  def updatePackages(collectionId: Long, packages: List[Package]): ConnectionIO[(List[Package], List[Package])] = {
-    val emptyResponse = (List.empty[Package], List.empty[Package]).point[ConnectionIO]
-
-    collectionPersistence.fetchOption(Queries.getById, collectionId) flatMap {
-      case None ⇒ emptyResponse
-      case Some(collection) ⇒
-        val existingPackages = collection.packages map Package
-        val newPackages = packages diff existingPackages
-        val removedPackages = existingPackages diff packages
-
-        if (newPackages.nonEmpty || removedPackages.nonEmpty)
-          collectionPersistence.update(Queries.updatePackages, (packages map (_.value), collectionId)) map {
-            _ ⇒ (newPackages, removedPackages)
-          }
-        else
-          emptyResponse
+  def add(data: SharedCollectionData): PersistenceService[SharedCollection] =
+    PersistenceService {
+      collectionPersistence.updateWithGeneratedKeys(
+        sql    = Queries.insert,
+        fields = SharedCollection.allFields,
+        values = data.toTuple
+      )
     }
-  }
+
+  def getById(id: Long): PersistenceService[SharedCollection] =
+    collectionPersistence.fetchOption(Queries.getById, id) map (
+      Either.fromOption(_, SharedCollectionNotFound("Shared collection not found"))
+    )
+
+  def getByPublicIdentifier(publicIdentifier: String): PersistenceService[SharedCollection] =
+    collectionPersistence.fetchOption(
+      sql    = Queries.getByPublicIdentifier,
+      values = publicIdentifier
+    ) map (
+      Either.fromOption(_, SharedCollectionNotFound(s"Shared collection with public identifier $publicIdentifier doesn't exist"))
+    )
+
+  def getByUser(user: Long): PersistenceService[List[SharedCollectionWithAggregatedInfo]] =
+    PersistenceService {
+      collectionPersistence.fetchListAs[SharedCollectionWithAggregatedInfo](
+        sql    = Queries.getByUser,
+        values = user
+      )
+    }
+
+  def getLatestByCategory(category: String, pageParams: Page): PersistenceService[List[SharedCollection]] =
+    PersistenceService {
+      collectionPersistence.fetchList(
+        sql    = Queries.getLatestByCategory,
+        values = (category, pageParams.pageSize, pageParams.pageNumber)
+      )
+    }
+
+  def getTopByCategory(category: String, pageParams: Page): PersistenceService[List[SharedCollection]] =
+    PersistenceService {
+      collectionPersistence.fetchList(
+        sql    = Queries.getTopByCategory,
+        values = (category, pageParams.pageSize, pageParams.pageNumber)
+      )
+    }
+
+  def updateCollectionInfo(id: Long, title: String): PersistenceService[Int] =
+    PersistenceService {
+      collectionPersistence.update(
+        sql    = Queries.update,
+        values = (title, id)
+      )
+    }
+
+  def updatePackages(collectionId: Long, packages: List[Package]): PersistenceService[(List[Package], List[Package])] = {
+
+    def updatePackagesInfo(newPackages: List[Package], removedPackages: List[Package]) =
+      if (newPackages.nonEmpty || removedPackages.nonEmpty)
+        PersistenceService(collectionPersistence
+          .update(Queries.updatePackages, (packages map (_.value), collectionId)))
+      else
+        PersistenceService(0)
+
+    for {
+      collection ← getById(collectionId).toEitherT
+      existingPackages = collection.packages map Package
+      newPackages = packages diff existingPackages
+      removedPackages = existingPackages diff packages
+      _ ← updatePackagesInfo(newPackages, removedPackages).toEitherT
+    } yield (newPackages, removedPackages)
+  }.value
 
   def apply[A](fa: Ops[A]): ConnectionIO[A] = fa match {
     case Add(collection) ⇒
-      add[SharedCollection](collection)
+      add(collection)
     case GetById(id) ⇒
       getById(id)
     case GetByPublicId(publicId) ⇒
@@ -109,7 +123,6 @@ object Services {
     publishedOn: Timestamp,
     author: String,
     name: String,
-    installations: Int,
     views: Int,
     category: String,
     icon: String,
@@ -117,9 +130,9 @@ object Services {
     packages: List[String]
   )
 
-  def services(
-    implicit
-    collectionPersistence: Persistence[SharedCollection]
-  ) = new Services(collectionPersistence)
+  implicit val connectionIOMonad: Monad[ConnectionIO] = ScalazInstances[ConnectionIO].monadInstance
+
+  def services(implicit collectionPersistence: Persistence[SharedCollection]) =
+    new Services(collectionPersistence)
 }
 

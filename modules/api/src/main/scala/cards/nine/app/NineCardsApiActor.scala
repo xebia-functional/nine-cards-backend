@@ -1,6 +1,7 @@
-package cards.nine.api
+package cards.nine.app
 
 import akka.actor.Actor
+import cards.nine.api.{ AuthHeadersRejectionHandler, NineCardsExceptionHandler, NineCardsRoutes }
 import cards.nine.commons.config.NineCardsConfig
 import spray.routing.HttpService
 import spray.routing.authentication.{ BasicAuth, BasicHttpAuthenticator, UserPass }

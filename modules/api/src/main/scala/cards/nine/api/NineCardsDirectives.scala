@@ -7,12 +7,14 @@ import cards.nine.api.NineCardsHeaders._
 import cards.nine.api.messages.UserMessages.ApiLoginRequest
 import cards.nine.api.utils.SprayMatchers.PriceFilterSegment
 import cards.nine.api.utils.TaskDirectives._
+import cards.nine.commons.NineCardsService._
 import cards.nine.commons.config.Domain.NineCardsConfiguration
 import cards.nine.domain.account._
 import cards.nine.domain.application.PriceFilter
-import cards.nine.domain.market.{ MarketToken, Localization }
+import cards.nine.domain.market.{ Localization, MarketToken }
 import cards.nine.processes.NineCardsServices._
 import cards.nine.processes._
+import cats.syntax.either._
 import org.joda.time.DateTime
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
@@ -35,6 +37,7 @@ class NineCardsDirectives(
   with MarshallingDirectives
   with MiscDirectives
   with PathDirectives
+  with RouteDirectives
   with SecurityDirectives
   with JsonFormats {
 
@@ -53,17 +56,17 @@ class NineCardsDirectives(
   } yield sessionToken
 
   def validateLoginRequest(email: Email, tokenId: GoogleIdToken): Task[Authentication[Unit]] =
-    (email, tokenId) match {
-      case (e, o) if e.value.isEmpty || o.value.isEmpty ⇒
-        Task.now(Left(rejectionByCredentialsRejected))
-      case _ ⇒
-        googleApiProcesses.checkGoogleTokenId(email, tokenId).foldMap(prodInterpreters) map {
-          case true ⇒ Right(())
-          case _ ⇒ Left(rejectionByCredentialsRejected)
-        } handle {
+    if (email.value.isEmpty || tokenId.value.isEmpty)
+      Task.now(Left(rejectionByCredentialsRejected))
+    else
+      googleApiProcesses
+        .checkGoogleTokenId(email, tokenId)
+        .leftMap(_ ⇒ rejectionByCredentialsRejected)
+        .value
+        .foldMap(prodInterpreters)
+        .handle {
           case _ ⇒ Left(rejectionByCredentialsRejected)
         }
-    }
 
   def authenticateUser: Directive1[UserContext] = for {
     uri ← requestUri
@@ -94,10 +97,9 @@ class NineCardsDirectives(
       androidId    = androidId,
       authToken    = authToken,
       requestUri   = requestUri.toString
-    ).foldMap(prodInterpreters) map {
-      case Some(v) ⇒ Right(v)
-      case None ⇒
-        Left(rejectionByCredentialsRejected)
+    ).foldMap(prodInterpreters) map { result ⇒
+      //TODO: Provide more details about the cause of the rejection with a custom rejection handler
+      result.leftMap(_ ⇒ rejectionByCredentialsRejected)
     } handle {
       case _ ⇒ Left(rejectionByCredentialsRejected)
     }
