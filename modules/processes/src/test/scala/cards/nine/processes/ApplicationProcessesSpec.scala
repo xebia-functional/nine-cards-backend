@@ -1,11 +1,12 @@
 package cards.nine.processes
 
+import cards.nine.commons.NineCardsService
+import cards.nine.commons.NineCardsService._
 import cards.nine.domain.account.AndroidId
 import cards.nine.domain.application.{ CardList, FullCard, Package }
 import cards.nine.domain.market.{ Localization, MarketCredentials, MarketToken }
 import cards.nine.processes.NineCardsServices._
 import cards.nine.services.free.algebra.GooglePlay.Services
-import cats.free.Free
 import org.specs2.matcher.Matchers
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
@@ -24,13 +25,6 @@ trait ApplicationProcessesSpecification
     implicit val applicationProcesses = new ApplicationProcesses[NineCardsServices]
 
   }
-
-  trait SuccessfulScope extends BasicScope {
-
-    googlePlayServices.resolveManyDetailed(packagesName, marketAuth) returns Free.pure(appsInfo)
-
-  }
-
 }
 
 trait ApplicationProcessesContext {
@@ -76,19 +70,21 @@ class ApplicationProcessesSpec extends ApplicationProcessesSpecification {
   "getAppsInfo" should {
     "return an empty response without calling the Google Play service if an empty list of" +
       "packages name is passed" in new BasicScope {
-        val response = applicationProcesses.getAppsInfo(Nil, marketAuth)
 
-        response.foldMap(testInterpreters) must_== emptyGetAppsInfoResponse
+        applicationProcesses.getAppsInfo(Nil, marketAuth).foldMap(testInterpreters) must beRight(emptyGetAppsInfoResponse)
       }
 
-    "return a valid response if a non empty list of packages name is passed" in new SuccessfulScope {
-      val response = applicationProcesses.getAppsInfo(packagesName, marketAuth)
+    "return a valid response if a non empty list of packages name is passed" in new BasicScope {
 
-      response.foldMap(testInterpreters) must beLike[CardList[FullCard]] {
-        case r ⇒
-          r.missing must_== missing
-          r.cards must_== apps
-      }
+      googlePlayServices.resolveManyDetailed(packagesName, marketAuth) returns
+        NineCardsService.right(appsInfo)
+
+      applicationProcesses
+        .getAppsInfo(packagesName, marketAuth)
+        .foldMap(testInterpreters) must beRight[CardList[FullCard]].which { response ⇒
+          response.missing must_== missing
+          response.cards must_== apps
+        }
     }
   }
 }

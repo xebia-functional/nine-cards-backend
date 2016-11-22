@@ -1,7 +1,9 @@
 package cards.nine.processes
 
-import cards.nine.commons.FreeUtils._
 import cards.nine.commons.config.Domain.NineCardsConfiguration
+import cards.nine.commons.NineCardsErrors.{ AuthTokenNotValid, InstallationNotFound, UserNotFound }
+import cards.nine.commons.NineCardsService
+import cards.nine.commons.NineCardsService.NineCardsService
 import cards.nine.domain.account._
 import cards.nine.processes.converters.Converters._
 import cards.nine.processes.messages.InstallationsMessages._
@@ -9,7 +11,6 @@ import cards.nine.processes.messages.UserMessages._
 import cards.nine.processes.utils.HashUtils
 import cards.nine.services.free.algebra
 import cards.nine.services.free.domain._
-import cats.free.Free
 
 class UserProcesses[F[_]](
   implicit
@@ -18,81 +19,66 @@ class UserProcesses[F[_]](
   hashUtils: HashUtils
 ) {
 
-  val userNotFound: Option[Long] = None
+  def signUpUser(request: LoginRequest): NineCardsService[F, LoginResponse] = {
 
-  def signUpUser(loginRequest: LoginRequest): Free[F, LoginResponse] =
-    userServices.getByEmail(loginRequest.email) flatMap {
-      case Some(user) ⇒
-        signUpInstallation(loginRequest.androidId, user)
-      case None ⇒
-        val apiKey = ApiKey(hashUtils.hashValue(loginRequest.sessionToken.value))
+    def signupUserAndInstallation = {
+      val apiKey = ApiKey(hashUtils.hashValue(request.sessionToken.value))
 
-        for {
-          newUser ← userServices.add(
-            email        = loginRequest.email,
-            apiKey       = apiKey,
-            sessionToken = loginRequest.sessionToken
-          )
-          installation ← userServices.addInstallation(
-            user        = newUser.id,
-            deviceToken = None,
-            androidId   = loginRequest.androidId
-          )
-        } yield (newUser, installation)
-    } map toLoginResponse
-
-  private def signUpInstallation(androidId: AndroidId, user: User) =
-    userServices.getInstallationByUserAndAndroidId(user.id, androidId) flatMap {
-      case Some(installation) ⇒
-        (user, installation).toFree
-      case None ⇒
-        userServices.addInstallation(user.id, None, androidId) map {
-          installation ⇒ (user, installation)
-        }
+      for {
+        user ← userServices.add(request.email, apiKey, request.sessionToken)
+        installation ← userServices.addInstallation(user.id, deviceToken = None, androidId = request.androidId)
+      } yield (user, installation)
     }
 
-  def updateInstallation(request: UpdateInstallationRequest): Free[F, UpdateInstallationResponse] =
+    def signUpInstallation(androidId: AndroidId, user: User) =
+      userServices.getInstallationByUserAndAndroidId(user.id, androidId)
+        .recoverWith {
+          case _: InstallationNotFound ⇒ userServices.addInstallation(user.id, None, androidId)
+        }
+
+    val userInfo = for {
+      u ← userServices.getByEmail(request.email)
+      i ← signUpInstallation(request.androidId, u)
+    } yield (u, i)
+
+    userInfo
+      .recoverWith {
+        case _: UserNotFound ⇒ signupUserAndInstallation
+      }
+      .map(toLoginResponse)
+  }
+
+  def updateInstallation(request: UpdateInstallationRequest): NineCardsService[F, UpdateInstallationResponse] =
     userServices.updateInstallation(
       user        = request.userId,
       androidId   = request.androidId,
       deviceToken = request.deviceToken
-    ) map toUpdateInstallationResponse
+    ).map(toUpdateInstallationResponse)
 
   def checkAuthToken(
     sessionToken: SessionToken,
     androidId: AndroidId,
     authToken: String,
     requestUri: String
-  ): Free[F, Option[Long]] =
-    userServices.getBySessionToken(sessionToken) flatMap {
-      case Some(user) ⇒
-        if (config.debugMode.getOrElse(false))
-          Option(user.id).toFree
-        else
-          validateAuthToken(user, androidId, authToken, requestUri)
-      case _ ⇒ userNotFound.toFree
+  ): NineCardsService[F, Long] = {
+
+    def validateAuthToken(user: User) = {
+      val debugMode = config.debugMode.getOrElse(false)
+      val expectedAuthToken = hashUtils.hashValue(requestUri, user.apiKey.value, None)
+
+      if (debugMode || expectedAuthToken.equals(authToken))
+        NineCardsService.right[F, Unit](Unit)
+      else
+        NineCardsService.left[F, Unit](AuthTokenNotValid("The provided auth token is not valid"))
     }
 
-  private[this] def validateAuthToken(
-    user: User,
-    androidId: AndroidId,
-    authToken: String,
-    requestUri: String
-  ) = {
-    val expectedAuthToken = hashUtils.hashValue(
-      text      = requestUri,
-      secretKey = user.apiKey.value,
-      salt      = None
-    )
-
-    if (expectedAuthToken.equals(authToken))
-      userServices.getInstallationByUserAndAndroidId(
-        user      = user.id,
-        androidId = androidId
-      ).map(_ map (_ ⇒ user.id))
-    else
-      userNotFound.toFree[F]
+    for {
+      user ← userServices.getBySessionToken(sessionToken)
+      _ ← validateAuthToken(user)
+      installation ← userServices.getInstallationByUserAndAndroidId(user.id, androidId)
+    } yield user.id
   }
+
 }
 
 object UserProcesses {

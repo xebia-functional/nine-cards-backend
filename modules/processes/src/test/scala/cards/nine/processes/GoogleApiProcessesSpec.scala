@@ -1,11 +1,12 @@
 package cards.nine.processes
 
-import cats.data.Xor
-import cats.free.Free
+import cards.nine.commons.NineCardsErrors.{ WrongEmailAccount, WrongGoogleAuthToken }
+import cards.nine.commons.NineCardsService
+import cards.nine.commons.NineCardsService._
 import cards.nine.domain.account._
 import cards.nine.processes.NineCardsServices._
 import cards.nine.services.free.algebra.GoogleApi.Services
-import cards.nine.services.free.domain.{ TokenInfo, WrongTokenInfo }
+import cards.nine.services.free.domain.TokenInfo
 import org.specs2.ScalaCheck
 import org.specs2.matcher.Matchers
 import org.specs2.mock.Mockito
@@ -16,31 +17,7 @@ trait GoogleApiProcessesSpecification
   extends Specification
   with Matchers
   with Mockito
-  with GoogleApiProcessesContext
   with TestInterpreters {
-
-  trait BasicScope extends Scope {
-
-    implicit val googleApiServices: Services[NineCardsServices] = mock[Services[NineCardsServices]]
-    implicit val googleApiProcesses = new GoogleApiProcesses[NineCardsServices]
-
-  }
-
-  trait SuccessfulScope extends BasicScope {
-
-    googleApiServices.getTokenInfo(GoogleIdToken(any[String])) returns Free.pure(Xor.right(tokenInfo))
-
-  }
-
-  trait UnsuccessfulScope extends BasicScope {
-
-    googleApiServices.getTokenInfo(GoogleIdToken(any[String])) returns Free.pure(Xor.left(wrongTokenInfo))
-
-  }
-
-}
-
-trait GoogleApiProcessesContext {
 
   val email = Email("valid.email@test.com")
 
@@ -48,12 +25,20 @@ trait GoogleApiProcessesContext {
 
   val tokenId = GoogleIdToken("eyJhbGciOiJSUzI1NiIsImtpZCI6IjcxMjI3MjFlZWQwYjQ1YmUxNWUzMGI2YThhOThjOTM3ZTJlNmQxN")
 
-  val tokenInfo = TokenInfo(
-    email_verified = "true",
-    email          = email.value
-  )
+  val tokenInfo = TokenInfo("true", email.value)
 
-  val wrongTokenInfo = WrongTokenInfo(error_description = "Invalid Value")
+  val wrongEmailAccountError = WrongEmailAccount(message = "The given email account is not valid")
+
+  val wrongAuthTokenError = WrongGoogleAuthToken(message = "Invalid Value")
+
+  trait BasicScope extends Scope {
+
+    implicit val googleApiServices: Services[NineCardsServices] = mock[Services[NineCardsServices]]
+
+    val googleApiProcesses = new GoogleApiProcesses[NineCardsServices]
+
+  }
+
 }
 
 class GoogleApiProcessesSpec
@@ -61,22 +46,31 @@ class GoogleApiProcessesSpec
   with ScalaCheck {
 
   "checkGoogleTokenId" should {
-    "return true if the given tokenId is valid" in new SuccessfulScope {
-      val tokenIdValidation = googleApiProcesses.checkGoogleTokenId(email, tokenId)
+    "return true if the given tokenId is valid" in new BasicScope {
 
-      tokenIdValidation.foldMap(testInterpreters) should beTrue
+      googleApiServices.getTokenInfo(GoogleIdToken(any[String])) returns NineCardsService.right(tokenInfo)
+
+      googleApiProcesses
+        .checkGoogleTokenId(email, tokenId)
+        .foldMap(testInterpreters) must beRight[Unit]
     }
 
-    "return false if the given tokenId is valid but the given email address is different" in new SuccessfulScope {
-      val tokenIdValidation = googleApiProcesses.checkGoogleTokenId(wrongEmail, tokenId)
+    "return false if the given tokenId is valid but the given email address is different" in new BasicScope {
 
-      tokenIdValidation.foldMap(testInterpreters) should beFalse
+      googleApiServices.getTokenInfo(GoogleIdToken(any[String])) returns NineCardsService.right(tokenInfo)
+
+      googleApiProcesses
+        .checkGoogleTokenId(wrongEmail, tokenId)
+        .foldMap(testInterpreters) must beLeft(wrongEmailAccountError)
     }
 
-    "return false if the given tokenId is not valid" in new UnsuccessfulScope {
-      val tokenIdValidation = googleApiProcesses.checkGoogleTokenId(email, tokenId)
+    "return a WrongGoogleAuthToken error if the given tokenId is not valid" in new BasicScope {
 
-      tokenIdValidation.foldMap(testInterpreters) should beFalse
+      googleApiServices.getTokenInfo(GoogleIdToken(any[String])) returns NineCardsService.left(wrongAuthTokenError)
+
+      googleApiProcesses
+        .checkGoogleTokenId(email, tokenId)
+        .foldMap(testInterpreters) must beLeft(wrongAuthTokenError)
     }
   }
 }

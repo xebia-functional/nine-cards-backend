@@ -1,14 +1,15 @@
 package cards.nine.services.free.interpreter.googleapi
 
+import cards.nine.commons.NineCardsErrors.{ NineCardsError, WrongGoogleAuthToken }
+import cards.nine.commons.NineCardsService.Result
 import cards.nine.commons.config.Domain.{ GoogleApiConfiguration, GoogleApiTokenInfo }
-import cats.data.Xor
 import cards.nine.domain.account.GoogleIdToken
-import cards.nine.services.free.domain.{ TokenInfo, WrongTokenInfo }
+import cards.nine.services.free.domain.TokenInfo
 import cards.nine.services.utils.MockServerService
 import org.mockserver.model.HttpRequest._
 import org.mockserver.model.HttpResponse._
-import org.mockserver.model.HttpStatusCode
-import org.specs2.matcher.{ DisjunctionMatchers, XorMatchers }
+import org.mockserver.model.HttpStatusCode._
+import org.specs2.matcher.DisjunctionMatchers
 import org.specs2.mutable.Specification
 
 object GoogleApiServerResponse {
@@ -79,7 +80,7 @@ trait MockGoogleApiServer extends MockServerService {
   )
     .respond(
       response
-        .withStatusCode(HttpStatusCode.OK_200.code)
+        .withStatusCode(OK_200.code)
         .withHeader(jsonHeader)
         .withBody(getTokenInfoValidResponse)
     )
@@ -92,7 +93,7 @@ trait MockGoogleApiServer extends MockServerService {
   )
     .respond(
       response
-        .withStatusCode(HttpStatusCode.OK_200.code)
+        .withStatusCode(OK_200.code)
         .withHeader(jsonHeader)
         .withBody(getTokenInfoValidResponseWithoutHd)
     )
@@ -105,7 +106,7 @@ trait MockGoogleApiServer extends MockServerService {
   )
     .respond(
       response
-        .withStatusCode(HttpStatusCode.OK_200.code)
+        .withStatusCode(OK_200.code)
         .withHeader(jsonHeader)
         .withBody(getTokenInfoWrongResponse)
     )
@@ -118,15 +119,14 @@ trait MockGoogleApiServer extends MockServerService {
   )
     .respond(
       response
-        .withStatusCode(HttpStatusCode.INTERNAL_SERVER_ERROR_500.code)
+        .withStatusCode(INTERNAL_SERVER_ERROR_500.code)
     )
 }
 
 class GoogleApiServicesSpec
   extends Specification
   with DisjunctionMatchers
-  with MockGoogleApiServer
-  with XorMatchers {
+  with MockGoogleApiServer {
 
   val config = GoogleApiConfiguration(
     protocol  = "http",
@@ -144,26 +144,26 @@ class GoogleApiServicesSpec
     "return the TokenInfo object when a valid token id is provided" in {
       val response = googleApiServices.getTokenInfo(GoogleIdToken(validTokenId))
 
-      response.unsafePerformSyncAttempt should be_\/-[WrongTokenInfo Xor TokenInfo].which {
+      response.unsafePerformSyncAttempt should be_\/-[Result[TokenInfo]].which {
         content ⇒
-          content should beXorRight[TokenInfo]
+          content must beRight[TokenInfo]
       }
     }
     "return the TokenInfo object when a valid token id is provided and the hd field isn't" +
       "included into the response" in {
         val response = googleApiServices.getTokenInfo(GoogleIdToken(otherTokenId))
 
-        response.unsafePerformSyncAttempt should be_\/-[WrongTokenInfo Xor TokenInfo].which {
+        response.unsafePerformSyncAttempt should be_\/-[Result[TokenInfo]].which {
           content ⇒
-            content should beXorRight[TokenInfo]
+            content must beRight[TokenInfo]
         }
       }
-    "return a WrongTokenInfo object when a wrong token id is provided" in {
+    "return a WrongGoogleAuthToken error when a wrong token id is provided" in {
       val result = googleApiServices.getTokenInfo(GoogleIdToken(wrongTokenId))
 
-      result.unsafePerformSyncAttempt should be_\/-[WrongTokenInfo Xor TokenInfo].which {
+      result.unsafePerformSyncAttempt should be_\/-[Result[TokenInfo]].which {
         content ⇒
-          content should beXorLeft[WrongTokenInfo]
+          content must beLeft[NineCardsError](WrongGoogleAuthToken("Invalid Value"))
       }
     }
     "return an exception when something fails during the call to the Google API" in {

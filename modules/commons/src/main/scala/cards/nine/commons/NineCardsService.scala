@@ -1,6 +1,8 @@
 package cards.nine.commons
 
 import cards.nine.commons.NineCardsErrors.NineCardsError
+import cats.{ Monad, RecursiveTailRecM }
+import cats.arrow.FunctionK
 import cats.data.EitherT
 import cats.free.{ :<:, Free }
 import cats.syntax.either._
@@ -15,7 +17,7 @@ object NineCardsService {
     EitherT[Free[F, ?], NineCardsError, A](f)
   }
 
-  def apply[Ops[_], F[_], A](op: Ops[Result[A]])(implicit inj: Ops :<: F): NineCardsService[F, A] =
+  def apply[Ops[_], F[_], A](op: Ops[Result[A]])(implicit I: Ops :<: F): NineCardsService[F, A] =
     apply[F, A](Free.inject[Ops, F](op))
 
   def fromEither[F[_], A](e: Result[A]) = NineCardsService[F, A](Free.pure(e))
@@ -23,4 +25,10 @@ object NineCardsService {
   def left[F[_], A](e: NineCardsError) = NineCardsService[F, A](Free.pure(Either.left(e)))
 
   def right[F[_], A](a: A): NineCardsService[F, A] = NineCardsService[F, A](Free.pure(Either.right(a)))
+
+  implicit class NineCardsServiceOps[F[_], A](service: NineCardsService[F, A]) {
+
+    def foldMap[M[_]](f: FunctionK[F, M])(implicit M: Monad[M], r: RecursiveTailRecM[M]): M[Result[A]] =
+      service.value.foldMap(f)
+  }
 }

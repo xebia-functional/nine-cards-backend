@@ -4,7 +4,7 @@ import doobie.imports.{ Composite, ConnectionIO, Query, Query0, Update, Update0 
 import shapeless.HNil
 import scalaz.Foldable
 
-class Persistence[K: Composite](val supportsSelectForUpdate: Boolean = true) {
+class Persistence[K: Composite] {
 
   def generateQuery(sql: String): Query0[K] =
     Query[HNil, K](sql).toQuery0(HNil)
@@ -43,18 +43,11 @@ class Persistence[K: Composite](val supportsSelectForUpdate: Boolean = true) {
 
   def update(sql: String): ConnectionIO[Int] = Update[HNil](sql).run(HNil)
 
-  def update[A](sql: String, values: A)(implicit A: Composite[A]): ConnectionIO[Int] =
+  def update[A: Composite](sql: String, values: A): ConnectionIO[Int] =
     Update[A](sql).run(values)
 
-  class UpdateWithGeneratedKeys[L] {
-
-    def apply[A: Composite](sql: String, fields: List[String], values: A)(implicit K: Composite[L]): ConnectionIO[L] = {
-      val prefix = if (supportsSelectForUpdate) fields else List("id")
-      Update[A](sql).withUniqueGeneratedKeys[L](prefix: _*)(values)
-    }
-  }
-
-  def updateWithGeneratedKeys[L] = new UpdateWithGeneratedKeys[L]
+  def updateWithGeneratedKeys[A: Composite](sql: String, fields: List[String], values: A): ConnectionIO[K] =
+    Update[A](sql).withUniqueGeneratedKeys[K](fields: _*)(values)
 
   def updateMany[F[_]: Foldable, A: Composite](sql: String, values: F[A]): ConnectionIO[Int] =
     Update[A](sql).updateMany(values)

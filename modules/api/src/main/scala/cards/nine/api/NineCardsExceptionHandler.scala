@@ -1,6 +1,5 @@
 package cards.nine.api
 
-import cards.nine.processes.ProcessesExceptions.SharedCollectionNotFoundException
 import cards.nine.services.persistence.PersistenceExceptions.PersistenceException
 import org.http4s.client.UnexpectedStatus
 import spray.http.StatusCodes._
@@ -22,16 +21,10 @@ trait NineCardsExceptionHandler extends HttpService {
             log.warning("Request to {} could not be handled normally", uri)
             complete(InternalServerError, Option(e.getMessage).getOrElse("Persistence error"))
         }
-      case e: SharedCollectionNotFoundException ⇒
-        requestUri {
-          uri ⇒
-            log.warning("Shared collection not found: {}", uri)
-            complete(NotFound, e.getMessage)
-        }
       case e: messages.rankings.Reload.InvalidDate ⇒
         requestUri { uri ⇒
           log.warning("Request to {} could not be handled normally", uri)
-          complete(BadRequest, e.getMessage)
+          complete(BadRequest, e.getMessage())
         }
       case e: messages.rankings.Reload.Error ⇒
         requestUri { uri ⇒

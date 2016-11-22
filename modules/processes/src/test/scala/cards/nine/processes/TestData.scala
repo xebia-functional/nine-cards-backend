@@ -3,7 +3,7 @@ package cards.nine.processes
 import java.sql.Timestamp
 import java.time.Instant
 
-import cards.nine.commons.NineCardsErrors.{ CountryNotFound, RankingNotFound }
+import cards.nine.commons.NineCardsErrors.{ CountryNotFound, RankingNotFound, SharedCollectionNotFound }
 import cards.nine.commons.NineCardsService
 import cards.nine.domain.account.{ AndroidId, DeviceToken }
 import cards.nine.domain.analytics._
@@ -11,10 +11,9 @@ import cards.nine.domain.application.{ CardList, FullCard, Package, Widget }
 import cards.nine.domain.market.{ Localization, MarketCredentials, MarketToken }
 import cards.nine.domain.pagination.Page
 import cards.nine.processes.NineCardsServices.NineCardsServices
-import cards.nine.processes.ProcessesExceptions.SharedCollectionNotFoundException
 import cards.nine.processes.converters.Converters
 import cards.nine.processes.messages.SharedCollectionMessages._
-import cards.nine.services.free.domain.Firebase.{ NotificationIndividualResult, NotificationResponse }
+import cards.nine.services.free.domain.Firebase.{ NotificationIndividualResult, SendNotificationResponse }
 import cards.nine.services.free.domain.Ranking.GoogleAnalyticsRanking
 import cards.nine.services.free.domain.{ SharedCollection ⇒ SharedCollectionServices, _ }
 import cards.nine.services.free.interpreter.collection.Services.{ SharedCollectionData ⇒ SharedCollectionDataServices }
@@ -179,7 +178,7 @@ object TestData {
 
     val countryNotFoundError = CountryNotFound(s"Country with ISO code2 US doesn't exist")
 
-    val nonExistentSharedCollection: Option[SharedCollectionServices] = None
+    val sharedCollectionNotFoundError = SharedCollectionNotFound("Shared collection not found")
 
     val createPackagesStats = PackagesStats(packagesName.size, None)
 
@@ -196,18 +195,16 @@ object TestData {
       androidId   = androidId
     )
 
-    val notificationResponse = NotificationResponse(
-      multicast_id  = multicastId,
-      success       = success,
-      failure       = failure,
-      canonical_ids = canonicalId,
-      results       = Option(
-        List(NotificationIndividualResult(
-          message_id      = Option(messageId),
-          registration_id = None,
-          error           = None
-        ))
-      )
+    val sendNotificationResponse = SendNotificationResponse(
+      multicastIds = List(multicastId),
+      success      = success,
+      failure      = failure,
+      canonicalIds = canonicalId,
+      results      = List(NotificationIndividualResult(
+        message_id      = Option(messageId),
+        registration_id = None,
+        error           = None
+      ))
     )
 
     val sharedCollectionDataServices = SharedCollectionDataServices(
@@ -308,13 +305,6 @@ object TestData {
       data = sharedCollectionWithAppsInfo
     )
 
-  }
-
-  object Exceptions {
-
-    val sharedCollectionNotFoundException = SharedCollectionNotFoundException(
-      message = "The required shared collection doesn't exist"
-    )
   }
 
   object rankings {

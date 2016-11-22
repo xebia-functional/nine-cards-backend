@@ -1,6 +1,9 @@
 package cards.nine.processes
 
 import cards.nine.commons.config.DummyConfig
+import cards.nine.commons.NineCardsErrors._
+import cards.nine.commons.NineCardsService
+import cards.nine.commons.NineCardsService._
 import cards.nine.domain.account._
 import cards.nine.processes.NineCardsServices._
 import cards.nine.processes.messages.InstallationsMessages._
@@ -8,7 +11,6 @@ import cards.nine.processes.messages.UserMessages.{ LoginRequest, LoginResponse 
 import cards.nine.processes.utils.HashUtils
 import cards.nine.services.free.algebra
 import cards.nine.services.free.domain.{ Installation, User }
-import cats.free.Free
 import com.roundeights.hasher.Hasher
 import org.mockito.Matchers.{ eq ⇒ mockEq }
 import org.specs2.ScalaCheck
@@ -33,46 +35,48 @@ trait UserProcessesSpecification
 
   trait UserAndInstallationSuccessfulScope extends BasicScope {
 
-    userServices.getByEmail(Email(mockEq(email))) returns Free.pure(Option(user))
+    userServices.getByEmail(Email(mockEq(email))) returns NineCardsService.right(user)
 
     userServices.getInstallationByUserAndAndroidId(mockEq(userId), AndroidId(mockEq(androidId))) returns
-      Free.pure(Option(installation))
+      NineCardsService.right(installation)
 
     userServices.updateInstallation(mockEq(userId), mockEq(Option(DeviceToken(deviceToken))), AndroidId(mockEq(androidId))) returns
-      Free.pure(installation)
+      NineCardsService.right(installation)
 
     userServices.getBySessionToken(SessionToken(mockEq(sessionToken))) returns
-      Free.pure(Option(user))
+      NineCardsService.right(user)
 
     userServices.getInstallationByUserAndAndroidId(mockEq(userId), AndroidId(mockEq(androidId))) returns
-      Free.pure(Option(installation))
+      NineCardsService.right(installation)
   }
 
   trait UserSuccessfulAndInstallationFailingScope extends BasicScope {
 
-    userServices.getByEmail(Email(mockEq(email))) returns Free.pure(Option(user))
+    userServices.getByEmail(Email(mockEq(email))) returns NineCardsService.right(user)
 
     userServices.getInstallationByUserAndAndroidId(mockEq(userId), AndroidId(mockEq(androidId))) returns
-      Free.pure(nonExistingInstallation)
+      NineCardsService.left(installationNotFoundError)
 
     userServices.addInstallation(mockEq(userId), mockEq(None), AndroidId(mockEq(androidId))) returns
-      Free.pure(installation)
+      NineCardsService.right(installation)
 
     userServices.getBySessionToken(SessionToken(mockEq(sessionToken))) returns
-      Free.pure(Option(user))
+      NineCardsService.right(user)
   }
 
   trait UserAndInstallationFailingScope extends BasicScope {
 
-    userServices.getByEmail(Email(mockEq(email))) returns Free.pure(nonExistingUser)
+    userServices.getByEmail(Email(mockEq(email))) returns
+      NineCardsService.left(userNotFoundError)
 
-    userServices.add(Email(mockEq(email)), ApiKey(any[String]), SessionToken(any[String])) returns Free.pure(user)
+    userServices.add(Email(mockEq(email)), ApiKey(any[String]), SessionToken(any[String])) returns
+      NineCardsService.right(user)
 
     userServices.addInstallation(mockEq(userId), mockEq(None), AndroidId(mockEq(androidId))) returns
-      Free.pure(installation)
+      NineCardsService.right(installation)
 
     userServices.getBySessionToken(SessionToken(mockEq(sessionToken))) returns
-      Free.pure(nonExistingUser)
+      NineCardsService.left(userNotFoundError)
   }
 
 }
@@ -93,7 +97,7 @@ trait UserProcessesContext {
 
   val user = User(userId, Email(email), SessionToken(sessionToken), ApiKey(apiKey), banned)
 
-  val nonExistingUser: Option[User] = None
+  val userNotFoundError = UserNotFound("The user doesn't exist")
 
   val androidId = "f07a13984f6d116a"
 
@@ -113,15 +117,17 @@ trait UserProcessesContext {
 
   val installation = Installation(installationId, userId, Option(DeviceToken(deviceToken)), AndroidId(androidId))
 
-  val nonExistingInstallation: Option[Installation] = None
+  val installationNotFoundError = InstallationNotFound("The installation doesn't exist")
 
-  val checkAuthTokenResponse = Option(userId)
+  val checkAuthTokenResponse = userId
 
   val dummyUrl = "http://localhost/dummy"
 
   val validAuthToken = Hasher(dummyUrl).hmac(apiKey).sha512.hex
 
   val wrongAuthToken = Hasher(dummyUrl).hmac(wrongApiKey).sha512.hex
+
+  val authTokenNotValidError = AuthTokenNotValid("The provided auth token is not valid")
 }
 
 class UserProcessesSpec
@@ -132,26 +138,30 @@ class UserProcessesSpec
     "return LoginResponse object when the user exists and installation" in
       new UserAndInstallationSuccessfulScope {
         val signUpUser = userProcesses.signUpUser(loginRequest)
-        signUpUser.foldMap(testInterpreters) shouldEqual loginResponse
+
+        signUpUser.foldMap(testInterpreters) must beRight[LoginResponse](loginResponse)
       }
 
     "return LoginResponse object when the user exists but not installation" in
       new UserSuccessfulAndInstallationFailingScope {
         val signUpUser = userProcesses.signUpUser(loginRequest)
-        signUpUser.foldMap(testInterpreters) shouldEqual loginResponse
+
+        signUpUser.foldMap(testInterpreters) must beRight[LoginResponse](loginResponse)
       }
 
     "return LoginResponse object when there isn't user or installation" in
       new UserAndInstallationFailingScope {
         val signUpUser = userProcesses.signUpUser(loginRequest)
-        signUpUser.foldMap(testInterpreters) shouldEqual loginResponse
+
+        signUpUser.foldMap(testInterpreters) must beRight[LoginResponse](loginResponse)
       }
   }
 
   "updateInstallation" should {
     "return UpdateInstallationResponse object" in new UserAndInstallationSuccessfulScope {
       val signUpInstallation = userProcesses.updateInstallation(updateInstallationRequest)
-      signUpInstallation.foldMap(testInterpreters) shouldEqual updateInstallationResponse
+
+      signUpInstallation.foldMap(testInterpreters) must beRight[UpdateInstallationResponse](updateInstallationResponse)
     }
   }
 
@@ -165,7 +175,7 @@ class UserProcessesSpec
           requestUri   = dummyUrl
         )
 
-        checkAuthToken.foldMap(testInterpreters) shouldEqual checkAuthTokenResponse
+        checkAuthToken.foldMap(testInterpreters) must beRight[Long](checkAuthTokenResponse)
       }
 
     "return the userId for a valid sessionToken and androidId without considering the authToken " +
@@ -184,7 +194,7 @@ class UserProcessesSpec
           requestUri   = dummyUrl
         )
 
-        checkAuthToken.foldMap(testInterpreters) shouldEqual checkAuthTokenResponse
+        checkAuthToken.foldMap(testInterpreters) must beRight[Long](checkAuthTokenResponse)
       }
 
     "return None when a wrong auth token is given" in new UserAndInstallationSuccessfulScope {
@@ -195,7 +205,7 @@ class UserProcessesSpec
         requestUri   = dummyUrl
       )
 
-      checkAuthToken.foldMap(testInterpreters) shouldEqual None
+      checkAuthToken.foldMap(testInterpreters) must beLeft[NineCardsError](authTokenNotValidError)
     }
 
     "return None if there is no user with the given sessionToken" in
@@ -207,7 +217,7 @@ class UserProcessesSpec
           requestUri   = dummyUrl
         )
 
-        checkAuthToken.foldMap(testInterpreters) should beNone
+        checkAuthToken.foldMap(testInterpreters) must beLeft[NineCardsError](userNotFoundError)
       }
 
     "return None if there is no installation with the given androidId that belongs to the user" in
@@ -219,7 +229,7 @@ class UserProcessesSpec
           requestUri   = dummyUrl
         )
 
-        checkAuthToken.foldMap(testInterpreters) should beNone
+        checkAuthToken.foldMap(testInterpreters) must beLeft[NineCardsError](installationNotFoundError)
       }
   }
 }
