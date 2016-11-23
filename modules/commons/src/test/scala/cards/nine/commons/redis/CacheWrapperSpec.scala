@@ -1,16 +1,18 @@
 package cards.nine.commons.redis
 
-import com.redis.RedisClient
-import com.redis.serialization.{ Format, Parse }
 import io.circe.{ Decoder, Encoder }
-import io.circe.generic.semiauto._
 import io.circe.parser._
+import io.circe.generic.semiauto._
 import org.scalacheck.{ Arbitrary, Gen }
 import org.specs2.ScalaCheck
 import org.specs2.matcher.MatchResult
 import org.specs2.mutable.Specification
 import org.specs2.specification.{ BeforeAfterAll, BeforeEach }
 import redis.embedded.RedisServer
+import scredis.Client
+import scredis.serialization.{ Reader, Writer }
+import scala.concurrent.{ Await, Future } // FIXME
+import scala.concurrent.duration.Duration
 
 trait RedisTestDomain {
 
@@ -36,40 +38,47 @@ trait RedisTestDomain {
   implicit val cacheValDecoder: Decoder[TestCacheVal] = deriveDecoder[TestCacheVal]
   implicit val cacheValEncoder: Encoder[TestCacheVal] = deriveEncoder[TestCacheVal]
 
-  implicit val keyParse: Parse[Option[TestCacheKey]] =
-    Parse(bv ⇒ decode[TestCacheKey](Parse.Implicits.parseString(bv)).toOption)
+  implicit val keyReader: Reader[Option[TestCacheKey]] = Readers.decoder(cacheKeyDecoder)
+  implicit val valReader: Reader[Option[TestCacheVal]] = Readers.decoder(cacheValDecoder)
 
-  implicit val valParse: Parse[Option[TestCacheVal]] =
-    Parse(bv ⇒ decode[TestCacheVal](Parse.Implicits.parseString(bv)).toOption)
+  implicit val valWriter: Writer[TestCacheVal] = Writers.encoder(cacheValEncoder)
 
-  implicit val keyAndValFormat: Format =
-    Format {
-      case key: TestCacheKey ⇒ cacheKeyEncoder(key).noSpaces
-      case value: TestCacheVal ⇒ cacheValEncoder(value).noSpaces
-    }
+  implicit val keyFormat: Format[TestCacheKey] = Format(cacheKeyEncoder)
 }
 
 trait RedisScope extends RedisTestDomain {
 
+  import TestUtils.redisTestActorSystem
+
+  import scala.concurrent.ExecutionContext.Implicits.global
+
   lazy val redisServer: RedisServer = new RedisServer()
-  lazy val redisClient: RedisClient = new RedisClient(host = "localhost", port = redisServer.getPort)
-  lazy val wrapper = CacheWrapper[TestCacheKey, TestCacheVal](redisClient)
+  lazy val redisClient: Client = Client(host = "localhost", port = redisServer.getPort)
+  lazy val wrapper = CacheWrapper[TestCacheKey, TestCacheVal]()
 
-  def findEntry(key: TestCacheKey): Option[TestCacheVal] = redisClient.get[Option[TestCacheVal]](key).flatten
+  def await[A](fut: Future[A]): A = Await.result(fut, Duration.Inf)
 
-  def findEntries(keys: List[TestCacheKey]): List[TestCacheVal] = keys match {
-    case head :: tail ⇒
-      redisClient.mget[Option[TestCacheVal]](head, tail: _*)
-        .getOrElse(Nil)
-        .flatMap(_.flatten.toList)
-    case _ ⇒ Nil
+  def run[A](ops: RedisOps[A]): A = ops(redisClient).unsafePerformSync
+
+  def findEntry(key: TestCacheKey): Option[TestCacheVal] = await {
+    redisClient.get[Option[TestCacheVal]](key).map(_.flatten)
   }
 
-  def getAllKeys: List[TestCacheKey] =
-    redisClient
-      .keys[Option[TestCacheKey]]("*")
-      .getOrElse(Nil)
-      .flatMap(_.flatten.toList)
+  def findEntries(keys: List[TestCacheKey]): List[TestCacheVal] = await {
+    if (keys.isEmpty)
+      Future(Nil)
+    else
+      for {
+        opts ← redisClient.mGet[Option[TestCacheVal]]((keys map keyFormat): _*)
+      } yield opts.flatten.flatten
+  }
+
+  def getAllKeys: List[TestCacheKey] = await {
+    for {
+      set ← redisClient.keys("*")
+    } yield set.toList.flatMap(str ⇒ decode[TestCacheKey](str).toOption)
+  }
+
 }
 
 class CacheWrapperSpec
@@ -83,19 +92,26 @@ class CacheWrapperSpec
 
   override def beforeAll(): Unit = redisServer.start()
 
-  override protected def before: Any = redisClient.flushall
+  override protected def before: Any = redisClient.flushAll
 
   object WithCachedData {
 
-    def apply[K, V, B](key: K, value: V)(check: ⇒ MatchResult[B]) = {
-      redisClient.flushall
-      redisClient.set(key, value)
+    def apply[K, V, B](key: K, value: V)(check: ⇒ MatchResult[B])(
+      implicit
+      fk: Format[K], wv: Writer[V]
+    ) = {
+      redisClient.flushAll
+      redisClient.set[V](fk(key), value)
       check
     }
 
-    def apply[K, V, B](data: List[(K, V)])(check: ⇒ MatchResult[B]) = {
-      redisClient.flushall
-      redisClient.mset(data: _*)
+    def apply[K, V, B](data: List[(K, V)])(check: ⇒ MatchResult[B])(
+      implicit
+      fk: Format[K], wv: Writer[V]
+    ) = {
+      def pair(p: (K, V)): (String, V) = (fk(p._1), p._2)
+      redisClient.flushAll
+      redisClient.mSet(data.map(pair).toMap)
       check
     }
   }
@@ -119,7 +135,7 @@ class CacheWrapperSpec
       prop { (key: TestCacheKey, value: TestCacheVal) ⇒
 
         WithCachedData(key, value) {
-          wrapper.delete(key)
+          run(wrapper.delete(key))
 
           val existingValue = findEntry(key)
 
@@ -135,7 +151,7 @@ class CacheWrapperSpec
         val (keys, values) = batch.entries.unzip
 
         WithCachedData(batch.entries) {
-          wrapper.delete(Nil)
+          run(wrapper.delete(Nil))
 
           val existingValues = findEntries(keys)
 
@@ -154,7 +170,7 @@ class CacheWrapperSpec
 
         WithCachedData(existing) {
 
-          wrapper.delete(deletedKeys)
+          run(wrapper.delete(deletedKeys))
 
           val deletedValues = findEntries(deletedKeys)
           val existingValues = findEntries(allKeys)
@@ -166,52 +182,16 @@ class CacheWrapperSpec
     }
   }
 
-  "findFirst" should {
-    "return None if there is no entry for the given keys" in {
-      prop { (key1: TestCacheKey, value1: TestCacheVal, key2: TestCacheKey, key3: TestCacheKey) ⇒
-
-        WithCachedData(key1, value1) {
-          val foundValue = wrapper.findFirst(List(key2, key3))
-
-          foundValue must beNone
-        }
-      }
-    }
-    "return the first element of the list if there are entries for all the keys" in {
-      prop { (key1: TestCacheKey, value1: TestCacheVal, key2: TestCacheKey, value2: TestCacheVal) ⇒
-
-        WithCachedData(List((key1, value1), (key2, value2))) {
-          val foundValue = wrapper.findFirst(List(key1, key2))
-
-          foundValue must beSome[TestCacheVal](value1)
-        }
-      }
-    }
-
-    "return the first existing element of the list if there are no entries for all the keys " in {
-      prop { (key1: TestCacheKey, value1: TestCacheVal, key2: TestCacheKey, value2: TestCacheVal) ⇒
-
-        WithCachedData(List((key2, value2))) {
-          val foundValue = wrapper.findFirst(List(key1, key2))
-
-          foundValue must beSome[TestCacheVal](value2)
-        }
-      }
-    }
-  }
-
   "get" should {
     "return None if there is no entry for the given key" in {
       prop { key: TestCacheKey ⇒
-        val result = wrapper.get(key)
-
-        result must beEmpty
+        run(wrapper.get(key)) must beEmpty
       }
     }
     "return a value if there is an entry for the given key" in {
       prop { (key: TestCacheKey, value: TestCacheVal) ⇒
         WithCachedData(key, value) {
-          wrapper.get(key) must beSome[TestCacheVal](value)
+          run(wrapper.get(key)) must beSome[TestCacheVal](value)
         }
       }
     }
@@ -220,9 +200,7 @@ class CacheWrapperSpec
   "mget" should {
     "return an empty list if an empty list of keys is given" in {
       prop { i: Int ⇒
-        val result = wrapper.mget(Nil)
-
-        result must beEmpty
+        run(wrapper.mget(Nil)) must beEmpty
       }
     }
     "return a list of values for those keys that have an entry in cache" in {
@@ -233,9 +211,7 @@ class CacheWrapperSpec
         val (_, notFoundValues) = notFound.unzip
 
         WithCachedData(found) {
-          val result = wrapper.mget(keys)
-
-          result must containTheSameElementsAs(foundValues) and
+          run(wrapper.mget(keys)) must containTheSameElementsAs(foundValues) and
             not(containTheSameElementsAs(notFoundValues))
         }
       }
@@ -245,22 +221,16 @@ class CacheWrapperSpec
   "put" should {
     "create a new entry into the cache if the given key doesn't exist" in {
       prop { (key: TestCacheKey, value: TestCacheVal) ⇒
-        wrapper.put((key, value))
-
-        val insertedValue = findEntry(key)
-
-        insertedValue must beSome[TestCacheVal](value)
+        run(wrapper.put((key, value)))
+        findEntry(key) must beSome[TestCacheVal](value)
       }
     }
     "update an existing entry if the given key exists in cache" in {
       prop { (key: TestCacheKey, value: TestCacheVal, newValue: TestCacheVal) ⇒
 
         WithCachedData(key, value) {
-          wrapper.put((key, newValue))
-
-          val insertedValue = findEntry(key)
-
-          insertedValue must beSome[TestCacheVal](newValue)
+          run(wrapper.put((key, newValue)))
+          findEntry(key) must beSome[TestCacheVal](newValue)
         }
       }
     }
@@ -269,22 +239,17 @@ class CacheWrapperSpec
   "mput" should {
     "do nothing if an empty list is provided" in {
       prop { i: Int ⇒
-        wrapper.mput(Nil)
-
+        run(wrapper.mput(Nil))
         getAllKeys must beEmpty
       }
     }
     "create a new entry for each key if these keys don't exist in cache" in {
       prop { batch: TestCacheEntryBatch ⇒
         val (keys, values) = batch.entries.unzip
+        redisClient.flushAll
+        run(wrapper.mput(batch.entries))
 
-        redisClient.flushall
-
-        wrapper.mput(batch.entries)
-
-        val insertedValues = findEntries(keys)
-
-        insertedValues must containTheSameElementsAs(values)
+        findEntries(keys) must containTheSameElementsAs(values)
       }
     }
     "create or update an existing entry depending on the existence of keys in cache" in {
@@ -297,7 +262,7 @@ class CacheWrapperSpec
 
           val newExistingValues = existingValues map (v ⇒ TestCacheVal(v.value.reverse))
 
-          wrapper.mput(nonExisting ++ existingKeys.zip(newExistingValues))
+          run(wrapper.mput(nonExisting ++ existingKeys.zip(newExistingValues)))
 
           val insertedValues = findEntries(nonExistingKeys)
           val updatedValues = findEntries(existingKeys)
