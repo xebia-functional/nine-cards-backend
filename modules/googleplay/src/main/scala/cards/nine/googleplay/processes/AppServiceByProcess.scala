@@ -2,20 +2,21 @@ package cards.nine.googleplay.processes
 
 import cats.data.Xor
 import cats.~>
-import cards.nine.commons.TaskInstances._
+import cards.nine.commons.catscalaz.TaskInstances._
 import cards.nine.commons.config.NineCardsConfig.nineCardsConfiguration
+import cards.nine.commons.redis.RedisOpsToTask
 import cards.nine.domain.application.{ FullCard, Package }
 import cards.nine.googleplay.domain._
 import cards.nine.googleplay.service.free.{ JoinInterpreter, JoinServices }
 import cards.nine.googleplay.service.free.{ algebra ⇒ Alg, interpreter ⇒ Inter }
-import com.redis.{ RedisClient, RedisClientPool }
 import org.http4s.client.{ Client ⇒ HttpClient }
 import org.joda.time.{ DateTime, DateTimeZone }
+import scredis.{ Client ⇒ ScredisClient }
 
 import scalaz.concurrent.Task
 
 case class AppServiceByProcess(
-  redisPool: RedisClientPool,
+  redisClient: ScredisClient,
   apiHttpClient: HttpClient,
   webHttpClient: HttpClient
 )
@@ -34,7 +35,7 @@ case class AppServiceByProcess(
 
   val cacheInt: Alg.Cache.Ops ~> Task = {
     import Inter.cache._
-    val toTask = new RedisToTask(redisPool)
+    val toTask = new RedisOpsToTask(redisClient)
     CacheInterpreter andThen toTask
   }
 
@@ -60,17 +61,13 @@ case class AppServiceByProcess(
 }
 
 object withTypes {
+
   type WithHttpClient[+A] = HttpClient ⇒ Task[A]
-  type WithRedisClient[+A] = RedisClient ⇒ Task[A]
 
   class HttpToTask(httpClient: HttpClient)
     extends (WithHttpClient ~> Task) {
     override def apply[A](fa: WithHttpClient[A]): Task[A] = fa(httpClient)
   }
 
-  class RedisToTask(redisPool: RedisClientPool)
-    extends (WithRedisClient ~> Task) {
-    override def apply[A](fa: WithRedisClient[A]): Task[A] = redisPool.withClient(fa)
-  }
 }
 

@@ -33,6 +33,9 @@ class ApplicationProcesses[F[_]](implicit services: GooglePlay.Services[F]) {
   def resolvePendingApps(numPackages: Int): NineCardsService[F, ResolvePendingStats] =
     services.resolvePendingApps(numPackages)
 
+  def storeCard(card: FullCard): NineCardsService[F, Unit] =
+    services.storeCard(card)
+
 }
 
 object ApplicationProcesses {

@@ -37,6 +37,9 @@ object CacheEntry {
   def pending(name: Package): (CacheKey, CacheVal) =
     CacheKey.pending(name) → CacheVal(None)
 
-  def permanent(name: Package, card: FullCard): (CacheKey, CacheVal) =
-    CacheKey.permanent(name) → CacheVal(Some(card))
+  def permanent(card: FullCard): (CacheKey, CacheVal) =
+    CacheKey.permanent(card.packageName) → CacheVal(Some(card))
 }
+
+object PendingQueueKey
+

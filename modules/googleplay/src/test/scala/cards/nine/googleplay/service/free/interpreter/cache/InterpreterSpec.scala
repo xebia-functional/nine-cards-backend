@@ -1,20 +1,19 @@
 package cards.nine.googleplay.service.free.interpreter.cache
 
+import cards.nine.commons.redis.TestUtils
 import cards.nine.domain.application.{ FullCard, Package }
 import cards.nine.domain.ScalaCheck._
 import cards.nine.googleplay.service.free.algebra.Cache._
 import cards.nine.googleplay.util.{ ScalaCheck ⇒ CustomArbitrary }
-import com.redis.RedisClient
-import io.circe.parser._
 import org.joda.time.{ DateTime, DateTimeZone }
 import org.scalacheck.{ Arbitrary, Gen }
 import org.specs2.ScalaCheck
 import org.specs2.mutable.Specification
 import org.specs2.specification.{ AfterAll, BeforeAll, BeforeEach }
 import redis.embedded.RedisServer
-
-import scala.concurrent.Await // FIXME
+import scala.concurrent.{ Await, Future } // FIXME
 import scala.concurrent.duration._
+import scredis.{ Client ⇒ ScredisClient, TransactionBuilder }
 
 class InterpreterSpec
   extends Specification
@@ -23,15 +22,19 @@ class InterpreterSpec
   with BeforeEach
   with AfterAll {
 
-  import CirceCoders._
+  import Formats._
   import CustomArbitrary._
   import KeyType._
 
+  import TestUtils.redisTestActorSystem
+
+  import scala.concurrent.ExecutionContext.Implicits.global
+
   private[this] object setup {
     lazy val redisServer: RedisServer = new RedisServer()
-    lazy val redisClient: RedisClient = new RedisClient(host = "localhost", port = redisServer.getPort)
+    lazy val redisClient: ScredisClient = ScredisClient(host = "localhost", port = redisServer.getPort)
 
-    def flush = redisClient.flushall
+    def flush = redisClient.flushAll
 
     val interpreter = CacheInterpreter
 
@@ -42,6 +45,7 @@ class InterpreterSpec
     def pendingKey(pack: Package): String = s"${pack.value}:Pending"
     def resolvedKey(pack: Package): String = s"${pack.value}:Resolved"
 
+    def permanentKey(pack: Package): String = s"${pack.value}:Permanent"
     def allByType(keyType: KeyType) = s"*:${keyType.entryName}*"
     val allErrors = "*:Error"
     def allByPackage(pack: Package): String = s"${pack.value}:*"
@@ -62,48 +66,48 @@ class InterpreterSpec
 
   sequential
 
-  private def getCacheValue(key: String) =
-    redisClient.get(key).flatMap(e ⇒ decode[CacheVal](e).toOption)
+  def await[A](fut: Future[A]) = Await.result(fut, Duration.Inf)
 
-  private def getCacheValues(keys: List[String]) = keys match {
-    case head :: tail ⇒
-      redisClient.mget(head, tail: _*)
-        .getOrElse(Nil)
-        .flatMap(_.toList)
-        .map(e ⇒ decode[CacheVal](e).toOption)
-    case _ ⇒ Nil
-  }
-  private def getEntry(key: String) = redisClient.get(key)
-  private def getEntries(keys: List[String]) = keys match {
-    case head :: tail ⇒ redisClient.mget(head, tail: _*).getOrElse(Nil).flatMap(_.toList)
-    case _ ⇒ Nil
-  }
-  private def getKeys(pattern: String) =
-    redisClient.keys(pattern).getOrElse(Nil)
+  private def getCacheValue(key: String): Option[CacheVal] =
+    await(redisClient.get[Option[CacheVal]](key).map(_.flatten))
 
-  private def putEntry(e: (CacheKey, CacheVal)) =
-    redisClient.set(KeyFormat.format(e._1), cacheValE(e._2).noSpaces)
+  private def getCacheValues(keys: List[String]): List[Option[CacheVal]] =
+    if (keys.isEmpty)
+      Nil
+    else
+      await(redisClient.mGet[Option[CacheVal]](keys: _*).map(_.map(_.flatten)))
 
-  private def putError(p: Package, d: DateTime) =
-    redisClient.rpush(KeyFormat.format(CacheKey.error(p)), d)
+  private def existsEntry(key: String): Boolean =
+    await(redisClient.get[String](key).map(_.isDefined))
 
-  private def putPendings(ps: List[Package]) = ps.map(_.value) match {
-    case head :: tail ⇒ redisClient.rpush("pending_packages", head, tail: _*)
-    case _ ⇒ Nil
+  private def getKeys(pattern: String): List[CacheKey] =
+    await(redisClient.keys(pattern)).toList.flatMap(parseKey)
+
+  private def putEntry(e: (CacheKey, CacheVal)): Unit =
+    await(redisClient.set(formatKey(e._1), cacheValE(e._2).noSpaces))
+
+  private def putError(p: Package, d: DateTime): Unit = {
+    await(redisClient.rPush[DateTime](formatKey(CacheKey.error(p)), d))
+    Unit
   }
 
-  private def putErrors(ps: List[Package], d: DateTime) = {
-    def command(p: Package) = (() ⇒ putError(p, d))
-    redisClient.pipelineNoMulti(ps map command)
-      .map(a ⇒ Await.result(a.future, Duration.Inf))
+  private def putPendings(ps: List[Package]): Unit =
+    if (!ps.isEmpty) {
+      await(redisClient.rPush("pending_packages", ps.map(_.value): _*))
+    }
+
+  private def putErrors(ps: List[Package], d: DateTime): Unit = await {
+    redisClient.inTransaction { tb: TransactionBuilder ⇒
+      ps.foreach(p ⇒ tb.rPush[DateTime](formatKey(CacheKey.error(p)), d))
+    }.map(_ ⇒ Unit)
   }
 
-  private def putEntries(entries: List[(CacheKey, CacheVal)]) = entries match {
-    case Nil ⇒ Unit
-    case _ ⇒ redisClient.mset(entries map formatEntry: _*)
+  private def putEntries(entries: List[(CacheKey, CacheVal)]): Unit = {
+    def formatEntry(e: (CacheKey, CacheVal)): (String, String) =
+      (formatKey(e._1), cacheValE(e._2).noSpaces)
+    await { redisClient.mSet(entries.map(formatEntry).toMap) }
+    Unit
   }
-  private def formatEntry(e: (CacheKey, CacheVal)): (String, String) =
-    (KeyFormat.format(e._1), cacheValE(e._2).noSpaces)
 
   "getValidCard" should {
 
@@ -134,7 +138,7 @@ class InterpreterSpec
     "return Some(e) if the cache contains a Permanent entry" >>
       prop { card: FullCard ⇒
         flush
-        putEntry(CacheEntry.permanent(card.packageName, card))
+        putEntry(CacheEntry.permanent(card))
 
         eval(GetValid(card.packageName)) must beSome(card)
       }
@@ -169,7 +173,7 @@ class InterpreterSpec
     "return a list of cards if the cache contains a Permanent entry" >>
       prop { cards: List[FullCard] ⇒
         flush
-        putEntries(cards map (c ⇒ CacheEntry.permanent(c.packageName, c)))
+        putEntries(cards map CacheEntry.permanent)
 
         eval(GetValidMany(cards map (_.packageName))) must containTheSameElementsAs(cards)
       }
@@ -182,7 +186,7 @@ class InterpreterSpec
         flush
         eval(PutResolved(card))
 
-        getEntry(resolvedKey(card.packageName)) must beSome
+        existsEntry(resolvedKey(card.packageName)) must beTrue
       }
 
     "add no other key as resolved" >>
@@ -190,7 +194,7 @@ class InterpreterSpec
         flush
         eval(PutResolved(card))
 
-        getEntry(resolvedKey(pack)) must beNone
+        existsEntry(resolvedKey(pack)) must beFalse
       }
 
     "add no key as pending or error" >>
@@ -220,8 +224,8 @@ class InterpreterSpec
       prop { cards: List[FullCard] ⇒
         flush
         eval(PutResolvedMany(cards))
-
-        getEntries(cards map (c ⇒ resolvedKey(c.packageName))) must haveSize(cards.size)
+        cards.map(c ⇒ resolvedKey(c.packageName))
+          .filter(existsEntry _) must haveSize(cards.size)
       }
 
     "add no other key as resolved" >>
@@ -229,7 +233,7 @@ class InterpreterSpec
         flush
         eval(PutResolvedMany(cards))
 
-        getEntry(resolvedKey(pack)) must beNone
+        existsEntry(resolvedKey(pack)) must beFalse
       }
 
     "add no key as pending or error" >>
@@ -246,12 +250,49 @@ class InterpreterSpec
         flush
         val newCards = cards map (c ⇒ c.copy(title = c.title.reverse, free = !c.free))
         eval(PutResolvedMany(cards))
-        eval(PutResolvedMany(newCards))
+        evalWithDelay(PutResolvedMany(newCards), 1.millis)
 
         val values = getCacheValues(cards map (c ⇒ resolvedKey(c.packageName)))
 
         getKeys(allByType(Resolved)) must haveSize(cards.size)
         values must containTheSameElementsAs(newCards map (c ⇒ Option(CacheVal(Option(c)))))
+      }
+  }
+
+  "putPermanent" should {
+    "add a package as permanent" >>
+      prop { card: FullCard ⇒
+        flush
+        eval(PutPermanent(card))
+
+        existsEntry(permanentKey(card.packageName)) must beTrue
+      }
+
+    "add no other key as permanent" >>
+      prop { (card: FullCard, pack: Package) ⇒
+        flush
+        eval(PutPermanent(card))
+
+        existsEntry(permanentKey(pack)) must beFalse
+      }
+
+    "add no key as pending or error" >>
+      prop { card: FullCard ⇒
+        flush
+        eval(PutPermanent(card))
+        getKeys(allByType(Pending)) must beEmpty
+        getKeys(allByType(Error)) must beEmpty
+      }
+
+    "overwrite any previous value" >>
+      prop { (card: FullCard) ⇒
+        flush
+        val newCard = card.copy(title = card.title.reverse, free = !card.free)
+        eval(PutPermanent(card))
+        eval(PutPermanent(newCard))
+
+        getKeys(allByType(Permanent)) must haveSize(1)
+        getCacheValue(permanentKey(card.packageName)) must_=== Option(CacheVal(Option(newCard)))
       }
   }
 
@@ -261,7 +302,7 @@ class InterpreterSpec
         flush
         eval(MarkPending(pack))
 
-        getEntry(pendingKey(pack)) must beSome
+        existsEntry(pendingKey(pack)) must beTrue
       }
 
     "add no key as resolved or error" >>
@@ -279,8 +320,7 @@ class InterpreterSpec
       prop { packages: List[Package] ⇒
         flush
         eval(MarkPendingMany(packages))
-
-        getEntries(packages map pendingKey) must haveSize(packages.size)
+        packages.map(pendingKey).filter(existsEntry) must haveSize(packages.size)
       }
 
     "add no key as resolved or error" >>
@@ -300,7 +340,7 @@ class InterpreterSpec
         putEntry(CacheEntry.pending(pack))
         eval(UnmarkPending(pack))
 
-        getEntry(pendingKey(pack)) must beNone
+        existsEntry(pendingKey(pack)) must beFalse
       }
   }
 
@@ -310,8 +350,7 @@ class InterpreterSpec
         flush
         putEntries(packages map CacheEntry.pending)
         eval(UnmarkPendingMany(packages))
-
-        getEntries(packages map pendingKey) must beEmpty
+        packages.filter(p ⇒ existsEntry(pendingKey(p))) must beEmpty
       }
   }
 
@@ -395,7 +434,7 @@ class InterpreterSpec
         putEntry(CacheEntry.resolved(card))
         eval(ClearInvalid(card.packageName))
 
-        getEntry(resolvedKey(card.packageName)) must beSome
+        existsEntry(resolvedKey(card.packageName)) must beTrue
       }
 
     "leave error entries for any other package" >>

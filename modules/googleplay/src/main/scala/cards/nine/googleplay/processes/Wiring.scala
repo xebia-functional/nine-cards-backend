@@ -1,30 +1,34 @@
 package cards.nine.googleplay.processes
 
+import akka.actor.ActorSystem
 import cards.nine.commons.config.NineCardsConfig._
-import cards.nine.googleplay.processes.withTypes.{ HttpToTask, RedisToTask }
+import cards.nine.commons.redis.RedisOpsToTask
+import cards.nine.googleplay.processes.withTypes.HttpToTask
 import cards.nine.googleplay.service.free.algebra.{ Cache, GoogleApi, WebScraper }
 import cards.nine.googleplay.service.free.interpreter._
 import cards.nine.googleplay.service.free.interpreter.cache.CacheInterpreter
 import cats._
 import cats.data.Coproduct
-import com.redis.RedisClientPool
 import org.http4s.client.blaze.PooledHttp1Client
+import scredis.{ Client ⇒ RedisClient }
 
 import scalaz.concurrent.Task
 
 object Wiring {
 
+  implicit val system: ActorSystem = ActorSystem("cards-nine-googleplay-processes-Wiring")
+
   private[this] val apiHttpClient = PooledHttp1Client()
   private[this] val webHttpClient = PooledHttp1Client()
 
-  val redisClientPool: RedisClientPool = new RedisClientPool(
-    host   = nineCardsConfiguration.redis.host,
-    port   = nineCardsConfiguration.redis.port,
-    secret = nineCardsConfiguration.redis.secret
+  val redisClient: RedisClient = RedisClient(
+    host        = nineCardsConfiguration.redis.host,
+    port        = nineCardsConfiguration.redis.port,
+    passwordOpt = nineCardsConfiguration.redis.secret
   )
 
   val cacheInt: Cache.Ops ~> Task = {
-    val toTask = new RedisToTask(redisClientPool)
+    val toTask = new RedisOpsToTask(redisClient)
     CacheInterpreter andThen toTask
   }
 
@@ -47,7 +51,7 @@ object Wiring {
   val interpreters: GooglePlayApp ~> Task = cacheInt or interpretersC01
 
   val appCardService: AppServiceByProcess = AppServiceByProcess(
-    redisPool     = redisClientPool,
+    redisClient   = redisClient,
     apiHttpClient = apiHttpClient,
     webHttpClient = webHttpClient
   )
@@ -55,7 +59,6 @@ object Wiring {
   def shutdown(): Unit = {
     apiHttpClient.shutdownNow
     webHttpClient.shutdownNow
-    redisClientPool.close
   }
 
 }

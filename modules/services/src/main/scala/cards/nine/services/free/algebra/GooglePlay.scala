@@ -44,6 +44,8 @@ object GooglePlay {
 
   case class ResolvePendingApps(numPackages: Int) extends Ops[Result[ResolvePendingStats]]
 
+  case class StoreCard(card: FullCard) extends Ops[Result[Unit]]
+
   class Services[F[_]](implicit I: Ops :<: F) {
 
     def resolve(
@@ -92,6 +94,10 @@ object GooglePlay {
 
     def resolvePendingApps(numPackages: Int): NineCardsService[F, ResolvePendingStats] =
       NineCardsService(ResolvePendingApps(numPackages))
+
+    def storeCard(card: FullCard): NineCardsService[F, Unit] =
+      NineCardsService(StoreCard(card))
+
   }
 
   object Services {

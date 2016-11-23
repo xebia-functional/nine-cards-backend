@@ -30,6 +30,18 @@ object GooglePlayMessages {
     categories: List[String]
   )
 
+  case class ApiSetAppInfoRequest(
+    title: String,
+    free: Boolean,
+    icon: String,
+    stars: Double,
+    downloads: String,
+    categories: List[String],
+    screenshots: List[String]
+  )
+
+  case class ApiSetAppInfoResponse()
+
   case class ApiGetRecommendationsByCategoryRequest(excludePackages: List[Package], limit: Int)
 
   case class ApiGetRecommendationsForAppsRequest(

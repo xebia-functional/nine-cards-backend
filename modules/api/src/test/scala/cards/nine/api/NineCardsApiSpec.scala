@@ -21,7 +21,7 @@ import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
 import org.specs2.specification.Scope
 import spray.http.HttpHeaders.RawHeader
-import spray.http.{ HttpRequest, MediaTypes, StatusCodes, Uri }
+import spray.http.{ BasicHttpCredentials, HttpRequest, MediaTypes, StatusCodes, Uri }
 import spray.routing.HttpService
 import spray.testkit.Specs2RouteTest
 
@@ -125,6 +125,9 @@ trait NineCardsApiSpecification
 
     rankingProcesses.getRankedWidgets(any, any, any, any) returns
       NineCardsService.right(Messages.getRankedWidgetsResponse).value
+
+    applicationProcesses.storeCard(any) returns
+      NineCardsService.right(Unit)
   }
 
   trait UnsuccessfulScope extends BasicScope {
@@ -519,6 +522,46 @@ class NineCardsApiSpec
     unauthorizedNoHeaders(request)
 
     successOk(request)
+  }
+
+  """ PUT /applications/details/{packageId}, the endpoint to store a card in the cache""" should {
+
+    val validPackage = "a.valid.package"
+
+    def request(packageId: String) = Put(
+      uri     = s"${Paths.details}/$packageId",
+      content = Messages.setAppInfoRequest
+    )
+
+    "Respond NotFound if the package name is badformed" in new BasicScope {
+      request("++package++") ~> sealRoute(nineCardsApi) ~> check {
+        status.intValue shouldEqual StatusCodes.Unauthorized.intValue
+
+      }
+    }
+
+    "respond Unauthorized if Basic Auth is missing" in new BasicScope {
+      request(validPackage) ~> sealRoute(nineCardsApi) ~> check {
+        status.intValue shouldEqual StatusCodes.Unauthorized.intValue
+      }
+    }
+
+    "respond Unauthorized if there are auth headers, but unknown" in new BasicScope {
+      val invalidCredentials = BasicHttpCredentials("Jon", "Doe")
+
+      request(validPackage) ~> addCredentials(invalidCredentials) ~> sealRoute(nineCardsApi) ~> check {
+        status.intValue shouldEqual StatusCodes.Unauthorized.intValue
+      }
+    }
+
+    "respond OK if the Basic Http Credentials are in the config " in new SuccessfulScope {
+      val (user, password) = config.editors.head
+      val credentials = BasicHttpCredentials(user, password)
+      request(validPackage) ~> addCredentials(credentials) ~> sealRoute(nineCardsApi) ~> check {
+        status.intValue shouldEqual StatusCodes.OK.intValue
+      }
+    }
+
   }
 
   "POST /applications/rank" should {

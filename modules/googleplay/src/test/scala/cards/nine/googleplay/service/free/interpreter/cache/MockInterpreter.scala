@@ -9,6 +9,7 @@ trait InterpreterServer[F[_]] {
   def getValidMany(packages: List[Package]): F[List[FullCard]]
   def putResolved(card: FullCard): F[Unit]
   def putResolvedMany(cards: List[FullCard]): F[Unit]
+  def putPermanent(card: FullCard): F[Unit]
   def markPending(pack: Package): F[Unit]
   def markPendingMany(packages: List[Package]): F[Unit]
   def unmarkPending(pack: Package): F[Unit]
@@ -28,6 +29,7 @@ case class MockInterpreter[F[_]](server: InterpreterServer[F]) extends (Ops ~> F
     case GetValidMany(packages) ⇒ server.getValidMany(packages)
     case PutResolved(card) ⇒ server.putResolved(card)
     case PutResolvedMany(packages) ⇒ server.putResolvedMany(packages)
+    case PutPermanent(card) ⇒ server.putPermanent(card)
     case MarkPending(pack) ⇒ server.markPending(pack)
     case MarkPendingMany(packages) ⇒ server.markPendingMany(packages)
     case UnmarkPending(pack) ⇒ server.unmarkPending(pack)

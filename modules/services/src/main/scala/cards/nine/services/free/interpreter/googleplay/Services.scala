@@ -2,7 +2,7 @@ package cards.nine.services.free.interpreter.googleplay
 
 import cards.nine.commons.NineCardsErrors.{ PackageNotResolved, RecommendationsServerError }
 import cards.nine.commons.NineCardsService.Result
-import cards.nine.commons.TaskInstances._
+import cards.nine.commons.catscalaz.TaskInstances._
 import cards.nine.domain.application._
 import cards.nine.domain.market.MarketCredentials
 import cards.nine.googleplay.processes.Wiring.GooglePlayApp
@@ -84,6 +84,11 @@ class Services(implicit googlePlayProcesses: CardsProcesses[GooglePlayApp]) exte
       .map(r ⇒ Either.right(Converters.toResolvePendingStats(r)))
       .foldMap(Wiring.interpreters)
 
+  def storeCard(card: FullCard): Task[Result[Unit]] =
+    googlePlayProcesses.storeCard(card)
+      .map(Either.right)
+      .foldMap(Wiring.interpreters)
+
   def apply[A](fa: Ops[A]): Task[A] = fa match {
     case ResolveManyBasic(packageNames, auth) ⇒
       resolveManyBasic(packageNames, auth)
@@ -99,6 +104,8 @@ class Services(implicit googlePlayProcesses: CardsProcesses[GooglePlayApp]) exte
       searchApps(query, excludePackages, limit, auth)
     case ResolvePendingApps(numPackages) ⇒
       resolvePendingApps(numPackages)
+    case StoreCard(card) ⇒
+      storeCard(card)
 
   }
 }

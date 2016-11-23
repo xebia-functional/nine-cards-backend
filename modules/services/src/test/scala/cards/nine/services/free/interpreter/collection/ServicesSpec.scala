@@ -2,16 +2,16 @@ package cards.nine.services.free.interpreter.collection
 
 import cards.nine.commons.NineCardsErrors.NineCardsError
 import cards.nine.domain.pagination.Page
-import cards.nine.services.free.domain.{SharedCollection, SharedCollectionWithAggregatedInfo, User}
+import cards.nine.services.free.domain.{ SharedCollection, SharedCollectionWithAggregatedInfo, User }
 import cards.nine.services.free.interpreter.collection.Services.SharedCollectionData
 import cards.nine.services.free.interpreter.user.Services.UserData
-import cards.nine.services.persistence.NineCardsGenEntities.{CollectionTitle, PublicIdentifier}
-import cards.nine.services.persistence.{DomainDatabaseContext, NineCardsScalacheckGen}
+import cards.nine.services.persistence.NineCardsGenEntities.{ CollectionTitle, PublicIdentifier }
+import cards.nine.services.persistence.{ DomainDatabaseContext, NineCardsScalacheckGen }
 import doobie.contrib.postgresql.pgtypes._
 import doobie.imports._
-import org.scalacheck.{Arbitrary, Gen}
+import org.scalacheck.{ Arbitrary, Gen }
 import org.specs2.ScalaCheck
-import org.specs2.matcher.{DisjunctionMatchers, MatchResult}
+import org.specs2.matcher.{ DisjunctionMatchers, MatchResult }
 import org.specs2.mutable.Specification
 import shapeless.syntax.std.product._
 
@@ -394,11 +394,11 @@ class ServicesSpec
             pageParams = pageParams
           ).transactAndRun
 
-        val maxViews =
-          if (socialCollections.isEmpty)
-            None
-          else
-            Option(socialCollections.map(_.views).max)
+          val maxViews =
+            if (socialCollections.isEmpty)
+              None
+            else
+              Option(socialCollections.map(_.views).max)
 
           collections must beRight[List[SharedCollection]].which { list ⇒
             list.size must be_<=(pageSize)
