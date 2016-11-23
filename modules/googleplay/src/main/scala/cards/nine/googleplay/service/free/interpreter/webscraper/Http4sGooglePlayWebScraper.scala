@@ -1,7 +1,6 @@
 package cards.nine.googleplay.service.free.interpreter.webscrapper
 
-import cats.data.Xor
-import cats.syntax.xor._
+import cats.syntax.either._
 import cards.nine.domain.application.FullCard
 import cards.nine.googleplay.domain._
 import org.http4s.{ Method, Request, Uri }
@@ -26,29 +25,29 @@ class Http4sGooglePlayWebScraper(serverUrl: String, client: Client) {
   private[this] def runRequest[L, R](
     appRequest: AppRequest,
     failed: ⇒ L,
-    parserR: ByteVector ⇒ Xor[L, R]
-  ): Task[Xor[L, R]] = {
-    lazy val leftFailed = Xor.Left(failed)
+    parserR: ByteVector ⇒ Either[L, R]
+  ): Task[Either[L, R]] = {
+    lazy val leftFailed = Either.left(failed)
     buildRequest(appRequest) match {
       case Some(request) ⇒
         client.fetch(request) {
           case Successful(resp) ⇒
             resp.as[ByteVector].map(parserR)
           case _ ⇒
-            Task.now(failed.left[R])
+            Task.now(Either.left(failed))
         }.handle {
-          case _ ⇒ failed.left[R]
+          case _ ⇒ Either.left(failed)
         }
 
       case None ⇒ Task.now(leftFailed)
     }
   }
 
-  def getCard(appRequest: AppRequest): Task[Xor[InfoError, FullCard]] = {
+  def getCard(appRequest: AppRequest): Task[InfoError Either FullCard] = {
     lazy val failed: InfoError = InfoError(appRequest.packageName.value)
     runRequest[InfoError, FullCard](appRequest, failed, { bv ⇒
       GooglePlayPageParser.parseCard(bv)
-        .fold(failed.left[FullCard])(i ⇒ i.right[InfoError])
+        .fold(Either.left[InfoError, FullCard](failed))(i ⇒ Either.right(i))
     })
   }
 }

@@ -4,7 +4,6 @@ import cards.nine.domain.application.{ BasicCard, FullCard }
 import cards.nine.domain.ScalaCheck.arbPackage
 import cards.nine.domain.market.MarketCredentials
 import cards.nine.googleplay.domain._
-import cats.data.Xor
 import org.scalacheck.Arbitrary._
 import org.scalacheck.Gen._
 import org.scalacheck.Shapeless._
@@ -25,7 +24,7 @@ object ScalaCheck {
   implicit val arbFullCard: Arbitrary[FullCard] =
     ScalaCheck_Aux.arbFullCard
 
-  implicit val arbGetCardAnswer: Arbitrary[Xor[InfoError, FullCard]] =
+  implicit val arbGetCardAnswer: Arbitrary[InfoError Either FullCard] =
     ScalaCheck_Aux.arbGetCardAnswer
 
   // TODO pull this out somewhere else
@@ -55,7 +54,7 @@ object ScalaCheck_Aux {
   val arbAuth = implicitly[Arbitrary[MarketCredentials]]
 
   val genFullCard: Gen[FullCard] =
-    for /*ScalaCheck.Gen*/ {
+    for {
       title ← identifier
       packageName ← arbPackage.arbitrary
       appDetails ← listOf(identifier)
@@ -76,7 +75,7 @@ object ScalaCheck_Aux {
 
   val arbGetCardAnswer = {
     implicit val app: Arbitrary[FullCard] = arbFullCard
-    implicitly[Arbitrary[Xor[InfoError, FullCard]]]
+    implicitly[Arbitrary[InfoError Either FullCard]]
   }
 
 }

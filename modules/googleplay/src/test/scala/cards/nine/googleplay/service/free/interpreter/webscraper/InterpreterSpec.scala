@@ -1,6 +1,5 @@
 package cards.nine.googleplay.service.free.interpreter.webscrapper
 
-import cats.data.Xor
 import cards.nine.domain.application.{ FullCard, Package }
 import cards.nine.googleplay.domain.webscrapper._
 import cards.nine.googleplay.service.free.algebra.WebScraper._
@@ -79,13 +78,13 @@ class InterpreterSpec extends Specification with Matchers with MockServer with W
           .withBody(byteVector)
       }
       mockServer.when(httpRequest).respond(httpResponse)
-      runOperation(fisherPrice.packageObj) must_=== Xor.Right(fisherPrice.card)
+      runOperation(fisherPrice.packageObj) must beRight(fisherPrice.card)
     }
 
     "return a PackageNotFound(_) failure if server gives 404 NotFound status" in {
       val httpResponse = HttpResponse.response.withStatusCode(NOT_FOUND_404.code)
       mockServer.when(httpRequest).respond(httpResponse)
-      runOperation(fisherPrice.packageObj) must_=== Xor.Left(PackageNotFound(fisherPrice.packageObj))
+      runOperation(fisherPrice.packageObj) must beLeft(PackageNotFound(fisherPrice.packageObj))
     }
 
     "For the SkyMap play store web app" in {
@@ -104,7 +103,7 @@ class InterpreterSpec extends Specification with Matchers with MockServer with W
       mockServer.when(httpRequest).respond(httpResponse)
 
       val result = runOperation(skymap.packageObj)
-      result must_=== Xor.Right(skymap.card)
+      result must beRight(skymap.card)
     }
 
   }

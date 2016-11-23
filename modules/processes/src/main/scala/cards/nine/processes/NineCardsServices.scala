@@ -3,13 +3,13 @@ package cards.nine.processes
 import cards.nine.services.free.algebra._
 import cards.nine.services.free.interpreter.Interpreters._
 import cats.data.Coproduct
-import cats.{ ApplicativeError, Monad, RecursiveTailRecM, ~> }
+import cats.{ ApplicativeError, Monad, ~> }
 
 import scalaz.concurrent.Task
 
 object NineCardsServices {
 
-  implicit val taskMonadInstance: Monad[Task] with ApplicativeError[Task, Throwable] with RecursiveTailRecM[Task] = taskMonad
+  implicit val taskMonadInstance: Monad[Task] with ApplicativeError[Task, Throwable] = taskMonad
 
   type NineCardsServicesC08[A] = Coproduct[GoogleOAuth.Ops, User.Ops, A]
   type NineCardsServicesC07[A] = Coproduct[Subscription.Ops, NineCardsServicesC08, A]

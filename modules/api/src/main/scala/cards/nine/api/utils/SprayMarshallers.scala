@@ -3,7 +3,6 @@ package cards.nine.api.utils
 import cards.nine.api.NineCardsErrorHandler
 import cards.nine.commons.NineCardsService.{ NineCardsService, Result }
 import cards.nine.processes.NineCardsServices._
-import cats.data.Xor
 import cats.free.Free
 import shapeless.Lazy
 import spray.httpx.marshalling.ToResponseMarshaller
@@ -30,18 +29,6 @@ object SprayMarshallers {
       (result, ctx) ⇒
         result.fold(
           left ⇒ handler.handleNineCardsErrors(left, ctx),
-          right ⇒ m(right, ctx)
-        )
-    }
-
-  implicit def catsXorMarshaller[T <: Throwable, A](
-    implicit
-    m: ToResponseMarshaller[A]
-  ): ToResponseMarshaller[Xor[T, A]] =
-    ToResponseMarshaller[Xor[T, A]] {
-      (xor, ctx) ⇒
-        xor.fold(
-          left ⇒ ctx.handleError(left),
           right ⇒ m(right, ctx)
         )
     }

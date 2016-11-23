@@ -3,6 +3,7 @@ package cards.nine.services.free.interpreter.googleplay
 import cards.nine.domain.application._
 import cards.nine.googleplay.domain._
 import cards.nine.googleplay.processes.{ getcard, ResolveMany, ResolvePending }
+import cats.instances.either._
 import cats.instances.list._
 import cats.syntax.monadCombine._
 

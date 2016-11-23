@@ -1,6 +1,6 @@
 package cards.nine.commons
 
-import cats.{ Applicative, ApplicativeError, Monad, RecursiveTailRecM }
+import cats.{ Applicative, ApplicativeError, Monad }
 
 import scalaz.concurrent.Task
 
@@ -8,8 +8,8 @@ trait TaskInstances {
 
   implicit val taskApplicative: Applicative[Task] = ScalazInstances[Task].applicativeInstance
 
-  implicit val taskMonad: Monad[Task] with RecursiveTailRecM[Task] with ApplicativeError[Task, Throwable] =
-    new Monad[Task] with RecursiveTailRecM[Task] with ApplicativeError[Task, Throwable] {
+  implicit val taskMonad: Monad[Task] with ApplicativeError[Task, Throwable] =
+    new Monad[Task] with ApplicativeError[Task, Throwable] {
 
       val monadInstance = ScalazInstances[Task].monadInstance
 
