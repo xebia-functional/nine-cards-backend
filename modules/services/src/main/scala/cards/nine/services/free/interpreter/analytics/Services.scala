@@ -2,7 +2,7 @@ package cards.nine.services.free.interpreter.analytics
 
 import cards.nine.commons.NineCardsErrors._
 import cards.nine.commons.NineCardsService.Result
-import cards.nine.commons.TaskInstances._
+import cards.nine.commons.catscalaz.TaskInstances._
 import cards.nine.commons.config.Domain.GoogleAnalyticsConfiguration
 import cards.nine.domain.analytics.{ CountryIsoCode, RankingParams }
 import cards.nine.services.free.algebra.GoogleAnalytics._

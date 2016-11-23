@@ -2,7 +2,7 @@ package cards.nine.googleplay.processes
 
 import cats.data.Xor
 import cats.~>
-import cards.nine.commons.TaskInstances._
+import cards.nine.commons.catscalaz.TaskInstances._
 import cards.nine.commons.config.NineCardsConfig.nineCardsConfiguration
 import cards.nine.domain.application.{ FullCard, Package }
 import cards.nine.googleplay.domain._

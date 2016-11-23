@@ -2,7 +2,7 @@ package cards.nine.services.free.interpreter.googleplay
 
 import cards.nine.commons.NineCardsErrors.{ PackageNotResolved, RecommendationsServerError }
 import cards.nine.commons.NineCardsService.Result
-import cards.nine.commons.TaskInstances._
+import cards.nine.commons.catscalaz.TaskInstances._
 import cards.nine.domain.application._
 import cards.nine.domain.market.MarketCredentials
 import cards.nine.googleplay.processes.Wiring.GooglePlayApp
