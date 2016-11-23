@@ -3,7 +3,7 @@ package cards.nine.services.free.interpreter
 import cards.nine.commons.config.NineCardsConfig._
 import cards.nine.commons.TaskInstances
 import cards.nine.commons.config.Domain.{ GoogleAnalyticsConfiguration, GoogleApiConfiguration, GoogleFirebaseConfiguration }
-import cards.nine.googleplay.processes.withTypes.WithRedisClient
+import cards.nine.googleplay.processes.Wiring.WithRedisClient
 import cats._
 import cards.nine.services.free.algebra._
 import cards.nine.services.free.interpreter.analytics.{ Services ⇒ AnalyticsServices }

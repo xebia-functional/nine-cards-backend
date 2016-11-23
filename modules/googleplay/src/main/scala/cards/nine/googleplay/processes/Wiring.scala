@@ -1,23 +1,35 @@
 package cards.nine.googleplay.processes
 
 import cards.nine.commons.config.NineCardsConfig._
-import cards.nine.googleplay.processes.withTypes.{ HttpToTask, RedisToTask }
+import cards.nine.googleplay.processes.GooglePlayApp.{ GooglePlayApp, Interpreters }
 import cards.nine.googleplay.service.free.algebra.{ Cache, GoogleApi, WebScraper }
 import cards.nine.googleplay.service.free.interpreter._
 import cards.nine.googleplay.service.free.interpreter.cache.CacheInterpreter
 import cats._
-import cats.data.Coproduct
-import com.redis.RedisClientPool
+import com.redis.{ RedisClient, RedisClientPool }
 import org.http4s.client.blaze.PooledHttp1Client
+import org.http4s.client.{ Client ⇒ HttpClient }
 
 import scalaz.concurrent.Task
 
 object Wiring {
 
+  type WithHttpClient[+A] = HttpClient ⇒ Task[A]
+  type WithRedisClient[+A] = RedisClient ⇒ Task[A]
+
+  class HttpToTask(httpClient: HttpClient)
+    extends (WithHttpClient ~> Task) {
+    override def apply[A](fa: WithHttpClient[A]): Task[A] = fa(httpClient)
+  }
+
+  class RedisToTask(redisPool: RedisClientPool)
+    extends (WithRedisClient ~> Task) {
+    override def apply[A](fa: WithRedisClient[A]): Task[A] = redisPool.withClient(fa)
+  }
+
   private[this] val apiHttpClient = PooledHttp1Client()
   private[this] val webHttpClient = PooledHttp1Client()
-
-  val redisClientPool: RedisClientPool = new RedisClientPool(
+  private[this] val redisClientPool: RedisClientPool = new RedisClientPool(
     host   = nineCardsConfiguration.redis.host,
     port   = nineCardsConfiguration.redis.port,
     secret = nineCardsConfiguration.redis.secret
@@ -40,17 +52,7 @@ object Wiring {
     interp andThen toTask
   }
 
-  type GooglePlayAppC01[A] = Coproduct[GoogleApi.Ops, WebScraper.Ops, A]
-  type GooglePlayApp[A] = Coproduct[Cache.Ops, GooglePlayAppC01, A]
-
-  val interpretersC01: GooglePlayAppC01 ~> Task = googleApiInt or webScrapperInt
-  val interpreters: GooglePlayApp ~> Task = cacheInt or interpretersC01
-
-  val appCardService: AppServiceByProcess = AppServiceByProcess(
-    redisPool     = redisClientPool,
-    apiHttpClient = apiHttpClient,
-    webHttpClient = webHttpClient
-  )
+  val interpreters: GooglePlayApp ~> Task = Interpreters(googleApiInt, cacheInt, webScrapperInt)
 
   def shutdown(): Unit = {
     apiHttpClient.shutdownNow
