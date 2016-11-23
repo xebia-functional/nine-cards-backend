@@ -3,7 +3,6 @@ package cards.nine.commons.redis
 import cards.nine.commons.catscalaz.ScalaFuture2Task
 import scalaz.concurrent.Task
 import scredis.serialization.{ Reader, Writer }
-import scala.concurrent.Future
 
 /**
   * A CacheQueue implements a queue backed in a Redis Cache. The operations assume that some keys in
