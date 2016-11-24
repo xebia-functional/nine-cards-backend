@@ -69,6 +69,16 @@ class Services(
       )
     }
 
+  def increaseViewsByOne(
+    id: Long
+  ): PersistenceService[Int] =
+    PersistenceService {
+      collectionPersistence.update(
+        sql    = Queries.increaseViewsByOne,
+        values = id
+      )
+    }
+
   def updateCollectionInfo(id: Long, title: String): PersistenceService[Int] =
     PersistenceService {
       collectionPersistence.update(
@@ -108,6 +118,8 @@ class Services(
       getLatestByCategory(category, paginationParams)
     case GetTopByCategory(category, pageParams) ⇒
       getTopByCategory(category, pageParams)
+    case IncreaseViewsByOne(id) ⇒
+      increaseViewsByOne(id)
     case Update(id, title) ⇒
       updateCollectionInfo(id, title)
     case UpdatePackages(collection, packages) ⇒

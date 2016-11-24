@@ -103,6 +103,8 @@ trait JsonFormats
 
   implicit val apiCreateCollectionResponseFormat = jsonFormat2(ApiCreateOrUpdateCollectionResponse)
 
+  implicit val apiIncreaseViewsCountByOneResponseFormat = jsonFormat1(ApiIncreaseViewsCountByOneResponse)
+
   implicit val apiSubscribeResponseFormat = jsonFormat0(ApiSubscribeResponse)
 
   implicit val apiUnsubscribeResponseFormat = jsonFormat0(ApiUnsubscribeResponse)

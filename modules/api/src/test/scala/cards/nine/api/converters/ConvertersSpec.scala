@@ -150,4 +150,15 @@ class ConvertersSpec
       }
     }
   }
+
+  "toApiIncreaseViewsCountByOneResponse" should {
+    "convert IncreaseViewsCountByOneResponse to ApiIncreaseViewsCountByOneResponse" in {
+      prop { (response: IncreaseViewsCountByOneResponse) ⇒
+
+        val apiResponse = Converters.toApiIncreaseViewsCountByOneResponse(response)
+
+        apiResponse.publicIdentifier must_== response.publicIdentifier
+      }
+    }
+  }
 }

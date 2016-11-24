@@ -24,6 +24,8 @@ object SharedCollection {
 
   case class GetTopByCategory(category: String, pageParams: Page) extends Ops[Result[List[domain.SharedCollection]]]
 
+  case class IncreaseViewsByOne(id: Long) extends Ops[Result[Int]]
+
   case class Update(id: Long, title: String) extends Ops[Result[Int]]
 
   case class UpdatePackages(collection: Long, packages: List[Package]) extends Ops[Result[(List[Package], List[Package])]]
@@ -47,6 +49,8 @@ object SharedCollection {
 
     def getTopByCategory(category: String, pageParams: Page): NineCardsService[F, List[domain.SharedCollection]] =
       NineCardsService(GetTopByCategory(category, pageParams))
+
+    def increaseViewsByOne(id: Long): NineCardsService[F, Int] = NineCardsService(IncreaseViewsByOne(id))
 
     def update(id: Long, title: String): NineCardsService[F, Int] = NineCardsService(Update(id, title))
 

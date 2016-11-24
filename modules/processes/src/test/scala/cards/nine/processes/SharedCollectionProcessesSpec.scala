@@ -213,6 +213,32 @@ class SharedCollectionProcessesSpec
 
   }
 
+  "increaseViewsCountByOne" should {
+    "increase the number of views by 1 if the shared collection exists" in
+      new BasicScope {
+
+        collectionServices.getByPublicId(publicIdentifier) returns NineCardsService.right(collection)
+        collectionServices.increaseViewsByOne(id = collectionId) returns NineCardsService.right(updatedCollectionsCount)
+
+        val collectionInfo = sharedCollectionProcesses.increaseViewsCountByOne(publicIdentifier)
+
+        collectionInfo.foldMap(testInterpreters) must beRight[IncreaseViewsCountByOneResponse].which {
+          response ⇒ response.publicIdentifier must_== publicIdentifier
+        }
+      }
+
+    "return a SharedCollectionNotFound error when the shared collection doesn't exist" in
+      new BasicScope {
+
+        collectionServices.getByPublicId(publicId = publicIdentifier) returns
+          NineCardsService.left(sharedCollectionNotFoundError)
+
+        val collectionInfo = sharedCollectionProcesses.increaseViewsCountByOne(publicIdentifier)
+
+        collectionInfo.foldMap(testInterpreters) must beLeft(sharedCollectionNotFoundError)
+      }
+  }
+
   "update" should {
     "return the public identifier and the added and removed packages if the shared collection exists" in
       new BasicScope {

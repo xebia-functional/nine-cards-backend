@@ -108,6 +108,14 @@ class SharedCollectionProcesses[F[_]](
       } yield response
     }
 
+  def increaseViewsCountByOne(
+    publicIdentifier: String
+  ): NineCardsService[F, IncreaseViewsCountByOneResponse] =
+    for {
+      collection ← collectionServices.getByPublicId(publicIdentifier)
+      _ ← collectionServices.increaseViewsByOne(collection.id)
+    } yield IncreaseViewsCountByOneResponse(collection.publicIdentifier)
+
   def updateCollection(
     publicIdentifier: String,
     collectionInfo: Option[SharedCollectionUpdateInfo],
