@@ -22,7 +22,7 @@ class CacheQueue[Key, Val](implicit
 
   def enqueue(key: Key, value: Val): RedisOps[Unit] =
     client ⇒ ScalaFuture2Task {
-      for (_ ← client.rPush(format(key), value)) yield Unit
+      client.rPush(format(key), value).map(_x ⇒ Unit)
     }
 
   def enqueueMany(key: Key, values: List[Val]): RedisOps[Unit] =
@@ -30,7 +30,7 @@ class CacheQueue[Key, Val](implicit
       if (values.isEmpty)
         Task(Unit)
       else ScalaFuture2Task {
-        for (_ ← client.rPush[Val](key, values: _*)) yield Unit
+        client.rPush[Val](key, values: _*).map(x ⇒ Unit)
       }
     }
 
@@ -50,10 +50,7 @@ class CacheQueue[Key, Val](implicit
       if (num <= 0)
         Task(Nil)
       else ScalaFuture2Task {
-        for {
-          ran ← client.lRange[Option[Val]](key, 0, num - 1)
-          res = ran.flatten.toList
-        } yield res
+        client.lRange[Option[Val]](key, 0, num - 1).map(_.flatten)
       }
     }
 
@@ -73,7 +70,7 @@ class CacheQueue[Key, Val](implicit
 
   def delete(key: Key): RedisOps[Unit] =
     client ⇒ ScalaFuture2Task {
-      for (_ ← client.del(key)) yield Unit
+      client.del(key).map(x ⇒ Unit)
     }
 
   def delete(keys: List[Key]): RedisOps[Unit] =
@@ -81,13 +78,13 @@ class CacheQueue[Key, Val](implicit
       if (keys.isEmpty)
         Task(Unit)
       else ScalaFuture2Task {
-        for (_ ← client.del(keys map format: _*)) yield Unit
+        client.del(keys map format: _*).map(x ⇒ Unit)
       }
     }
 
   def purge(key: Key, value: Val): RedisOps[Unit] =
     client ⇒ ScalaFuture2Task {
-      for (_ ← client.lRem[Val](key, value, 0)) yield Unit
+      client.lRem[Val](key, value, 0).map(x ⇒ Unit)
     }
 
 }
