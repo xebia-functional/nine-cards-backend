@@ -8,6 +8,7 @@ import cards.nine.api.messages.UserMessages.ApiLoginRequest
 import cards.nine.api.utils.SprayMatchers.PriceFilterSegment
 import cards.nine.api.utils.TaskDirectives._
 import cards.nine.commons.NineCardsService._
+import cards.nine.commons.config.Domain.NineCardsConfiguration
 import cards.nine.domain.account._
 import cards.nine.domain.application.PriceFilter
 import cards.nine.domain.market.{ Localization, MarketToken }
@@ -15,19 +16,20 @@ import cards.nine.processes.NineCardsServices._
 import cards.nine.processes._
 import cats.syntax.either._
 import org.joda.time.DateTime
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
+import scalaz.concurrent.Task
 import shapeless._
 import spray.http.Uri
 import spray.routing._
 import spray.routing.authentication._
 import spray.routing.directives._
 
-import scala.concurrent.ExecutionContext
-import scalaz.concurrent.Task
-
 class NineCardsDirectives(
   implicit
   userProcesses: UserProcesses[NineCardsServices],
   googleApiProcesses: GoogleApiProcesses[NineCardsServices],
+  config: NineCardsConfiguration,
   ec: ExecutionContext
 )
   extends BasicDirectives
@@ -102,6 +104,22 @@ class NineCardsDirectives(
       case _ ⇒ Left(rejectionByCredentialsRejected)
     }
 
+  val editorAuth: BasicHttpAuthenticator[String] = BasicAuth(
+    authenticator = new AppCuratorAuthenticator(config.editors),
+    realm         = "App Cards Editors"
+  )
+
+  class AppCuratorAuthenticator(editors: Map[String, String]) extends UserPassAuthenticator[String] {
+
+    override def apply(userPassOption: Option[UserPass]): Future[Option[String]] = {
+      def isEditor(userPass: UserPass): Boolean =
+        editors.get(userPass.user) == Some(userPass.pass)
+
+      Future(userPassOption.filter(isEditor).map(_.user))
+    }
+
+  }
+
   def generateNewCollectionInfo: Directive1[NewSharedCollectionInfo] = for {
     currentDateTime ← provide(CurrentDateTime(DateTime.now))
     publicIdentifier ← provide(PublicIdentifier(UUID.randomUUID.toString))
@@ -111,6 +129,7 @@ class NineCardsDirectives(
 
   val priceFilterPath: Directive[PriceFilter :: HNil] =
     path(PriceFilterSegment) | (pathEndOrSingleSlash & provide(PriceFilter.ALL: PriceFilter))
+
 }
 
 object NineCardsDirectives {
@@ -119,7 +138,9 @@ object NineCardsDirectives {
     implicit
     userProcesses: UserProcesses[NineCardsServices],
     googleApiProcesses: GoogleApiProcesses[NineCardsServices],
+    config: NineCardsConfiguration,
     ec: ExecutionContext
   ) = new NineCardsDirectives
 
 }
+

@@ -10,6 +10,12 @@ class NineCardsConfigSpec extends Specification {
   val stringValue2 = "xyz"
   val booleanValue = true
 
+  val mapValue = Map(
+    "karl" → "microsoft",
+    "marx" → "made",
+    "gave" → "no"
+  )
+
   val dummyConfigHocon =
     s"""
        |nineCards {
@@ -19,6 +25,11 @@ class NineCardsConfigSpec extends Specification {
        |  emptyStringListValue = []
        |  singletonStringListValue = [$stringValue]
        |  manyStringListValue = [$stringValue, $stringValue2 ]
+       |  mapValue {
+       |    karl = "microsoft"
+       |    marx = "made"
+       |    gave = "no"
+       |  }
        |}
      """.stripMargin
 
@@ -90,4 +101,12 @@ class NineCardsConfigSpec extends Specification {
       config.getOptionalString("stringValue") must beNone
     }
   }
+
+  "getMap" should {
+    s"return the map of String $ifExists" in {
+      val actual = config.getMap("nineCards.mapValue").toList
+      actual must containTheSameElementsAs(mapValue.toList)
+    }
+  }
+
 }

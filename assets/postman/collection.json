@@ -2,7 +2,7 @@
 	"variables": [],
 	"info": {
 		"name": "NineCardsV2",
-		"_postman_id": "a7fbab51-5eba-1427-d340-2f3b013ff342",
+		"_postman_id": "7601ac68-2dd7-e1a6-c4d2-e8c501937867",
 		"description": "",
 		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json"
 	},
@@ -19,7 +19,7 @@
 						"header": [
 							{
 								"key": "Accept",
-								"value": "\"application/json\"",
+								"value": "application/json",
 								"description": ""
 							},
 							{
@@ -59,7 +59,7 @@
 							},
 							{
 								"key": "Accept",
-								"value": "\"application/json\"",
+								"value": "application/json",
 								"description": ""
 							},
 							{
@@ -110,7 +110,7 @@
 							},
 							{
 								"key": "Accept",
-								"value": "\"application/json\"",
+								"value": "application/json",
 								"description": ""
 							},
 							{
@@ -155,7 +155,7 @@
 							},
 							{
 								"key": "Accept",
-								"value": "\"application/json\"",
+								"value": "application/json",
 								"description": ""
 							},
 							{
@@ -195,7 +195,7 @@
 							},
 							{
 								"key": "Accept",
-								"value": "\"application/json\"",
+								"value": "application/json",
 								"description": ""
 							},
 							{
@@ -240,7 +240,7 @@
 							},
 							{
 								"key": "Accept",
-								"value": "\"application/json\"",
+								"value": "application/json",
 								"description": ""
 							},
 							{
@@ -252,6 +252,45 @@
 						"body": {
 							"mode": "raw",
 							"raw": "{\n\t\"items\" : [\n\t\t\"com.google.android.youtube\",\n\t\t\"com.google.android.gm\",\n\t\t\"com.facebook.katana\",\n\t\t\"com.twitter.android\",\n\t\t\"flipboard.app\"\n\t]\n}"
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Store an App Data as Permanent",
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": {
+								"username": "local",
+								"password": "local",
+								"saveHelperData": true,
+								"showPassword": false
+							}
+						},
+						"url": "{{scheme}}://{{authority}}{{root_path}}/applications/details/one.false.package",
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"description": ""
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"description": ""
+							},
+							{
+								"key": "Authorization",
+								"value": "Basic bG9jYWw6bG9jYWw=",
+								"description": ""
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"title\" : \"The False APP\",\n\t\"free\" : true,\n\t\"icon\" : \"http://the.false.icon\",\n\t\"downloads\": \"millions and billions\",\n\t\"stars\" : 1.414236562,\n\t\"categories\": [\"SOCIAL\"],\n\t\"screenshots\" : [\"http://one.false.screenshot\"]\n}"
 						},
 						"description": ""
 					},
@@ -291,7 +330,7 @@
 							},
 							{
 								"key": "Accept",
-								"value": "\"application/json\"",
+								"value": "application/json",
 								"description": ""
 							}
 						],
@@ -326,7 +365,7 @@
 							},
 							{
 								"key": "Accept",
-								"value": "\"application/json\"",
+								"value": "application/json",
 								"description": ""
 							},
 							{
@@ -371,7 +410,7 @@
 							},
 							{
 								"key": "Accept",
-								"value": "\"application/json\"",
+								"value": "application/json",
 								"description": ""
 							}
 						],
@@ -406,7 +445,7 @@
 							},
 							{
 								"key": "Accept",
-								"value": "\"application/json\"",
+								"value": "application/json",
 								"description": ""
 							},
 							{
@@ -437,7 +476,7 @@
 						"header": [
 							{
 								"key": "Accept",
-								"value": "\"application/json\"",
+								"value": "application/json",
 								"description": ""
 							}
 						],
@@ -457,7 +496,7 @@
 						"header": [
 							{
 								"key": "Accept",
-								"value": "\"application/json\"",
+								"value": "application/json",
 								"description": ""
 							}
 						],
@@ -477,7 +516,7 @@
 						"header": [
 							{
 								"key": "Accept",
-								"value": "\"application/json\"",
+								"value": "application/json",
 								"description": ""
 							}
 						],
@@ -497,7 +536,7 @@
 						"header": [
 							{
 								"key": "Accept",
-								"value": "\"application/json\"",
+								"value": "application/json",
 								"description": ""
 							},
 							{
@@ -527,7 +566,7 @@
 						"header": [
 							{
 								"key": "Accept",
-								"value": "\"application/json\"",
+								"value": "application/json",
 								"description": ""
 							},
 							{
@@ -557,7 +596,7 @@
 						"header": [
 							{
 								"key": "Accept",
-								"value": "\"application/json\"",
+								"value": "application/json",
 								"description": ""
 							},
 							{
@@ -613,7 +652,7 @@
 							},
 							{
 								"key": "Accept",
-								"value": "\"application/json\"",
+								"value": "application/json",
 								"description": ""
 							},
 							{
@@ -658,7 +697,7 @@
 							},
 							{
 								"key": "Accept",
-								"value": "\"application/json\"",
+								"value": "application/json",
 								"description": ""
 							}
 						],
@@ -699,7 +738,7 @@
 							},
 							{
 								"key": "Accept",
-								"value": "\"application/json\"",
+								"value": "application/json",
 								"description": ""
 							}
 						],
@@ -734,7 +773,7 @@
 							},
 							{
 								"key": "Accept",
-								"value": "\"application/json\"",
+								"value": "application/json",
 								"description": ""
 							},
 							{
@@ -774,7 +813,7 @@
 							},
 							{
 								"key": "Accept",
-								"value": "\"application/json\"",
+								"value": "application/json",
 								"description": ""
 							}
 						],

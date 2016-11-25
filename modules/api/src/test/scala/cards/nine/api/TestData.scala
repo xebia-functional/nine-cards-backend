@@ -128,6 +128,16 @@ object TestData {
 
   object Messages {
 
+    val setAppInfoRequest = ApiSetAppInfoRequest(
+      title       = "App Example",
+      free        = false,
+      icon        = "",
+      stars       = 0.0,
+      downloads   = "",
+      categories  = Nil,
+      screenshots = Nil
+    )
+
     val collectionInfo = SharedCollectionUpdateInfo(title = name)
 
     val packagesStats = PackagesStats(addedPackages, removedPackages)

@@ -42,6 +42,7 @@ class InterpreterSpec
     def pendingKey(pack: Package): String = s"${pack.value}:Pending"
     def resolvedKey(pack: Package): String = s"${pack.value}:Resolved"
 
+    def permanentKey(pack: Package): String = s"${pack.value}:Permanent"
     def allByType(keyType: KeyType) = s"*:${keyType.entryName}*"
     val allErrors = "*:Error"
     def allByPackage(pack: Package): String = s"${pack.value}:*"
@@ -134,7 +135,7 @@ class InterpreterSpec
     "return Some(e) if the cache contains a Permanent entry" >>
       prop { card: FullCard ⇒
         flush
-        putEntry(CacheEntry.permanent(card.packageName, card))
+        putEntry(CacheEntry.permanent(card))
 
         eval(GetValid(card.packageName)) must beSome(card)
       }
@@ -169,7 +170,7 @@ class InterpreterSpec
     "return a list of cards if the cache contains a Permanent entry" >>
       prop { cards: List[FullCard] ⇒
         flush
-        putEntries(cards map (c ⇒ CacheEntry.permanent(c.packageName, c)))
+        putEntries(cards map CacheEntry.permanent)
 
         eval(GetValidMany(cards map (_.packageName))) must containTheSameElementsAs(cards)
       }
@@ -252,6 +253,44 @@ class InterpreterSpec
 
         getKeys(allByType(Resolved)) must haveSize(cards.size)
         values must containTheSameElementsAs(newCards map (c ⇒ Option(CacheVal(Option(c)))))
+      }
+  }
+
+  "putPermanent" should {
+    "add a package as permanent" >>
+      prop { card: FullCard ⇒
+        flush
+        eval(PutPermanent(card))
+
+        getEntry(permanentKey(card.packageName)) must beSome
+      }
+
+    "add no other key as permanent" >>
+      prop { (card: FullCard, pack: Package) ⇒
+        flush
+        eval(PutPermanent(card))
+
+        getEntry(permanentKey(pack)) must beNone
+      }
+
+    "add no key as pending or error" >>
+      prop { card: FullCard ⇒
+        flush
+        eval(PutPermanent(card))
+
+        getKeys(allByType(Pending)) must beEmpty
+        getKeys(allByType(Error)) must beEmpty
+      }
+
+    "overwrite any previous value" >>
+      prop { (card: FullCard) ⇒
+        flush
+        val newCard = card.copy(title = card.title.reverse, free = !card.free)
+        eval(PutPermanent(card))
+        eval(PutPermanent(newCard))
+
+        getKeys(allByType(Permanent)) must haveSize(1)
+        getCacheValue(permanentKey(card.packageName)) must_=== Option(CacheVal(Option(newCard)))
       }
   }
 

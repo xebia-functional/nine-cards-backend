@@ -63,6 +63,12 @@ object CacheInterpreter extends (Ops ~> WithRedisClient) {
         wrap.mput(cards map CacheEntry.resolved)
       }
 
+    case PutPermanent(card) ⇒ client: RedisClient ⇒
+      Task {
+        val wrap = CacheWrapper[CacheKey, CacheVal](client)
+        wrap.put(CacheEntry.permanent(card))
+      }
+
     case MarkPending(pack) ⇒ client: RedisClient ⇒
       Task {
         val wrap = CacheWrapper[CacheKey, CacheVal](client)
@@ -109,12 +115,14 @@ object CacheInterpreter extends (Ops ~> WithRedisClient) {
         CacheWrapper[CacheKey, CacheVal](client)
           .delete(CacheKey.pending(pack))
         ErrorCache(client).delete(CacheKey.error(pack))
+        PendingQueue(client).purge(PendingQueue.QueueKey, pack)
       }
 
     case ClearInvalidMany(packages) ⇒ client: RedisClient ⇒
       Task {
         val wrap = CacheWrapper[CacheKey, CacheVal](client)
         wrap.delete(packages map CacheKey.pending)
+        PendingQueue(client).purgeMany(PendingQueue.QueueKey, packages)
         ErrorCache(client).delete(packages map CacheKey.error)
       }
 

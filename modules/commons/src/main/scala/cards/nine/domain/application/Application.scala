@@ -1,12 +1,27 @@
 package cards.nine.domain.application
 
 import enumeratum.{ Enum, EnumEntry }
+import scala.util.matching.Regex
 
 /**
   * A Package is the unique identifier of an android App.
   * It is a dot-separated sequence of lowercase segments, much like Java packages.
   */
 case class Package(value: String) extends AnyVal
+
+object PackageRegex {
+
+  val string: String = {
+    val c = """[a-zA-Z0-9\_]+"""
+    s"""$c(?:\\.$c)*"""
+  }
+
+  val regex: Regex = string.r
+
+  def parse(str: String): Option[Package] =
+    regex.unapplySeq(str) map (_ ⇒ Package(str))
+
+}
 
 case class Widget(packageName: Package, className: String)
 

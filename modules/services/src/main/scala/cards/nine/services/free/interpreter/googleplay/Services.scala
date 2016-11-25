@@ -84,6 +84,11 @@ class Services(implicit googlePlayProcesses: CardsProcesses[GooglePlayApp]) exte
       .map(r ⇒ Either.right(Converters.toResolvePendingStats(r)))
       .foldMap(Wiring.interpreters)
 
+  def storeCard(card: FullCard): Task[Result[Unit]] =
+    googlePlayProcesses.storeCard(card)
+      .map(Either.right)
+      .foldMap(Wiring.interpreters)
+
   def apply[A](fa: Ops[A]): Task[A] = fa match {
     case ResolveManyBasic(packageNames, auth) ⇒
       resolveManyBasic(packageNames, auth)
@@ -99,6 +104,8 @@ class Services(implicit googlePlayProcesses: CardsProcesses[GooglePlayApp]) exte
       searchApps(query, excludePackages, limit, auth)
     case ResolvePendingApps(numPackages) ⇒
       resolvePendingApps(numPackages)
+    case StoreCard(card) ⇒
+      storeCard(card)
 
   }
 }

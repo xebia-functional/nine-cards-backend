@@ -15,6 +15,8 @@ object Cache {
 
   case class PutResolvedMany(cards: List[FullCard]) extends Ops[Unit]
 
+  case class PutPermanent(card: FullCard) extends Ops[Unit]
+
   case class MarkPending(`package`: Package) extends Ops[Unit]
 
   case class MarkPendingMany(packages: List[Package]) extends Ops[Unit]
@@ -46,6 +48,8 @@ object Cache {
 
     def putResolvedMany(cards: List[FullCard]): Free[F, Unit] =
       Free.inject[Ops, F](PutResolvedMany(cards))
+
+    def putPermanent(card: FullCard): Free[F, Unit] = Free.inject[Ops, F](PutPermanent(card))
 
     def markPending(pack: Package): Free[F, Unit] = Free.inject[Ops, F](MarkPending(pack))
 

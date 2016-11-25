@@ -10,6 +10,7 @@ object Domain {
   case class NineCardsConfiguration(
     db: DatabaseConfiguration,
     debugMode: Option[Boolean],
+    editors: Map[String, String],
     google: GoogleConfiguration,
     http: HttpConfiguration,
     rankings: RankingsConfiguration,
@@ -26,6 +27,7 @@ object Domain {
       NineCardsConfiguration(
         DatabaseConfiguration(config, prefix),
         config.getOptionalBoolean(s"$prefix.debugMode"),
+        config.getMap(s"$prefix.editors"),
         GoogleConfiguration(config, prefix),
         HttpConfiguration(config, prefix),
         RankingsConfiguration(config, prefix),
