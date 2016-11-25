@@ -9,7 +9,6 @@ trait Settings {
 
   lazy val projectSettings: Seq[Def.Setting[_]] = Seq(
     addCompilerPlugin("org.spire-math" %% "kind-projector" % Versions.kindProjector),
-    addCompilerPlugin("org.scalamacros" % "paradise" % Versions.paradise cross CrossVersion.full),
     scalaVersion := Versions.scala,
     organization := "com.fortysevendeg",
     organizationName := "47 Degrees",

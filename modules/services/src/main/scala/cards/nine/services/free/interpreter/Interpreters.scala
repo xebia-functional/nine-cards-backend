@@ -4,17 +4,17 @@ import cards.nine.commons.config.NineCardsConfig._
 import cards.nine.commons.TaskInstances
 import cards.nine.googleplay.processes.Wiring.WithRedisClient
 import cards.nine.services.free.algebra._
-import cards.nine.services.free.interpreter.analytics.{Services => AnalyticsServices}
-import cards.nine.services.free.interpreter.collection.{Services => CollectionServices}
-import cards.nine.services.free.interpreter.country.{Services => CountryServices}
-import cards.nine.services.free.interpreter.firebase.{Services => FirebaseServices}
-import cards.nine.services.free.interpreter.googleapi.{Services => GoogleApiServices}
-import cards.nine.services.free.interpreter.googleoauth.{Services => GoogleOAuthServices}
-import cards.nine.services.free.interpreter.googleplay.{Services => GooglePlayServices}
-import cards.nine.services.free.interpreter.ranking.{Services => RankingServices}
+import cards.nine.services.free.interpreter.analytics.{ Services ⇒ AnalyticsServices }
+import cards.nine.services.free.interpreter.collection.{ Services ⇒ CollectionServices }
+import cards.nine.services.free.interpreter.country.{ Services ⇒ CountryServices }
+import cards.nine.services.free.interpreter.firebase.{ Services ⇒ FirebaseServices }
+import cards.nine.services.free.interpreter.googleapi.{ Services ⇒ GoogleApiServices }
+import cards.nine.services.free.interpreter.googleoauth.{ Services ⇒ GoogleOAuthServices }
+import cards.nine.services.free.interpreter.googleplay.{ Services ⇒ GooglePlayServices }
+import cards.nine.services.free.interpreter.ranking.{ Services ⇒ RankingServices }
 import cards.nine.services.free.interpreter.ranking.Services._
-import cards.nine.services.free.interpreter.subscription.{Services => SubscriptionServices}
-import cards.nine.services.free.interpreter.user.{Services => UserServices}
+import cards.nine.services.free.interpreter.subscription.{ Services ⇒ SubscriptionServices }
+import cards.nine.services.free.interpreter.user.{ Services ⇒ UserServices }
 import cards.nine.services.persistence.DatabaseTransactor._
 import cats.{ ApplicativeError, ~> }
 import com.redis.RedisClientPool

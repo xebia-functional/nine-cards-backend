@@ -48,10 +48,10 @@ class Interpreter(config: GooglePlayWebConfiguration) extends (Ops ~> WithClient
       val httpRequest = new Request(method = Method.GET, uri = detailsUriOf(pack))
 
       client.expect[ByteVector](httpRequest).map { bv ⇒
-        GooglePlayPageParser.parseCard(bv) match {
-          case Some(card) ⇒ Either.right(card)
-          case None ⇒ Either.left(PageParseFailed(pack))
-        }
+        Either.fromOption(
+          GooglePlayPageParser.parseCard(bv),
+          PageParseFailed(pack)
+        )
       }.handle {
         case e: UnexpectedStatus ⇒ Either.left(handleUnexpected(e))
       }
