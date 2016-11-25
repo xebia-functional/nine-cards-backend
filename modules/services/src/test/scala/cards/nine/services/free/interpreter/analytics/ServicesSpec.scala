@@ -59,7 +59,7 @@ class ServicesSpec
 
   import TestData._
 
-  implicit val configuration: GoogleAnalyticsConfiguration = GoogleAnalyticsConfiguration(
+  val configuration: GoogleAnalyticsConfiguration = GoogleAnalyticsConfiguration(
     protocol = "http",
     host     = "localhost",
     port     = Option(mockServerPort),
@@ -67,7 +67,7 @@ class ServicesSpec
     viewId   = TestData.viewId
   )
 
-  val services = Services.services
+  val services = Services.services(configuration)
 
   "getRanking" should {
 

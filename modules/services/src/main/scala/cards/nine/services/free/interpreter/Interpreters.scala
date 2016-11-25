@@ -2,9 +2,7 @@ package cards.nine.services.free.interpreter
 
 import cards.nine.commons.config.NineCardsConfig._
 import cards.nine.commons.TaskInstances
-import cards.nine.commons.config.Domain.{ GoogleAnalyticsConfiguration, GoogleApiConfiguration, GoogleFirebaseConfiguration }
 import cards.nine.googleplay.processes.Wiring.WithRedisClient
-import cats._
 import cards.nine.services.free.algebra._
 import cards.nine.services.free.interpreter.analytics.{ Services ⇒ AnalyticsServices }
 import cards.nine.services.free.interpreter.collection.{ Services ⇒ CollectionServices }
@@ -18,6 +16,7 @@ import cards.nine.services.free.interpreter.ranking.Services._
 import cards.nine.services.free.interpreter.subscription.{ Services ⇒ SubscriptionServices }
 import cards.nine.services.free.interpreter.user.{ Services ⇒ UserServices }
 import cards.nine.services.persistence.DatabaseTransactor._
+import cats.{ ApplicativeError, ~> }
 import com.redis.RedisClientPool
 import doobie.contrib.postgresql.pgtypes._
 import doobie.imports._
@@ -26,12 +25,6 @@ import scalaz.concurrent.Task
 
 class Interpreters(implicit A: ApplicativeError[Task, Throwable], T: Transactor[Task]) {
 
-  implicit val analyticsConfig: GoogleAnalyticsConfiguration = nineCardsConfiguration.google.analytics
-
-  implicit val firebaseConfig: GoogleFirebaseConfiguration = nineCardsConfiguration.google.firebase
-
-  implicit val googleApiConfig: GoogleApiConfiguration = nineCardsConfiguration.google.api
-
   val redisClientPool: RedisClientPool = new RedisClientPool(
     host   = nineCardsConfiguration.redis.host,
     port   = nineCardsConfiguration.redis.port,
@@ -39,7 +32,6 @@ class Interpreters(implicit A: ApplicativeError[Task, Throwable], T: Transactor[
   )
 
   val toTask = new (WithRedisClient ~> Task) {
-
     override def apply[A](fa: WithRedisClient[A]): Task[A] = redisClientPool.withClient(fa)
   }
 
@@ -47,15 +39,15 @@ class Interpreters(implicit A: ApplicativeError[Task, Throwable], T: Transactor[
     def apply[A](fa: ConnectionIO[A]): Task[A] = fa.transact(T)
   }
 
-  val analyticsInterpreter: (GoogleAnalytics.Ops ~> Task) = AnalyticsServices.services
+  val analyticsInterpreter: (GoogleAnalytics.Ops ~> Task) = AnalyticsServices.services(nineCardsConfiguration.google.analytics)
 
   val collectionInterpreter: (SharedCollection.Ops ~> Task) = CollectionServices.services.andThen(connectionIO2Task)
 
   val countryInterpreter: (Country.Ops ~> Task) = CountryServices.services.andThen(connectionIO2Task)
 
-  val firebaseInterpreter: (Firebase.Ops ~> Task) = FirebaseServices.services
+  val firebaseInterpreter: (Firebase.Ops ~> Task) = FirebaseServices.services(nineCardsConfiguration.google.firebase)
 
-  val googleApiInterpreter: (GoogleApi.Ops ~> Task) = GoogleApiServices.services
+  val googleApiInterpreter: (GoogleApi.Ops ~> Task) = GoogleApiServices.services(nineCardsConfiguration.google.api)
 
   val googleOAuthInterpreter: (GoogleOAuth.Ops ~> Task) = GoogleOAuthServices
 

@@ -41,5 +41,5 @@ class Services(config: GoogleApiConfiguration) extends (Ops ~> Task) {
 
 object Services {
 
-  implicit def services(implicit config: GoogleApiConfiguration) = new Services(config)
+  implicit def services(config: GoogleApiConfiguration) = new Services(config)
 }
