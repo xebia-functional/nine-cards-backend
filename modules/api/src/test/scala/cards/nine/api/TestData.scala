@@ -15,7 +15,6 @@ import cards.nine.processes.messages.SharedCollectionMessages._
 import cards.nine.processes.messages.UserMessages.{ LoginRequest, LoginResponse }
 import cards.nine.processes.messages.rankings.{ Get, Reload }
 import cards.nine.services.free.domain.Ranking.GoogleAnalyticsRanking
-import cards.nine.services.persistence.PersistenceExceptions.PersistenceException
 import org.joda.time.{ DateTime, DateTimeZone }
 import spray.http.HttpHeaders.RawHeader
 
@@ -91,16 +90,6 @@ object TestData {
   val views = 1
 
   val sharedCollectionNotFoundError = SharedCollectionNotFound("Shared collection not found")
-
-  object Exceptions {
-
-    val http4sException = org.http4s.InvalidResponseException(msg = "Test error")
-
-    val persistenceException = PersistenceException(
-      message = "Test error",
-      cause   = None
-    )
-  }
 
   object Headers {
 

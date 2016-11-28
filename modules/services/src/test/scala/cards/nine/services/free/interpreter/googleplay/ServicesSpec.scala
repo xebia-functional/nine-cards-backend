@@ -6,11 +6,12 @@ import cards.nine.domain.account.AndroidId
 import cards.nine.domain.application.{ CardList, Category, FullCard, Package, PriceFilter }
 import cards.nine.domain.market.{ Localization, MarketCredentials, MarketToken }
 import cards.nine.googleplay.domain._
+import cards.nine.googleplay.processes.GooglePlayApp.GooglePlayApp
 import cards.nine.googleplay.processes.getcard.UnknownPackage
-import cards.nine.googleplay.processes.{ CardsProcesses, ResolveMany, Wiring }
+import cards.nine.googleplay.processes.{ CardsProcesses, ResolveMany }
 import cats.data.Xor
 import cats.free.Free
-import org.specs2.matcher.{ DisjunctionMatchers, Matcher, Matchers, XorMatchers }
+import org.specs2.matcher.{ DisjunctionMatchers, Matcher, Matchers }
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
 import org.specs2.specification.Scope
@@ -19,8 +20,7 @@ class ServicesSpec
   extends Specification
   with Matchers
   with Mockito
-  with DisjunctionMatchers
-  with XorMatchers {
+  with DisjunctionMatchers {
 
   import TestData._
 
@@ -111,7 +111,7 @@ class ServicesSpec
   }
 
   trait BasicScope extends Scope {
-    implicit val googlePlayProcesses = mock[CardsProcesses[Wiring.GooglePlayApp]]
+    implicit val googlePlayProcesses = mock[CardsProcesses[GooglePlayApp]]
     val services = Services.services
   }
 

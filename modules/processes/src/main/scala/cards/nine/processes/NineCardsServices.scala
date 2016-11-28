@@ -1,7 +1,6 @@
 package cards.nine.processes
 
 import cards.nine.services.free.algebra._
-import cards.nine.services.free.interpreter.Interpreters
 import cards.nine.services.free.interpreter.Interpreters._
 import cats.data.Coproduct
 import cats.{ ApplicativeError, Monad, RecursiveTailRecM, ~> }
@@ -22,28 +21,35 @@ object NineCardsServices {
   type NineCardsServicesC01[A] = Coproduct[GoogleAnalytics.Ops, NineCardsServicesC02, A]
   type NineCardsServices[A] = Coproduct[Firebase.Ops, NineCardsServicesC01, A]
 
-  class NineCardsInterpreters[F[_]](int: Interpreters[F]) {
+  class NineCardsInterpreters {
 
-    val interpretersC08: NineCardsServicesC08 ~> F = int.googleOAuthInterpreter or int.userInterpreter
+    val interpretersC08: NineCardsServicesC08 ~> Task =
+      taskInterpreters.googleOAuthInterpreter or taskInterpreters.userInterpreter
 
-    val interpretersC07: NineCardsServicesC07 ~> F = int.subscriptionInterpreter or interpretersC08
+    val interpretersC07: NineCardsServicesC07 ~> Task =
+      taskInterpreters.subscriptionInterpreter or interpretersC08
 
-    val interpretersC06: NineCardsServicesC06 ~> F = int.collectionInterpreter or interpretersC07
+    val interpretersC06: NineCardsServicesC06 ~> Task =
+      taskInterpreters.collectionInterpreter or interpretersC07
 
-    val interpretersC05: NineCardsServicesC05 ~> F = int.rankingInterpreter or interpretersC06
+    val interpretersC05: NineCardsServicesC05 ~> Task =
+      taskInterpreters.rankingInterpreter or interpretersC06
 
-    val interpretersC04: NineCardsServicesC04 ~> F = int.countryInterpreter or interpretersC05
+    val interpretersC04: NineCardsServicesC04 ~> Task =
+      taskInterpreters.countryInterpreter or interpretersC05
 
-    val interpretersC03: NineCardsServicesC03 ~> F = int.googlePlayInterpreter or interpretersC04
+    val interpretersC03: NineCardsServicesC03 ~> Task =
+      taskInterpreters.googlePlayInterpreter or interpretersC04
 
-    val interpretersC02: NineCardsServicesC02 ~> F = int.googleApiInterpreter or interpretersC03
+    val interpretersC02: NineCardsServicesC02 ~> Task =
+      taskInterpreters.googleApiInterpreter or interpretersC03
 
-    val interpretersC01: NineCardsServicesC01 ~> F = int.analyticsInterpreter or interpretersC02
+    val interpretersC01: NineCardsServicesC01 ~> Task =
+      taskInterpreters.analyticsInterpreter or interpretersC02
 
-    val interpreters: NineCardsServices ~> F = int.firebaseInterpreter or interpretersC01
+    val interpreters: NineCardsServices ~> Task =
+      taskInterpreters.firebaseInterpreter or interpretersC01
   }
 
-  val prodNineCardsInterpreters = new NineCardsInterpreters(taskInterpreters)
-
-  val prodInterpreters: NineCardsServices ~> Task = prodNineCardsInterpreters.interpreters
+  val prodInterpreters: NineCardsServices ~> Task = new NineCardsInterpreters().interpreters
 }

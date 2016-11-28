@@ -3,23 +3,29 @@ package cards.nine.googleplay.processes
 import akka.actor.ActorSystem
 import cards.nine.commons.config.NineCardsConfig._
 import cards.nine.commons.redis.RedisOpsToTask
-import cards.nine.googleplay.processes.withTypes.HttpToTask
+import cards.nine.googleplay.processes.GooglePlayApp.{ GooglePlayApp, Interpreters }
 import cards.nine.googleplay.service.free.algebra.{ Cache, GoogleApi, WebScraper }
 import cards.nine.googleplay.service.free.interpreter._
 import cards.nine.googleplay.service.free.interpreter.cache.CacheInterpreter
 import cats._
-import cats.data.Coproduct
 import org.http4s.client.blaze.PooledHttp1Client
-import scredis.{ Client ⇒ RedisClient }
-
+import org.http4s.client.{ Client ⇒ HttpClient }
 import scalaz.concurrent.Task
+import scredis.{ Client ⇒ RedisClient }
 
 object Wiring {
 
-  implicit val system: ActorSystem = ActorSystem("cards-nine-googleplay-processes-Wiring")
+  type WithHttpClient[+A] = HttpClient ⇒ Task[A]
+
+  class HttpToTask(httpClient: HttpClient)
+    extends (WithHttpClient ~> Task) {
+    override def apply[A](fa: WithHttpClient[A]): Task[A] = fa(httpClient)
+  }
 
   private[this] val apiHttpClient = PooledHttp1Client()
   private[this] val webHttpClient = PooledHttp1Client()
+
+  implicit val system: ActorSystem = ActorSystem("cards-nine-googleplay-processes-Wiring")
 
   val redisClient: RedisClient = RedisClient(
     host        = nineCardsConfiguration.redis.host,
@@ -44,17 +50,7 @@ object Wiring {
     interp andThen toTask
   }
 
-  type GooglePlayAppC01[A] = Coproduct[GoogleApi.Ops, WebScraper.Ops, A]
-  type GooglePlayApp[A] = Coproduct[Cache.Ops, GooglePlayAppC01, A]
-
-  val interpretersC01: GooglePlayAppC01 ~> Task = googleApiInt or webScrapperInt
-  val interpreters: GooglePlayApp ~> Task = cacheInt or interpretersC01
-
-  val appCardService: AppServiceByProcess = AppServiceByProcess(
-    redisClient   = redisClient,
-    apiHttpClient = apiHttpClient,
-    webHttpClient = webHttpClient
-  )
+  val interpreters: GooglePlayApp ~> Task = Interpreters(googleApiInt, cacheInt, webScrapperInt)
 
   def shutdown(): Unit = {
     apiHttpClient.shutdownNow

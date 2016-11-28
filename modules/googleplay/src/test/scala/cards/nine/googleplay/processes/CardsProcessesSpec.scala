@@ -4,9 +4,9 @@ import cards.nine.domain.ScalaCheck._
 import cards.nine.domain.application.{ FullCard, Package }
 import cards.nine.domain.market.MarketCredentials
 import cards.nine.googleplay.domain.{ apigoogle ⇒ ApiDom, webscrapper ⇒ WebDom }
+import cards.nine.googleplay.processes.GooglePlayApp.{ GooglePlayApp, Interpreters }
 import cards.nine.googleplay.service.free.algebra.{ Cache ⇒ CacheAlg, GoogleApi ⇒ ApiAlg, WebScraper ⇒ WebAlg }
 import cards.nine.googleplay.service.free.interpreter.{ cache ⇒ CacheInt, googleapi ⇒ ApiInt, webscrapper ⇒ WebInt }
-import cards.nine.googleplay.service.free.{ JoinInterpreter, JoinServices }
 import cards.nine.googleplay.util.ScalaCheck._
 import cats.data.Xor
 import cats.{ Id, ~> }
@@ -32,10 +32,9 @@ class CardsProcessesSpec
   val webScrapperIntServer: WebInt.InterpreterServer[Id] = mock[WebInt.InterpreterServer[Id]]
   val webScrapperInt: WebAlg.Ops ~> Id = WebInt.MockInterpreter(webScrapperIntServer)
 
-  val interpreter: JoinServices ~> Id =
-    JoinInterpreter.interpreter(apiGoogleInt, cacheInt, webScrapperInt)
+  val interpreter: GooglePlayApp ~> Id = Interpreters(apiGoogleInt, cacheInt, webScrapperInt)
 
-  val processes = CardsProcesses.processes[JoinServices]
+  val processes = CardsProcesses.processes[GooglePlayApp]
 
   def clear(): Unit = {
     reset(apiGoogleIntServer)

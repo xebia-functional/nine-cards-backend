@@ -58,6 +58,7 @@ trait OnSuccessTaskMagnet {
 }
 
 object OnSuccessTaskMagnet {
+  import scala.language.existentials
   implicit def apply[T](task: ⇒ Task[T])(implicit hl: HListable[T]) =
     new Directive[hl.Out] with OnSuccessTaskMagnet {
       type Out = hl.Out
