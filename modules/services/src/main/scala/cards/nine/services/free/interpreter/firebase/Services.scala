@@ -90,5 +90,5 @@ class Services(config: GoogleFirebaseConfiguration) extends (Ops ~> Task) {
 }
 
 object Services {
-  def services(implicit config: GoogleFirebaseConfiguration) = new Services(config)
+  def services(config: GoogleFirebaseConfiguration) = new Services(config)
 }

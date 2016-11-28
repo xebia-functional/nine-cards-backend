@@ -1,6 +1,5 @@
 package cards.nine.api
 
-import cards.nine.services.persistence.PersistenceExceptions.PersistenceException
 import org.http4s.client.UnexpectedStatus
 import spray.http.StatusCodes._
 import spray.routing.{ ExceptionHandler, HttpService }
@@ -14,12 +13,6 @@ trait NineCardsExceptionHandler extends HttpService {
           uri ⇒
             log.warning("Request to {} could not be handled normally", uri)
             complete(ServiceUnavailable, Option(e.getMessage).getOrElse("Net connection error"))
-        }
-      case e: PersistenceException ⇒
-        requestUri {
-          uri ⇒
-            log.warning("Request to {} could not be handled normally", uri)
-            complete(InternalServerError, Option(e.getMessage).getOrElse("Persistence error"))
         }
       case e: messages.rankings.Reload.InvalidDate ⇒
         requestUri { uri ⇒

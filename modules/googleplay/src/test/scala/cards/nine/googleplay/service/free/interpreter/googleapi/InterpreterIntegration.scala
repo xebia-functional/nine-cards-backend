@@ -1,11 +1,13 @@
 package cards.nine.googleplay.service.free.interpreter.googleapi
 
-import cats.data.Xor
+import cards.nine.commons.catscalaz.TaskInstances._
 import cards.nine.domain.application.FullCard
-import cards.nine.googleplay.domain._
-import cards.nine.googleplay.processes.Wiring
 import cards.nine.googleplay.config.TestConfig._
+import cards.nine.googleplay.domain._
+import cards.nine.googleplay.processes.GooglePlayApp.GooglePlayApp
+import cards.nine.googleplay.processes.{ CardsProcesses, Wiring }
 import cards.nine.googleplay.service.free.interpreter.TestData._
+import cats.data.Xor
 import org.specs2.matcher.TaskMatchers
 import org.specs2.mutable.Specification
 import org.specs2.specification.AfterAll
@@ -14,7 +16,7 @@ class InterpreterIntegration extends Specification with AfterAll {
 
   import TaskMatchers._
 
-  private val appCardService = Wiring.appCardService
+  val process: CardsProcesses[GooglePlayApp] = CardsProcesses.processes[GooglePlayApp]
 
   override def afterAll: Unit = Wiring.shutdown()
 
@@ -31,16 +33,23 @@ class InterpreterIntegration extends Specification with AfterAll {
           screenshots = List(),
           stars       = 3.145
         )
-        val appRequest = AppRequest(fisherPrice.packageObj, marketAuth)
-        val response = appCardService(appRequest)
+        val response = process
+          .getCard(fisherPrice.packageObj, marketAuth)
+          .foldMap(Wiring.interpreters)
+          .map(xor ⇒ xor.bimap(_ ⇒ InfoError(fisherPrice.packageName), c ⇒ c))
+
         val fields = response.map(_.map(eraseDetails))
         // The number of downloads can be different from the Google API.
         fields must returnValue(Xor.Right(eraseDetails(fisherPrice.card)))
       }
 
       "result in an error state for packages that do not exist" in {
-        val appRequest = AppRequest(nonexisting.packageObj, marketAuth)
-        appCardService(appRequest) must returnValue(Xor.left(nonexisting.infoError))
+        val response = process
+          .getCard(nonexisting.packageObj, marketAuth)
+          .foldMap(Wiring.interpreters)
+          .map(xor ⇒ xor.bimap(_ ⇒ InfoError(nonexisting.packageName), c ⇒ c))
+
+        response must returnValue(Xor.left(nonexisting.infoError))
       }
     }
 

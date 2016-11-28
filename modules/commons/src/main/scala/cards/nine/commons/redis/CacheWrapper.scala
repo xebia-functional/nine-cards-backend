@@ -30,7 +30,8 @@ class CacheWrapper[Key, Val](
 
   def put(entry: (Key, Val)): RedisOps[Unit] =
     client ⇒ ScalaFuture2Task {
-      for (_ ← client.set[Val](format(entry._1), entry._2)) yield Unit
+      val (key, value) = entry
+      client.set[Val](format(key), value).map(x ⇒ Unit)
     }
 
   def mput(entries: List[(Key, Val)]): RedisOps[Unit] =
@@ -38,14 +39,13 @@ class CacheWrapper[Key, Val](
       if (entries.isEmpty)
         Task(Unit)
       else ScalaFuture2Task {
-        def form(entry: (Key, Val)): (String, Val) = format(entry._1) → entry._2
-        client.mSet[Val](entries.map(form).toMap)
+        client.mSet[Val](entries.map({ case (k, v) ⇒ format(k) → v }).toMap)
       }
     }
 
   def delete(key: Key): RedisOps[Unit] =
     client ⇒ ScalaFuture2Task {
-      for (_ ← client.del(key)) yield Unit
+      client.del(key).map(x ⇒ Unit)
     }
 
   def delete(keys: List[Key]): RedisOps[Unit] =
@@ -53,7 +53,7 @@ class CacheWrapper[Key, Val](
       if (keys.isEmpty)
         Task(Unit)
       else ScalaFuture2Task {
-        for (_ ← client.del(keys map format: _*)) yield Unit
+        client.del(keys map format: _*).map(x ⇒ Unit)
       }
     }
 
