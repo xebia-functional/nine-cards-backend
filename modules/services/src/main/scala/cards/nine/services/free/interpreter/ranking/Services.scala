@@ -4,7 +4,7 @@ import cards.nine.commons.redis.CacheWrapper
 import cards.nine.commons.NineCardsErrors.{ NineCardsError, RankingNotFound }
 import cards.nine.domain.analytics._
 import cards.nine.domain.application.{ Moment, Package, Widget }
-import cards.nine.googleplay.processes.withTypes.WithRedisClient
+import cards.nine.googleplay.processes.Wiring.WithRedisClient
 import cards.nine.services.free.algebra.Ranking._
 import cards.nine.services.free.domain.Ranking._
 import cats.~>

@@ -87,5 +87,5 @@ class Services(config: GoogleAnalyticsConfiguration) extends (Ops ~> Task) {
 }
 
 object Services {
-  def services(implicit config: GoogleAnalyticsConfiguration) = new Services(config)
+  def services(config: GoogleAnalyticsConfiguration) = new Services(config)
 }

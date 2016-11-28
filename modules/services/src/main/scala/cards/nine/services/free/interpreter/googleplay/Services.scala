@@ -5,7 +5,7 @@ import cards.nine.commons.NineCardsService.Result
 import cards.nine.commons.TaskInstances._
 import cards.nine.domain.application._
 import cards.nine.domain.market.MarketCredentials
-import cards.nine.googleplay.processes.Wiring.GooglePlayApp
+import cards.nine.googleplay.processes.GooglePlayApp.GooglePlayApp
 import cards.nine.googleplay.processes.{ CardsProcesses, Wiring }
 import cards.nine.services.free.algebra.GooglePlay._
 import cats.syntax.either._
