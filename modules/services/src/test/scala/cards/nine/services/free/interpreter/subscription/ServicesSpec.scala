@@ -1,6 +1,6 @@
 package cards.nine.services.free.interpreter.subscription
 
-import cards.nine.commons.ScalazInstances
+import cards.nine.commons.catscalaz.ScalazInstances
 import cards.nine.services.free.domain.SharedCollectionSubscription.Queries.{ insert ⇒ subscriptionInsert }
 import cards.nine.services.free.domain.{ SharedCollection, SharedCollectionSubscription, User }
 import cards.nine.services.free.interpreter.collection.Services.SharedCollectionData
