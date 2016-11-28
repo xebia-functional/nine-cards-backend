@@ -1,4 +1,4 @@
-package cards.nine.api
+package cards.nine.api.collections
 
 import org.joda.time.{ DateTime, DateTimeZone }
 import org.specs2.matcher.Matchers
@@ -12,7 +12,7 @@ class JsonFormatsSpec extends Specification with Matchers {
 
   "JodaDateTimeFormat, the Json Format for dates," should {
 
-    import cards.nine.api.JsonFormats.JodaDateTimeFormat
+    import cards.nine.api.collections.JsonFormats.JodaDateTimeFormat
 
     val date = new DateTime(2013, 5, 23, 0, 0, DateTimeZone.UTC)
 

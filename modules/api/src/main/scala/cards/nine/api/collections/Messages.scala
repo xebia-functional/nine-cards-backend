@@ -1,10 +1,10 @@
-package cards.nine.api.messages
+package cards.nine.api.collections
 
 import cards.nine.domain.application.Package
 import cards.nine.processes.collections.messages._
 import org.joda.time.DateTime
 
-object SharedCollectionMessages {
+package messages {
 
   case class ApiCreateCollectionRequest(
     author: String,
