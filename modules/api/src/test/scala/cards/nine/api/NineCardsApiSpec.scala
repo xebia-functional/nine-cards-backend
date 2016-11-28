@@ -11,7 +11,6 @@ import cards.nine.commons.config.NineCardsConfig
 import cards.nine.domain.account._
 import cards.nine.processes.NineCardsServices._
 import cards.nine.processes._
-import cards.nine.processes.collections.SharedCollectionProcesses
 import cards.nine.processes.messages.UserMessages._
 import cats.free.Free
 import cats.syntax.either._
@@ -54,8 +53,6 @@ trait NineCardsApiSpecification
 
     implicit val recommendationsProcesses: RecommendationsProcesses[NineCardsServices] = mock[RecommendationsProcesses[NineCardsServices]]
 
-    implicit val sharedCollectionProcesses: SharedCollectionProcesses[NineCardsServices] = mock[SharedCollectionProcesses[NineCardsServices]]
-
     implicit val config: NineCardsConfiguration = NineCardsConfig.nineCardsConfiguration
 
     val nineCardsApi = new NineCardsRoutes().nineCardsRoutes
@@ -76,36 +73,6 @@ trait NineCardsApiSpecification
 
     userProcesses.updateInstallation(mockEq(Messages.updateInstallationRequest)) returns
       NineCardsService.right(Messages.updateInstallationResponse)
-
-    sharedCollectionProcesses.createCollection(any) returns
-      NineCardsService.right(Messages.createOrUpdateCollectionResponse)
-
-    sharedCollectionProcesses.getCollectionByPublicIdentifier(any, any[String], any) returns
-      NineCardsService.right(Messages.getCollectionByPublicIdentifierResponse)
-
-    sharedCollectionProcesses.subscribe(any[String], any[Long]) returns
-      NineCardsService.right(Messages.subscribeResponse)
-
-    sharedCollectionProcesses.unsubscribe(any[String], any[Long]) returns
-      NineCardsService.right(Messages.unsubscribeResponse)
-
-    sharedCollectionProcesses.getLatestCollectionsByCategory(any, any, any, any) returns
-      NineCardsService.right(Messages.getCollectionsResponse)
-
-    sharedCollectionProcesses.getPublishedCollections(any[Long], any) returns
-      NineCardsService.right(Messages.getCollectionsResponse)
-
-    sharedCollectionProcesses.getSubscriptionsByUser(any) returns
-      NineCardsService.right(Messages.getSubscriptionsByUserResponse)
-
-    sharedCollectionProcesses.getTopCollectionsByCategory(any, any, any, any) returns
-      NineCardsService.right(Messages.getCollectionsResponse)
-
-    sharedCollectionProcesses.updateCollection(any, any, any) returns
-      NineCardsService.right(Messages.createOrUpdateCollectionResponse)
-
-    sharedCollectionProcesses.increaseViewsCountByOne(any) returns
-      NineCardsService.right(Messages.increaseViewsCountByOneResponse)
 
     applicationProcesses.getAppsInfo(any, any) returns
       NineCardsService.right(Messages.getAppsInfoResponse)
@@ -146,20 +113,6 @@ trait NineCardsApiSpecification
       requestUri   = any[String]
     ) returns NineCardsService.left(AuthTokenNotValid("The provided auth token is not valid"))
 
-    sharedCollectionProcesses.getCollectionByPublicIdentifier(any, any[String], any) returns
-      NineCardsService.left(sharedCollectionNotFoundError)
-
-    sharedCollectionProcesses.subscribe(any[String], any[Long]) returns
-      NineCardsService.left(sharedCollectionNotFoundError)
-
-    sharedCollectionProcesses.unsubscribe(any[String], any[Long]) returns
-      NineCardsService.left(sharedCollectionNotFoundError)
-
-    sharedCollectionProcesses.updateCollection(any, any, any) returns
-      NineCardsService.left(sharedCollectionNotFoundError)
-
-    sharedCollectionProcesses.increaseViewsCountByOne(any) returns
-      NineCardsService.left(sharedCollectionNotFoundError)
   }
 
   trait FailingScope extends BasicScope {
@@ -177,36 +130,6 @@ trait NineCardsApiSpecification
 
     userProcesses.updateInstallation(mockEq(Messages.updateInstallationRequest)) returns
       NineCardsService.right(Messages.updateInstallationResponse)
-
-    sharedCollectionProcesses.createCollection(any) returns
-      NineCardsService.right(Messages.createOrUpdateCollectionResponse)
-
-    sharedCollectionProcesses.getCollectionByPublicIdentifier(any, any[String], any) returns
-      NineCardsService.right(Messages.getCollectionByPublicIdentifierResponse)
-
-    sharedCollectionProcesses.getLatestCollectionsByCategory(any, any, any, any) returns
-      NineCardsService.right(Messages.getCollectionsResponse)
-
-    sharedCollectionProcesses.getPublishedCollections(any[Long], any) returns
-      NineCardsService.right(Messages.getCollectionsResponse)
-
-    sharedCollectionProcesses.getSubscriptionsByUser(any) returns
-      NineCardsService.right(Messages.getSubscriptionsByUserResponse)
-
-    sharedCollectionProcesses.getTopCollectionsByCategory(any, any, any, any) returns
-      NineCardsService.right(Messages.getCollectionsResponse)
-
-    sharedCollectionProcesses.subscribe(any[String], any[Long]) returns
-      NineCardsService.right(Messages.subscribeResponse)
-
-    sharedCollectionProcesses.unsubscribe(any[String], any[Long]) returns
-      NineCardsService.right(Messages.unsubscribeResponse)
-
-    sharedCollectionProcesses.updateCollection(any, any, any) returns
-      NineCardsService.right(Messages.createOrUpdateCollectionResponse)
-
-    sharedCollectionProcesses.increaseViewsCountByOne(any) returns
-      NineCardsService.right(Messages.increaseViewsCountByOneResponse)
 
     rankingProcesses.getRanking(any) returns Free.pure(Either.right(Messages.rankings.getResponse))
 
@@ -248,14 +171,6 @@ class NineCardsApiSpec
       }
     }.pendingUntilFixed("Pending using EitherT")
 
-  }
-
-  private[this] def notFoundSharedCollection(request: HttpRequest) = {
-    "return a 404 Not found status code if the shared collection doesn't exist" in new UnsuccessfulScope {
-      request ~> addHeaders(Headers.userInfoHeaders) ~> sealRoute(nineCardsApi) ~> check {
-        status.intValue shouldEqual StatusCodes.NotFound.intValue
-      }
-    }
   }
 
   private[this] def internalServerError(request: HttpRequest) = {
@@ -361,141 +276,6 @@ class NineCardsApiSpec
     unauthorizedNoHeaders(request)
 
     authenticatedBadRequestEmptyBody(Put(Paths.installations))
-
-    internalServerError(request)
-
-    successOk(request)
-  }
-  "POST /collections" should {
-
-    val request = Post(Paths.collections, Messages.apiCreateCollectionRequest)
-
-    unauthorizedNoHeaders(request)
-
-    authenticatedBadRequestEmptyBody(Post(Paths.collections))
-
-    internalServerError(request)
-
-    successOk(request)
-  }
-
-  "GET /collections/collectionId" should {
-
-    val request = Get(Paths.collectionById) ~> addHeaders(Headers.googlePlayHeaders)
-
-    "return a 404 Not found status code if the shared collection doesn't exist" in new UnsuccessfulScope {
-
-      Get(Paths.collectionById) ~>
-        addHeaders(Headers.userInfoHeaders) ~>
-        addHeaders(Headers.googlePlayHeaders) ~>
-        sealRoute(nineCardsApi) ~>
-        check {
-          status.intValue shouldEqual StatusCodes.NotFound.intValue
-        }
-    }
-
-    unauthorizedNoHeaders(request)
-
-    internalServerError(request)
-
-    successOk(request)
-  }
-
-  "PUT /collections/collectionId" should {
-
-    val request = Put(Paths.collectionById, Messages.apiUpdateCollectionRequest)
-
-    authenticatedBadRequestEmptyBody(Put(Paths.collectionById))
-
-    notFoundSharedCollection(request)
-
-    unauthorizedNoHeaders(request)
-
-    internalServerError(request)
-
-    successOk(request)
-  }
-
-  "POST /collections/collectionId/views" should {
-
-    val request = Post(Paths.increaseViews)
-
-    notFoundSharedCollection(request)
-
-    unauthorizedNoHeaders(request)
-
-    internalServerError(request)
-
-    successOk(request)
-  }
-
-  "GET /collections/subscriptions" should {
-
-    val request = Get(Paths.subscriptionsByUser)
-
-    unauthorizedNoHeaders(request)
-
-    internalServerError(request)
-
-    successOk(request)
-  }
-
-  "PUT /collections/subscriptions/collectionId" should {
-
-    val request = Put(Paths.subscriptionByCollectionId)
-
-    unauthorizedNoHeaders(request)
-
-    notFoundSharedCollection(request)
-
-    internalServerError(request)
-
-    successOk(request)
-  }
-
-  "DELETE /collections/subscriptions/collectionId" should {
-
-    val request = Delete(Paths.subscriptionByCollectionId)
-
-    unauthorizedNoHeaders(request)
-
-    notFoundSharedCollection(request)
-
-    internalServerError(request)
-
-    successOk(request)
-  }
-
-  "GET /collections" should {
-
-    val request = Get(Paths.collections) ~>
-      addHeaders(Headers.googlePlayHeaders)
-
-    unauthorizedNoHeaders(request)
-
-    internalServerError(request)
-
-    successOk(request)
-  }
-
-  "GET /collections/latest/category" should {
-
-    val request = Get(Paths.latestCollections) ~>
-      addHeaders(Headers.googlePlayHeaders)
-
-    unauthorizedNoHeaders(request)
-
-    internalServerError(request)
-
-    successOk(request)
-  }
-
-  "GET /collections/top/category" should {
-
-    val request = Get(Paths.topCollections) ~>
-      addHeaders(Headers.googlePlayHeaders)
-
-    unauthorizedNoHeaders(request)
 
     internalServerError(request)
 

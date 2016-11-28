@@ -6,7 +6,6 @@ import cards.nine.api.messages.UserMessages._
 import cards.nine.domain.account.{ AndroidId, SessionToken }
 import cards.nine.domain.application.{ BasicCard, CardList, FullCard }
 import cards.nine.domain.market.{ MarketToken, Localization }
-import cards.nine.processes.collections.messages._
 import cards.nine.processes.messages.InstallationsMessages._
 import cards.nine.processes.messages.UserMessages._
 import org.scalacheck.{ Arbitrary, Gen }
@@ -128,37 +127,4 @@ class ConvertersSpec
     }
   }
 
-  "toApiCreateOrUpdateCollectionResponse" should {
-    "convert CreateOrUpdateCollectionResponse to ApiCreateOrUpdateCollectionResponse" in {
-      prop { (response: CreateOrUpdateCollectionResponse) ⇒
-
-        val apiResponse = Converters.toApiCreateOrUpdateCollectionResponse(response)
-
-        apiResponse.packagesStats must_== response.packagesStats
-        apiResponse.publicIdentifier must_== response.publicIdentifier
-      }
-    }
-  }
-
-  "toApiGetSubscriptionsByUserResponse" should {
-    "convert GetSubscriptionsByUserResponse to ApiGetSubscriptionsByUserResponse" in {
-      prop { (response: GetSubscriptionsByUserResponse) ⇒
-
-        val apiResponse = Converters.toApiGetSubscriptionsByUser(response)
-
-        apiResponse.subscriptions must_== response.subscriptions
-      }
-    }
-  }
-
-  "toApiIncreaseViewsCountByOneResponse" should {
-    "convert IncreaseViewsCountByOneResponse to ApiIncreaseViewsCountByOneResponse" in {
-      prop { (response: IncreaseViewsCountByOneResponse) ⇒
-
-        val apiResponse = Converters.toApiIncreaseViewsCountByOneResponse(response)
-
-        apiResponse.publicIdentifier must_== response.publicIdentifier
-      }
-    }
-  }
 }

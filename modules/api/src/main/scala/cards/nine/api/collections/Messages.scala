@@ -1,11 +1,10 @@
-package cards.nine.api.messages
+package cards.nine.api.collections
 
-import cats.data.Xor
 import cards.nine.domain.application.Package
 import cards.nine.processes.collections.messages._
 import org.joda.time.DateTime
 
-object SharedCollectionMessages {
+package messages {
 
   case class ApiCreateCollectionRequest(
     author: String,
@@ -59,8 +58,6 @@ object SharedCollectionMessages {
     collectionInfo: Option[SharedCollectionUpdateInfo],
     packages: Option[List[Package]]
   )
-
-  type XorApiGetCollectionByPublicId = Xor[Throwable, ApiSharedCollection]
 
   case class ApiGetSubscriptionsByUser(subscriptions: List[String])
 

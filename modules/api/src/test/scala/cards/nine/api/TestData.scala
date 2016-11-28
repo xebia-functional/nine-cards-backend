@@ -3,14 +3,11 @@ package cards.nine.api
 import cards.nine.api.NineCardsHeaders._
 import cards.nine.api.messages.GooglePlayMessages._
 import cards.nine.api.messages.InstallationsMessages.ApiUpdateInstallationRequest
-import cards.nine.api.messages.SharedCollectionMessages._
 import cards.nine.api.messages.UserMessages.ApiLoginRequest
 import cards.nine.api.messages.{ rankings ⇒ Api }
-import cards.nine.commons.NineCardsErrors.SharedCollectionNotFound
 import cards.nine.domain.account._
 import cards.nine.domain.analytics.{ RankedAppsByCategory, RankedWidgetsByMoment }
 import cards.nine.domain.application.{ CardList, Category, FullCard, Package }
-import cards.nine.processes.collections.messages._
 import cards.nine.processes.messages.InstallationsMessages._
 import cards.nine.processes.messages.UserMessages.{ LoginRequest, LoginResponse }
 import cards.nine.processes.messages.rankings.{ Get, Reload }
@@ -89,8 +86,6 @@ object TestData {
 
   val views = 1
 
-  val sharedCollectionNotFoundError = SharedCollectionNotFound("Shared collection not found")
-
   object Headers {
 
     val userInfoHeaders = List(
@@ -127,28 +122,6 @@ object TestData {
       screenshots = Nil
     )
 
-    val collectionInfo = SharedCollectionUpdateInfo(title = name)
-
-    val packagesStats = PackagesStats(addedPackages, removedPackages)
-
-    val sharedCollection = SharedCollection(
-      publicIdentifier = publicIdentifier,
-      publishedOn      = now,
-      author           = author,
-      name             = name,
-      views            = views,
-      category         = category,
-      icon             = icon,
-      community        = community,
-      owned            = owned,
-      packages         = packagesName
-    )
-
-    def sharedCollectionInfo[A] = SharedCollectionWithAppsInfo[A](
-      collection = sharedCollection,
-      appsInfo   = List.empty[A]
-    )
-
     val apiGetAppsInfoRequest = ApiAppsInfoRequest(items = List("", "", "") map Package)
 
     val apiGetRecommendationsByCategoryRequest = ApiGetRecommendationsByCategoryRequest(
@@ -181,52 +154,15 @@ object TestData {
 
     val getRecommendationsByCategoryResponse = CardList[FullCard](Nil, Nil)
 
-    val apiCreateCollectionRequest = ApiCreateCollectionRequest(
-      author        = author,
-      name          = name,
-      installations = Option(installations),
-      views         = Option(views),
-      category      = category,
-      icon          = icon,
-      community     = community,
-      packages      = packagesName
-    )
-
     val apiLoginRequest = ApiLoginRequest(email, androidId, tokenId)
-
-    val apiUpdateCollectionRequest = ApiUpdateCollectionRequest(
-      collectionInfo = Option(collectionInfo),
-      packages       = Option(packagesName)
-    )
 
     val apiUpdateInstallationRequest = ApiUpdateInstallationRequest(deviceToken)
 
     val getAppsInfoResponse = CardList[FullCard](Nil, Nil)
 
-    val createOrUpdateCollectionResponse = CreateOrUpdateCollectionResponse(
-      publicIdentifier = publicIdentifier,
-      packagesStats    = packagesStats
-    )
-
-    val increaseViewsCountByOneResponse = IncreaseViewsCountByOneResponse(
-      publicIdentifier = publicIdentifier
-    )
-
-    val getCollectionByPublicIdentifierResponse = GetCollectionByPublicIdentifierResponse(
-      data = sharedCollectionInfo
-    )
-
-    val getCollectionsResponse = GetCollectionsResponse(Nil)
-
-    val getSubscriptionsByUserResponse = GetSubscriptionsByUserResponse(List(publicIdentifier))
-
     val loginRequest = LoginRequest(email, androidId, sessionToken, tokenId)
 
     val loginResponse = LoginResponse(apiToken, sessionToken)
-
-    val subscribeResponse = SubscribeResponse()
-
-    val unsubscribeResponse = UnsubscribeResponse()
 
     val updateInstallationRequest = UpdateInstallationRequest(userId, androidId, deviceToken)
 
@@ -261,19 +197,11 @@ object TestData {
 
     val categorize = "/applications/categorize"
 
-    val collections = "/collections"
-
-    val collectionById = "/collections/40daf308-fecf-4228-9262-a712d783cf49"
-
-    val increaseViews = "/collections/40daf308-fecf-4228-9262-a712d783cf49/views"
-
     val details = "/applications/details"
 
     val installations = "/installations"
 
     val invalid = "/chalkyTown"
-
-    val latestCollections = "/collections/latest/SOCIAL/0/25"
 
     val login = "/login"
 
@@ -287,11 +215,6 @@ object TestData {
 
     val recommendationsForApps = "/recommendations"
 
-    val subscriptionByCollectionId = "/collections/subscriptions/40daf308-fecf-4228-9262-a712d783cf49"
-
-    val subscriptionsByUser = "/collections/subscriptions"
-
-    val topCollections = "/collections/top/SOCIAL/0/25"
   }
 
 }
