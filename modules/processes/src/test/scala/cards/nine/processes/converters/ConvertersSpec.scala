@@ -52,16 +52,4 @@ class ConvertersSpec
     }
   }
 
-  "toGetSubscriptionsByUserResponse" should {
-    "convert a list of SharedCollectionSubscription to a GetSubscriptionsByUserResponse object" in {
-      prop { subscriptions: List[SharedCollectionSubscription] ⇒
-
-        val response = Converters.toGetSubscriptionsByUserResponse(subscriptions)
-
-        forall(response.subscriptions) { publicId ⇒
-          subscriptions.exists(_.sharedCollectionPublicId == publicId)
-        }
-      }
-    }
-  }
 }

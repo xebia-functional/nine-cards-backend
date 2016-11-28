@@ -17,6 +17,7 @@ import cards.nine.domain.analytics._
 import cards.nine.domain.application.{ BasicCard, Category, FullCard, Package, PriceFilter }
 import cards.nine.domain.pagination.Page
 import cards.nine.processes._
+import cards.nine.processes.collections.SharedCollectionProcesses
 import cards.nine.processes.NineCardsServices._
 
 import scala.concurrent.ExecutionContext

@@ -1,12 +1,13 @@
-package cards.nine.processes
+package cards.nine.processes.collections
 
 import cards.nine.commons.NineCardsService
 import cards.nine.commons.NineCardsService._
 import cards.nine.processes.NineCardsServices._
-import cards.nine.processes.TestData.Messages._
-import cards.nine.processes.TestData.Values._
-import cards.nine.processes.TestData._
-import cards.nine.processes.messages.SharedCollectionMessages._
+import cards.nine.processes.TestInterpreters
+import cards.nine.processes.collections.TestData.Messages._
+import cards.nine.processes.collections.TestData.Values._
+import cards.nine.processes.collections.TestData._
+import cards.nine.processes.collections.messages._
 import cards.nine.services.free.algebra
 import cards.nine.services.free.algebra._
 import org.specs2.ScalaCheck
