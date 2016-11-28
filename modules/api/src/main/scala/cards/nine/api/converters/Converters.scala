@@ -10,8 +10,8 @@ import cards.nine.domain.account._
 import cards.nine.domain.analytics.{ RankedAppsByCategory, RankedWidgetsByMoment }
 import cards.nine.domain.application._
 import cards.nine.domain.market.MarketCredentials
+import cards.nine.processes.collections.messages._
 import cards.nine.processes.messages.InstallationsMessages._
-import cards.nine.processes.messages.SharedCollectionMessages._
 import cards.nine.processes.messages.UserMessages._
 import cards.nine.processes.messages.rankings.GetRankedDeviceApps._
 import cats.syntax.either._

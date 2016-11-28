@@ -11,6 +11,7 @@ import cards.nine.commons.config.NineCardsConfig
 import cards.nine.domain.account._
 import cards.nine.processes.NineCardsServices._
 import cards.nine.processes._
+import cards.nine.processes.collections.SharedCollectionProcesses
 import cards.nine.processes.messages.UserMessages._
 import cats.free.Free
 import cats.syntax.either._

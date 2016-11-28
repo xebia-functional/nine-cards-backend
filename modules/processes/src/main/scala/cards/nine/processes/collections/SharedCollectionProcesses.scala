@@ -1,12 +1,11 @@
-package cards.nine.processes
+package cards.nine.processes.collections
 
 import cards.nine.commons.NineCardsService
 import cards.nine.commons.NineCardsService.NineCardsService
 import cards.nine.domain.application.{ BasicCard, CardList, Package }
 import cards.nine.domain.market.MarketCredentials
 import cards.nine.domain.pagination.Page
-import cards.nine.processes.converters.Converters._
-import cards.nine.processes.messages.SharedCollectionMessages._
+import cards.nine.processes.collections.messages._
 import cards.nine.services.free.algebra
 import cards.nine.services.free.algebra.{ Firebase, GooglePlay }
 import cards.nine.services.free.domain.Firebase._
@@ -20,6 +19,8 @@ class SharedCollectionProcesses[F[_]](
   subscriptionServices: algebra.Subscription.Services[F],
   userServices: algebra.User.Services[F]
 ) {
+
+  import Converters._
 
   def createCollection(request: CreateCollectionRequest): NineCardsService[F, CreateOrUpdateCollectionResponse] =
     collectionServices.add(request.collection) map { collection ⇒

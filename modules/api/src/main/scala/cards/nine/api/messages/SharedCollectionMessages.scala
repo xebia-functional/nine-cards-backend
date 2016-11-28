@@ -2,7 +2,7 @@ package cards.nine.api.messages
 
 import cats.data.Xor
 import cards.nine.domain.application.Package
-import cards.nine.processes.messages.SharedCollectionMessages._
+import cards.nine.processes.collections.messages._
 import org.joda.time.DateTime
 
 object SharedCollectionMessages {

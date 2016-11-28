@@ -7,7 +7,7 @@ import cards.nine.api.messages.SharedCollectionMessages._
 import cards.nine.api.messages.UserMessages._
 import cards.nine.domain.application.{ Package, Widget }
 import cards.nine.domain.account._
-import cards.nine.processes.messages.SharedCollectionMessages._
+import cards.nine.processes.collections.messages._
 import io.circe.{ Decoder, Encoder, Json }
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat

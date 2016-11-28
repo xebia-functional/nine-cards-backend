@@ -1,9 +1,9 @@
-package cards.nine.processes.messages
+package cards.nine.processes.collections
 
 import cards.nine.domain.application.{ BasicCard, FullCard, Package }
 import org.joda.time.DateTime
 
-object SharedCollectionMessages {
+package messages {
 
   case class SharedCollectionData(
     publicIdentifier: String,
