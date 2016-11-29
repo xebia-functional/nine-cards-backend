@@ -40,3 +40,6 @@ object CacheEntry {
   def permanent(card: FullCard): (CacheKey, CacheVal) =
     CacheKey.permanent(card.packageName) → CacheVal(Some(card))
 }
+
+object PendingQueueKey
+
