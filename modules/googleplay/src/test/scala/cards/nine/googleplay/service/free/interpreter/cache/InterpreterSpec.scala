@@ -96,6 +96,14 @@ class InterpreterSpec
       await(redisClient.rPush("pending_packages", ps.map(_.value): _*))
     }
 
+  private def putPending(p: Package): Unit = {
+    await(redisClient.rPush("pending_packages", p))
+    putEntry(CacheEntry.pending(p))
+  }
+
+  private def dumpQueue(): List[Package] =
+    await(redisClient.lRange[Option[Package]]("pending_packages", 0, -1)).flatten
+
   private def putErrors(ps: List[Package], d: DateTime): Unit = await {
     redisClient.inTransaction { tb: TransactionBuilder ⇒
       ps.foreach(p ⇒ tb.rPush[DateTime](formatKey(CacheKey.error(p)), d))
@@ -121,7 +129,7 @@ class InterpreterSpec
     "return None if the cache only contains Error or Pending entries for the package" >>
       prop { pack: Package ⇒
         flush
-        putEntry(CacheEntry.pending(pack))
+        putPending(pack)
         putError(pack, date)
 
         eval(GetValid(pack)) must beNone
@@ -206,6 +214,17 @@ class InterpreterSpec
         getKeys(allByType(Error)) must beEmpty
       }
 
+    "remove any previous pending or error keys for the package" >>
+      prop { card: FullCard ⇒
+        flush
+        putPending(card.packageName)
+        putError(card.packageName, date)
+        eval(PutResolved(card))
+        getKeys(allByType(Pending)) must beEmpty
+        getKeys(allByType(Error)) must beEmpty
+        dumpQueue() must beEmpty
+      }
+
     "overwrite any previous value" >>
       prop { (card: FullCard) ⇒
         flush
@@ -284,6 +303,17 @@ class InterpreterSpec
         getKeys(allByType(Error)) must beEmpty
       }
 
+    "remove any previous pending or error keys for the package" >>
+      prop { card: FullCard ⇒
+        flush
+        putPending(card.packageName)
+        putError(card.packageName, date)
+        eval(PutPermanent(card))
+        getKeys(allByType(Pending)) must beEmpty
+        getKeys(allByType(Error)) must beEmpty
+        dumpQueue() must beEmpty
+      }
+
     "overwrite any previous value" >>
       prop { (card: FullCard) ⇒
         flush
@@ -296,69 +326,11 @@ class InterpreterSpec
       }
   }
 
-  "markPending" should {
-    "add a package as Pending" >>
-      prop { pack: Package ⇒
-        flush
-        eval(MarkPending(pack))
-
-        existsEntry(pendingKey(pack)) must beTrue
-      }
-
-    "add no key as resolved or error" >>
-      prop { pack: Package ⇒
-        flush
-        eval(MarkPending(pack))
-
-        getKeys(allByType(Error)) must beEmpty
-        getKeys(allByType(Resolved)) must beEmpty
-      }
-  }
-
-  "markPendingMany" should {
-    "add a list of packages as Pending" >>
-      prop { packages: List[Package] ⇒
-        flush
-        eval(MarkPendingMany(packages))
-        packages.map(pendingKey).filter(existsEntry) must haveSize(packages.size)
-      }
-
-    "add no key as resolved or error" >>
-      prop { packages: List[Package] ⇒
-        flush
-        eval(MarkPendingMany(packages))
-
-        getKeys(allByType(Error)) must beEmpty
-        getKeys(allByType(Resolved)) must beEmpty
-      }
-  }
-
-  "unmarkPending" should {
-    "remove a previously pending package" >>
-      prop { pack: Package ⇒
-        flush
-        putEntry(CacheEntry.pending(pack))
-        eval(UnmarkPending(pack))
-
-        existsEntry(pendingKey(pack)) must beFalse
-      }
-  }
-
-  "unmarkPendingMany" should {
-    "remove a previously list of pending packages" >>
-      prop { packages: List[Package] ⇒
-        flush
-        putEntries(packages map CacheEntry.pending)
-        eval(UnmarkPendingMany(packages))
-        packages.filter(p ⇒ existsEntry(pendingKey(p))) must beEmpty
-      }
-  }
-
-  "markError" should {
+  "addError" should {
     "add a package as error" >>
       prop { pack: Package ⇒
         flush
-        eval(MarkError(pack))
+        eval(AddError(pack))
 
         getKeys(allByPackageAndType(pack, Error)) must not be empty
       }
@@ -366,26 +338,35 @@ class InterpreterSpec
     "add no key as resolved or pending" >>
       prop { pack: Package ⇒
         flush
-        eval(MarkError(pack))
+        eval(AddError(pack))
 
         getKeys(allByType(Resolved)) must beEmpty
         getKeys(allByType(Pending)) must beEmpty
       }
 
+    "remove any previous pending keys for the package" >>
+      prop { pack: Package ⇒
+        flush
+        putPending(pack)
+        eval(AddError(pack))
+        getKeys(allByType(Pending)) must beEmpty
+        dumpQueue() must beEmpty
+      }
+
     "allow adding several error entries for package with different dates" >>
       prop { pack: Package ⇒
         flush
-        eval(MarkError(pack))
-        evalWithDelay(MarkError(pack), 1.millis)
+        eval(AddError(pack))
+        evalWithDelay(AddError(pack), 1.millis)
         getKeys(allByType(Error)) must haveSize(1)
       }
   }
 
-  "markErrorMany" should {
+  "addErrorMany" should {
     "add a list of packages as error" >>
       prop { packages: List[Package] ⇒
         flush
-        eval(MarkErrorMany(packages))
+        eval(AddErrorMany(packages))
 
         getKeys(allByType(Error)) must haveSize(packages.size)
       }
@@ -393,97 +374,27 @@ class InterpreterSpec
     "add no key as resolved or pending" >>
       prop { packages: List[Package] ⇒
         flush
-        eval(MarkErrorMany(packages))
+        eval(AddErrorMany(packages))
 
         getKeys(allByType(Pending)) must beEmpty
         getKeys(allByType(Resolved)) must beEmpty
       }
 
+    "remove any previous pending keys for the packages" >>
+      prop { packages: List[Package] ⇒
+        flush
+        putPendings(packages)
+        eval(AddErrorMany(packages))
+        getKeys(allByType(Pending)) must beEmpty
+        dumpQueue() must beEmpty
+      }
+
     "allow adding several errors with different dates" >>
       prop { packages: List[Package] ⇒
         flush
-        eval(MarkErrorMany(packages))
-        evalWithDelay(MarkErrorMany(packages), 2.millis)
+        eval(AddErrorMany(packages))
+        evalWithDelay(AddErrorMany(packages), 2.millis)
         getKeys(allByType(Error)) must haveSize(packages.size)
-      }
-  }
-
-  "ClearInvalid" should {
-
-    "remove existing error entries" >>
-      prop { pack: Package ⇒
-        flush
-        putError(pack, date)
-        eval(ClearInvalid(pack))
-
-        getKeys(allByPackage(pack)) must beEmpty
-      }
-
-    "remove existing pending entries" >>
-      prop { pack: Package ⇒
-        flush
-        putEntry(CacheEntry.pending(pack))
-        eval(ClearInvalid(pack))
-
-        getKeys(allByPackage(pack)) must beEmpty
-      }
-
-    "leave resolved entries" >>
-      prop { card: FullCard ⇒
-        flush
-        putEntry(CacheEntry.resolved(card))
-        eval(ClearInvalid(card.packageName))
-
-        existsEntry(resolvedKey(card.packageName)) must beTrue
-      }
-
-    "leave error entries for any other package" >>
-      prop { pack: Package ⇒
-        val other = Package(s"${pack.value}_not")
-        flush
-        putError(pack, date)
-        eval(ClearInvalid(other))
-
-        getKeys(allByPackage(pack)) must not be empty
-      }
-  }
-
-  "ClearInvalidMany" should {
-
-    "remove existing error entries" >>
-      prop { packages: List[Package] ⇒
-        flush
-        putErrors(packages, date)
-        eval(ClearInvalidMany(packages))
-        getKeys(allErrors) must beEmpty
-      }
-
-    "remove existing pending entries" >>
-      prop { packages: List[Package] ⇒
-        flush
-        putEntries(packages map CacheEntry.pending)
-        eval(ClearInvalidMany(packages))
-
-        getKeys(allByType(Pending)) must beEmpty
-      }
-
-    "leave resolved entries" >>
-      prop { cards: List[FullCard] ⇒
-        flush
-        putEntries(cards map CacheEntry.resolved)
-        eval(ClearInvalidMany(cards map (_.packageName)))
-
-        getKeys(allByType(Resolved)) must haveSize(cards.size)
-      }
-
-    "leave error entries for any other package" >>
-      prop { packages: List[Package] ⇒
-        flush
-        val otherPackages = List(Package("other.package"))
-        putErrors(packages ++ otherPackages, date)
-        eval(ClearInvalidMany(otherPackages))
-
-        getKeys(allErrors) must haveSize(packages.size)
       }
   }
 

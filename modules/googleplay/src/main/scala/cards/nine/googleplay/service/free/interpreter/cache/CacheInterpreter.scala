@@ -33,65 +33,59 @@ object CacheInterpreter extends (Ops ~> RedisOps) {
       wrap.mget(keys).map(_.flatMap(_.card))
 
     case PutResolved(card) ⇒
-      wrap.put(CacheEntry.resolved(card))
+      val pack = card.packageName
+      removePending(pack) *> removeError(pack) *> wrap.put(CacheEntry.resolved(card))
 
     case PutResolvedMany(cards) ⇒
-      wrap.mput(cards map CacheEntry.resolved)
+      val packs = cards.map(_.packageName)
+      wrap.mput(cards map CacheEntry.resolved) *> removeErrorMany(packs) *> removePendingMany(packs)
 
     case PutPermanent(card) ⇒
-      wrap.put(CacheEntry.permanent(card))
+      val pack = card.packageName
+      removePending(pack) *> removeError(pack) *> wrap.put(CacheEntry.permanent(card))
 
-    case MarkPending(pack) ⇒
-      val a = wrap.put(CacheEntry.pending(pack))
-      val b = pendingQueue.enqueue(PendingQueueKey, pack)
-      a *> b
+    case SetToPending(pack) ⇒
+      removeError(pack) *> addPending(pack) *> wrap.put(CacheEntry.pending(pack))
 
-    case MarkPendingMany(packages) ⇒
-      val a = wrap.mput(packages map CacheEntry.pending)
-      val b = pendingQueue.enqueueMany(PendingQueueKey, packages)
-      a *> b
+    case SetToPendingMany(packages) ⇒
+      val enqueues = packages.traverse[RedisOps, Unit](addPending)
+      val put = wrap.mput(packages map CacheEntry.pending)
+      removeErrorMany(packages) *> enqueues *> put
 
-    case UnmarkPending(pack) ⇒
-      val a = wrap.delete(CacheKey.pending(pack))
-      val b = pendingQueue.purge(PendingQueueKey, pack)
-      a *> b
+    case AddError(pack) ⇒
+      val now = DateTime.now(DateTimeZone.UTC)
+      removePending(pack) *> errorCache.enqueue(CacheKey.error(pack), now)
 
-    case UnmarkPendingMany(packages) ⇒
-      val a = wrap.delete(packages map CacheKey.pending)
-      val b = packages.traverse[RedisOps, Unit] { pack ⇒
-        pendingQueue.purge(PendingQueueKey, pack)
+    case AddErrorMany(packages) ⇒
+      val now = DateTime.now(DateTimeZone.UTC)
+      val putErrors = packages.traverse[RedisOps, Unit] {
+        pack ⇒ errorCache.enqueue(CacheKey.error(pack), now)
       }
-      a <* b
-
-    case MarkError(pack) ⇒
-      val now = DateTime.now(DateTimeZone.UTC)
-      errorCache.enqueue(CacheKey.error(pack), now)
-
-    case MarkErrorMany(packages) ⇒
-      val now = DateTime.now(DateTimeZone.UTC)
-      packages.traverse[RedisOps, Unit] { pack ⇒
-        errorCache.enqueue(CacheKey.error(pack), now)
-      }.map(x ⇒ {})
-
-    case ClearInvalid(pack) ⇒
-      val a = wrap.delete(CacheKey.pending(pack))
-      val b = errorCache.delete(CacheKey.error(pack))
-      val c = pendingQueue.purge(PendingQueueKey, pack)
-      a *> b *> c
-
-    case ClearInvalidMany(packages) ⇒
-      val pendings = packages map CacheKey.pending
-      val errors = packages map CacheKey.error
-      wrap.delete(pendings) *> errorCache.delete(errors)
-
-    case IsPending(pack) ⇒
-      wrap.get(CacheKey.pending(pack)).map(_.isDefined)
+      putErrors *> removePendingMany(packages)
 
     case ListPending(num) ⇒
       val take = pendingQueue.takeMany(PendingQueueKey, num)
       val deque = pendingQueue.dequeueMany(PendingQueueKey, num)
       take <* deque
-
   }
+
+  private[this] def addPending(pack: Package): RedisOps[Unit] = {
+    val pendingKey = CacheKey.pending(pack)
+    pendingQueue.enqueueIfNotExists[CacheKey](PendingQueueKey, pendingKey, pack)
+  }
+
+  private[this] def removePending(pack: Package): RedisOps[Unit] =
+    pendingQueue.purge(PendingQueueKey, pack) *> wrap.delete(CacheKey.pending(pack))
+
+  private[this] def removePendingMany(packages: List[Package]): RedisOps[Unit] = {
+    val purge = packages traverse { p ⇒ pendingQueue.purge(PendingQueueKey, p) }
+    purge *> wrap.delete(packages map CacheKey.pending)
+  }
+
+  private[this] def removeError(pack: Package): RedisOps[Unit] =
+    errorCache.delete(CacheKey.error(pack))
+
+  private[this] def removeErrorMany(packages: List[Package]): RedisOps[Unit] =
+    errorCache.delete(packages map CacheKey.error)
 
 }

@@ -102,7 +102,7 @@ class CardsProcessesSpec
           cacheIntServer.getValid(pack) returns None
           apiGoogleIntServer.getDetails(pack, auth) returns Xor.Left(ApiDom.PackageNotFound(pack))
           webScrapperIntServer.existsApp(pack) returns true
-          cacheIntServer.markPending(pack) returns Unit
+          cacheIntServer.setToPending(pack) returns Unit
         }
 
         "Return the package as PendingResolution" >>
@@ -117,7 +117,7 @@ class CardsProcessesSpec
             val pack = card.packageName
             setup(pack, card, auth)
             runGetCard(pack, auth)
-            there was one(cacheIntServer).markPending(pack)
+            there was one(cacheIntServer).setToPending(pack)
           }
       }
 
@@ -130,7 +130,7 @@ class CardsProcessesSpec
         cacheIntServer.getValid(pack) returns None
         apiGoogleIntServer.getDetails(pack, auth) returns Xor.Left(ApiDom.PackageNotFound(pack))
         webScrapperIntServer.existsApp(pack) returns false
-        cacheIntServer.markError(pack) returns Unit
+        cacheIntServer.addError(pack) returns Unit
       }
 
       "Return the package as Unresolved" >>
@@ -145,7 +145,7 @@ class CardsProcessesSpec
           val pack = card.packageName
           setup(pack, card, auth)
           runGetCard(pack, auth)
-          there was one(cacheIntServer).markError(pack)
+          there was one(cacheIntServer).addError(pack)
         }
 
     }
@@ -186,7 +186,7 @@ class CardsProcessesSpec
       def setup(pack: Package, date: DateTime) = {
         clear()
         webScrapperIntServer.getDetails(pack) returns Xor.Left(WebDom.PackageNotFound(pack))
-        cacheIntServer.markError(pack) returns Unit
+        cacheIntServer.addError(pack) returns Unit
       }
 
       "it reports the package as Unknown" >> prop { pack: Package ⇒
@@ -197,7 +197,7 @@ class CardsProcessesSpec
       "it stores the package as an error" >> prop { pack: Package ⇒
         setup(pack, testDate)
         runResolvePending(pack)
-        there was one(cacheIntServer).markError(pack)
+        there was one(cacheIntServer).addError(pack)
       }
 
     }
@@ -207,7 +207,7 @@ class CardsProcessesSpec
       def setup(pack: Package) = {
         clear()
         webScrapperIntServer.getDetails(pack) returns Xor.Left(WebDom.WebPageServerError)
-        cacheIntServer.markPending(pack) returns Unit
+        cacheIntServer.setToPending(pack) returns Unit
       }
 
       "it reports the package as (still) pending" >> prop { pack: Package ⇒
