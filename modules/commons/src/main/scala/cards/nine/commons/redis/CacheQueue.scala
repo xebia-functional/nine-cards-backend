@@ -1,7 +1,8 @@
 package cards.nine.commons.redis
 
-import com.redis.RedisClient
-import com.redis.serialization.{ Format, Parse }
+import cards.nine.commons.catscalaz.ScalaFuture2Task
+import scalaz.concurrent.Task
+import scredis.serialization.{ Reader, Writer }
 
 /**
   * A CacheQueue implements a queue backed in a Redis Cache. The operations assume that some keys in
@@ -9,27 +10,34 @@ import com.redis.serialization.{ Format, Parse }
   * A queue of values of some type is managed by this class, by enqueuing on the left and dequeuing from the right.
   * The CacheQueue class is generic on the type of the Key and that of the values stored in the Queue.
   */
-class CacheQueue[Key, Val](client: RedisClient)(implicit f: Format, pv: Parse[Option[Val]]) {
+class CacheQueue[Key, Val](implicit
+  format: Format[Key],
+  writer: Writer[Val],
+  reader: Reader[Option[Val]]) {
+
+  import scala.concurrent.ExecutionContext.Implicits.global
 
   // We see Redis lists as queues: we enqueue on the right, and dequeue from the left (
   // Thus, retrieving goes through positive indexes.
 
-  def enqueue(key: Key, value: Val): Unit =
-    client.rpush(key, value)
-
-  def enqueueMany(key: Key, values: List[Val]): Unit = values match {
-    case Nil ⇒ Unit
-    case h :: t ⇒ client.lpush(key, h, t: _*)
-  }
-
-  def enqueueAtMany(keys: List[Key], value: Val): Unit = {
-    def commandForKey(key: Key): (() ⇒ Any) = {
-      () ⇒ client.rpush(key, value)
+  def enqueue(key: Key, value: Val): RedisOps[Unit] =
+    client ⇒ ScalaFuture2Task {
+      client.rPush(format(key), value).map(_x ⇒ Unit)
     }
-    asyncAwait(keys map commandForKey)
-  }
 
-  def dequeue(key: Key): Option[Val] = client.lpop(key).flatten
+  def enqueueMany(key: Key, values: List[Val]): RedisOps[Unit] =
+    client ⇒ {
+      if (values.isEmpty)
+        Task(Unit)
+      else ScalaFuture2Task {
+        client.rPush[Val](key, values: _*).map(x ⇒ Unit)
+      }
+    }
+
+  def dequeue(key: Key): RedisOps[Option[Val]] =
+    client ⇒ ScalaFuture2Task {
+      client.lPop(key).map(_.flatten)
+    }
 
   /* A few notes on how Redis handles indexes and ranges for lists
    *  in a non-empty list A of N elements, indexes are numbered from 0 to N-1,
@@ -37,55 +45,58 @@ class CacheQueue[Key, Val](client: RedisClient)(implicit f: Format, pv: Parse[Op
    * a negative index number indicates position counting from end,
    *  - so "lindex A -1" gives last element,
    */
-  def takeMany(key: Key, num: Int): List[Val] =
-    if (num <= 0)
-      Nil
-    else
-      client.lrange[Option[Val]](key, 0, num - 1)
-        .getOrElse(Nil)
-        .flatMap(_.flatten.toList)
+  def takeMany(key: Key, num: Int): RedisOps[List[Val]] =
+    client ⇒ {
+      if (num <= 0)
+        Task(Nil)
+      else ScalaFuture2Task {
+        client.lRange[Option[Val]](key, 0, num - 1).map(_.flatten)
+      }
+    }
 
-  def dequeueMany(key: Key, num: Int): Unit =
-    if (num > 0)
-      client.ltrim(key, num, -1) // end Index is -1
-    else {}
+  def dequeueMany(key: Key, num: Int): RedisOps[Unit] =
+    client ⇒ {
+      if (num > 0)
+        ScalaFuture2Task {
+          client.lTrim(key, num, -1) // end Index is -1
+        }
+      else Task(Unit)
+    }
 
-  def length(key: Key): Long = client.llen(key).getOrElse(0)
+  def length(key: Key): RedisOps[Long] =
+    client ⇒ ScalaFuture2Task {
+      client.lLen(key)
+    }
 
-  def delete(key: Key): Unit = client.del(key)
+  def delete(key: Key): RedisOps[Unit] =
+    client ⇒ ScalaFuture2Task {
+      client.del(key).map(x ⇒ Unit)
+    }
 
-  def delete(keys: List[Key]): Unit = keys match {
-    case head :: tail ⇒ client.del(head, tail: _*)
-    case _ ⇒ Nil
-  }
+  def delete(keys: List[Key]): RedisOps[Unit] =
+    client ⇒ {
+      if (keys.isEmpty)
+        Task(Unit)
+      else ScalaFuture2Task {
+        client.del(keys map format: _*).map(x ⇒ Unit)
+      }
+    }
 
-  def purge(key: Key, value: Val): Unit =
-    client.lrem(key, 0, value)
-
-  def purgeMany(key: Key, values: List[Val]): Unit = {
-    def doPurge(value: Val) = () ⇒ client.lrem(key, 0, value)
-    asyncAwait(values map doPurge)
-  }
-
-  private[this] def asyncAwait(commands: Seq[() ⇒ Any]): Unit = {
-    import scala.concurrent.Await // FIXME
-    import scala.concurrent.duration.Duration.Inf
-
-    client
-      .pipelineNoMulti(commands)
-      .map(a ⇒ Await.result(a.future, Inf))
-  }
+  def purge(key: Key, value: Val): RedisOps[Unit] =
+    client ⇒ ScalaFuture2Task {
+      client.lRem[Val](key, value, 0).map(x ⇒ Unit)
+    }
 
 }
 
 object CacheQueue {
 
-  def apply[Key, Val](client: RedisClient)(
+  def apply[Key, Val](
     implicit
-    format: Format,
-    keyParse: Parse[Option[Key]],
-    valParse: Parse[Option[Val]]
+    formK: Format[Key],
+    wv: Writer[Val],
+    rv: Reader[Option[Val]]
   ): CacheQueue[Key, Val] =
-    new CacheQueue[Key, Val](client)
+    new CacheQueue[Key, Val]()
 
 }
