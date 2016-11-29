@@ -10,8 +10,8 @@ import cards.nine.commons.NineCardsErrors.SharedCollectionNotFound
 import cards.nine.domain.account._
 import cards.nine.domain.analytics.{ RankedAppsByCategory, RankedWidgetsByMoment }
 import cards.nine.domain.application.{ CardList, Category, FullCard, Package }
+import cards.nine.processes.collections.messages._
 import cards.nine.processes.messages.InstallationsMessages._
-import cards.nine.processes.messages.SharedCollectionMessages._
 import cards.nine.processes.messages.UserMessages.{ LoginRequest, LoginResponse }
 import cards.nine.processes.messages.rankings.{ Get, Reload }
 import cards.nine.services.free.domain.Ranking.GoogleAnalyticsRanking

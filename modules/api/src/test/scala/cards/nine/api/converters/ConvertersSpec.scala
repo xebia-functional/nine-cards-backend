@@ -6,8 +6,8 @@ import cards.nine.api.messages.UserMessages._
 import cards.nine.domain.account.{ AndroidId, SessionToken }
 import cards.nine.domain.application.{ BasicCard, CardList, FullCard }
 import cards.nine.domain.market.{ MarketToken, Localization }
+import cards.nine.processes.collections.messages._
 import cards.nine.processes.messages.InstallationsMessages._
-import cards.nine.processes.messages.SharedCollectionMessages._
 import cards.nine.processes.messages.UserMessages._
 import org.scalacheck.{ Arbitrary, Gen }
 import org.scalacheck.Shapeless._
