@@ -23,7 +23,7 @@ object RedisOps {
 
   }
 
-  implicit val redisOpApplicative: Applicative[RedisOps] = RedisOpInstances
+  implicit val applicative: Applicative[RedisOps] = RedisOpInstances
 
 }
 
