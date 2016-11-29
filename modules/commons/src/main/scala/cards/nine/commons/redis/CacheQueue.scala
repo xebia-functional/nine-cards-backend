@@ -2,6 +2,7 @@ package cards.nine.commons.redis
 
 import cards.nine.commons.catscalaz.ScalaFuture2Task
 import scalaz.concurrent.Task
+import scredis.protocol.Decoder
 import scredis.serialization.{ Reader, Writer }
 
 /**
@@ -11,9 +12,9 @@ import scredis.serialization.{ Reader, Writer }
   * The CacheQueue class is generic on the type of the Key and that of the values stored in the Queue.
   */
 class CacheQueue[Key, Val](implicit
-  format: Format[Key],
-  writer: Writer[Val],
-  reader: Reader[Option[Val]]) {
+  keyFormat: Format[Key],
+  valWriter: Writer[Val],
+  valReader: Reader[Option[Val]]) {
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -22,7 +23,7 @@ class CacheQueue[Key, Val](implicit
 
   def enqueue(key: Key, value: Val): RedisOps[Unit] =
     client ⇒ ScalaFuture2Task {
-      client.rPush(format(key), value).map(_x ⇒ Unit)
+      client.rPush(keyFormat(key), value).map(_x ⇒ Unit)
     }
 
   def enqueueMany(key: Key, values: List[Val]): RedisOps[Unit] =
@@ -78,7 +79,7 @@ class CacheQueue[Key, Val](implicit
       if (keys.isEmpty)
         Task(Unit)
       else ScalaFuture2Task {
-        client.del(keys map format: _*).map(x ⇒ Unit)
+        client.del(keys map keyFormat: _*).map(x ⇒ Unit)
       }
     }
 
@@ -86,6 +87,22 @@ class CacheQueue[Key, Val](implicit
     client ⇒ ScalaFuture2Task {
       client.lRem[Val](key, value, 0).map(x ⇒ Unit)
     }
+
+  def enqueueIfNotExists[Guard](queueKey: Key, guardKey: Guard, value: Val)(implicit guardFormat: Format[Guard]): RedisOps[Unit] = {
+    // For Boolean conditions within system, can use Lua Scripts.
+    val ifExistsScript = s"""
+      | if redis.call("exists", KEYS[2]) == 0
+      | then redis.call("rpush", KEYS[1], ARGV[1])
+      | end
+    """.stripMargin
+
+    implicit val unitDecoder: Decoder[Unit] = { case x ⇒ Unit }
+    val keys = Seq(keyFormat(queueKey), guardFormat(guardKey))
+
+    client ⇒ ScalaFuture2Task {
+      client.eval[Unit, String, Val](ifExistsScript, keys, Seq(value))
+    }
+  }
 
 }
 
