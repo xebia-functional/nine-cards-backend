@@ -45,14 +45,12 @@ object CacheInterpreter extends (Ops ~> RedisOps) {
       removePending(pack) *> removeError(pack) *> wrap.put(CacheEntry.permanent(card))
 
     case SetToPending(pack) ⇒
-      val put = wrap.put(CacheEntry.pending(pack))
-      val enqueue = pendingQueue.enqueue(PendingQueueKey, pack)
-      removeError(pack) *> put *> enqueue
+      removeError(pack) *> addPending(pack) *> wrap.put(CacheEntry.pending(pack))
 
     case SetToPendingMany(packages) ⇒
+      val enqueues = packages.traverse[RedisOps, Unit](addPending)
       val put = wrap.mput(packages map CacheEntry.pending)
-      val enqueue = pendingQueue.enqueueMany(PendingQueueKey, packages)
-      removeErrorMany(packages) *> put *> enqueue
+      removeErrorMany(packages) *> enqueues *> put
 
     case AddError(pack) ⇒
       val now = DateTime.now(DateTimeZone.UTC)
@@ -69,6 +67,11 @@ object CacheInterpreter extends (Ops ~> RedisOps) {
       val take = pendingQueue.takeMany(PendingQueueKey, num)
       val deque = pendingQueue.dequeueMany(PendingQueueKey, num)
       take <* deque
+  }
+
+  private[this] def addPending(pack: Package): RedisOps[Unit] = {
+    val pendingKey = CacheKey.pending(pack)
+    pendingQueue.enqueueIfNotExists[CacheKey](PendingQueueKey, pendingKey, pack)
   }
 
   private[this] def removePending(pack: Package): RedisOps[Unit] =
