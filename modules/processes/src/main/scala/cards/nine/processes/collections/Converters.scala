@@ -8,7 +8,7 @@ import cards.nine.services.free.domain.{ BaseSharedCollection, SharedCollectionW
 import cards.nine.services.free.interpreter.collection.Services.{ SharedCollectionData ⇒ SharedCollectionDataServices }
 import org.joda.time.DateTime
 
-object Converters {
+private[collections] object Converters {
 
   implicit def toJodaDateTime(timestamp: Timestamp): DateTime = new DateTime(timestamp.getTime)
 
