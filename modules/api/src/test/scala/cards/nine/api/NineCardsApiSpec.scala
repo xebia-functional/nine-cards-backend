@@ -11,6 +11,7 @@ import cards.nine.commons.config.NineCardsConfig
 import cards.nine.domain.account._
 import cards.nine.processes.NineCardsServices._
 import cards.nine.processes._
+import cards.nine.processes.applications.ApplicationProcesses
 import cards.nine.processes.messages.UserMessages._
 import cats.free.Free
 import cats.syntax.either._
@@ -51,8 +52,6 @@ trait NineCardsApiSpecification
 
     implicit val rankingProcesses: RankingProcesses[NineCardsServices] = mock[RankingProcesses[NineCardsServices]]
 
-    implicit val recommendationsProcesses: RecommendationsProcesses[NineCardsServices] = mock[RecommendationsProcesses[NineCardsServices]]
-
     implicit val config: NineCardsConfiguration = NineCardsConfig.nineCardsConfiguration
 
     val nineCardsApi = new NineCardsRoutes().nineCardsRoutes
@@ -82,10 +81,10 @@ trait NineCardsApiSpecification
     rankingProcesses.reloadRankingByScope(any, any) returns
       Free.pure(Either.right(Messages.rankings.reloadResponse))
 
-    recommendationsProcesses.getRecommendationsByCategory(any, any, any, any, any) returns
+    applicationProcesses.getRecommendationsByCategory(any, any, any, any, any) returns
       NineCardsService.right(Messages.getRecommendationsByCategoryResponse)
 
-    recommendationsProcesses.getRecommendationsForApps(any, any, any, any, any) returns
+    applicationProcesses.getRecommendationsForApps(any, any, any, any, any) returns
       NineCardsService.right(Messages.getRecommendationsByCategoryResponse)
 
     rankingProcesses.getRankedDeviceApps(any, any) returns
