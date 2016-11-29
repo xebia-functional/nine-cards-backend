@@ -91,15 +91,16 @@ class InterpreterSpec
     Unit
   }
 
+  private def getPending(): List[Package] =
+    await(redisClient.sMembers[Option[Package]]("pending_packages").map(_.toList.flatten))
+
   private def putPendings(ps: List[Package]): Unit =
     if (!ps.isEmpty) {
-      await(redisClient.rPush("pending_packages", ps.map(_.value): _*))
+      await(redisClient.sAdd("pending_packages", ps.map(_.value): _*))
     }
 
-  private def putPending(p: Package): Unit = {
-    await(redisClient.rPush("pending_packages", p))
-    putEntry(CacheEntry.pending(p))
-  }
+  private def putPending(p: Package): Unit =
+    await(redisClient.sAdd("pending_packages", p))
 
   private def dumpQueue(): List[Package] =
     await(redisClient.lRange[Option[Package]]("pending_packages", 0, -1)).flatten
@@ -161,11 +162,18 @@ class InterpreterSpec
         eval(GetValidMany(packages)) must beEmpty
       }
 
-    "return an empty list if the cache only contains Error or Pending entries for the packages" >>
+    "return an empty list if the cache only contains the packages as Errors" >>
       prop { packages: List[Package] ⇒
         flush
-        putEntries(packages map CacheEntry.pending)
         packages foreach { p ⇒ putError(p, date) }
+
+        eval(GetValidMany(packages)) must beEmpty
+      }
+
+    "return an empty list if the cache only contains the packages as Pending" >>
+      prop { packages: List[Package] ⇒
+        flush
+        putPendings(packages)
 
         eval(GetValidMany(packages)) must beEmpty
       }
@@ -210,7 +218,7 @@ class InterpreterSpec
         flush
         eval(PutResolved(card))
 
-        getKeys(allByType(Pending)) must beEmpty
+        getPending() must beEmpty
         getKeys(allByType(Error)) must beEmpty
       }
 
@@ -220,7 +228,7 @@ class InterpreterSpec
         putPending(card.packageName)
         putError(card.packageName, date)
         eval(PutResolved(card))
-        getKeys(allByType(Pending)) must beEmpty
+        getPending() must beEmpty
         getKeys(allByType(Error)) must beEmpty
         dumpQueue() must beEmpty
       }
@@ -260,7 +268,7 @@ class InterpreterSpec
         flush
         eval(PutResolvedMany(cards))
 
-        getKeys(allByType(Pending)) must beEmpty
+        getPending() must beEmpty
         getKeys(allByType(Error)) must beEmpty
       }
 
@@ -299,7 +307,7 @@ class InterpreterSpec
       prop { card: FullCard ⇒
         flush
         eval(PutPermanent(card))
-        getKeys(allByType(Pending)) must beEmpty
+        getPending() must beEmpty
         getKeys(allByType(Error)) must beEmpty
       }
 
@@ -309,7 +317,7 @@ class InterpreterSpec
         putPending(card.packageName)
         putError(card.packageName, date)
         eval(PutPermanent(card))
-        getKeys(allByType(Pending)) must beEmpty
+        getPending() must beEmpty
         getKeys(allByType(Error)) must beEmpty
         dumpQueue() must beEmpty
       }
@@ -341,7 +349,7 @@ class InterpreterSpec
         eval(AddError(pack))
 
         getKeys(allByType(Resolved)) must beEmpty
-        getKeys(allByType(Pending)) must beEmpty
+        getPending() must beEmpty
       }
 
     "remove any previous pending keys for the package" >>
@@ -349,7 +357,7 @@ class InterpreterSpec
         flush
         putPending(pack)
         eval(AddError(pack))
-        getKeys(allByType(Pending)) must beEmpty
+        getPending() must beEmpty
         dumpQueue() must beEmpty
       }
 
@@ -376,7 +384,7 @@ class InterpreterSpec
         flush
         eval(AddErrorMany(packages))
 
-        getKeys(allByType(Pending)) must beEmpty
+        getPending() must beEmpty
         getKeys(allByType(Resolved)) must beEmpty
       }
 
@@ -385,7 +393,7 @@ class InterpreterSpec
         flush
         putPendings(packages)
         eval(AddErrorMany(packages))
-        getKeys(allByType(Pending)) must beEmpty
+        getPending() must beEmpty
         dumpQueue() must beEmpty
       }
 
@@ -412,7 +420,6 @@ class InterpreterSpec
     "get all the pending elements for a package" >>
       prop { testData: ListPendingTestData ⇒
         flush
-        putEntries(testData.pendingPackages map CacheEntry.pending)
         putPendings(testData.pendingPackages)
         val list = eval(ListPending(testData.limit))
         list must contain(atMost(testData.pendingPackages: _*))

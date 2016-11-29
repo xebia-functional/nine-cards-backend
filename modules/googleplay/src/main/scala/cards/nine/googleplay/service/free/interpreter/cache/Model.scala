@@ -8,7 +8,6 @@ object KeyType extends Enum[KeyType] {
   case object Resolved extends KeyType
   case object Permanent extends KeyType
   case object Error extends KeyType
-  case object Pending extends KeyType
 
   val values = super.findValues
 }
@@ -22,8 +21,6 @@ object CacheKey {
 
   def permanent(name: Package): CacheKey = CacheKey(name, Permanent)
 
-  def pending(name: Package): CacheKey = CacheKey(name, Pending)
-
   def error(name: Package): CacheKey = CacheKey(name, Error)
 }
 
@@ -33,9 +30,6 @@ object CacheEntry {
 
   def resolved(card: FullCard): (CacheKey, CacheVal) =
     CacheKey.resolved(card.packageName) → CacheVal(Some(card))
-
-  def pending(name: Package): (CacheKey, CacheVal) =
-    CacheKey.pending(name) → CacheVal(None)
 
   def permanent(card: FullCard): (CacheKey, CacheVal) =
     CacheKey.permanent(card.packageName) → CacheVal(Some(card))
