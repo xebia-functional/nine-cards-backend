@@ -1,8 +1,8 @@
-package cards.nine.api.messages
+package cards.nine.api.accounts
 
 import cards.nine.domain.account._
 
-object UserMessages {
+object messages {
 
   case class ApiLoginRequest(
     email: Email,
@@ -14,4 +14,9 @@ object UserMessages {
     apiKey: ApiKey,
     sessionToken: SessionToken
   )
+
+  case class ApiUpdateInstallationRequest(deviceToken: Option[DeviceToken])
+
+  case class ApiUpdateInstallationResponse(androidId: AndroidId, deviceToken: Option[DeviceToken])
+
 }

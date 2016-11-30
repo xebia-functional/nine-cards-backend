@@ -2,13 +2,10 @@ package cards.nine.api
 
 import cards.nine.api.NineCardsHeaders._
 import cards.nine.api.messages.GooglePlayMessages._
-import cards.nine.api.messages.InstallationsMessages.ApiUpdateInstallationRequest
-import cards.nine.api.messages.UserMessages.ApiLoginRequest
 import cards.nine.api.messages.{ rankings ⇒ Api }
 import cards.nine.domain.account._
 import cards.nine.domain.analytics.RankedWidgetsByMoment
 import cards.nine.domain.application.{ CardList, Category, FullCard, Package }
-import cards.nine.processes.account.messages._
 import cards.nine.processes.messages.rankings.{ Get, Reload }
 import cards.nine.services.free.domain.Ranking.GoogleAnalyticsRanking
 import org.joda.time.{ DateTime, DateTimeZone }
@@ -118,19 +115,7 @@ object TestData {
 
     val getRecommendationsByCategoryResponse = CardList[FullCard](Nil, Nil)
 
-    val apiLoginRequest = ApiLoginRequest(email, androidId, tokenId)
-
-    val apiUpdateInstallationRequest = ApiUpdateInstallationRequest(deviceToken)
-
     val getAppsInfoResponse = CardList[FullCard](Nil, Nil)
-
-    val loginRequest = LoginRequest(email, androidId, sessionToken, tokenId)
-
-    val loginResponse = LoginResponse(apiToken, sessionToken)
-
-    val updateInstallationRequest = UpdateInstallationRequest(userId, androidId, deviceToken)
-
-    val updateInstallationResponse = UpdateInstallationResponse(androidId, deviceToken)
 
     object rankings {
 
@@ -159,11 +144,7 @@ object TestData {
 
     val apiDocs = "/apiDocs/index.html"
 
-    val installations = "/installations"
-
     val invalid = "/chalkyTown"
-
-    val login = "/login"
 
     val rankWidgets = "/widgets/rank"
 

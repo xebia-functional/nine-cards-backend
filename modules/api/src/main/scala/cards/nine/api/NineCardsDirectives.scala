@@ -4,7 +4,7 @@ import java.util.UUID
 
 import cards.nine.api.NineCardsHeaders.Domain._
 import cards.nine.api.NineCardsHeaders._
-import cards.nine.api.messages.UserMessages.ApiLoginRequest
+import cards.nine.api.accounts.messages.ApiLoginRequest
 import cards.nine.api.utils.SprayMatchers.PriceFilterSegment
 import cards.nine.api.utils.TaskDirectives._
 import cards.nine.commons.NineCardsService._
@@ -40,6 +40,8 @@ class NineCardsDirectives(
   with RouteDirectives
   with SecurityDirectives
   with JsonFormats {
+
+  import cards.nine.api.accounts.JsonFormats._
 
   implicit def fromTaskAuth[T](auth: ⇒ Task[Authentication[T]]): AuthMagnet[T] =
     new AuthMagnet(onSuccess(auth))
