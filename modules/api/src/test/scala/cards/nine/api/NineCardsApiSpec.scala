@@ -11,8 +11,9 @@ import cards.nine.commons.config.NineCardsConfig
 import cards.nine.domain.account._
 import cards.nine.processes.NineCardsServices._
 import cards.nine.processes._
+import cards.nine.processes.account.AccountProcesses
+import cards.nine.processes.account.messages._
 import cards.nine.processes.applications.ApplicationProcesses
-import cards.nine.processes.messages.UserMessages._
 import cats.free.Free
 import cats.syntax.either._
 import cats.syntax.xor._
@@ -44,9 +45,7 @@ trait NineCardsApiSpecification
 
   trait BasicScope extends Scope {
 
-    implicit val userProcesses: UserProcesses[NineCardsServices] = mock[UserProcesses[NineCardsServices]]
-
-    implicit val googleApiProcesses: GoogleApiProcesses[NineCardsServices] = mock[GoogleApiProcesses[NineCardsServices]]
+    implicit val accountProcesses: AccountProcesses[NineCardsServices] = mock[AccountProcesses[NineCardsServices]]
 
     implicit val applicationProcesses: ApplicationProcesses[NineCardsServices] = mock[ApplicationProcesses[NineCardsServices]]
 
@@ -56,7 +55,7 @@ trait NineCardsApiSpecification
 
     val nineCardsApi = new NineCardsRoutes().nineCardsRoutes
 
-    userProcesses.checkAuthToken(
+    accountProcesses.checkAuthToken(
       sessionToken = SessionToken(mockEq(sessionToken.value)),
       androidId    = AndroidId(mockEq(androidId.value)),
       authToken    = mockEq(authToken),
@@ -66,11 +65,11 @@ trait NineCardsApiSpecification
 
   trait SuccessfulScope extends BasicScope {
 
-    googleApiProcesses.checkGoogleTokenId(email, tokenId) returns NineCardsService.right(Unit)
+    accountProcesses.checkGoogleTokenId(email, tokenId) returns NineCardsService.right(Unit)
 
-    userProcesses.signUpUser(any[LoginRequest]) returns NineCardsService.right(Messages.loginResponse)
+    accountProcesses.signUpUser(any[LoginRequest]) returns NineCardsService.right(Messages.loginResponse)
 
-    userProcesses.updateInstallation(mockEq(Messages.updateInstallationRequest)) returns
+    accountProcesses.updateInstallation(mockEq(Messages.updateInstallationRequest)) returns
       NineCardsService.right(Messages.updateInstallationResponse)
 
     rankingProcesses.getRanking(any) returns Free.pure(Either.right(Messages.rankings.getResponse))
@@ -91,10 +90,10 @@ trait NineCardsApiSpecification
 
   trait UnsuccessfulScope extends BasicScope {
 
-    googleApiProcesses.checkGoogleTokenId(email, tokenId) returns
+    accountProcesses.checkGoogleTokenId(email, tokenId) returns
       NineCardsService.left(WrongEmailAccount("The given email account is not valid"))
 
-    userProcesses.checkAuthToken(
+    accountProcesses.checkAuthToken(
       sessionToken = SessionToken(mockEq(sessionToken.value)),
       androidId    = AndroidId(mockEq(androidId.value)),
       authToken    = mockEq(failingAuthToken),
@@ -105,18 +104,18 @@ trait NineCardsApiSpecification
 
   trait FailingScope extends BasicScope {
 
-    googleApiProcesses.checkGoogleTokenId(email, tokenId) returns NineCardsService.right(Unit)
+    accountProcesses.checkGoogleTokenId(email, tokenId) returns NineCardsService.right(Unit)
 
-    userProcesses.checkAuthToken(
+    accountProcesses.checkAuthToken(
       sessionToken = SessionToken(mockEq(sessionToken.value)),
       androidId    = AndroidId(mockEq(androidId.value)),
       authToken    = mockEq(failingAuthToken),
       requestUri   = any[String]
     ) returns NineCardsService.right(userId)
 
-    userProcesses.signUpUser(any[LoginRequest]) returns NineCardsService.right(Messages.loginResponse)
+    accountProcesses.signUpUser(any[LoginRequest]) returns NineCardsService.right(Messages.loginResponse)
 
-    userProcesses.updateInstallation(mockEq(Messages.updateInstallationRequest)) returns
+    accountProcesses.updateInstallation(mockEq(Messages.updateInstallationRequest)) returns
       NineCardsService.right(Messages.updateInstallationResponse)
 
     rankingProcesses.getRanking(any) returns Free.pure(Either.right(Messages.rankings.getResponse))

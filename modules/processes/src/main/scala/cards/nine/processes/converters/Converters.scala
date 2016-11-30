@@ -1,41 +1,9 @@
 package cards.nine.processes.converters
 
-import java.sql.Timestamp
-
 import cards.nine.domain.analytics._
-import cards.nine.domain.application.{ CardList, FullCard, Moment, Package }
-import cards.nine.processes.messages.InstallationsMessages._
-import cards.nine.processes.messages.UserMessages.LoginResponse
-import cards.nine.services.free.domain.{ Installation ⇒ InstallationServices, User ⇒ UserAppServices }
-import org.joda.time.DateTime
+import cards.nine.domain.application.{ Moment, Package }
 
 object Converters {
-
-  implicit def toJodaDateTime(timestamp: Timestamp): DateTime = new DateTime(timestamp.getTime)
-
-  implicit def toTimestamp(datetime: DateTime): Timestamp = new Timestamp(datetime.getMillis)
-
-  def toLoginResponse(info: (UserAppServices, InstallationServices)): LoginResponse = {
-    val (user, _) = info
-    LoginResponse(
-      apiKey       = user.apiKey,
-      sessionToken = user.sessionToken
-    )
-  }
-
-  def toUpdateInstallationResponse(installation: InstallationServices): UpdateInstallationResponse =
-    UpdateInstallationResponse(
-      androidId   = installation.androidId,
-      deviceToken = installation.deviceToken
-    )
-
-  def filterCategorized(info: CardList[FullCard]): CardList[FullCard] = {
-    val (appsWithoutCategories, apps) = info.cards.partition(app ⇒ app.categories.isEmpty)
-    CardList(
-      missing = info.missing ++ appsWithoutCategories.map(_.packageName),
-      cards   = apps
-    )
-  }
 
   def toUnrankedApp(category: String)(pack: Package) = UnrankedApp(pack, category)
 

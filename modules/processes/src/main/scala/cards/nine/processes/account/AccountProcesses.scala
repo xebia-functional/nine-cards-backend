@@ -1,23 +1,33 @@
-package cards.nine.processes
+package cards.nine.processes.account
 
-import cards.nine.commons.config.Domain.NineCardsConfiguration
-import cards.nine.commons.NineCardsErrors.{ AuthTokenNotValid, InstallationNotFound, UserNotFound }
+import cards.nine.commons.NineCardsErrors.{ AuthTokenNotValid, InstallationNotFound, UserNotFound, WrongEmailAccount }
 import cards.nine.commons.NineCardsService
 import cards.nine.commons.NineCardsService.NineCardsService
+import cards.nine.commons.config.Domain.NineCardsConfiguration
 import cards.nine.domain.account._
-import cards.nine.processes.converters.Converters._
-import cards.nine.processes.messages.InstallationsMessages._
-import cards.nine.processes.messages.UserMessages._
 import cards.nine.processes.utils.HashUtils
 import cards.nine.services.free.algebra
+import cards.nine.services.free.algebra.GoogleApi
 import cards.nine.services.free.domain._
 
-class UserProcesses[F[_]](
+class AccountProcesses[F[_]](
   implicit
+  googleAPIServices: algebra.GoogleApi.Services[F],
   userServices: algebra.User.Services[F],
   config: NineCardsConfiguration,
   hashUtils: HashUtils
 ) {
+
+  import messages._
+  import Converters._
+
+  def checkGoogleTokenId(email: Email, tokenId: GoogleIdToken): NineCardsService[F, Unit] =
+    googleAPIServices
+      .getTokenInfo(tokenId)
+      .ensure(WrongEmailAccount("The given email account is not valid")) { tokenInfo ⇒
+        tokenInfo.email_verified == "true" && tokenInfo.email == email.value
+      }
+      .map(_ ⇒ Unit)
 
   def signUpUser(request: LoginRequest): NineCardsService[F, LoginResponse] = {
 
@@ -81,13 +91,14 @@ class UserProcesses[F[_]](
 
 }
 
-object UserProcesses {
+object AccountProcesses {
 
   implicit def processes[F[_]](
     implicit
+    googleAPIServices: GoogleApi.Services[F],
     userServices: algebra.User.Services[F],
     config: NineCardsConfiguration,
     hashUtils: HashUtils
-  ) = new UserProcesses
+  ) = new AccountProcesses
 
 }

@@ -4,7 +4,7 @@ import cards.nine.domain.account.AndroidId
 import cards.nine.domain.application.{ CardList, FullCard, Package, PriceFilter }
 import cards.nine.domain.market.{ Localization, MarketCredentials, MarketToken }
 
-object TestData {
+private[applications] object TestData {
 
   val packagesName = List(
     "earth.europe.italy",

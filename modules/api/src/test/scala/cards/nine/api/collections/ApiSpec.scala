@@ -13,6 +13,7 @@ import cards.nine.commons.config.NineCardsConfig
 import cards.nine.domain.account._
 import cards.nine.processes.NineCardsServices._
 import cards.nine.processes._
+import cards.nine.processes.account.AccountProcesses
 import cards.nine.processes.collections.SharedCollectionProcesses
 import org.mockito.Matchers.{ eq ⇒ mockEq }
 import org.specs2.matcher.Matchers
@@ -42,7 +43,7 @@ trait CollectionsApiSpecification
 
   trait BasicScope extends Scope {
 
-    implicit val userProcesses: UserProcesses[NineCardsServices] = mock[UserProcesses[NineCardsServices]]
+    implicit val accountProcesses: AccountProcesses[NineCardsServices] = mock[AccountProcesses[NineCardsServices]]
 
     implicit val sharedCollectionProcesses: SharedCollectionProcesses[NineCardsServices] = mock[SharedCollectionProcesses[NineCardsServices]]
 
@@ -50,7 +51,7 @@ trait CollectionsApiSpecification
 
     val routes = sealRoute(new CollectionsApi().route)
 
-    userProcesses.checkAuthToken(
+    accountProcesses.checkAuthToken(
       sessionToken = SessionToken(mockEq(sessionToken.value)),
       androidId    = AndroidId(mockEq(androidId.value)),
       authToken    = mockEq(authToken),
@@ -94,7 +95,7 @@ trait CollectionsApiSpecification
 
   trait UnsuccessfulScope extends BasicScope {
 
-    userProcesses.checkAuthToken(
+    accountProcesses.checkAuthToken(
       sessionToken = SessionToken(mockEq(sessionToken.value)),
       androidId    = AndroidId(mockEq(androidId.value)),
       authToken    = mockEq(failingAuthToken),
@@ -119,7 +120,7 @@ trait CollectionsApiSpecification
 
   trait FailingScope extends BasicScope {
 
-    userProcesses.checkAuthToken(
+    accountProcesses.checkAuthToken(
       sessionToken = SessionToken(mockEq(sessionToken.value)),
       androidId    = AndroidId(mockEq(androidId.value)),
       authToken    = mockEq(failingAuthToken),

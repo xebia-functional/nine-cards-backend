@@ -11,6 +11,7 @@ import cards.nine.commons.config.Domain.NineCardsConfiguration
 import cards.nine.domain.application.Category
 import cards.nine.domain.pagination.Page
 import cards.nine.processes._
+import cards.nine.processes.account.AccountProcesses
 import cards.nine.processes.collections.SharedCollectionProcesses
 import cards.nine.processes.NineCardsServices._
 
@@ -20,7 +21,7 @@ import spray.routing._
 class CollectionsApi(
   implicit
   config: NineCardsConfiguration,
-  userProcesses: UserProcesses[NineCardsServices],
+  accountProcesses: AccountProcesses[NineCardsServices],
   sharedCollectionProcesses: SharedCollectionProcesses[NineCardsServices],
   refFactory: ActorRefFactory,
   executionContext: ExecutionContext

@@ -14,7 +14,7 @@ import cards.nine.services.free.domain.Firebase.{ NotificationIndividualResult, 
 import cards.nine.services.free.interpreter.collection.Services.{ SharedCollectionData ⇒ SharedCollectionDataServices }
 import org.joda.time.DateTime
 
-object TestData {
+private[collections] object TestData {
 
   val addedPackagesCount = 2
 
