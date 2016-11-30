@@ -4,7 +4,6 @@ import cards.nine.api.NineCardsHeaders.Domain._
 import cards.nine.api.messages.InstallationsMessages._
 import cards.nine.api.messages.UserMessages._
 import cards.nine.domain.account.{ AndroidId, SessionToken }
-import cards.nine.domain.application.{ BasicCard, CardList, FullCard }
 import cards.nine.domain.market.{ MarketToken, Localization }
 import cards.nine.processes.messages.InstallationsMessages._
 import cards.nine.processes.messages.UserMessages._
@@ -70,45 +69,6 @@ class ConvertersSpec
         apiResponse.deviceToken must_== response.deviceToken
       }
     }
-  }
-
-  "toApiCategorizeAppsResponse" should {
-    "convert an GetAppsInfoResponse to an ApiCategorizeAppsResponse object" in {
-      prop { (response: CardList[FullCard]) ⇒
-
-        val apiResponse = Converters.toApiAppsInfoResponse(Converters.toApiCategorizedApp)(response)
-
-        apiResponse.errors must containTheSameElementsAs(response.missing)
-
-        forall(apiResponse.items) { item ⇒
-          response.cards.exists(appInfo ⇒
-            appInfo.packageName == item.packageName &&
-              appInfo.categories == item.categories)
-        }
-      }
-    }
-  }
-
-  "toApiDetailAppsResponse" should {
-    "convert an GetAppsInfoResponse to an ApiDetailAppsResponse object" in {
-      prop { (response: CardList[FullCard]) ⇒
-
-        val apiResponse = Converters.toApiAppsInfoResponse(Converters.toApiDetailsApp)(response)
-
-        apiResponse.errors must_== response.missing
-        apiResponse.items must_== (response.cards map Converters.toApiDetailsApp)
-      }
-    }
-  }
-
-  "toApiIconApp" should {
-    "convert a FullCard to an ApiAppIcon" in
-      prop { (card: BasicCard) ⇒
-        val api = Converters.toApiIconApp(card)
-        api.packageName must_== card.packageName
-        api.title must_== card.title
-        api.icon must_== card.icon
-      }
   }
 
   "toMarketAuth" should {

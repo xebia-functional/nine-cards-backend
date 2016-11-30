@@ -21,7 +21,7 @@ import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
 import org.specs2.specification.Scope
 import spray.http.HttpHeaders.RawHeader
-import spray.http.{ BasicHttpCredentials, HttpRequest, MediaTypes, StatusCodes, Uri }
+import spray.http.{ HttpRequest, MediaTypes, StatusCodes }
 import spray.routing.HttpService
 import spray.testkit.Specs2RouteTest
 
@@ -72,9 +72,6 @@ trait NineCardsApiSpecification
     userProcesses.updateInstallation(mockEq(Messages.updateInstallationRequest)) returns
       NineCardsService.right(Messages.updateInstallationResponse)
 
-    applicationProcesses.getAppsInfo(any, any) returns
-      NineCardsService.right(Messages.getAppsInfoResponse)
-
     rankingProcesses.getRanking(any) returns Free.pure(Either.right(Messages.rankings.getResponse))
 
     rankingProcesses.reloadRankingByScope(any, any) returns
@@ -86,17 +83,9 @@ trait NineCardsApiSpecification
     applicationProcesses.getRecommendationsForApps(any, any, any, any, any) returns
       NineCardsService.right(Messages.getRecommendationsByCategoryResponse)
 
-    rankingProcesses.getRankedDeviceApps(any, any) returns
-      NineCardsService.right(Messages.getRankedAppsResponse).value
-
-    rankingProcesses.getRankedAppsByMoment(any, any, any, any) returns
-      NineCardsService.right(Messages.getRankedAppsResponse).value
-
     rankingProcesses.getRankedWidgets(any, any, any, any) returns
       NineCardsService.right(Messages.getRankedWidgetsResponse).value
 
-    applicationProcesses.storeCard(any) returns
-      NineCardsService.right(Unit)
   }
 
   trait UnsuccessfulScope extends BasicScope {
@@ -134,8 +123,6 @@ trait NineCardsApiSpecification
     rankingProcesses.reloadRankingByScope(any, any) returns
       Free.pure(Either.right(Messages.rankings.reloadResponse))
 
-    rankingProcesses.getRankedDeviceApps(any, any) returns
-      NineCardsService.right(Messages.getRankedAppsResponse).value
   }
 
 }
@@ -280,121 +267,6 @@ class NineCardsApiSpec
     successOk(request)
   }
 
-  "POST /applications/categorize" should {
-
-    val request = Post(
-      uri     = Paths.categorize,
-      content = Messages.apiGetAppsInfoRequest
-    ) ~> addHeaders(Headers.googlePlayHeaders)
-
-    authenticatedBadRequestEmptyBody(Post(Paths.categorize))
-
-    unauthorizedNoHeaders(request)
-
-    successOk(request)
-  }
-
-  "POST /applications/details" should {
-
-    val request = Post(
-      uri     = Paths.details,
-      content = Messages.apiGetAppsInfoRequest
-    ) ~> addHeaders(Headers.googlePlayHeaders)
-
-    authenticatedBadRequestEmptyBody(Post(Paths.details))
-
-    unauthorizedNoHeaders(request)
-
-    successOk(request)
-  }
-
-  """POST /applications/details?slice=icon, the variant to get only title and icon""" should {
-
-    val request = Post(
-      uri     = Uri(
-        path  = Uri.Path(Paths.details),
-        query = Uri.Query("?slice=icon")
-      ),
-      content = Messages.apiGetAppsInfoRequest
-    ) ~> addHeaders(Headers.googlePlayHeaders)
-
-    authenticatedBadRequestEmptyBody(Post(Paths.details))
-
-    unauthorizedNoHeaders(request)
-
-    successOk(request)
-  }
-
-  """ PUT /applications/details/{packageId}, the endpoint to store a card in the cache""" should {
-
-    val validPackage = "a.valid.package"
-
-    def request(packageId: String) = Put(
-      uri     = s"${Paths.details}/$packageId",
-      content = Messages.setAppInfoRequest
-    )
-
-    "Respond NotFound if the package name is badformed" in new BasicScope {
-      request("++package++") ~> sealRoute(nineCardsApi) ~> check {
-        status.intValue shouldEqual StatusCodes.Unauthorized.intValue
-
-      }
-    }
-
-    "respond Unauthorized if Basic Auth is missing" in new BasicScope {
-      request(validPackage) ~> sealRoute(nineCardsApi) ~> check {
-        status.intValue shouldEqual StatusCodes.Unauthorized.intValue
-      }
-    }
-
-    "respond Unauthorized if there are auth headers, but unknown" in new BasicScope {
-      val invalidCredentials = BasicHttpCredentials("Jon", "Doe")
-
-      request(validPackage) ~> addCredentials(invalidCredentials) ~> sealRoute(nineCardsApi) ~> check {
-        status.intValue shouldEqual StatusCodes.Unauthorized.intValue
-      }
-    }
-
-    "respond OK if the Basic Http Credentials are in the config " in new SuccessfulScope {
-      val (user, password) = config.editors.head
-      val credentials = BasicHttpCredentials(user, password)
-      request(validPackage) ~> addCredentials(credentials) ~> sealRoute(nineCardsApi) ~> check {
-        status.intValue shouldEqual StatusCodes.OK.intValue
-      }
-    }
-
-  }
-
-  "POST /applications/rank" should {
-
-    val request = Post(
-      uri     = Paths.rankApps,
-      content = Messages.apiRankAppsRequest
-    )
-
-    authenticatedBadRequestEmptyBody(Post(Paths.rankApps))
-
-    unauthorizedNoHeaders(request)
-
-    internalServerError(request)
-
-    successOk(request)
-  }
-
-  "POST /applications/rank-by-moment" should {
-
-    val request = Post(
-      uri     = Paths.rankAppsByMoments,
-      content = Messages.apiRankByMomentsRequest
-    )
-
-    authenticatedBadRequestEmptyBody(Post(Paths.rankApps))
-
-    unauthorizedNoHeaders(request)
-
-    successOk(request)
-  }
-
   "POST /widgets/rank" should {
 
     val request = Post(
@@ -402,7 +274,7 @@ class NineCardsApiSpec
       content = Messages.apiRankByMomentsRequest
     )
 
-    authenticatedBadRequestEmptyBody(Post(Paths.rankApps))
+    authenticatedBadRequestEmptyBody(Post(Paths.rankWidgets))
 
     unauthorizedNoHeaders(request)
 
