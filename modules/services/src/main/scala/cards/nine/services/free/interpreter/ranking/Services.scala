@@ -14,13 +14,14 @@ import cats.syntax.either._
 import cats.syntax.functor._
 import cats.syntax.semigroup._
 import cats.~>
+import scala.concurrent.ExecutionContext
 
-class Services() extends (Ops ~> RedisOps) {
+class Services(implicit ec: ExecutionContext) extends (Ops ~> RedisOps) {
 
   import Coders._
   import RedisOps._
 
-  private[this] val wrap = CacheWrapper[CacheKey, CacheVal]
+  private[this] val wrap = new CacheWrapper[CacheKey, CacheVal]
 
   private[this] def getForScope(scope: GeoScope): RedisOps[Option[GoogleAnalyticsRanking]] = {
     def generateCacheKey(scope: GeoScope) = scope match {
@@ -127,6 +128,6 @@ class Services() extends (Ops ~> RedisOps) {
 
 object Services {
 
-  def services() = new Services()
+  def services(implicit ec: ExecutionContext) = new Services()
 
 }

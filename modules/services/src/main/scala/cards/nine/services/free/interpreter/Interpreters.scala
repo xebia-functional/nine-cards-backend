@@ -25,6 +25,7 @@ import scredis.{ Client ⇒ ScredisClient }
 class Interpreters(implicit A: ApplicativeError[Task, Throwable], T: Transactor[Task]) {
 
   implicit val system: ActorSystem = ActorSystem("cards-nine-services-redis")
+  import scala.concurrent.ExecutionContext.Implicits.global
 
   val redisClient: RedisClient = ScredisClient(
     host        = nineCardsConfiguration.redis.host,

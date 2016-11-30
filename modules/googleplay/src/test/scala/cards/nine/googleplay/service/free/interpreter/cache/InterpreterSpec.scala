@@ -36,7 +36,9 @@ class InterpreterSpec
 
     def flush = redisClient.flushAll
 
-    val interpreter = CacheInterpreter
+    import scala.concurrent.ExecutionContext.Implicits.global
+
+    val interpreter = new CacheInterpreter()
 
     def eval[A](op: Ops[A]) = interpreter(op)(redisClient).unsafePerformSync
 

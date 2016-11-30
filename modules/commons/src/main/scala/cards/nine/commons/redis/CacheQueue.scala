@@ -1,6 +1,7 @@
 package cards.nine.commons.redis
 
 import cards.nine.commons.catscalaz.ScalaFuture2Task
+import scala.concurrent.ExecutionContext
 import scalaz.concurrent.Task
 import scredis.protocol.Decoder
 import scredis.serialization.{ Reader, Writer }
@@ -14,9 +15,8 @@ import scredis.serialization.{ Reader, Writer }
 class CacheQueue[Key, Val](implicit
   keyFormat: Format[Key],
   valWriter: Writer[Val],
-  valReader: Reader[Option[Val]]) {
-
-  import scala.concurrent.ExecutionContext.Implicits.global
+  valReader: Reader[Option[Val]],
+  ec: ExecutionContext) {
 
   // We see Redis lists as queues: we enqueue on the right, and dequeue from the left (
   // Thus, retrieving goes through positive indexes.
@@ -103,17 +103,5 @@ class CacheQueue[Key, Val](implicit
       client.eval[Unit, String, Val](ifExistsScript, keys, Seq(value))
     }
   }
-
-}
-
-object CacheQueue {
-
-  def apply[Key, Val](
-    implicit
-    formK: Format[Key],
-    wv: Writer[Val],
-    rv: Reader[Option[Val]]
-  ): CacheQueue[Key, Val] =
-    new CacheQueue[Key, Val]()
 
 }

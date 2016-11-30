@@ -1,6 +1,7 @@
 package cards.nine.commons.redis
 
 import cards.nine.commons.catscalaz.ScalaFuture2Task
+import scala.concurrent.ExecutionContext
 import scredis.serialization.{ Reader, Writer }
 import scalaz.concurrent.Task
 
@@ -8,10 +9,9 @@ class CacheWrapper[Key, Val](
   implicit
   format: Format[Key],
   writer: Writer[Val],
-  reader: Reader[Option[Val]]
+  reader: Reader[Option[Val]],
+  ec: ExecutionContext
 ) {
-
-  import scala.concurrent.ExecutionContext.Implicits.global
 
   def get(key: Key): RedisOps[Option[Val]] =
     client ⇒ ScalaFuture2Task {
@@ -57,10 +57,4 @@ class CacheWrapper[Key, Val](
       }
     }
 
-}
-
-object CacheWrapper {
-
-  def apply[Key, Val]()(implicit format: Format[Key], writeVal: Writer[Val], readVal: Reader[Option[Val]]): CacheWrapper[Key, Val] =
-    new CacheWrapper[Key, Val]()(format, writeVal, readVal)
 }

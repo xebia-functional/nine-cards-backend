@@ -54,7 +54,7 @@ trait RedisScope extends RedisTestDomain {
 
   lazy val redisServer: RedisServer = new RedisServer()
   lazy val redisClient: Client = Client(host = "localhost", port = redisServer.getPort)
-  lazy val wrapper = CacheWrapper[TestCacheKey, TestCacheVal]()
+  lazy val wrapper = new CacheWrapper[TestCacheKey, TestCacheVal]()
 
   def await[A](fut: Future[A]): A = Await.result(fut, Duration.Inf)
 

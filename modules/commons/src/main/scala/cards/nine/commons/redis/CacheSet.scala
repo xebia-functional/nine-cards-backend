@@ -1,15 +1,15 @@
 package cards.nine.commons.redis
 
 import cards.nine.commons.catscalaz.ScalaFuture2Task
+import scala.concurrent.ExecutionContext
 import scalaz.concurrent.Task
 import scredis.serialization.{ Reader, Writer }
 
 class CacheSet[Key, Elem](key: Key)(implicit
   keyFormat: Format[Key],
   valWriter: Writer[Elem],
-  valReader: Reader[Option[Elem]]) {
-
-  import scala.concurrent.ExecutionContext.Implicits.global
+  valReader: Reader[Option[Elem]],
+  ec: ExecutionContext) {
 
   def insert(elem: Elem): RedisOps[Unit] =
     client ⇒ ScalaFuture2Task {

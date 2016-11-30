@@ -15,6 +15,8 @@ import scredis.{ Client ⇒ RedisClient }
 
 object Wiring {
 
+  import scala.concurrent.ExecutionContext.Implicits.global
+
   type WithHttpClient[+A] = HttpClient ⇒ Task[A]
 
   class HttpToTask(httpClient: HttpClient)
@@ -35,7 +37,7 @@ object Wiring {
 
   val cacheInt: Cache.Ops ~> Task = {
     val toTask = new RedisOpsToTask(redisClient)
-    CacheInterpreter andThen toTask
+    new CacheInterpreter() andThen toTask
   }
 
   val googleApiInt: GoogleApi.Ops ~> Task = {

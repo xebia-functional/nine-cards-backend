@@ -8,10 +8,10 @@ import cats.instances.list._
 import cats.syntax.cartesian._
 import cats.syntax.functor._
 import cats.syntax.traverse._
-
 import org.joda.time.{ DateTime, DateTimeZone }
+import scala.concurrent.ExecutionContext
 
-object CacheInterpreter extends (Ops ~> RedisOps) {
+class CacheInterpreter(implicit ec: ExecutionContext) extends (Ops ~> RedisOps) {
 
   import Formats._
   import RedisOps._
