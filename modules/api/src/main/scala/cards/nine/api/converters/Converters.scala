@@ -6,7 +6,7 @@ import cards.nine.api.messages.InstallationsMessages._
 import cards.nine.api.messages.UserMessages._
 import cards.nine.commons.NineCardsService.Result
 import cards.nine.domain.account._
-import cards.nine.domain.analytics.{ RankedAppsByCategory, RankedWidgetsByMoment }
+import cards.nine.domain.analytics.RankedWidgetsByMoment
 import cards.nine.domain.application._
 import cards.nine.domain.market.MarketCredentials
 import cards.nine.processes.messages.InstallationsMessages._
@@ -28,18 +28,6 @@ object Converters {
     ApiLoginResponse(
       apiKey       = response.apiKey,
       sessionToken = response.sessionToken
-    )
-
-  def toFullCard(packageName: Package, apiDetails: ApiSetAppInfoRequest): FullCard =
-    FullCard(
-      packageName = packageName,
-      title       = apiDetails.title,
-      free        = apiDetails.free,
-      icon        = apiDetails.icon,
-      stars       = apiDetails.stars,
-      downloads   = apiDetails.downloads,
-      categories  = apiDetails.categories,
-      screenshots = apiDetails.screenshots
     )
 
   def toUpdateInstallationRequest(
@@ -65,36 +53,6 @@ object Converters {
       androidId    = userContext.androidId,
       localization = googlePlayContext.marketLocalization,
       token        = googlePlayContext.googlePlayToken
-    )
-
-  def toApiAppsInfoResponse[Card, A](toA: Card ⇒ A)(response: CardList[Card]): ApiAppsInfoResponse[A] =
-    ApiAppsInfoResponse(
-      errors = response.missing,
-      items  = response.cards map toA
-    )
-
-  def toApiCategorizedApp(appInfo: FullCard): ApiCategorizedApp =
-    ApiCategorizedApp(
-      packageName = appInfo.packageName,
-      categories  = appInfo.categories
-    )
-
-  def toApiIconApp(appInfo: BasicCard): ApiIconApp =
-    ApiIconApp(
-      packageName = appInfo.packageName,
-      title       = appInfo.title,
-      icon        = appInfo.icon
-    )
-
-  def toApiDetailsApp(card: FullCard): ApiDetailsApp =
-    ApiDetailsApp(
-      packageName = card.packageName,
-      title       = card.title,
-      free        = card.free,
-      icon        = card.icon,
-      stars       = card.stars,
-      downloads   = card.downloads,
-      categories  = card.categories
     )
 
   def toApiRecommendation(card: FullCard): ApiRecommendation =
@@ -124,18 +82,6 @@ object Converters {
       response.cards map toApiRecommendation
     )
 
-  def toApiSearchAppsResponse(response: CardList[BasicCard]): ApiSearchAppsResponse =
-    ApiSearchAppsResponse(response.cards map toApiRecommendation)
-
-  def toApiRankedAppsByCategory(ranking: RankedAppsByCategory) =
-    ApiRankedAppsByCategory(ranking.category, ranking.packages map (_.packageName))
-
-  def toApiRankAppsResponse(result: Result[List[RankedAppsByCategory]]) =
-    result.map {
-      items ⇒
-        ApiRankAppsResponse(items map toApiRankedAppsByCategory)
-    }
-
   def toApiRankedWidgetsByMoment(ranking: RankedWidgetsByMoment) =
     ApiRankedWidgetsByMoment(ranking.moment, ranking.widgets map (_.widget))
 
@@ -146,8 +92,5 @@ object Converters {
     }
 
   def toDeviceAppList(items: List[Package]) = items map DeviceApp.apply
-
-  def toApiSetAppInfoResponse(result: Unit): ApiSetAppInfoResponse =
-    ApiSetAppInfoResponse()
 
 }

@@ -55,20 +55,6 @@ trait JsonFormats
 
   implicit val updateInstallationResponseFormat = jsonFormat2(ApiUpdateInstallationResponse)
 
-  implicit val apiCategorizeAppsRequestFormat = jsonFormat1(ApiAppsInfoRequest)
-
-  implicit val apiCategorizedAppFormat = jsonFormat2(ApiCategorizedApp)
-
-  implicit val apiIconAppFormat = jsonFormat3(ApiIconApp)
-
-  implicit def apiAppsInfoResponse[A](implicit base: JsonFormat[A]): RootJsonFormat[ApiAppsInfoResponse[A]] =
-    jsonFormat2(ApiAppsInfoResponse[A])
-
-  implicit val appGooglePlayInfoFormat = jsonFormat7(ApiDetailsApp)
-
-  implicit val apiSetAppInfoRequestFormat = jsonFormat7(ApiSetAppInfoRequest)
-  implicit val apiSetAppInfoResponseFormat = jsonFormat0(ApiSetAppInfoResponse)
-
   implicit val apiGetRecommendationsByCategoryRequestFormat = jsonFormat2(ApiGetRecommendationsByCategoryRequest)
 
   implicit val apiGetRecommendationsForAppsRequestFormat = jsonFormat4(ApiGetRecommendationsForAppsRequest)
@@ -77,13 +63,7 @@ trait JsonFormats
 
   implicit val apiGetRecommendationsResponseFormat = jsonFormat1(ApiGetRecommendationsResponse)
 
-  implicit val apiRankAppsRequestFormat = jsonFormat2(ApiRankAppsRequest)
-
   implicit val apiRankAppsByMomentsRequestFormat = jsonFormat4(ApiRankByMomentsRequest)
-
-  implicit val apiRankedAppsByCategoryFormat = jsonFormat2(ApiRankedAppsByCategory)
-
-  implicit val apiRankAppsResponseFormat = jsonFormat1(ApiRankAppsResponse)
 
   implicit val widgetFormat = jsonFormat2(Widget.apply)
 
@@ -91,9 +71,6 @@ trait JsonFormats
 
   implicit val apiRankWidgetsResponseFormat = jsonFormat1(ApiRankWidgetsResponse)
 
-  implicit val apiSearchAppsRequest = jsonFormat3(ApiSearchAppsRequest)
-
-  implicit val apiSearchAppsResponse = jsonFormat1(ApiSearchAppsResponse)
 }
 
 object JsonFormats extends JsonFormats
