@@ -10,6 +10,7 @@ import cards.nine.commons.NineCardsService.{ NineCardsService, Result }
 import cards.nine.commons.config.Domain.NineCardsConfiguration
 import cards.nine.domain.application.{ BasicCard, FullCard, Package }
 import cards.nine.processes._
+import cards.nine.processes.account.AccountProcesses
 import cards.nine.processes.applications.ApplicationProcesses
 import cards.nine.processes.NineCardsServices._
 import scala.concurrent.ExecutionContext
@@ -18,7 +19,7 @@ import spray.routing._
 class ApplicationsApi(
   implicit
   config: NineCardsConfiguration,
-  userProcesses: UserProcesses[NineCardsServices],
+  accountProcesses: AccountProcesses[NineCardsServices],
   applicationProcesses: ApplicationProcesses[NineCardsServices],
   rankingProcesses: RankingProcesses[NineCardsServices],
   executionContext: ExecutionContext

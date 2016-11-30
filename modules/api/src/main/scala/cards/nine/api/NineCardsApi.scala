@@ -17,6 +17,7 @@ import cards.nine.domain.account.SessionToken
 import cards.nine.domain.analytics._
 import cards.nine.domain.application.{ Category, PriceFilter }
 import cards.nine.processes._
+import cards.nine.processes.account.AccountProcesses
 import cards.nine.processes.applications.ApplicationProcesses
 import cards.nine.processes.NineCardsServices._
 import scala.concurrent.ExecutionContext
@@ -25,8 +26,7 @@ import spray.routing._
 class NineCardsRoutes(
   implicit
   config: NineCardsConfiguration,
-  userProcesses: UserProcesses[NineCardsServices],
-  googleApiProcesses: GoogleApiProcesses[NineCardsServices],
+  accountProcesses: AccountProcesses[NineCardsServices],
   applicationProcesses: ApplicationProcesses[NineCardsServices],
   rankingProcesses: RankingProcesses[NineCardsServices],
   refFactory: ActorRefFactory,
@@ -56,7 +56,7 @@ class NineCardsRoutes(
         entity(as[ApiLoginRequest]) { request ⇒
           nineCardsDirectives.authenticateLoginRequest { sessionToken: SessionToken ⇒
             complete {
-              userProcesses
+              accountProcesses
                 .signUpUser(toLoginRequest(request, sessionToken))
                 .map(toApiLoginResponse)
             }
@@ -71,7 +71,7 @@ class NineCardsRoutes(
         put {
           entity(as[ApiUpdateInstallationRequest]) { request ⇒
             complete {
-              userProcesses
+              accountProcesses
                 .updateInstallation(toUpdateInstallationRequest(request, userContext))
                 .map(toApiUpdateInstallationResponse)
             }
@@ -127,7 +127,7 @@ class NineCardsRoutes(
   private type NineCardsServed[A] = cats.free.Free[NineCardsServices, A]
 
   private[this] def updateInstallation(request: ApiUpdateInstallationRequest, userContext: UserContext) =
-    userProcesses
+    accountProcesses
       .updateInstallation(toUpdateInstallationRequest(request, userContext))
       .map(toApiUpdateInstallationResponse)
 
