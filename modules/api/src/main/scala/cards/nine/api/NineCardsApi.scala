@@ -7,13 +7,11 @@ import cards.nine.api.applications.ApplicationsApi
 import cards.nine.api.collections.CollectionsApi
 import cards.nine.api.converters.Converters._
 import cards.nine.api.messages.GooglePlayMessages._
-import cards.nine.api.messages.InstallationsMessages._
-import cards.nine.api.messages.UserMessages._
+import cards.nine.api.accounts.AccountsApi
 import cards.nine.api.utils.SprayMarshallers._
 import cards.nine.api.utils.SprayMatchers._
 import cards.nine.commons.NineCardsService.{ NineCardsService, Result }
 import cards.nine.commons.config.Domain.NineCardsConfiguration
-import cards.nine.domain.account.SessionToken
 import cards.nine.domain.analytics._
 import cards.nine.domain.application.{ Category, PriceFilter }
 import cards.nine.processes._
@@ -37,48 +35,18 @@ class NineCardsRoutes(
   import JsonFormats._
 
   lazy val nineCardsRoutes: Route = {
+    val accountsRoute = new AccountsApi().route
     val applicationRoute = new ApplicationsApi().route
     val collectionsRoute = new CollectionsApi().route
 
     pathPrefix("apiDocs")(swaggerRoute) ~
+      accountsRoute ~
       applicationRoute ~
       collectionsRoute ~
-      pathPrefix("installations")(installationsRoute) ~
-      pathPrefix("login")(userRoute) ~
       pathPrefix("rankings")(rankings.route) ~
       pathPrefix("recommendations")(recommendationsRoute) ~
       pathPrefix("widgets")(widgetRoute)
   }
-
-  private[this] lazy val userRoute: Route =
-    pathEndOrSingleSlash {
-      post {
-        entity(as[ApiLoginRequest]) { request ⇒
-          nineCardsDirectives.authenticateLoginRequest { sessionToken: SessionToken ⇒
-            complete {
-              accountProcesses
-                .signUpUser(toLoginRequest(request, sessionToken))
-                .map(toApiLoginResponse)
-            }
-          }
-        }
-      }
-    }
-
-  private[this] lazy val installationsRoute: Route =
-    nineCardsDirectives.authenticateUser { implicit userContext: UserContext ⇒
-      pathEndOrSingleSlash {
-        put {
-          entity(as[ApiUpdateInstallationRequest]) { request ⇒
-            complete {
-              accountProcesses
-                .updateInstallation(toUpdateInstallationRequest(request, userContext))
-                .map(toApiUpdateInstallationResponse)
-            }
-          }
-        }
-      }
-    }
 
   private[this] lazy val recommendationsRoute: Route =
     nineCardsDirectives.authenticateUser { userContext ⇒
@@ -125,11 +93,6 @@ class NineCardsRoutes(
     }
 
   private type NineCardsServed[A] = cats.free.Free[NineCardsServices, A]
-
-  private[this] def updateInstallation(request: ApiUpdateInstallationRequest, userContext: UserContext) =
-    accountProcesses
-      .updateInstallation(toUpdateInstallationRequest(request, userContext))
-      .map(toApiUpdateInstallationResponse)
 
   private[this] def getRecommendationsByCategory(
     request: ApiGetRecommendationsByCategoryRequest,

@@ -4,7 +4,7 @@ import akka.actor.ActorSystem
 import akka.testkit._
 import cards.nine.api.NineCardsHeaders._
 import cards.nine.api.TestData._
-import cards.nine.commons.NineCardsErrors.{ AuthTokenNotValid, WrongEmailAccount }
+import cards.nine.commons.NineCardsErrors.AuthTokenNotValid
 import cards.nine.commons.NineCardsService
 import cards.nine.commons.config.Domain.NineCardsConfiguration
 import cards.nine.commons.config.NineCardsConfig
@@ -12,7 +12,6 @@ import cards.nine.domain.account._
 import cards.nine.processes.NineCardsServices._
 import cards.nine.processes._
 import cards.nine.processes.account.AccountProcesses
-import cards.nine.processes.account.messages._
 import cards.nine.processes.applications.ApplicationProcesses
 import cats.free.Free
 import cats.syntax.either._
@@ -22,12 +21,11 @@ import org.specs2.matcher.Matchers
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
 import org.specs2.specification.Scope
+import scala.concurrent.duration.DurationInt
 import spray.http.HttpHeaders.RawHeader
 import spray.http.{ HttpRequest, MediaTypes, StatusCodes }
 import spray.routing.HttpService
 import spray.testkit.Specs2RouteTest
-
-import scala.concurrent.duration.DurationInt
 
 trait NineCardsApiSpecification
   extends Specification
@@ -65,13 +63,6 @@ trait NineCardsApiSpecification
 
   trait SuccessfulScope extends BasicScope {
 
-    accountProcesses.checkGoogleTokenId(email, tokenId) returns NineCardsService.right(Unit)
-
-    accountProcesses.signUpUser(any[LoginRequest]) returns NineCardsService.right(Messages.loginResponse)
-
-    accountProcesses.updateInstallation(mockEq(Messages.updateInstallationRequest)) returns
-      NineCardsService.right(Messages.updateInstallationResponse)
-
     rankingProcesses.getRanking(any) returns Free.pure(Either.right(Messages.rankings.getResponse))
 
     rankingProcesses.reloadRankingByScope(any, any) returns
@@ -90,9 +81,6 @@ trait NineCardsApiSpecification
 
   trait UnsuccessfulScope extends BasicScope {
 
-    accountProcesses.checkGoogleTokenId(email, tokenId) returns
-      NineCardsService.left(WrongEmailAccount("The given email account is not valid"))
-
     accountProcesses.checkAuthToken(
       sessionToken = SessionToken(mockEq(sessionToken.value)),
       androidId    = AndroidId(mockEq(androidId.value)),
@@ -104,19 +92,12 @@ trait NineCardsApiSpecification
 
   trait FailingScope extends BasicScope {
 
-    accountProcesses.checkGoogleTokenId(email, tokenId) returns NineCardsService.right(Unit)
-
     accountProcesses.checkAuthToken(
       sessionToken = SessionToken(mockEq(sessionToken.value)),
       androidId    = AndroidId(mockEq(androidId.value)),
       authToken    = mockEq(failingAuthToken),
       requestUri   = any[String]
     ) returns NineCardsService.right(userId)
-
-    accountProcesses.signUpUser(any[LoginRequest]) returns NineCardsService.right(Messages.loginResponse)
-
-    accountProcesses.updateInstallation(mockEq(Messages.updateInstallationRequest)) returns
-      NineCardsService.right(Messages.updateInstallationResponse)
 
     rankingProcesses.getRanking(any) returns Free.pure(Either.right(Messages.rankings.getResponse))
 
@@ -207,64 +188,6 @@ class NineCardsApiSpec
       }
     }
 
-  }
-  "POST /login" should {
-
-    val request = Post(Paths.login, Messages.apiLoginRequest)
-
-    "return a 401 Unauthorized status code if the given email is empty" in new BasicScope {
-
-      Post(Paths.login, Messages.apiLoginRequest.copy(email = Email(""))) ~>
-        sealRoute(nineCardsApi) ~>
-        check {
-          status.intValue shouldEqual StatusCodes.Unauthorized.intValue
-        }
-    }
-
-    "return a 401 Unauthorized status code if the given tokenId is empty" in new BasicScope {
-
-      Post(Paths.login, Messages.apiLoginRequest.copy(tokenId = GoogleIdToken(""))) ~>
-        sealRoute(nineCardsApi) ~>
-        check {
-          status.intValue shouldEqual StatusCodes.Unauthorized.intValue
-        }
-    }
-
-    "return a 401 Unauthorized status code if the given email address and tokenId are not valid" in new UnsuccessfulScope {
-
-      Post(Paths.login, Messages.apiLoginRequest) ~>
-        sealRoute(nineCardsApi) ~>
-        check {
-          status.intValue shouldEqual StatusCodes.Unauthorized.intValue
-        }
-    }
-
-    "return a 200 Ok status code if the given email address and tokenId are valid" in new SuccessfulScope {
-
-      Post(Paths.login, Messages.apiLoginRequest) ~>
-        sealRoute(nineCardsApi) ~>
-        check {
-          status.intValue shouldEqual StatusCodes.OK.intValue
-        }
-    }
-
-    badRequestEmptyBody(Post(Paths.login))
-
-    internalServerError(request)
-
-  }
-
-  "PUT /installations" should {
-
-    val request = Put(Paths.installations, Messages.apiUpdateInstallationRequest)
-
-    unauthorizedNoHeaders(request)
-
-    authenticatedBadRequestEmptyBody(Put(Paths.installations))
-
-    internalServerError(request)
-
-    successOk(request)
   }
 
   "POST /widgets/rank" should {

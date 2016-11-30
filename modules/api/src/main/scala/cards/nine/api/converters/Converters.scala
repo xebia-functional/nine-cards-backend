@@ -2,50 +2,14 @@ package cards.nine.api.converters
 
 import cards.nine.api.NineCardsHeaders.Domain._
 import cards.nine.api.messages.GooglePlayMessages._
-import cards.nine.api.messages.InstallationsMessages._
-import cards.nine.api.messages.UserMessages._
 import cards.nine.commons.NineCardsService.Result
-import cards.nine.domain.account._
 import cards.nine.domain.analytics.RankedWidgetsByMoment
 import cards.nine.domain.application._
 import cards.nine.domain.market.MarketCredentials
-import cards.nine.processes.account.messages._
 import cards.nine.processes.messages.rankings.GetRankedDeviceApps._
 import cats.syntax.either._
 
 object Converters {
-
-  def toLoginRequest(request: ApiLoginRequest, sessionToken: SessionToken): LoginRequest =
-    LoginRequest(
-      email        = request.email,
-      androidId    = request.androidId,
-      sessionToken = sessionToken,
-      tokenId      = request.tokenId
-    )
-
-  implicit def toApiLoginResponse(response: LoginResponse): ApiLoginResponse =
-    ApiLoginResponse(
-      apiKey       = response.apiKey,
-      sessionToken = response.sessionToken
-    )
-
-  def toUpdateInstallationRequest(
-    request: ApiUpdateInstallationRequest,
-    userContext: UserContext
-  ): UpdateInstallationRequest =
-    UpdateInstallationRequest(
-      userId      = userContext.userId.value,
-      androidId   = userContext.androidId,
-      deviceToken = request.deviceToken
-    )
-
-  def toApiUpdateInstallationResponse(
-    response: UpdateInstallationResponse
-  ): ApiUpdateInstallationResponse =
-    ApiUpdateInstallationResponse(
-      androidId   = response.androidId,
-      deviceToken = response.deviceToken
-    )
 
   def toMarketAuth(googlePlayContext: GooglePlayContext, userContext: UserContext): MarketCredentials =
     MarketCredentials(
