@@ -8,10 +8,10 @@ import cats.instances.list._
 import cats.syntax.cartesian._
 import cats.syntax.functor._
 import cats.syntax.traverse._
-
 import org.joda.time.{ DateTime, DateTimeZone }
+import scala.concurrent.ExecutionContext
 
-object CacheInterpreter extends (Ops ~> RedisOps) {
+class CacheInterpreter(implicit ec: ExecutionContext) extends (Ops ~> RedisOps) {
 
   import Formats._
   import RedisOps._
@@ -20,7 +20,7 @@ object CacheInterpreter extends (Ops ~> RedisOps) {
 
   private[this] val errorCache: CacheQueue[CacheKey, DateTime] = new CacheQueue
 
-  private[this] val pendingQueue: CacheQueue[PendingQueueKey.type, Package] = new CacheQueue
+  private[this] val pendingSet: CacheSet[PendingQueueKey.type, Package] = new CacheSet(PendingQueueKey)
 
   def apply[A](ops: Ops[A]): RedisOps[A] = ops match {
 
@@ -34,52 +34,34 @@ object CacheInterpreter extends (Ops ~> RedisOps) {
 
     case PutResolved(card) ⇒
       val pack = card.packageName
-      removePending(pack) *> removeError(pack) *> wrap.put(CacheEntry.resolved(card))
+      pendingSet.remove(pack) *> removeError(pack) *> wrap.put(CacheEntry.resolved(card))
 
     case PutResolvedMany(cards) ⇒
       val packs = cards.map(_.packageName)
-      wrap.mput(cards map CacheEntry.resolved) *> removeErrorMany(packs) *> removePendingMany(packs)
+      wrap.mput(cards map CacheEntry.resolved) *> removeErrorMany(packs) *> pendingSet.remove(packs)
 
     case PutPermanent(card) ⇒
       val pack = card.packageName
-      removePending(pack) *> removeError(pack) *> wrap.put(CacheEntry.permanent(card))
+      pendingSet.remove(pack) *> removeError(pack) *> wrap.put(CacheEntry.permanent(card))
 
     case SetToPending(pack) ⇒
-      removeError(pack) *> addPending(pack) *> wrap.put(CacheEntry.pending(pack))
+      removeError(pack) *> pendingSet.insert(pack)
 
     case SetToPendingMany(packages) ⇒
-      val enqueues = packages.traverse[RedisOps, Unit](addPending)
-      val put = wrap.mput(packages map CacheEntry.pending)
-      removeErrorMany(packages) *> enqueues *> put
+      removeErrorMany(packages) *> pendingSet.insert(packages)
 
     case AddError(pack) ⇒
       val now = DateTime.now(DateTimeZone.UTC)
-      removePending(pack) *> errorCache.enqueue(CacheKey.error(pack), now)
+      pendingSet.remove(pack) *> errorCache.enqueue(CacheKey.error(pack), now)
 
     case AddErrorMany(packages) ⇒
       val now = DateTime.now(DateTimeZone.UTC)
       val putErrors = packages.traverse[RedisOps, Unit] {
         pack ⇒ errorCache.enqueue(CacheKey.error(pack), now)
       }
-      putErrors *> removePendingMany(packages)
+      putErrors *> pendingSet.remove(packages)
 
-    case ListPending(num) ⇒
-      val take = pendingQueue.takeMany(PendingQueueKey, num)
-      val deque = pendingQueue.dequeueMany(PendingQueueKey, num)
-      take <* deque
-  }
-
-  private[this] def addPending(pack: Package): RedisOps[Unit] = {
-    val pendingKey = CacheKey.pending(pack)
-    pendingQueue.enqueueIfNotExists[CacheKey](PendingQueueKey, pendingKey, pack)
-  }
-
-  private[this] def removePending(pack: Package): RedisOps[Unit] =
-    pendingQueue.purge(PendingQueueKey, pack) *> wrap.delete(CacheKey.pending(pack))
-
-  private[this] def removePendingMany(packages: List[Package]): RedisOps[Unit] = {
-    val purge = packages traverse { p ⇒ pendingQueue.purge(PendingQueueKey, p) }
-    purge *> wrap.delete(packages map CacheKey.pending)
+    case ListPending(num) ⇒ pendingSet.extractMany(num)
   }
 
   private[this] def removeError(pack: Package): RedisOps[Unit] =
