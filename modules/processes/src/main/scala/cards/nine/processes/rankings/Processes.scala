@@ -1,12 +1,10 @@
-package cards.nine.processes
+package cards.nine.processes.rankings
 
 import cards.nine.commons.NineCardsErrors.CountryNotFound
 import cards.nine.commons.NineCardsService
 import cards.nine.commons.NineCardsService._
 import cards.nine.domain.analytics._
 import cards.nine.domain.application.{ Category, Moment, Package }
-import cards.nine.processes.converters.Converters._
-import cards.nine.processes.messages.rankings._
 import cards.nine.services.free.algebra
 import cards.nine.services.free.algebra.GoogleAnalytics
 import cards.nine.services.free.domain.Ranking.GoogleAnalyticsRanking
@@ -23,6 +21,9 @@ class RankingProcesses[F[_]](
   rankingServices: algebra.Ranking.Services[F]
 ) {
   private[this] val allCategories = Category.valuesName ++ Moment.valuesName ++ Moment.widgetValuesName
+
+  import messages._
+  import Converters._
 
   def getRanking(scope: GeoScope): Free[F, Result[Get.Response]] =
     (rankingServices.getRanking(scope) map Get.Response).value
