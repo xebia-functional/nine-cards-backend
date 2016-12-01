@@ -1,4 +1,4 @@
-package cards.nine.api.messages
+package cards.nine.api.rankings
 
 import cats.data.Xor
 import cards.nine.domain.application.Package
@@ -6,7 +6,7 @@ import cards.nine.domain.application.Package
 import org.joda.time.{ DateTime, DateTimeZone }
 import org.joda.time.format.DateTimeFormat
 
-object rankings {
+object messages {
 
   case class Ranking(categories: Map[String, List[Package]])
 
