@@ -3,6 +3,7 @@ package cards.nine.api
 import akka.actor.ActorRefFactory
 import cards.nine.api.NineCardsDirectives._
 import cards.nine.api.NineCardsHeaders.Domain._
+import cards.nine.api.applications.ApplicationsApi
 import cards.nine.api.collections.CollectionsApi
 import cards.nine.api.converters.Converters._
 import cards.nine.api.messages.GooglePlayMessages._
@@ -14,11 +15,10 @@ import cards.nine.commons.NineCardsService.{ NineCardsService, Result }
 import cards.nine.commons.config.Domain.NineCardsConfiguration
 import cards.nine.domain.account.SessionToken
 import cards.nine.domain.analytics._
-import cards.nine.domain.application.{ BasicCard, Category, FullCard, Package, PriceFilter }
+import cards.nine.domain.application.{ Category, PriceFilter }
 import cards.nine.processes._
 import cards.nine.processes.applications.ApplicationProcesses
 import cards.nine.processes.NineCardsServices._
-
 import scala.concurrent.ExecutionContext
 import spray.routing._
 
@@ -37,11 +37,11 @@ class NineCardsRoutes(
   import JsonFormats._
 
   lazy val nineCardsRoutes: Route = {
-    val applicationRoute = new ApplicationRoutes().route
+    val applicationRoute = new ApplicationsApi().route
     val collectionsRoute = new CollectionsApi().route
 
     pathPrefix("apiDocs")(swaggerRoute) ~
-      pathPrefix("applications")(applicationRoute) ~
+      applicationRoute ~
       collectionsRoute ~
       pathPrefix("installations")(installationsRoute) ~
       pathPrefix("login")(userRoute) ~
@@ -211,153 +211,5 @@ class NineCardsRoutes(
       rankingProcesses.getRanking(scope).map(Converters.toApiRanking)
 
   }
-
-}
-
-class ApplicationRoutes(
-  implicit
-  config: NineCardsConfiguration,
-  userProcesses: UserProcesses[NineCardsServices],
-  googleApiProcesses: GoogleApiProcesses[NineCardsServices],
-  applicationProcesses: ApplicationProcesses[NineCardsServices],
-  rankingProcesses: RankingProcesses[NineCardsServices],
-  executionContext: ExecutionContext
-) {
-
-  import Directives._
-  import JsonFormats._
-
-  lazy val route: Route = details ~ categorize ~ rank ~ search
-
-  private[this] val details: Route =
-    pathPrefix("details") {
-      pathEndOrSingleSlash {
-        post {
-          entity(as[ApiAppsInfoRequest]) { request ⇒
-            nineCardsDirectives.authenticateUser { userContext ⇒
-              nineCardsDirectives.googlePlayInfo { googlePlayContext ⇒
-                parameter("slice".?) { sliceOpt ⇒
-                  sliceOpt match {
-                    case Some("icon") ⇒
-                      complete(getAppsBasicInfo(request, googlePlayContext, userContext)(toApiIconApp))
-                    case _ ⇒
-                      complete(getAppsInfo(request, googlePlayContext, userContext)(toApiDetailsApp))
-                  }
-                }
-              }
-            }
-          }
-        }
-      } ~
-        path(PackageSegment) { packageId ⇒
-          put {
-            authenticate(nineCardsDirectives.editorAuth) { userName ⇒
-              entity(as[ApiSetAppInfoRequest]) { details ⇒
-                complete(setAppInfo(packageId, details))
-              }
-            }
-          }
-        }
-    }
-
-  private[this] val categorize: Route =
-    nineCardsDirectives.authenticateUser { userContext ⇒
-      path("categorize") {
-        post {
-          entity(as[ApiAppsInfoRequest]) { request ⇒
-            nineCardsDirectives.googlePlayInfo { googlePlayContext ⇒
-              complete(getAppsInfo(request, googlePlayContext, userContext)(toApiCategorizedApp))
-            }
-          }
-        }
-      }
-    }
-
-  private[this] val rank: Route =
-    nineCardsDirectives.authenticateUser { userContext ⇒
-      path("rank") {
-        post {
-          entity(as[ApiRankAppsRequest]) { request ⇒
-            complete(rankApps(request, userContext))
-          }
-        }
-      } ~
-        path("rank-by-moments") {
-          post {
-            entity(as[ApiRankByMomentsRequest]) { request ⇒
-              complete(rankAppsByMoments(request, userContext))
-            }
-          }
-        }
-    }
-
-  private[this] val search: Route =
-    path("search") {
-      post {
-        entity(as[ApiSearchAppsRequest]) { request ⇒
-          nineCardsDirectives.authenticateUser { userContext ⇒
-            nineCardsDirectives.googlePlayInfo { googlePlayContext ⇒
-              complete(searchApps(request, googlePlayContext, userContext))
-            }
-          }
-        }
-      }
-    }
-
-  private type NineCardsServed[A] = cats.free.Free[NineCardsServices, A]
-
-  private[this] def getAppsInfo[T](
-    request: ApiAppsInfoRequest,
-    googlePlayContext: GooglePlayContext,
-    userContext: UserContext
-  )(converter: FullCard ⇒ T): NineCardsService[NineCardsServices, ApiAppsInfoResponse[T]] =
-    applicationProcesses
-      .getAppsInfo(request.items, toMarketAuth(googlePlayContext, userContext))
-      .map(toApiAppsInfoResponse(converter))
-
-  private[this] def getAppsBasicInfo[T](
-    request: ApiAppsInfoRequest,
-    googlePlayContext: GooglePlayContext,
-    userContext: UserContext
-  )(converter: BasicCard ⇒ T): NineCardsService[NineCardsServices, ApiAppsInfoResponse[T]] =
-    applicationProcesses
-      .getAppsBasicInfo(request.items, toMarketAuth(googlePlayContext, userContext))
-      .map(toApiAppsInfoResponse[BasicCard, T](converter))
-
-  private[this] def setAppInfo(
-    packageId: Package,
-    apiDetails: ApiSetAppInfoRequest
-  ): NineCardsService[NineCardsServices, ApiSetAppInfoResponse] =
-    applicationProcesses
-      .storeCard(toFullCard(packageId, apiDetails))
-      .map(toApiSetAppInfoResponse)
-
-  private[this] def searchApps(
-    request: ApiSearchAppsRequest,
-    googlePlayContext: GooglePlayContext,
-    userContext: UserContext
-  ): NineCardsService[NineCardsServices, ApiSearchAppsResponse] =
-    applicationProcesses
-      .searchApps(
-        request.query,
-        request.excludePackages,
-        request.limit,
-        toMarketAuth(googlePlayContext, userContext)
-      )
-      .map(toApiSearchAppsResponse)
-
-  private[this] def rankApps(
-    request: ApiRankAppsRequest,
-    userContext: UserContext
-  ): NineCardsServed[Result[ApiRankAppsResponse]] =
-    rankingProcesses.getRankedDeviceApps(request.location, request.items)
-      .map(toApiRankAppsResponse)
-
-  private[this] def rankAppsByMoments(
-    request: ApiRankByMomentsRequest,
-    userContext: UserContext
-  ): NineCardsServed[Result[ApiRankAppsResponse]] =
-    rankingProcesses.getRankedAppsByMoment(request.location, request.items, request.moments, request.limit)
-      .map(toApiRankAppsResponse)
 
 }

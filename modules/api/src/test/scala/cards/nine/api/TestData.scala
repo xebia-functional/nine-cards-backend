@@ -6,7 +6,7 @@ import cards.nine.api.messages.InstallationsMessages.ApiUpdateInstallationReques
 import cards.nine.api.messages.UserMessages.ApiLoginRequest
 import cards.nine.api.messages.{ rankings ⇒ Api }
 import cards.nine.domain.account._
-import cards.nine.domain.analytics.{ RankedAppsByCategory, RankedWidgetsByMoment }
+import cards.nine.domain.analytics.RankedWidgetsByMoment
 import cards.nine.domain.application.{ CardList, Category, FullCard, Package }
 import cards.nine.processes.messages.InstallationsMessages._
 import cards.nine.processes.messages.UserMessages.{ LoginRequest, LoginResponse }
@@ -17,8 +17,6 @@ import spray.http.HttpHeaders.RawHeader
 
 object TestData {
 
-  val addedPackages = 5
-
   val androidId = AndroidId("f07a13984f6d116a")
 
   val apiToken = ApiKey("a7db875d-f11e-4b0c-8d7a-db210fd93e1b")
@@ -28,8 +26,6 @@ object TestData {
   val authToken = "c8abd539-d912-4eff-8d3c-679307defc71"
 
   val category = "SOCIAL"
-
-  val community = true
 
   val deviceToken = Option(DeviceToken("d897b6f1-c6a9-42bd-bf42-c787883c7d3e"))
 
@@ -43,8 +39,6 @@ object TestData {
 
   val icon = "path-to-icon"
 
-  val installations = 1
-
   val limit = 20
 
   val limitPerApp = 25
@@ -53,11 +47,7 @@ object TestData {
 
   val marketLocalization = "en-us"
 
-  val name = "The best social media apps"
-
   val now = DateTime.now
-
-  val owned = true
 
   val packagesName = List(
     "earth.europe.italy",
@@ -74,17 +64,11 @@ object TestData {
 
   val moments = List("HOME", "NIGHT")
 
-  val publicIdentifier = "40daf308-fecf-4228-9262-a712d783cf49"
-
-  val removedPackages = None
-
   val sessionToken = SessionToken("1d1afeea-c7ec-45d8-a6f8-825b836f2785")
 
   val tokenId = GoogleIdToken("6c7b303e-585e-4fe8-8b6f-586547317331-7f9b12dd-8946-4285-a72a-746e482834dd")
 
   val userId = 1l
-
-  val views = 1
 
   object Headers {
 
@@ -112,18 +96,6 @@ object TestData {
 
   object Messages {
 
-    val setAppInfoRequest = ApiSetAppInfoRequest(
-      title       = "App Example",
-      free        = false,
-      icon        = "",
-      stars       = 0.0,
-      downloads   = "",
-      categories  = Nil,
-      screenshots = Nil
-    )
-
-    val apiGetAppsInfoRequest = ApiAppsInfoRequest(items = List("", "", "") map Package)
-
     val apiGetRecommendationsByCategoryRequest = ApiGetRecommendationsByCategoryRequest(
       excludePackages = excludePackages,
       limit           = limit
@@ -136,19 +108,12 @@ object TestData {
       limitPerApp     = Option(limitPerApp)
     )
 
-    val apiRankAppsRequest = ApiRankAppsRequest(
-      location = location,
-      items    = deviceApps
-    )
-
     val apiRankByMomentsRequest = ApiRankByMomentsRequest(
       location = location,
       items    = packagesName,
       moments  = moments,
       limit    = limit
     )
-
-    val getRankedAppsResponse = List.empty[RankedAppsByCategory]
 
     val getRankedWidgetsResponse = List.empty[RankedWidgetsByMoment]
 
@@ -195,19 +160,11 @@ object TestData {
 
     val apiDocs = "/apiDocs/index.html"
 
-    val categorize = "/applications/categorize"
-
-    val details = "/applications/details"
-
     val installations = "/installations"
 
     val invalid = "/chalkyTown"
 
     val login = "/login"
-
-    val rankApps = "/applications/rank"
-
-    val rankAppsByMoments = "/applications/rank-by-moments"
 
     val rankWidgets = "/widgets/rank"
 
