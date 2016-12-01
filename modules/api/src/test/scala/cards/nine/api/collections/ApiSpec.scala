@@ -44,8 +44,6 @@ trait CollectionsApiSpecification
 
     implicit val userProcesses: UserProcesses[NineCardsServices] = mock[UserProcesses[NineCardsServices]]
 
-    implicit val applicationProcesses: ApplicationProcesses[NineCardsServices] = mock[ApplicationProcesses[NineCardsServices]]
-
     implicit val sharedCollectionProcesses: SharedCollectionProcesses[NineCardsServices] = mock[SharedCollectionProcesses[NineCardsServices]]
 
     implicit val config: NineCardsConfiguration = NineCardsConfig.nineCardsConfiguration

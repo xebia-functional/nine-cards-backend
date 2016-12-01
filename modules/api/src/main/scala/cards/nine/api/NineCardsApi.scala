@@ -16,6 +16,7 @@ import cards.nine.domain.account.SessionToken
 import cards.nine.domain.analytics._
 import cards.nine.domain.application.{ BasicCard, Category, FullCard, Package, PriceFilter }
 import cards.nine.processes._
+import cards.nine.processes.applications.ApplicationProcesses
 import cards.nine.processes.NineCardsServices._
 
 import scala.concurrent.ExecutionContext
@@ -28,7 +29,6 @@ class NineCardsRoutes(
   googleApiProcesses: GoogleApiProcesses[NineCardsServices],
   applicationProcesses: ApplicationProcesses[NineCardsServices],
   rankingProcesses: RankingProcesses[NineCardsServices],
-  recommendationsProcesses: RecommendationsProcesses[NineCardsServices],
   refFactory: ActorRefFactory,
   executionContext: ExecutionContext
 ) {
@@ -138,7 +138,7 @@ class NineCardsRoutes(
     googlePlayContext: GooglePlayContext,
     userContext: UserContext
   ): NineCardsService[NineCardsServices, ApiGetRecommendationsResponse] =
-    recommendationsProcesses
+    applicationProcesses
       .getRecommendationsByCategory(
         category.entryName,
         priceFilter,
@@ -153,7 +153,7 @@ class NineCardsRoutes(
     googlePlayContext: GooglePlayContext,
     userContext: UserContext
   ): NineCardsService[NineCardsServices, ApiGetRecommendationsResponse] =
-    recommendationsProcesses
+    applicationProcesses
       .getRecommendationsForApps(
         request.packages,
         request.excludePackages,
@@ -221,7 +221,6 @@ class ApplicationRoutes(
   googleApiProcesses: GoogleApiProcesses[NineCardsServices],
   applicationProcesses: ApplicationProcesses[NineCardsServices],
   rankingProcesses: RankingProcesses[NineCardsServices],
-  recommendationsProcesses: RecommendationsProcesses[NineCardsServices],
   executionContext: ExecutionContext
 ) {
 
@@ -338,7 +337,7 @@ class ApplicationRoutes(
     googlePlayContext: GooglePlayContext,
     userContext: UserContext
   ): NineCardsService[NineCardsServices, ApiSearchAppsResponse] =
-    recommendationsProcesses
+    applicationProcesses
       .searchApps(
         request.query,
         request.excludePackages,
