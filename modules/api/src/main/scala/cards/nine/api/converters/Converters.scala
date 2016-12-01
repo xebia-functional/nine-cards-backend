@@ -6,7 +6,7 @@ import cards.nine.commons.NineCardsService.Result
 import cards.nine.domain.analytics.RankedWidgetsByMoment
 import cards.nine.domain.application._
 import cards.nine.domain.market.MarketCredentials
-import cards.nine.processes.messages.rankings.GetRankedDeviceApps._
+import cards.nine.processes.rankings.messages.GetRankedDeviceApps._
 import cats.syntax.either._
 
 object Converters {

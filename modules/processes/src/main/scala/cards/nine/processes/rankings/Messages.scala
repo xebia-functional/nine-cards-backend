@@ -1,4 +1,4 @@
-package cards.nine.processes.messages
+package cards.nine.processes.rankings
 
 import cards.nine.domain.analytics._
 import cards.nine.domain.application.Package
@@ -6,7 +6,7 @@ import cards.nine.domain.oauth.ServiceAccount
 import cards.nine.domain.pagination.Page
 import cards.nine.services.free.domain.Ranking._
 
-object rankings {
+object messages {
 
   object Reload {
 

@@ -17,6 +17,7 @@ import cards.nine.domain.application.{ Category, PriceFilter }
 import cards.nine.processes._
 import cards.nine.processes.account.AccountProcesses
 import cards.nine.processes.applications.ApplicationProcesses
+import cards.nine.processes.rankings.RankingProcesses
 import cards.nine.processes.NineCardsServices._
 import scala.concurrent.ExecutionContext
 import spray.routing._

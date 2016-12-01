@@ -1,4 +1,4 @@
-package cards.nine.processes.converters
+package cards.nine.processes.rankings
 
 import cards.nine.domain.analytics._
 import cards.nine.domain.application.{ Moment, Package }

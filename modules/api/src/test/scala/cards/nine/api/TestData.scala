@@ -6,7 +6,7 @@ import cards.nine.api.messages.{ rankings ⇒ Api }
 import cards.nine.domain.account._
 import cards.nine.domain.analytics.RankedWidgetsByMoment
 import cards.nine.domain.application.{ CardList, Category, FullCard, Package }
-import cards.nine.processes.messages.rankings.{ Get, Reload }
+import cards.nine.processes.rankings.messages.{ Get, Reload }
 import cards.nine.services.free.domain.Ranking.GoogleAnalyticsRanking
 import org.joda.time.{ DateTime, DateTimeZone }
 import spray.http.HttpHeaders.RawHeader
