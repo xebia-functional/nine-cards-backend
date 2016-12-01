@@ -14,8 +14,6 @@ import cards.nine.processes._
 import cards.nine.processes.account.AccountProcesses
 import cards.nine.processes.applications.ApplicationProcesses
 import cards.nine.processes.rankings.RankingProcesses
-import cats.free.Free
-import cats.syntax.either._
 import org.mockito.Matchers.{ eq ⇒ mockEq }
 import org.specs2.matcher.Matchers
 import org.specs2.mock.Mockito
@@ -63,11 +61,6 @@ trait NineCardsApiSpecification
 
   trait SuccessfulScope extends BasicScope {
 
-    rankingProcesses.getRanking(any) returns Free.pure(Either.right(Messages.rankings.getResponse))
-
-    rankingProcesses.reloadRankingByScope(any, any) returns
-      Free.pure(Either.right(Messages.rankings.reloadResponse))
-
     applicationProcesses.getRecommendationsByCategory(any, any, any, any, any) returns
       NineCardsService.right(Messages.getRecommendationsByCategoryResponse)
 
@@ -98,11 +91,6 @@ trait NineCardsApiSpecification
       authToken    = mockEq(failingAuthToken),
       requestUri   = any[String]
     ) returns NineCardsService.right(userId)
-
-    rankingProcesses.getRanking(any) returns Free.pure(Either.right(Messages.rankings.getResponse))
-
-    rankingProcesses.reloadRankingByScope(any, any) returns
-      Free.pure(Either.right(Messages.rankings.reloadResponse))
 
   }
 
@@ -231,43 +219,5 @@ class NineCardsApiSpec
 
     successOk(request)
   }
-
-  def testRanking(scopePath: String) = {
-    val path = s"/rankings/$scopePath"
-
-    s""" "GET ${path}", the endpoint to read a ranking,""" should {
-      val request = Get(path)
-
-      internalServerError(request)
-
-      "return a 200 OK Status code if the operation was carried out" in new SuccessfulScope {
-        request ~> sealRoute(nineCardsApi) ~> check {
-          status.intValue shouldEqual StatusCodes.OK.intValue
-        }
-      }
-
-    }
-
-    s""" "POST $path", the endpoint to refresh an ranking,""" should {
-
-      import NineCardsMarshallers._
-
-      val request = Post(path, Messages.rankings.reloadApiRequest)
-
-      "return a 200 OK Status code if the operation was carried out" in new SuccessfulScope {
-        request ~> addHeaders(Headers.googleAnalyticsHeaders) ~> sealRoute(nineCardsApi) ~> check {
-          status.intValue shouldEqual StatusCodes.OK.intValue
-        }
-      }
-    }
-
-  }
-
-  val rankingPaths: List[String] = {
-    val countries = List("countries/es", "countries/ES", "countries/gb", "countries/us", "countries/it")
-    "world" :: countries
-  }
-
-  rankingPaths foreach testRanking
 
 }

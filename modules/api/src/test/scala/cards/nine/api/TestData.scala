@@ -2,13 +2,10 @@ package cards.nine.api
 
 import cards.nine.api.NineCardsHeaders._
 import cards.nine.api.messages.GooglePlayMessages._
-import cards.nine.api.messages.{ rankings ⇒ Api }
 import cards.nine.domain.account._
 import cards.nine.domain.analytics.RankedWidgetsByMoment
-import cards.nine.domain.application.{ CardList, Category, FullCard, Package }
-import cards.nine.processes.rankings.messages.{ Get, Reload }
-import cards.nine.services.free.domain.Ranking.GoogleAnalyticsRanking
-import org.joda.time.{ DateTime, DateTimeZone }
+import cards.nine.domain.application.{ CardList, FullCard, Package }
+import org.joda.time.DateTime
 import spray.http.HttpHeaders.RawHeader
 
 object TestData {
@@ -117,27 +114,6 @@ object TestData {
 
     val getAppsInfoResponse = CardList[FullCard](Nil, Nil)
 
-    object rankings {
-
-      val ranking = GoogleAnalyticsRanking(Map(
-        Category.SOCIAL.entryName → List(Package("testApp"))
-      ))
-      val getResponse = Get.Response(ranking)
-
-      val apiRanking = Api.Ranking(
-        Map(
-          Category.SOCIAL.entryName → List("socialite", "socialist").map(Package),
-          Category.COMMUNICATION.entryName → List("es.elpais", "es.elmundo", "uk.theguardian").map(Package)
-        )
-      )
-
-      val reloadResponse = Reload.Response()
-      val startDate: DateTime = new DateTime(2016, 7, 15, 0, 0, DateTimeZone.UTC)
-      val endDate: DateTime = new DateTime(2016, 8, 21, 0, 0, DateTimeZone.UTC)
-      val reloadApiRequest = Api.Reload.Request(startDate, endDate, 5)
-      val reloadApiResponse = Api.Reload.Response()
-
-    }
   }
 
   object Paths {

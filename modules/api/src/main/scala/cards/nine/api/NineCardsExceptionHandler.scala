@@ -14,12 +14,12 @@ trait NineCardsExceptionHandler extends HttpService {
             log.warning("Request to {} could not be handled normally", uri)
             complete(ServiceUnavailable, Option(e.getMessage).getOrElse("Net connection error"))
         }
-      case e: messages.rankings.Reload.InvalidDate ⇒
+      case e: rankings.messages.Reload.InvalidDate ⇒
         requestUri { uri ⇒
           log.warning("Request to {} could not be handled normally", uri)
           complete(BadRequest, e.getMessage())
         }
-      case e: messages.rankings.Reload.Error ⇒
+      case e: rankings.messages.Reload.Error ⇒
         requestUri { uri ⇒
           log.warning("Request to {} could not be handled normally", uri)
           val status = if (e.code == 401) Unauthorized else InternalServerError
