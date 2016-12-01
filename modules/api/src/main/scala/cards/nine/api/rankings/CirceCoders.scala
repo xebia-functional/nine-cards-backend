@@ -1,6 +1,6 @@
-package cards.nine.api
+package cards.nine.api.rankings
 
-import cards.nine.api.messages.rankings
+import cards.nine.api.rankings.messages._
 import cards.nine.domain.application.Package
 import io.circe.generic.semiauto._
 import io.circe.{ Decoder, Encoder, ObjectEncoder }
@@ -16,8 +16,8 @@ object Decoders {
     Decoder.decodeString.map(str ⇒ DateTime.parse(str, dayFormatter))
   }
 
-  implicit val reloadRankingRequest: Decoder[rankings.Reload.Request] =
-    deriveDecoder[rankings.Reload.Request]
+  implicit val reloadRankingRequest: Decoder[Reload.Request] =
+    deriveDecoder[Reload.Request]
 
 }
 
@@ -32,13 +32,13 @@ object Encoders {
   implicit val packageName: Encoder[Package] =
     Encoder.encodeString.contramap(_.value)
 
-  implicit val ranking: ObjectEncoder[rankings.Ranking] = deriveEncoder[rankings.Ranking]
+  implicit val ranking: ObjectEncoder[Ranking] = deriveEncoder[Ranking]
 
-  implicit val error: ObjectEncoder[rankings.Reload.Error] = deriveEncoder[rankings.Reload.Error]
+  implicit val error: ObjectEncoder[Reload.Error] = deriveEncoder[Reload.Error]
 
-  implicit val reloadRankingRequest: ObjectEncoder[rankings.Reload.Request] =
-    deriveEncoder[rankings.Reload.Request]
-  implicit val reloadRankingResponse: ObjectEncoder[rankings.Reload.Response] =
-    deriveEncoder[rankings.Reload.Response]
+  implicit val reloadRankingRequest: ObjectEncoder[Reload.Request] =
+    deriveEncoder[Reload.Request]
+  implicit val reloadRankingResponse: ObjectEncoder[Reload.Response] =
+    deriveEncoder[Reload.Response]
 
 }

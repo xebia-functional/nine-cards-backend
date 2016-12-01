@@ -1,16 +1,15 @@
-package cards.nine.api
+package cards.nine.api.rankings
 
-import cards.nine.api.messages.rankings.{ Ranking, Reload }
 import cards.nine.api.utils.SprayMarshallers._
 import cards.nine.commons.NineCardsService.Result
 import cards.nine.processes.NineCardsServices._
 import io.circe.spray.{ JsonSupport, RootDecoder }
-
 import scalaz.concurrent.Task
 import spray.httpx.marshalling.{ Marshaller, ToResponseMarshaller }
 import spray.httpx.unmarshalling.Unmarshaller
 
 object NineCardsMarshallers {
+  import messages.{ Ranking, Reload }
 
   private type NineCardsServed[A] = cats.free.Free[NineCardsServices, A]
 

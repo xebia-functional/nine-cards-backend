@@ -5,6 +5,7 @@ import cards.nine.api.NineCardsDirectives._
 import cards.nine.api.NineCardsHeaders.Domain._
 import cards.nine.api.applications.ApplicationsApi
 import cards.nine.api.collections.CollectionsApi
+import cards.nine.api.rankings.RankingsApi
 import cards.nine.api.converters.Converters._
 import cards.nine.api.messages.GooglePlayMessages._
 import cards.nine.api.accounts.AccountsApi
@@ -12,7 +13,6 @@ import cards.nine.api.utils.SprayMarshallers._
 import cards.nine.api.utils.SprayMatchers._
 import cards.nine.commons.NineCardsService.{ NineCardsService, Result }
 import cards.nine.commons.config.Domain.NineCardsConfiguration
-import cards.nine.domain.analytics._
 import cards.nine.domain.application.{ Category, PriceFilter }
 import cards.nine.processes._
 import cards.nine.processes.account.AccountProcesses
@@ -39,12 +39,13 @@ class NineCardsRoutes(
     val accountsRoute = new AccountsApi().route
     val applicationRoute = new ApplicationsApi().route
     val collectionsRoute = new CollectionsApi().route
+    val rankingsRoute = new RankingsApi().route
 
     pathPrefix("apiDocs")(swaggerRoute) ~
       accountsRoute ~
       applicationRoute ~
       collectionsRoute ~
-      pathPrefix("rankings")(rankings.route) ~
+      rankingsRoute ~
       pathPrefix("recommendations")(recommendationsRoute) ~
       pathPrefix("widgets")(widgetRoute)
   }
@@ -133,47 +134,5 @@ class NineCardsRoutes(
   ): NineCardsServed[Result[ApiRankWidgetsResponse]] =
     rankingProcesses.getRankedWidgets(request.location, request.items, request.moments, request.limit)
       .map(toApiRankWidgetsResponse)
-
-  private[this] object rankings {
-
-    import NineCardsMarshallers._
-    import cards.nine.api.converters.{ rankings ⇒ Converters }
-    import cards.nine.api.messages.{ rankings ⇒ Api }
-
-    lazy val route: Route =
-      geographicScope { scope ⇒
-        get {
-          complete(getRanking(scope))
-        } ~
-          post {
-            reloadParams(params ⇒ complete(reloadRanking(scope, params)))
-          }
-      }
-
-    private[this] lazy val geographicScope: Directive1[GeoScope] = {
-      val country: Directive1[GeoScope] =
-        path("countries" / TypedSegment[CountryIsoCode])
-          .map(c ⇒ CountryScope(c): GeoScope)
-      val world = path("world") & provide(WorldScope: GeoScope)
-
-      world | country
-    }
-
-    private[this] lazy val reloadParams: Directive1[RankingParams] =
-      for {
-        authToken ← headerValueByName(NineCardsHeaders.headerGoogleAnalyticsToken)
-        apiRequest ← entity(as[Api.Reload.Request])
-      } yield Converters.reload.toRankingParams(authToken, apiRequest)
-
-    private[this] def reloadRanking(
-      scope: GeoScope,
-      params: RankingParams
-    ): NineCardsServed[Result[Api.Reload.Response]] =
-      rankingProcesses.reloadRankingByScope(scope, params).map(Converters.reload.toApiResponse)
-
-    private[this] def getRanking(scope: GeoScope): NineCardsServed[Result[Api.Ranking]] =
-      rankingProcesses.getRanking(scope).map(Converters.toApiRanking)
-
-  }
 
 }
