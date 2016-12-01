@@ -1,9 +1,11 @@
-package cards.nine.api
+package cards.nine.api.applications
 
 import akka.actor.ActorSystem
 import akka.testkit._
+import cards.nine.api.{ AuthHeadersRejectionHandler, NineCardsExceptionHandler }
 import cards.nine.api.NineCardsHeaders._
-import cards.nine.api.TestData._
+import cards.nine.api.TestData.{ Headers, androidId, authToken, failingAuthToken, sessionToken, userId }
+import cards.nine.api.applications.TestData._
 import cards.nine.commons.NineCardsErrors.AuthTokenNotValid
 import cards.nine.commons.NineCardsService
 import cards.nine.commons.config.Domain.NineCardsConfiguration
@@ -13,21 +15,19 @@ import cards.nine.processes.NineCardsServices._
 import cards.nine.processes._
 import cards.nine.processes.account.AccountProcesses
 import cards.nine.processes.applications.ApplicationProcesses
-import cats.free.Free
-import cats.syntax.either._
-import cats.syntax.xor._
 import org.mockito.Matchers.{ eq ⇒ mockEq }
 import org.specs2.matcher.Matchers
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
 import org.specs2.specification.Scope
-import scala.concurrent.duration.DurationInt
 import spray.http.HttpHeaders.RawHeader
-import spray.http.{ HttpRequest, MediaTypes, StatusCodes }
+import spray.http.{ BasicHttpCredentials, HttpRequest, StatusCodes, Uri }
 import spray.routing.HttpService
 import spray.testkit.Specs2RouteTest
 
-trait NineCardsApiSpecification
+import scala.concurrent.duration.DurationInt
+
+trait ApplicationsApiSpecification
   extends Specification
   with AuthHeadersRejectionHandler
   with HttpService
@@ -43,15 +43,15 @@ trait NineCardsApiSpecification
 
   trait BasicScope extends Scope {
 
-    implicit val accountProcesses: AccountProcesses[NineCardsServices] = mock[AccountProcesses[NineCardsServices]]
-
     implicit val applicationProcesses: ApplicationProcesses[NineCardsServices] = mock[ApplicationProcesses[NineCardsServices]]
 
     implicit val rankingProcesses: RankingProcesses[NineCardsServices] = mock[RankingProcesses[NineCardsServices]]
 
+    implicit val accountProcesses: AccountProcesses[NineCardsServices] = mock[AccountProcesses[NineCardsServices]]
+
     implicit val config: NineCardsConfiguration = NineCardsConfig.nineCardsConfiguration
 
-    val nineCardsApi = new NineCardsRoutes().nineCardsRoutes
+    val routes = sealRoute(new ApplicationsApi().route)
 
     accountProcesses.checkAuthToken(
       sessionToken = SessionToken(mockEq(sessionToken.value)),
@@ -63,19 +63,23 @@ trait NineCardsApiSpecification
 
   trait SuccessfulScope extends BasicScope {
 
-    rankingProcesses.getRanking(any) returns Free.pure(Either.right(Messages.rankings.getResponse))
-
-    rankingProcesses.reloadRankingByScope(any, any) returns
-      Free.pure(Either.right(Messages.rankings.reloadResponse))
+    applicationProcesses.getAppsInfo(any, any) returns
+      NineCardsService.right(getAppsInfoResponse)
 
     applicationProcesses.getRecommendationsByCategory(any, any, any, any, any) returns
-      NineCardsService.right(Messages.getRecommendationsByCategoryResponse)
+      NineCardsService.right(getRecommendationsByCategoryResponse)
 
     applicationProcesses.getRecommendationsForApps(any, any, any, any, any) returns
-      NineCardsService.right(Messages.getRecommendationsByCategoryResponse)
+      NineCardsService.right(getRecommendationsByCategoryResponse)
+
+    rankingProcesses.getRankedDeviceApps(any, any) returns
+      NineCardsService.right(getRankedAppsResponse).value
+
+    rankingProcesses.getRankedAppsByMoment(any, any, any, any) returns
+      NineCardsService.right(getRankedAppsResponse).value
 
     rankingProcesses.getRankedWidgets(any, any, any, any) returns
-      NineCardsService.right(Messages.getRankedWidgetsResponse).value
+      NineCardsService.right(getRankedWidgetsResponse).value
 
   }
 
@@ -99,40 +103,36 @@ trait NineCardsApiSpecification
       requestUri   = any[String]
     ) returns NineCardsService.right(userId)
 
-    rankingProcesses.getRanking(any) returns Free.pure(Either.right(Messages.rankings.getResponse))
-
-    rankingProcesses.reloadRankingByScope(any, any) returns
-      Free.pure(Either.right(Messages.rankings.reloadResponse))
-
+    rankingProcesses.getRankedDeviceApps(any, any) returns NineCardsService.right(getRankedAppsResponse).value
   }
 
 }
 
-class NineCardsApiSpec
-  extends NineCardsApiSpecification {
+class ApplicationsApiSpec
+  extends ApplicationsApiSpecification {
 
   private[this] def unauthorizedNoHeaders(request: HttpRequest) = {
 
     "return a 401 Unauthorized status code if no headers are provided" in new BasicScope {
-      request ~> sealRoute(nineCardsApi) ~> check {
+      request ~> routes ~> check {
         status.intValue shouldEqual StatusCodes.Unauthorized.intValue
       }
     }
 
     "return a 401 Unauthorized status code if some of the headers aren't provided" in new BasicScope {
-      request ~> addHeader(RawHeader(headerAndroidId, androidId.value)) ~> sealRoute(nineCardsApi) ~> check {
+      request ~> addHeader(RawHeader(headerAndroidId, androidId.value)) ~> routes ~> check {
         status.intValue shouldEqual StatusCodes.Unauthorized.intValue
       }
     }
 
     "return a 401 Unauthorized status code if a wrong credential is provided" in new UnsuccessfulScope {
-      request ~> addHeaders(Headers.failingUserInfoHeaders) ~> sealRoute(nineCardsApi) ~> check {
+      request ~> addHeaders(Headers.failingUserInfoHeaders) ~> routes ~> check {
         status.intValue shouldEqual StatusCodes.Unauthorized.intValue
       }
     }
 
     "return a 401 Unauthorized status code if a persistence error happens" in new FailingScope {
-      request ~> addHeaders(Headers.failingUserInfoHeaders) ~> sealRoute(nineCardsApi) ~> check {
+      request ~> addHeaders(Headers.failingUserInfoHeaders) ~> routes ~> check {
         status.intValue shouldEqual StatusCodes.Unauthorized.intValue
       }
     }.pendingUntilFixed("Pending using EitherT")
@@ -141,7 +141,7 @@ class NineCardsApiSpec
 
   private[this] def internalServerError(request: HttpRequest) = {
     "return 500 Internal Server Error status code if a persistence error happens" in new FailingScope {
-      request ~> addHeaders(Headers.userInfoHeaders) ~> sealRoute(nineCardsApi) ~> check {
+      request ~> addHeaders(Headers.userInfoHeaders) ~> routes ~> check {
         status.intValue shouldEqual StatusCodes.InternalServerError.intValue
       }
     }.pendingUntilFixed("Pending using EitherT")
@@ -149,7 +149,7 @@ class NineCardsApiSpec
 
   private[this] def badRequestEmptyBody(request: HttpRequest) = {
     "return a 400 BadRequest if no body is provided" in new BasicScope {
-      request ~> sealRoute(nineCardsApi) ~> check {
+      request ~> routes ~> check {
         status.intValue shouldEqual StatusCodes.BadRequest.intValue
       }
     }
@@ -157,7 +157,7 @@ class NineCardsApiSpec
 
   private[this] def authenticatedBadRequestEmptyBody(request: HttpRequest) = {
     "return a 400 BadRequest if no body is provided" in new BasicScope {
-      request ~> addHeaders(Headers.userInfoHeaders) ~> sealRoute(nineCardsApi) ~> check {
+      request ~> addHeaders(Headers.userInfoHeaders) ~> routes ~> check {
         status.intValue shouldEqual StatusCodes.BadRequest.intValue
       }
     }
@@ -165,109 +165,127 @@ class NineCardsApiSpec
 
   private[this] def successOk(request: HttpRequest) = {
     "return a 200 OK Status code if the operation was carried out" in new SuccessfulScope {
-      request ~> addHeaders(Headers.userInfoHeaders) ~> sealRoute(nineCardsApi) ~> check {
+      request ~> addHeaders(Headers.userInfoHeaders) ~> routes ~> check {
         status.intValue shouldEqual StatusCodes.OK.intValue
       }
     }
   }
 
-  "nineCardsApi" should {
-    "grant access to Swagger documentation" in new BasicScope {
-      Get(Paths.apiDocs) ~>
-        sealRoute(nineCardsApi) ~>
-        check {
-          status should be equalTo StatusCodes.OK.intValue
-          mediaType === MediaTypes.`text/html`
-          responseAs[String] must contain("Swagger")
-        }
-    }
-
-    "return a 404 NotFound error for an undefined path " in new BasicScope {
-      Get(Paths.invalid) ~> sealRoute(nineCardsApi) ~> check {
-        status.intValue shouldEqual StatusCodes.NotFound.intValue
-      }
-    }
-
-  }
-
-  "POST /widgets/rank" should {
+  "POST /applications/categorize" should {
 
     val request = Post(
-      uri     = Paths.rankWidgets,
-      content = Messages.apiRankByMomentsRequest
+      uri     = Paths.categorize,
+      content = apiGetAppsInfoRequest
+    ) ~> addHeaders(Headers.googlePlayHeaders)
+
+    authenticatedBadRequestEmptyBody(Post(Paths.categorize))
+
+    unauthorizedNoHeaders(request)
+
+    successOk(request)
+  }
+
+  "POST /applications/details" should {
+
+    val request = Post(
+      uri     = Paths.details,
+      content = apiGetAppsInfoRequest
+    ) ~> addHeaders(Headers.googlePlayHeaders)
+
+    authenticatedBadRequestEmptyBody(Post(Paths.details))
+
+    unauthorizedNoHeaders(request)
+
+    successOk(request)
+  }
+
+  """POST /applications/details?slice=icon, the variant to get only title and icon""" should {
+
+    val request = Post(
+      uri     = Uri(
+        path  = Uri.Path(Paths.details),
+        query = Uri.Query("?slice=icon")
+      ),
+      content = apiGetAppsInfoRequest
+    ) ~> addHeaders(Headers.googlePlayHeaders)
+
+    authenticatedBadRequestEmptyBody(Post(Paths.details))
+
+    unauthorizedNoHeaders(request)
+
+    successOk(request)
+  }
+
+  """ PUT /applications/details/{packageId}, the endpoint to store a card in the cache""" should {
+
+    val validPackage = "a.valid.package"
+
+    def request(packageId: String) = Put(
+      uri     = s"${Paths.details}/$packageId",
+      content = setAppInfoRequest
     )
 
-    authenticatedBadRequestEmptyBody(Post(Paths.rankWidgets))
+    "Respond NotFound if the package name is badformed" in new BasicScope {
+      request("++package++") ~> routes ~> check {
+        status.intValue shouldEqual StatusCodes.Unauthorized.intValue
 
-    unauthorizedNoHeaders(request)
-
-    successOk(request)
-  }
-
-  "POST /recommendations" should {
-
-    val request = Post(
-      uri     = Paths.recommendationsForApps,
-      content = Messages.apiGetRecommendationsForAppsRequest
-    ) ~> addHeaders(Headers.googlePlayHeaders)
-
-    authenticatedBadRequestEmptyBody(Post(Paths.recommendationsForApps))
-
-    unauthorizedNoHeaders(request)
-
-    successOk(request)
-  }
-
-  "POST /recommendations/category" should {
-
-    val request = Post(
-      uri     = Paths.recommendationsByCategory,
-      content = Messages.apiGetRecommendationsByCategoryRequest
-    ) ~> addHeaders(Headers.googlePlayHeaders)
-
-    authenticatedBadRequestEmptyBody(Post(Paths.recommendationsByCategory))
-
-    unauthorizedNoHeaders(request)
-
-    successOk(request)
-  }
-
-  def testRanking(scopePath: String) = {
-    val path = s"/rankings/$scopePath"
-
-    s""" "GET ${path}", the endpoint to read a ranking,""" should {
-      val request = Get(path)
-
-      internalServerError(request)
-
-      "return a 200 OK Status code if the operation was carried out" in new SuccessfulScope {
-        request ~> sealRoute(nineCardsApi) ~> check {
-          status.intValue shouldEqual StatusCodes.OK.intValue
-        }
       }
-
     }
 
-    s""" "POST $path", the endpoint to refresh an ranking,""" should {
+    "respond Unauthorized if Basic Auth is missing" in new BasicScope {
+      request(validPackage) ~> routes ~> check {
+        status.intValue shouldEqual StatusCodes.Unauthorized.intValue
+      }
+    }
 
-      import NineCardsMarshallers._
+    "respond Unauthorized if there are auth headers, but unknown" in new BasicScope {
+      val invalidCredentials = BasicHttpCredentials("Jon", "Doe")
 
-      val request = Post(path, Messages.rankings.reloadApiRequest)
+      request(validPackage) ~> addCredentials(invalidCredentials) ~> routes ~> check {
+        status.intValue shouldEqual StatusCodes.Unauthorized.intValue
+      }
+    }
 
-      "return a 200 OK Status code if the operation was carried out" in new SuccessfulScope {
-        request ~> addHeaders(Headers.googleAnalyticsHeaders) ~> sealRoute(nineCardsApi) ~> check {
-          status.intValue shouldEqual StatusCodes.OK.intValue
-        }
+    "respond OK if the Basic Http Credentials are in the config " in new SuccessfulScope {
+      applicationProcesses.storeCard(any) returns NineCardsService.right(Unit)
+
+      val (user, password) = config.editors.head
+      val credentials = BasicHttpCredentials(user, password)
+      request(validPackage) ~> addCredentials(credentials) ~> routes ~> check {
+        status.intValue shouldEqual StatusCodes.OK.intValue
       }
     }
 
   }
 
-  val rankingPaths: List[String] = {
-    val countries = List("countries/es", "countries/ES", "countries/gb", "countries/us", "countries/it")
-    "world" :: countries
+  "POST /applications/rank" should {
+
+    val request = Post(
+      uri     = Paths.rankApps,
+      content = apiRankAppsRequest
+    )
+
+    authenticatedBadRequestEmptyBody(Post(Paths.rankApps))
+
+    unauthorizedNoHeaders(request)
+
+    internalServerError(request)
+
+    successOk(request)
   }
 
-  rankingPaths foreach testRanking
+  "POST /applications/rank-by-moment" should {
+
+    val request = Post(
+      uri     = Paths.rankAppsByMoments,
+      content = apiRankByMomentsRequest
+    )
+
+    authenticatedBadRequestEmptyBody(Post(Paths.rankApps))
+
+    unauthorizedNoHeaders(request)
+
+    successOk(request)
+  }
 
 }
