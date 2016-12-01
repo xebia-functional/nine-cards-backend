@@ -3,7 +3,7 @@ package cards.nine.api.converters
 import cards.nine.api.messages.{ rankings ⇒ Api }
 import cards.nine.commons.NineCardsService.Result
 import cards.nine.domain.analytics.{ AnalyticsToken, DateRange, RankingParams }
-import cards.nine.processes.messages.rankings.{ Get, Reload }
+import cards.nine.processes.rankings.messages.{ Get, Reload }
 import cats.syntax.either._
 
 object rankings {

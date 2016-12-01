@@ -1,13 +1,12 @@
-package cards.nine.processes
+package cards.nine.processes.rankings
 
 import cards.nine.commons.NineCardsErrors.{ CountryNotFound, NineCardsError }
 import cards.nine.commons.NineCardsService
 import cards.nine.domain.analytics._
 import cards.nine.processes.NineCardsServices._
-import cards.nine.processes.TestData._
-import cards.nine.processes.TestData.Values._
-import cards.nine.processes.TestData.rankings._
-import cards.nine.processes.messages.rankings._
+import cards.nine.processes.rankings.TestData._
+import cards.nine.processes.TestInterpreters
+import cards.nine.processes.rankings.messages._
 import cards.nine.services.free.algebra.{ Country, GoogleAnalytics, Ranking }
 import cards.nine.services.free.domain.Ranking.CountriesWithRanking
 import org.mockito.Matchers.{ eq ⇒ mockEq }

@@ -13,6 +13,7 @@ import cards.nine.processes.NineCardsServices._
 import cards.nine.processes._
 import cards.nine.processes.account.AccountProcesses
 import cards.nine.processes.applications.ApplicationProcesses
+import cards.nine.processes.rankings.RankingProcesses
 import cats.free.Free
 import cats.syntax.either._
 import cats.syntax.xor._
