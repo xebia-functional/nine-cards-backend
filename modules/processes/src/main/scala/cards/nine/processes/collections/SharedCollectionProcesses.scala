@@ -23,7 +23,7 @@ class SharedCollectionProcesses[F[_]](
   import Converters._
 
   def createCollection(request: CreateCollectionRequest): NineCardsService[F, CreateOrUpdateCollectionResponse] =
-    collectionServices.add(request.collection) map { collection ⇒
+    collectionServices.add(toSharedCollectionDataServices(request.collection)) map { collection ⇒
       CreateOrUpdateCollectionResponse(
         publicIdentifier = collection.publicIdentifier,
         packagesStats    = PackagesStats(added = collection.packages.size)
