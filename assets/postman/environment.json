@@ -24,14 +24,14 @@
     },
     {
       "key": "user_sessionToken",
-      "value": "toktok",
+      "value": "anntok",
       "type": "text",
       "name": "token",
       "enabled": true
     },
     {
       "key": "user_androidId",
-      "value": "andrea",
+      "value": "anndroidid",
       "type": "text",
       "name": "user_androidid",
       "enabled": true
@@ -51,6 +51,12 @@
     {
       "key": "COMPUTE_AUTH_TOKEN",
       "value": "",
+      "type": "text",
+      "enabled": true
+    },
+    {
+      "key": "collection_id",
+      "value": "anncol",
       "type": "text",
       "enabled": true
     }
