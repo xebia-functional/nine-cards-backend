@@ -1,5 +1,8 @@
 package cards.nine.commons.config
 
+import cards.nine.commons.config.ParserUtils.cache.CacheConnectionInfo
+import cards.nine.commons.config.ParserUtils.database.PersistenceConnectionInfo
+import cats.data.Validated.{ Invalid, Valid }
 import org.joda.time.Period
 import org.joda.time.format.PeriodFormat
 
@@ -66,12 +69,17 @@ object Domain {
     def apply(config: NineCardsConfig, parentPrefix: String): DatabaseDefaultConfiguration = {
       val prefix = s"$parentPrefix.default"
 
-      DatabaseDefaultConfiguration(
-        config.getString(s"$prefix.driver"),
-        config.getString(s"$prefix.url"),
-        config.getString(s"$prefix.user"),
-        config.getString(s"$prefix.password")
-      )
+      ParserUtils.database.parseConnectionString(config.getString(s"$prefix.url")) match {
+        case Valid(PersistenceConnectionInfo(user, password, url)) ⇒
+          DatabaseDefaultConfiguration(
+            driver   = config.getString(s"$prefix.driver"),
+            url      = s"${config.getString(s"$prefix.urlPrefix")}$url",
+            user     = user,
+            password = password
+          )
+        case Invalid(errors) ⇒
+          throw new RuntimeException(s"Database configuration not valid:\n${errors.toList.mkString("\n")}")
+      }
     }
   }
 
@@ -371,11 +379,16 @@ object Domain {
     def apply(config: NineCardsConfig, parentPrefix: String): RedisConfiguration = {
       val prefix = s"$parentPrefix.redis"
 
-      RedisConfiguration(
-        config.getString(s"$prefix.host"),
-        config.getInt(s"$prefix.port"),
-        config.getOptionalString(s"$prefix.secret")
-      )
+      ParserUtils.cache.parseConnectionString(config.getString(s"$prefix.url")) match {
+        case Valid(CacheConnectionInfo(secret, host, port)) ⇒
+          RedisConfiguration(
+            host   = host,
+            port   = port,
+            secret = secret
+          )
+        case Invalid(errors) ⇒
+          throw new RuntimeException(s"Cache configuration not valid:\n${errors.toList.mkString("\n")}")
+      }
     }
   }
 

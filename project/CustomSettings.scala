@@ -2,6 +2,8 @@ import com.typesafe.config.ConfigFactory
 import sbt.Keys._
 import sbt._
 
+import scala.util.matching.Regex
+
 object CustomSettings {
 
   case class DatabaseConfig(driver: String, url: String, user: String, password: String)
@@ -24,11 +26,30 @@ object CustomSettings {
         }
       }
 
+      val parseDatabaseConnectionUrl = {
+        val protocol = "([^:\\/]+:\\/\\/)"
+        val userInfo = "([^:]+)(:([^@]+))?@"
+        val serverInstanceInfo = s"([^\\/:]+)(:\\d+)?(\\/.+)?"
+
+        val DatabaseUrl: Regex = s"$protocol$userInfo($serverInstanceInfo)?".r
+
+        envOrElseConfig(s"$prefix.url") match {
+          case DatabaseUrl(_, userValue, _, passwordValue, urlValue, _, _, _) ⇒
+            (urlValue, userValue, Option(passwordValue).getOrElse(""))
+          case _ =>
+            println(s"No valid value for key '$prefix.url'. Expected format: protocol://user[:password]@server/database")
+            ("", "", "")
+        }
+      }
+
+      val (url, user, password) = parseDatabaseConnectionUrl
+      val urlPrefix = envOrElseConfig(s"$prefix.urlPrefix")
+
       DatabaseConfig(
         driver = envOrElseConfig(s"$prefix.driver"),
-        url = envOrElseConfig(s"$prefix.url"),
-        user = envOrElseConfig(s"$prefix.user"),
-        password = envOrElseConfig(s"$prefix.password")
+        url = s"$urlPrefix$url",
+        user = user,
+        password = password
       )
     }
 

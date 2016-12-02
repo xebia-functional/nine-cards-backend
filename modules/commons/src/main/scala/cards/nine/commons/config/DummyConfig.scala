@@ -13,17 +13,9 @@ trait DummyConfig {
   object db {
 
     object default {
-      val driver = "org.h2.Driver"
-      val url = "jdbc:h2:mem:"
-      val user = "sa"
-      val password = ""
-    }
-
-    object domain {
       val driver = "org.postgresql.Driver"
-      val url = "jdbc:postgresql://localhost/ninecards_travis_ci_test"
-      val user = "postgres"
-      val password = ""
+      val urlPrefix = "jdbc:postgresql://"
+      val url = "postgres://postgres@localhost/ninecards_travis_ci_test"
     }
 
     object hikari {
@@ -99,6 +91,10 @@ trait DummyConfig {
     }
   }
 
+  object redis {
+    val url = "redis://localhost:6379"
+  }
+
   val editors: Map[String, String] = Map(
     "karl" → "microsoft",
     "marx" → "made",
@@ -118,9 +114,8 @@ trait DummyConfig {
        |  db {
        |    default {
        |      driver = "${db.default.driver}"
+       |      urlPrefix = "${db.default.urlPrefix}"
        |      url = "${db.default.url}"
-       |      user = "${db.default.user}"
-       |      password = "${db.default.password}"
        |    }
        |    hikari {
        |      maximumPoolSize = ${db.hikari.maximumPoolSize}
@@ -203,8 +198,7 @@ trait DummyConfig {
        |    }
        |  }
        |  redis {
-       |    host = "${common.host}"
-       |    port = ${common.port}
+       |    url = "${redis.url}"
        |  }
        |  salt = "${ninecards.salt}"
        |  secretKey = "${ninecards.secretKey}"
