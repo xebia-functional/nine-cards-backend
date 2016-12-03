@@ -9,7 +9,6 @@ import cards.nine.googleplay.domain._
 import cards.nine.googleplay.processes.GooglePlayApp.GooglePlayApp
 import cards.nine.googleplay.processes.getcard.UnknownPackage
 import cards.nine.googleplay.processes.{ CardsProcesses, ResolveMany }
-import cats.data.Xor
 import cats.free.Free
 import org.specs2.matcher.{ DisjunctionMatchers, Matcher, Matchers }
 import org.specs2.mock.Mockito
@@ -119,7 +118,7 @@ class ServicesSpec
     "return the App object when a valid package name is provided" in new BasicScope {
 
       googlePlayProcesses.getCard(onePackage, AuthData.marketAuth) returns
-        Free.pure(Xor.right(GooglePlayResponses.fullCard))
+        Free.pure(Right(GooglePlayResponses.fullCard))
 
       val response = services.resolveOne(onePackage, AuthData.marketAuth)
 
@@ -131,7 +130,7 @@ class ServicesSpec
     "return an error message when a wrong package name is provided" in new BasicScope {
 
       googlePlayProcesses.getCard(onePackage, AuthData.marketAuth) returns
-        Free.pure(Xor.left(GooglePlayResponses.unknwonPackageError))
+        Free.pure(Left(GooglePlayResponses.unknwonPackageError))
 
       val response = services.resolveOne(onePackage, AuthData.marketAuth)
 
@@ -164,7 +163,7 @@ class ServicesSpec
       googlePlayProcesses.recommendationsByCategory(
         Requests.recommendByCategoryRequest,
         AuthData.marketAuth
-      ) returns Free.pure(Xor.right(GooglePlayResponses.fullCardList))
+      ) returns Free.pure(Right(GooglePlayResponses.fullCardList))
 
       val response = services.recommendByCategory(
         category         = category,
@@ -186,7 +185,7 @@ class ServicesSpec
       googlePlayProcesses.recommendationsByCategory(
         Requests.recommendByCategoryRequest,
         AuthData.marketAuth
-      ) returns Free.pure(Xor.left(GooglePlayResponses.recommendationsInfoError))
+      ) returns Free.pure(Left(GooglePlayResponses.recommendationsInfoError))
 
       val response = services.recommendByCategory(
         category         = category,

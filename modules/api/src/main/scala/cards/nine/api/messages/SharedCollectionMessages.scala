@@ -1,6 +1,5 @@
 package cards.nine.api.messages
 
-import cats.data.Xor
 import cards.nine.domain.application.Package
 import cards.nine.processes.messages.SharedCollectionMessages._
 import org.joda.time.DateTime
@@ -59,8 +58,6 @@ object SharedCollectionMessages {
     collectionInfo: Option[SharedCollectionUpdateInfo],
     packages: Option[List[Package]]
   )
-
-  type XorApiGetCollectionByPublicId = Xor[Throwable, ApiSharedCollection]
 
   case class ApiGetSubscriptionsByUser(subscriptions: List[String])
 

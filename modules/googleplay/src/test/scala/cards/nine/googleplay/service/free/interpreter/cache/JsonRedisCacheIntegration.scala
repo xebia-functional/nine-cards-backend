@@ -1,5 +1,6 @@
 package cards.nine.googleplay.service.free.interpreter.cache
 
+import cats.syntax.either._
 import com.redis.RedisClientPool
 import io.circe.parser._
 import io.circe.{ Decoder, Encoder }

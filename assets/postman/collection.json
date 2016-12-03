@@ -699,11 +699,61 @@
 								"key": "Accept",
 								"value": "application/json",
 								"description": ""
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"description": ""
 							}
 						],
 						"body": {
 							"mode": "raw",
 							"raw": "{\n  \t\"excludePackages\" : [\n\t\t\"com.twitter.android\",\n\t\t\"flipboard.app\"\n  \t],\n  \t\"limit\" : 10\n}"
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Search apps by Word",
+					"request": {
+						"url": "{{scheme}}://{{authority}}{{root_path}}/applications/search",
+						"method": "POST",
+						"header": [
+							{
+								"key": "X-Session-Token",
+								"value": "{{user_sessionToken}}",
+								"description": ""
+							},
+							{
+								"key": "X-Android-ID",
+								"value": "{{user_androidId}}",
+								"description": ""
+							},
+							{
+								"key": "X-Auth-Token",
+								"value": "{{COMPUTE_AUTH_TOKEN}}",
+								"description": ""
+							},
+							{
+								"key": "X-Google-Play-Token",
+								"value": "{{google_play_token}}",
+								"description": ""
+							},
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"description": ""
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"description": ""
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"query\" : \"Write\" , \n  \t\"excludePackages\" : [\n\t\t\"com.twitter.android\",\n\t\t\"flipboard.app\"\n  \t],\n  \t\"limit\" : 10\n}"
 						},
 						"description": ""
 					},

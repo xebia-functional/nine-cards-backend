@@ -1,5 +1,6 @@
 package cards.nine.commons.redis
 
+import cats.syntax.either._
 import com.redis.RedisClient
 import com.redis.serialization.{ Format, Parse }
 import io.circe.{ Decoder, Encoder }

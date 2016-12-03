@@ -1,8 +1,8 @@
 package cards.nine.googleplay.service.free.interpreter.webscrapper
 
 import cards.nine.commons.config.Domain.GooglePlayWebConfiguration
+import cats.syntax.either._
 import cats.~>
-import cats.data.Xor
 import cards.nine.domain.application.{ FullCard, Package }
 import cards.nine.googleplay.domain.webscrapper._
 import cards.nine.googleplay.service.free.algebra.WebScraper._
@@ -37,23 +37,23 @@ class Interpreter(config: GooglePlayWebConfiguration) extends (Ops ~> WithClient
     }
   }
 
-  private[this] class GetDetailsWP(pack: Package) extends WithClient[Failure Xor FullCard] {
+  private[this] class GetDetailsWP(pack: Package) extends WithClient[Failure Either FullCard] {
 
     def handleUnexpected(e: UnexpectedStatus): Failure = e.status match {
       case Status.NotFound ⇒ PackageNotFound(pack)
       case _ ⇒ WebPageServerError
     }
 
-    override def apply(client: Client): Task[Failure Xor FullCard] = {
+    override def apply(client: Client): Task[Failure Either FullCard] = {
       val httpRequest = new Request(method = Method.GET, uri = detailsUriOf(pack))
 
       client.expect[ByteVector](httpRequest).map { bv ⇒
-        GooglePlayPageParser.parseCard(bv) match {
-          case Some(card) ⇒ Xor.Right(card)
-          case None ⇒ Xor.Left(PageParseFailed(pack))
-        }
+        Either.fromOption(
+          GooglePlayPageParser.parseCard(bv),
+          PageParseFailed(pack)
+        )
       }.handle {
-        case e: UnexpectedStatus ⇒ Xor.Left(handleUnexpected(e))
+        case e: UnexpectedStatus ⇒ Either.left(handleUnexpected(e))
       }
     }
   }

@@ -1,6 +1,5 @@
 package cards.nine.googleplay.service.free.interpreter.cache
 
-import cats.data.Xor
 import cards.nine.domain.application.{ FullCard, Package }
 import org.specs2.mutable.Specification
 import org.joda.time.{ DateTime, DateTimeZone }
@@ -56,8 +55,8 @@ class CirceCodersSpec extends Specification {
   def checkCoders[A](typeName: String, obj: A, jsonStr: String)(implicit dec: Decoder[A], enc: Encoder[A]) = {
     s"The Coders for $typeName" should {
 
-      s"encode a $typeName into a full string " in (obj.asJson.noSpaces must_=== (jsonStr))
-      s"parse a string into a $typeName" in (decode[A](jsonStr) must_=== (Xor.Right(obj)))
+      s"encode a $typeName into a full string " in (obj.asJson.noSpaces must_=== jsonStr)
+      s"parse a string into a $typeName" in (decode[A](jsonStr) must beRight(obj))
 
     }
   }

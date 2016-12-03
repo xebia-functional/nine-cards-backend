@@ -7,8 +7,9 @@ import cards.nine.googleplay.domain._
 import cards.nine.googleplay.domain.apigoogle._
 import cards.nine.googleplay.proto.GooglePlay.{ BulkDetailsRequest, DocV2, ResponseWrapper }
 import cards.nine.googleplay.service.free.algebra.GoogleApi._
+import cats.instances.either._
+import cats.syntax.either._
 import cats.~>
-import cats.data.Xor
 import cats.instances.list._
 import cats.syntax.monadCombine._
 import cats.syntax.traverse._
@@ -40,7 +41,7 @@ class Interpreter(config: GooglePlayApiConfiguration) extends (Ops ~> WithHttpCl
   )
 
   class BulkDetailsWithClient(packagesName: List[Package], auth: MarketCredentials)
-    extends (Client ⇒ Task[Failure Xor List[BasicCard]]) {
+    extends (Client ⇒ Task[Failure Either List[BasicCard]]) {
 
     val builder = BulkDetailsRequest.newBuilder()
     builder.addAllDocid(packagesName.map(_.value).asJava)
@@ -58,9 +59,9 @@ class Interpreter(config: GooglePlayApiConfiguration) extends (Ops ~> WithHttpCl
       case _ ⇒ GoogleApiServerError
     }
 
-    def apply(client: Client): Task[Failure Xor List[BasicCard]] =
+    def apply(client: Client): Task[Failure Either List[BasicCard]] =
       client.expect[ByteVector](httpRequest).map { bv ⇒
-        Xor.right {
+        Either.right {
           ResponseWrapper
             .parseFrom(bv.toArray)
             .getPayload.getBulkDetailsResponse
@@ -70,12 +71,12 @@ class Interpreter(config: GooglePlayApiConfiguration) extends (Ops ~> WithHttpCl
             .filterNot(_.packageName.value.isEmpty)
         }
       }.handle {
-        case e: UnexpectedStatus ⇒ Xor.Left(handleUnexpected(e))
+        case e: UnexpectedStatus ⇒ Either.left(handleUnexpected(e))
       }
   }
 
   class DetailsWithClient(packageName: Package, auth: MarketCredentials)
-    extends (Client ⇒ Task[Failure Xor FullCard]) {
+    extends (Client ⇒ Task[Failure Either FullCard]) {
 
     val httpRequest: Request =
       new Request(
@@ -93,20 +94,20 @@ class Interpreter(config: GooglePlayApiConfiguration) extends (Ops ~> WithHttpCl
       case _ ⇒ GoogleApiServerError
     }
 
-    def apply(client: Client): Task[Failure Xor FullCard] =
+    def apply(client: Client): Task[Failure Either FullCard] =
       client.expect[ByteVector](httpRequest).map { bv ⇒
         val docV2: DocV2 = ResponseWrapper.parseFrom(bv.toArray).getPayload.getDetailsResponse.getDocV2
         val fullCard = Converters.toFullCard(docV2)
-        Xor.Right(fullCard)
+        Either.right(fullCard)
       }.handle {
-        case e: UnexpectedStatus ⇒ Xor.Left(handleUnexpected(e))
+        case e: UnexpectedStatus ⇒ Either.left(handleUnexpected(e))
       }
   }
 
   class RecommendationsByAppsWithClient(request: RecommendByAppsRequest, auth: MarketCredentials)
     extends (Client ⇒ Task[List[Package]]) {
 
-    def recommendationsByApp(client: Client)(pack: Package): Task[InfoError Xor List[Package]] = {
+    def recommendationsByApp(client: Client)(pack: Package): Task[InfoError Either List[Package]] = {
 
       val httpRequest: Request = new Request(
         method  = Method.GET,
@@ -126,9 +127,9 @@ class Interpreter(config: GooglePlayApiConfiguration) extends (Ops ~> WithHttpCl
       }
 
       client.expect[ByteVector](httpRequest).map { bv ⇒
-        Xor.Right(ResponseWrapper.parseFrom(bv.toArray).getPayload.getListResponse)
+        Either.right(ResponseWrapper.parseFrom(bv.toArray).getPayload.getListResponse)
       }.handle {
-        case e: UnexpectedStatus ⇒ Xor.Left(handleUnexpected(e))
+        case e: UnexpectedStatus ⇒ Either.left(handleUnexpected(e))
       }.map {
         _.bimap(
           _ ⇒ InfoError(s"Recommendations for package ${pack.value}"),
@@ -137,7 +138,7 @@ class Interpreter(config: GooglePlayApiConfiguration) extends (Ops ~> WithHttpCl
       }
     }
 
-    def joinLists(xors: List[InfoError Xor List[Package]]): List[Package] = {
+    def joinLists(xors: List[InfoError Either List[Package]]): List[Package] = {
       val (_, packages) = xors.separate
       packages.flatten.distinct.diff(request.excludedApps).take(request.maxTotal)
     }
@@ -148,7 +149,7 @@ class Interpreter(config: GooglePlayApiConfiguration) extends (Ops ~> WithHttpCl
   }
 
   class RecommendationsByCategoryWithClient(request: RecommendByCategoryRequest, auth: MarketCredentials)
-    extends (Client ⇒ Task[InfoError Xor List[Package]]) {
+    extends (Client ⇒ Task[InfoError Either List[Package]]) {
 
     val infoError = InfoError(s"Recommendations for category ${request.category} that are ${request.priceFilter}")
 
@@ -168,19 +169,19 @@ class Interpreter(config: GooglePlayApiConfiguration) extends (Ops ~> WithHttpCl
       headers = headers.fullHeaders(auth)
     )
 
-    def apply(client: Client): Task[InfoError Xor List[Package]] =
+    def apply(client: Client): Task[InfoError Either List[Package]] =
       client.expect[ByteVector](httpRequest).map { bv ⇒
-        Xor.Right(ResponseWrapper.parseFrom(bv.toArray).getPayload.getListResponse)
+        Either.right(ResponseWrapper.parseFrom(bv.toArray).getPayload.getListResponse)
       }.handle {
-        case e: UnexpectedStatus ⇒ Xor.Left(GoogleApiServerError)
+        case e: UnexpectedStatus ⇒ Either.left(GoogleApiServerError)
       }.map {
-        case Xor.Left(_) ⇒ Xor.Left(infoError)
-        case Xor.Right(listResponse) ⇒ Xor.right(Converters.listResponseToPackages(listResponse))
+        case Left(_) ⇒ Either.left(infoError)
+        case Right(listResponse) ⇒ Either.right(Converters.listResponseToPackages(listResponse))
       }
   }
 
   class SearchAppsWithClient(request: SearchAppsRequest, auth: MarketCredentials)
-    extends (Client ⇒ Task[Failure Xor List[Package]]) {
+    extends (Client ⇒ Task[Failure Either List[Package]]) {
 
     val httpRequest: Request = new Request(
       method  = Method.GET,
@@ -198,14 +199,14 @@ class Interpreter(config: GooglePlayApiConfiguration) extends (Ops ~> WithHttpCl
       case _ ⇒ GoogleApiServerError
     }
 
-    def apply(client: Client): Task[Failure Xor List[Package]] =
+    def apply(client: Client): Task[Failure Either List[Package]] =
       client.expect[ByteVector](httpRequest).map { bv ⇒
         val searchResponse = ResponseWrapper.parseFrom(bv.toArray).getPayload.getSearchResponse
         val packages = Converters.searchResponseToPackages(searchResponse)
         val filtered = packages.diff(request.excludedApps).take(request.maxTotal)
-        Xor.Right(filtered)
+        Either.right(filtered)
       }.handle {
-        case e: UnexpectedStatus ⇒ Xor.Left(handleUnexpected(e))
+        case e: UnexpectedStatus ⇒ Either.left(handleUnexpected(e))
       }
 
   }

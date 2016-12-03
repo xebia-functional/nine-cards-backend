@@ -4,6 +4,7 @@ import cards.nine.domain.application.{ FullCard, Package }
 import cards.nine.domain.ScalaCheck._
 import cards.nine.googleplay.service.free.algebra.Cache._
 import cards.nine.googleplay.util.{ ScalaCheck ⇒ CustomArbitrary }
+import cats.syntax.either._
 import com.redis.RedisClient
 import io.circe.parser._
 import org.joda.time.{ DateTime, DateTimeZone }

@@ -1,6 +1,5 @@
 package cards.nine.api.messages
 
-import cats.data.Xor
 import cards.nine.domain.application.Package
 
 import org.joda.time.{ DateTime, DateTimeZone }
@@ -44,8 +43,6 @@ object rankings {
     case class Response()
 
     case class Error(code: Int, message: String, status: String) extends Throwable
-
-    type XorResponse = Xor[Error, Response]
 
   }
 

@@ -2,6 +2,7 @@ package cards.nine.googleplay.service.free.interpreter.cache
 
 import cards.nine.commons.redis._
 import cards.nine.googleplay.service.free.algebra.Cache._
+import cats.syntax.either._
 import cats.~>
 import com.redis.RedisClient
 import com.redis.serialization.{ Format, Parse }
