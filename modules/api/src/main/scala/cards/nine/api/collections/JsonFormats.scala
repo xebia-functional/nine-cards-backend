@@ -1,8 +1,8 @@
 package cards.nine.api.collections
 
-import cats.data.Xor
 import cards.nine.api.collections.messages._
 import cards.nine.processes.collections.messages._
+import cats.syntax.either._
 import io.circe.{ Decoder, Encoder, Json }
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
@@ -25,7 +25,7 @@ private[collections] trait JsonFormats
 
     val decodeDateTime: Decoder[DateTime] = Decoder.instance { cursor ⇒
       cursor.as[String].flatMap {
-        dateTime ⇒ Xor.right(DateTime.parse(dateTime, formatter))
+        dateTime ⇒ Either.right(DateTime.parse(dateTime, formatter))
       }
     }
 

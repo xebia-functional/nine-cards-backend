@@ -8,12 +8,10 @@ import cards.nine.commons.NineCardsService
 import cards.nine.commons.config.Domain.NineCardsConfiguration
 import cards.nine.commons.config.NineCardsConfig
 import cards.nine.processes.NineCardsServices._
-import cards.nine.processes._
 import cards.nine.processes.account.AccountProcesses
 import cards.nine.processes.rankings.RankingProcesses
 import cats.free.Free
 import cats.syntax.either._
-import cats.syntax.xor._
 import org.specs2.matcher.Matchers
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
