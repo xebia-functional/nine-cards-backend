@@ -10,7 +10,7 @@ import org.mockserver.model.HttpRequest.{ request ⇒ mockRequest }
 import org.mockserver.model.HttpResponse.{ response ⇒ mockResponse }
 import org.mockserver.model.HttpStatusCode._
 import org.mockserver.model.{ Header, JsonBody }
-import org.specs2.matcher.{ DisjunctionMatchers, Matchers, XorMatchers }
+import org.specs2.matcher.{ DisjunctionMatchers, Matchers }
 import org.specs2.mutable.Specification
 
 trait MockServer extends MockServerService {
@@ -78,8 +78,7 @@ class ServicesSpec
   extends Specification
   with MockServer
   with Matchers
-  with DisjunctionMatchers
-  with XorMatchers {
+  with DisjunctionMatchers {
 
   import TestData._
 

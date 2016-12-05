@@ -8,7 +8,6 @@ import cards.nine.googleplay.processes.GooglePlayApp.{ GooglePlayApp, Interprete
 import cards.nine.googleplay.service.free.algebra.{ Cache ⇒ CacheAlg, GoogleApi ⇒ ApiAlg, WebScraper ⇒ WebAlg }
 import cards.nine.googleplay.service.free.interpreter.{ cache ⇒ CacheInt, googleapi ⇒ ApiInt, webscrapper ⇒ WebInt }
 import cards.nine.googleplay.util.ScalaCheck._
-import cats.data.Xor
 import cats.{ Id, ~> }
 import org.joda.time.{ DateTime, DateTimeZone }
 import org.mockito.Mockito.reset
@@ -62,7 +61,7 @@ class CardsProcessesSpec
         prop { (card: FullCard, auth: MarketCredentials) ⇒
           val pack = card.packageName
           setup(pack, card, auth)
-          runGetCard(pack, auth) must_== Xor.Right(card)
+          runGetCard(pack, auth) must beRight(card)
         }
     }
 
@@ -71,7 +70,7 @@ class CardsProcessesSpec
       def setup(pack: Package, card: FullCard, auth: MarketCredentials) = {
         clear()
         cacheIntServer.getValid(pack) returns None
-        apiGoogleIntServer.getDetails(pack, auth) returns Xor.Right(card)
+        apiGoogleIntServer.getDetails(pack, auth) returns Right(card)
         cacheIntServer.putResolved(card) returns Unit
       }
 
@@ -79,7 +78,7 @@ class CardsProcessesSpec
         prop { (card: FullCard, auth: MarketCredentials) ⇒
           val pack = card.packageName
           setup(pack, card, auth)
-          runGetCard(pack, auth) must_== Xor.Right(card)
+          runGetCard(pack, auth) must beRight(card)
         }
       }
 
@@ -100,7 +99,7 @@ class CardsProcessesSpec
         def setup(pack: Package, card: FullCard, auth: MarketCredentials) = {
           clear()
           cacheIntServer.getValid(pack) returns None
-          apiGoogleIntServer.getDetails(pack, auth) returns Xor.Left(ApiDom.PackageNotFound(pack))
+          apiGoogleIntServer.getDetails(pack, auth) returns Left(ApiDom.PackageNotFound(pack))
           webScrapperIntServer.existsApp(pack) returns true
           cacheIntServer.setToPending(pack) returns Unit
         }
@@ -109,7 +108,7 @@ class CardsProcessesSpec
           prop { (card: FullCard, auth: MarketCredentials) ⇒
             val pack = card.packageName
             setup(pack, card, auth)
-            runGetCard(pack, auth) must_== Xor.Left(getcard.PendingResolution(pack))
+            runGetCard(pack, auth) must beLeft(getcard.PendingResolution(pack))
           }
 
         "Stores the package as Pending in the cache " >>
@@ -128,7 +127,7 @@ class CardsProcessesSpec
       def setup(pack: Package, card: FullCard, auth: MarketCredentials) = {
         clear()
         cacheIntServer.getValid(pack) returns None
-        apiGoogleIntServer.getDetails(pack, auth) returns Xor.Left(ApiDom.PackageNotFound(pack))
+        apiGoogleIntServer.getDetails(pack, auth) returns Left(ApiDom.PackageNotFound(pack))
         webScrapperIntServer.existsApp(pack) returns false
         cacheIntServer.addError(pack) returns Unit
       }
@@ -137,7 +136,7 @@ class CardsProcessesSpec
         prop { (card: FullCard, auth: MarketCredentials) ⇒
           val pack = card.packageName
           setup(pack, card, auth)
-          runGetCard(pack, auth) must_== Xor.Left(getcard.UnknownPackage(pack))
+          runGetCard(pack, auth) must beLeft(getcard.UnknownPackage(pack))
         }
 
       "Store it in the cache as Error" >>
@@ -160,7 +159,7 @@ class CardsProcessesSpec
 
       def setup(pack: Package, card: FullCard) = {
         clear()
-        webScrapperIntServer.getDetails(pack) returns Xor.Right(card)
+        webScrapperIntServer.getDetails(pack) returns Right(card)
         cacheIntServer.putResolved(card) returns Unit
       }
 
@@ -185,7 +184,7 @@ class CardsProcessesSpec
 
       def setup(pack: Package, date: DateTime) = {
         clear()
-        webScrapperIntServer.getDetails(pack) returns Xor.Left(WebDom.PackageNotFound(pack))
+        webScrapperIntServer.getDetails(pack) returns Left(WebDom.PackageNotFound(pack))
         cacheIntServer.addError(pack) returns Unit
       }
 
@@ -206,7 +205,7 @@ class CardsProcessesSpec
 
       def setup(pack: Package) = {
         clear()
-        webScrapperIntServer.getDetails(pack) returns Xor.Left(WebDom.WebPageServerError)
+        webScrapperIntServer.getDetails(pack) returns Left(WebDom.WebPageServerError)
         cacheIntServer.setToPending(pack) returns Unit
       }
 

@@ -20,7 +20,6 @@ class Services(implicit googlePlayProcesses: CardsProcesses[GooglePlayApp]) exte
       .foldMap(Wiring.interpreters).map { result ⇒
         result
           .leftMap(e ⇒ PackageNotResolved(e.packageName.value))
-          .toEither
       }
   }
 
@@ -47,9 +46,9 @@ class Services(implicit googlePlayProcesses: CardsProcesses[GooglePlayApp]) exte
     ).foldMap(Wiring.interpreters)
       .map(
         _.bimap(
-        e ⇒ RecommendationsServerError(e.message),
-        r ⇒ Converters.omitMissing(r)
-      ).toEither
+          e ⇒ RecommendationsServerError(e.message),
+          r ⇒ Converters.omitMissing(r)
+        )
       )
 
   def recommendationsForApps(

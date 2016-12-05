@@ -14,7 +14,6 @@ import cards.nine.processes._
 import cards.nine.processes.messages.UserMessages._
 import cats.free.Free
 import cats.syntax.either._
-import cats.syntax.xor._
 import org.mockito.Matchers.{ eq ⇒ mockEq }
 import org.specs2.matcher.Matchers
 import org.specs2.mock.Mockito

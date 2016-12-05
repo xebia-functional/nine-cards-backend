@@ -1,5 +1,6 @@
 package cards.nine.commons.redis
 
+import cats.syntax.either._
 import io.circe.{ Decoder, Encoder }
 import io.circe.parser._
 import scredis.serialization.{ Reader, Writer, UTF8StringReader, UTF8StringWriter }

@@ -1,11 +1,11 @@
 package cards.nine.googleplay.processes
 
-import cats.data.Xor
 import cats.free.Free
+import cats.instances.either._
 import cats.instances.list._
 import cats.syntax.monadCombine._
 import cats.syntax.traverse._
-import cats.syntax.xor._
+import cats.syntax.either._
 import cards.nine.domain.application.{ BasicCard, CardList, FullCard, Package }
 import cards.nine.domain.market.MarketCredentials
 import cards.nine.googleplay.domain._
@@ -50,17 +50,17 @@ class CardsProcesses[F[_]](
   def recommendationsByCategory(
     request: RecommendByCategoryRequest,
     auth: MarketCredentials
-  ): Free[F, InfoError Xor CardList[FullCard]] =
+  ): Free[F, InfoError Either CardList[FullCard]] =
     googleApi.recommendationsByCategory(request, auth) flatMap {
-      case ll @ Xor.Left(_) ⇒ Free.pure(ll)
-      case Xor.Right(recommendations) ⇒
+      case Left(error) ⇒ Free.pure(Either.left(error))
+      case Right(recommendations) ⇒
         val packages = recommendations.diff(request.excludedApps).take(request.maxTotal)
         for {
           result ← resolvePackageList(packages, auth)
-        } yield CardList(
+        } yield Either.right(CardList(
           missing = result.notFoundPackages ++ result.pendingPackages,
           cards   = result.cachedPackages ++ result.resolvedPackages
-        ).right[InfoError]
+        ))
     }
 
   def recommendationsByApps(
@@ -78,8 +78,8 @@ class CardsProcesses[F[_]](
 
   def searchApps(request: SearchAppsRequest, auth: MarketCredentials): Free[F, CardList[BasicCard]] =
     googleApi.searchApps(request, auth) flatMap {
-      case Xor.Left(_) ⇒ Free.pure(CardList(Nil, Nil))
-      case Xor.Right(packs) ⇒
+      case Left(_) ⇒ Free.pure(CardList(Nil, Nil))
+      case Right(packs) ⇒
         getBasicCards(packs, auth) map { r ⇒
           CardList(
             missing = r.notFound ++ r.pending,
@@ -90,9 +90,9 @@ class CardsProcesses[F[_]](
 
   private[this] def getPackagesInfoInGooglePlay(packages: List[Package], auth: MarketCredentials) =
     googleApi.getBulkDetails(packages, auth) map {
-      case Xor.Left(_) ⇒
+      case Left(_) ⇒
         ResolveMany.Response(Nil, packages, Nil)
-      case Xor.Right(apps) ⇒
+      case Right(apps) ⇒
         val notFound = packages.diff(apps.map(_.packageName))
         ResolveMany.Response(notFound, Nil, apps)
     }
@@ -130,9 +130,7 @@ class CardsProcesses[F[_]](
     for {
       cachedPackages ← cacheService.getValidMany(packages)
       uncachedPackages = packages diff cachedPackages.map(_.packageName)
-      detailedPackages ← uncachedPackages.traverse[Free[F, ?], ApiFailure Xor FullCard] { p ⇒
-        googleApi.getDetails(p, auth)
-      }
+      detailedPackages ← uncachedPackages.traverse[Free[F, ?], ApiFailure Either FullCard](p ⇒ googleApi.getDetails(p, auth))
       (failures, cards) = detailedPackages.separate
       (notFound, error) = findNotFound(uncachedPackages.diff(cards.map(_.packageName)), failures)
 
@@ -161,15 +159,15 @@ class CardsProcesses[F[_]](
     cacheService.getValid(pack) flatMap {
       case Some(card) ⇒
         // Yes -> Return the stored content
-        Free.pure(Xor.Right(card))
+        Free.pure(Either.right(card))
       case None ⇒
         // No -> Google Play API Returns valid response?
         googleApi.getDetails(pack, auth) flatMap {
-          case r @ Xor.Right(card) ⇒
+          case Right(card) ⇒
             // Yes -> Create key/value in Redis as Resolved, Return package info
-            cacheService.putResolved(card).map(_ ⇒ r)
-          case Xor.Left(apiFailure) ⇒
-            handleFailedResponse(apiFailure).map(Xor.left)
+            cacheService.putResolved(card).map(x ⇒ Either.right(card))
+          case Left(apiFailure) ⇒
+            handleFailedResponse(apiFailure).map(Either.left)
         }
     }
   }
@@ -178,14 +176,14 @@ class CardsProcesses[F[_]](
     import ResolvePending._
 
     webScrapper.getDetails(pack) flatMap {
-      case Xor.Right(card) ⇒
-        for (_ ← cacheService.putResolved(card)) yield Resolved
-      case Xor.Left(PageParseFailed(_)) ⇒
-        for (_ ← cacheService.setToPending(pack)) yield Pending
-      case Xor.Left(PackageNotFound(_)) ⇒
-        for (_ ← cacheService.addError(pack)) yield Unknown
-      case Xor.Left(WebPageServerError) ⇒
-        for (_ ← cacheService.setToPending(pack)) yield Pending
+      case Right(card) ⇒
+        cacheService.putResolved(card).map(x ⇒ Resolved)
+      case Left(PageParseFailed(_)) ⇒
+        cacheService.setToPending(pack).map(x ⇒ Pending)
+      case Left(PackageNotFound(_)) ⇒
+        cacheService.addError(pack).map(x ⇒ Unknown)
+      case Left(WebPageServerError) ⇒
+        cacheService.setToPending(pack).map(x ⇒ Pending)
     }
   }
 }

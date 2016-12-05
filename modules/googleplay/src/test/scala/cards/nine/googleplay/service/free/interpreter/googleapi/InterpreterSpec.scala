@@ -11,7 +11,6 @@ import cards.nine.googleplay.domain.apigoogle._
 import cards.nine.googleplay.service.free.algebra.GoogleApi._
 import cards.nine.googleplay.service.util.MockServer
 import cards.nine.googleplay.util.WithHttp1Client
-import cats.data.Xor
 import org.mockserver.model.{ Header, HttpRequest, HttpResponse, HttpStatusCode }
 import org.specs2.matcher.{ Matchers, TaskMatchers }
 import org.specs2.mutable.Specification
@@ -55,18 +54,18 @@ class InterpreterSpec extends Specification with Matchers with MockServer with W
 
   def run[A](ops: Ops[A]) = interpreter(ops)(pooledClient)
 
-  def checkTokenErrors[A](request: HttpRequest, ops: Ops[Failure Xor A]) = {
+  def checkTokenErrors[A](request: HttpRequest, ops: Ops[Failure Either A]) = {
 
     "give a Too Many Request failure if the API replies with an TooManyRequests status" in {
       val httpResponse = HttpResponse.response.withStatusCode(429)
       mockServer.when(request).respond(httpResponse)
-      run(ops) must returnValue(Xor.Left(QuotaExceeded(auth)))
+      run(ops) must returnValue(Left(QuotaExceeded(auth)))
     }
 
     "return an Unauthorized failure if Google's Api replies with a Unauthorized status" in {
       val httpResponse = HttpResponse.response.withStatusCode(UNAUTHORIZED_401.code)
       mockServer.when(request).respond(httpResponse)
-      run(ops) must returnValue(Xor.Left(WrongAuthParams(auth)))
+      run(ops) must returnValue(Left(WrongAuthParams(auth)))
     }
 
   }
@@ -81,7 +80,7 @@ class InterpreterSpec extends Specification with Matchers with MockServer with W
       .withQueryStringParameter("doc", fisherPrice.packageName)
       .withHeaders(msHeaders(auth))
 
-    val ops: Ops[Failure Xor FullCard] = GetDetails(fisherPrice.packageObj, auth)
+    val ops: Ops[Failure Either FullCard] = GetDetails(fisherPrice.packageObj, auth)
 
     "return 200 OK and the Full Card for a package if Google's API replies as 200 OK" in {
       val httpResponse: HttpResponse = {
@@ -92,13 +91,13 @@ class InterpreterSpec extends Specification with Matchers with MockServer with W
           .withBody(byteVector)
       }
       mockServer.when(httpRequest).respond(httpResponse)
-      run(ops) must returnValue(Xor.Right(fisherPrice.card))
+      run(ops) must returnValue(Right(fisherPrice.card))
     }
 
     "give a PackageNotFound Failure if the Api replies with a NotFound status" in {
       val httpResponse = HttpResponse.response.withStatusCode(NOT_FOUND_404.code)
       mockServer.when(httpRequest).respond(httpResponse)
-      run(ops) must returnValue(Xor.Left(PackageNotFound(fisherPrice.packageObj)))
+      run(ops) must returnValue(Left(PackageNotFound(fisherPrice.packageObj)))
     }
 
     checkTokenErrors(httpRequest, ops)
@@ -117,7 +116,7 @@ class InterpreterSpec extends Specification with Matchers with MockServer with W
 
     val numPacks = 7
 
-    val ops: Ops[Failure Xor List[Package]] = {
+    val ops: Ops[Failure Either List[Package]] = {
       val request = SearchAppsRequest(word = "cosmos", excludedApps = Nil, maxTotal = numPacks)
       SearchApps(request, auth)
     }
@@ -131,7 +130,7 @@ class InterpreterSpec extends Specification with Matchers with MockServer with W
           .withBody(byteVector)
       }
       mockServer.when(httpRequest).respond(httpResponse)
-      run(ops) must returnValue(Xor.Right(searchCosmos.results.take(numPacks)))
+      run(ops) must returnValue(Right(searchCosmos.results.take(numPacks)))
 
     }
 

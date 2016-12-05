@@ -1,6 +1,5 @@
 package cards.nine.googleplay.processes
 
-import cats.data.Xor
 import cards.nine.domain.application.{ FullCard, Package }
 import cards.nine.domain.market.MarketCredentials
 
@@ -9,7 +8,7 @@ package object getcard {
   case class WrongAuthParams(packageName: Package, marketAuth: MarketCredentials) extends FailedResponse
   case class PendingResolution(packageName: Package) extends FailedResponse
   case class UnknownPackage(packageName: Package) extends FailedResponse
-  type Response = FailedResponse Xor FullCard
+  type Response = FailedResponse Either FullCard
 }
 
 object ResolveMany {

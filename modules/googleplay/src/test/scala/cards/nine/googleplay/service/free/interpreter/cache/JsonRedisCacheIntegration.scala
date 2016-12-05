@@ -1,6 +1,7 @@
 package cards.nine.googleplay.service.free.interpreter.cache
 
 import cards.nine.commons.redis.TestUtils
+import cats.syntax.either._
 import io.circe.parser._
 import io.circe.{ Decoder, Encoder }
 import org.specs2.mutable.Specification

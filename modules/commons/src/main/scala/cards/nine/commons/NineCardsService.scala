@@ -1,7 +1,7 @@
 package cards.nine.commons
 
 import cards.nine.commons.NineCardsErrors.NineCardsError
-import cats.{ Monad, RecursiveTailRecM }
+import cats.Monad
 import cats.arrow.FunctionK
 import cats.data.EitherT
 import cats.free.{ :<:, Free }
@@ -28,7 +28,7 @@ object NineCardsService {
 
   implicit class NineCardsServiceOps[F[_], A](service: NineCardsService[F, A]) {
 
-    def foldMap[M[_]](f: FunctionK[F, M])(implicit M: Monad[M], r: RecursiveTailRecM[M]): M[Result[A]] =
+    def foldMap[M[_]](f: FunctionK[F, M])(implicit M: Monad[M]): M[Result[A]] =
       service.value.foldMap(f)
   }
 }
