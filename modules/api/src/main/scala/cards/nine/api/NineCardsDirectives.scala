@@ -11,7 +11,7 @@ import cards.nine.commons.NineCardsService._
 import cards.nine.commons.config.Domain.NineCardsConfiguration
 import cards.nine.domain.account._
 import cards.nine.domain.application.PriceFilter
-import cards.nine.domain.market.{ Localization, MarketToken }
+import cards.nine.domain.market.{ Localization, MarketCredentials, MarketToken }
 import cards.nine.processes.account.AccountProcesses
 import cards.nine.processes.NineCardsServices._
 import cards.nine.processes._
@@ -51,7 +51,7 @@ class NineCardsDirectives(
     challengeHeaders = Nil
   )
 
-  def authenticateLoginRequest: Directive1[SessionToken] = for {
+  val authenticateLoginRequest: Directive1[SessionToken] = for {
     request ← entity(as[ApiLoginRequest])
     _ ← authenticate(validateLoginRequest(request.email, request.tokenId))
     sessionToken ← generateSessionToken
@@ -70,7 +70,7 @@ class NineCardsDirectives(
           case _ ⇒ Left(rejectionByCredentialsRejected)
         }
 
-  def authenticateUser: Directive1[UserContext] = for {
+  val authenticateUser: Directive1[UserContext] = for {
     uri ← requestUri
     herokuForwardedProtocol ← optionalHeaderValueByName(headerHerokuForwardedProto)
     herokuUri = herokuForwardedProtocol.filterNot(_.isEmpty).fold(uri)(uri.withScheme)
@@ -80,13 +80,12 @@ class NineCardsDirectives(
     userId ← authenticate(validateUser(sessionToken, androidId, authToken, herokuUri))
   } yield UserContext(UserId(userId), androidId) :: HNil
 
-  val googlePlayInfo: Directive1[GooglePlayContext] = for {
-    googlePlayToken ← headerValueByName(headerGooglePlayToken)
-    marketLocalization ← optionalHeaderValueByName(headerMarketLocalization)
-  } yield GooglePlayContext(
-    googlePlayToken    = MarketToken(googlePlayToken),
-    marketLocalization = marketLocalization map Localization.apply
-  )
+  val marketAuthHeaders: Directive1[MarketCredentials] =
+    for {
+      androidId ← headerValueByName(headerAndroidId).map(AndroidId)
+      marketToken ← headerValueByName(headerGooglePlayToken).map(MarketToken)
+      localization ← optionalHeaderValueByName(headerMarketLocalization).map(_.map(Localization))
+    } yield MarketCredentials(androidId, marketToken, localization)
 
   def validateUser(
     sessionToken: SessionToken,
@@ -122,12 +121,12 @@ class NineCardsDirectives(
 
   }
 
-  def generateNewCollectionInfo: Directive1[NewSharedCollectionInfo] = for {
+  val generateNewCollectionInfo: Directive1[NewSharedCollectionInfo] = for {
     currentDateTime ← provide(CurrentDateTime(DateTime.now))
     publicIdentifier ← provide(PublicIdentifier(UUID.randomUUID.toString))
   } yield NewSharedCollectionInfo(currentDateTime, publicIdentifier) :: HNil
 
-  def generateSessionToken: Directive1[SessionToken] = provide(SessionToken(UUID.randomUUID.toString))
+  val generateSessionToken: Directive1[SessionToken] = provide(SessionToken(UUID.randomUUID.toString))
 
   val priceFilterPath: Directive[PriceFilter :: HNil] =
     path(PriceFilterSegment) | (pathEndOrSingleSlash & provide(PriceFilter.ALL: PriceFilter))
