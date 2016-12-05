@@ -1,6 +1,5 @@
 package cards.nine.api.applications
 
-import cards.nine.api.messages.GooglePlayMessages._
 import cards.nine.domain.analytics.{ RankedAppsByCategory, RankedWidgetsByMoment }
 import cards.nine.domain.application.{ CardList, FullCard, Package }
 import org.joda.time.DateTime
@@ -93,6 +92,12 @@ private[applications] object TestData {
     val rankApps = "/applications/rank"
 
     val rankAppsByMoments = "/applications/rank-by-moments"
+
+    val recommendationsByCategory = "/recommendations/SOCIAL"
+
+    val recommendationsForApps = "/recommendations"
+
+    val rankWidgets = "/widgets/rank"
 
   }
 

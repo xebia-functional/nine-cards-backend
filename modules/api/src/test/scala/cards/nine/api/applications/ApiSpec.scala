@@ -289,4 +289,46 @@ class ApplicationsApiSpec
     successOk(request)
   }
 
+  "POST /recommendations" should {
+
+    val request = Post(
+      uri     = Paths.recommendationsForApps,
+      content = apiGetRecommendationsForAppsRequest
+    ) ~> addHeaders(Headers.googlePlayHeaders)
+
+    authenticatedBadRequestEmptyBody(Post(Paths.recommendationsForApps))
+
+    unauthorizedNoHeaders(request)
+
+    successOk(request)
+  }
+
+  "POST /recommendations/category" should {
+
+    val request = Post(
+      uri     = Paths.recommendationsByCategory,
+      content = apiGetRecommendationsByCategoryRequest
+    ) ~> addHeaders(Headers.googlePlayHeaders)
+
+    authenticatedBadRequestEmptyBody(Post(Paths.recommendationsByCategory))
+
+    unauthorizedNoHeaders(request)
+
+    successOk(request)
+  }
+
+  "POST /widgets/rank" should {
+
+    val request = Post(
+      uri     = Paths.rankWidgets,
+      content = apiRankByMomentsRequest
+    )
+
+    authenticatedBadRequestEmptyBody(Post(Paths.rankWidgets))
+
+    unauthorizedNoHeaders(request)
+
+    successOk(request)
+  }
+
 }

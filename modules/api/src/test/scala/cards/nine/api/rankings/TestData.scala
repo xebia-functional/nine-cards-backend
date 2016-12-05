@@ -1,7 +1,6 @@
 package cards.nine.api.rankings
 
 import cards.nine.api.NineCardsHeaders._
-import cards.nine.api.messages.GooglePlayMessages._
 import cards.nine.api.rankings.{ messages ⇒ Api }
 import cards.nine.domain.account._
 import cards.nine.domain.analytics.RankedWidgetsByMoment
@@ -60,13 +59,6 @@ private[rankings] object TestData {
   }
 
   object Messages {
-
-    val apiRankByMomentsRequest = ApiRankByMomentsRequest(
-      location = location,
-      items    = packagesName,
-      moments  = moments,
-      limit    = limit
-    )
 
     val getRankedWidgetsResponse = List.empty[RankedWidgetsByMoment]
 
