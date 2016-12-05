@@ -4,7 +4,7 @@ import java.util.UUID
 
 import cards.nine.api.NineCardsHeaders.Domain._
 import cards.nine.api.NineCardsHeaders._
-import cards.nine.api.messages.UserMessages.ApiLoginRequest
+import cards.nine.api.accounts.messages.ApiLoginRequest
 import cards.nine.api.utils.SprayMatchers.PriceFilterSegment
 import cards.nine.api.utils.TaskDirectives._
 import cards.nine.commons.NineCardsService._
@@ -12,6 +12,7 @@ import cards.nine.commons.config.Domain.NineCardsConfiguration
 import cards.nine.domain.account._
 import cards.nine.domain.application.PriceFilter
 import cards.nine.domain.market.{ Localization, MarketToken }
+import cards.nine.processes.account.AccountProcesses
 import cards.nine.processes.NineCardsServices._
 import cards.nine.processes._
 import cats.syntax.either._
@@ -27,8 +28,7 @@ import spray.routing.directives._
 
 class NineCardsDirectives(
   implicit
-  userProcesses: UserProcesses[NineCardsServices],
-  googleApiProcesses: GoogleApiProcesses[NineCardsServices],
+  accountProcesses: AccountProcesses[NineCardsServices],
   config: NineCardsConfiguration,
   ec: ExecutionContext
 )
@@ -40,6 +40,8 @@ class NineCardsDirectives(
   with RouteDirectives
   with SecurityDirectives
   with JsonFormats {
+
+  import cards.nine.api.accounts.JsonFormats._
 
   implicit def fromTaskAuth[T](auth: ⇒ Task[Authentication[T]]): AuthMagnet[T] =
     new AuthMagnet(onSuccess(auth))
@@ -59,7 +61,7 @@ class NineCardsDirectives(
     if (email.value.isEmpty || tokenId.value.isEmpty)
       Task.now(Left(rejectionByCredentialsRejected))
     else
-      googleApiProcesses
+      accountProcesses
         .checkGoogleTokenId(email, tokenId)
         .leftMap(_ ⇒ rejectionByCredentialsRejected)
         .value
@@ -92,7 +94,7 @@ class NineCardsDirectives(
     authToken: String,
     requestUri: Uri
   ): Task[Authentication[Long]] =
-    userProcesses.checkAuthToken(
+    accountProcesses.checkAuthToken(
       sessionToken = sessionToken,
       androidId    = androidId,
       authToken    = authToken,
@@ -136,8 +138,7 @@ object NineCardsDirectives {
 
   implicit def nineCardsDirectives(
     implicit
-    userProcesses: UserProcesses[NineCardsServices],
-    googleApiProcesses: GoogleApiProcesses[NineCardsServices],
+    accountProcesses: AccountProcesses[NineCardsServices],
     config: NineCardsConfiguration,
     ec: ExecutionContext
   ) = new NineCardsDirectives
