@@ -27,19 +27,26 @@ class NineCardsRoutes(
   import Directives._
 
   lazy val nineCardsRoutes: Route =
-    pathPrefix("apiDocs")(swaggerRoute) ~
-      (new AccountsApi().route) ~
+    (new AccountsApi().route) ~
       (new ApplicationsApi().route) ~
       (new CollectionsApi().route) ~
-      (new RankingsApi().route)
+      (new RankingsApi().route) ~
+      swaggerRoute ~
+      loaderIoRoute
+
+  private[this] lazy val loaderIoRoute = {
+    val loaderIoToken = config.loaderIO.verificationToken
+    val loaderIoFile = s"loaderio-${loaderIoToken}.txt"
+
+    pathPrefix(loaderIoFile)(complete(s"loaderio-${loaderIoToken}"))
+  }
 
   private[this] lazy val swaggerRoute: Route =
-    // This path prefix grants access to the Swagger documentation.
-    // Both /apiDocs/ and /apiDocs/index.html are valid paths to load Swagger-UI.
-    pathEndOrSingleSlash {
-      getFromResource("apiDocs/index.html")
-    } ~ {
-      getFromResourceDirectory("apiDocs")
+    pathPrefix("apiDocs") {
+      // This path prefix grants access to the Swagger documentation.
+      // Both /apiDocs/ and /apiDocs/index.html are valid paths to load Swagger-UI.
+      pathEndOrSingleSlash(getFromResource("apiDocs/index.html")) ~
+        getFromResourceDirectory("apiDocs")
     }
 
 }
