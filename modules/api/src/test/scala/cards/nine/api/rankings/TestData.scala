@@ -2,7 +2,6 @@ package cards.nine.api.rankings
 
 import cards.nine.api.NineCardsHeaders._
 import cards.nine.api.rankings.{ messages ⇒ Api }
-import cards.nine.domain.account._
 import cards.nine.domain.analytics.RankedWidgetsByMoment
 import cards.nine.domain.application.{ Category, Package }
 import cards.nine.processes.rankings.messages.{ Get, Reload }
@@ -12,44 +11,11 @@ import spray.http.HttpHeaders.RawHeader
 
 private[rankings] object TestData {
 
-  val androidId = AndroidId("f07a13984f6d116a")
-
-  val apiToken = ApiKey("a7db875d-f11e-4b0c-8d7a-db210fd93e1b")
-
   val googleAnalyticsToken = "yada-yada-yada"
-
-  val icon = "path-to-icon"
-
-  val limit = 20
-
-  val limitPerApp = 25
 
   val location = Option("US")
 
-  val marketLocalization = "en-us"
-
   val now = DateTime.now
-
-  val packagesName = List(
-    "earth.europe.italy",
-    "earth.europe.unitedKingdom",
-    "earth.europe.germany",
-    "earth.europe.france",
-    "earth.europe.portugal",
-    "earth.europe.spain"
-  ) map Package
-
-  val deviceApps = Map("countries" → packagesName)
-
-  val excludePackages = packagesName.filter(_.value.length > 18)
-
-  val moments = List("HOME", "NIGHT")
-
-  val sessionToken = SessionToken("1d1afeea-c7ec-45d8-a6f8-825b836f2785")
-
-  val tokenId = GoogleIdToken("6c7b303e-585e-4fe8-8b6f-586547317331-7f9b12dd-8946-4285-a72a-746e482834dd")
-
-  val userId = 1l
 
   object Headers {
 

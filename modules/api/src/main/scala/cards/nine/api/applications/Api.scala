@@ -226,7 +226,7 @@ class ApplicationsApi(
       .getRecommendationsForApps(
         request.packages,
         request.excludePackages,
-        request.limitPerApp.getOrElse(Int.MaxValue),
+        request.limitPerApp,
         request.limit,
         toMarketAuth(googlePlayContext, userContext)
       )

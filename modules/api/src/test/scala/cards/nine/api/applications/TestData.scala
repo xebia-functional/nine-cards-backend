@@ -16,7 +16,7 @@ private[applications] object TestData {
 
   val limit = 20
 
-  val limitPerApp = 25
+  val limitPerApp = Some(25)
 
   val location = Option("US")
 
@@ -58,7 +58,7 @@ private[applications] object TestData {
     packages        = packagesName,
     excludePackages = excludePackages,
     limit           = limit,
-    limitPerApp     = Option(limitPerApp)
+    limitPerApp     = limitPerApp
   )
 
   val apiRankAppsRequest = ApiRankAppsRequest(
