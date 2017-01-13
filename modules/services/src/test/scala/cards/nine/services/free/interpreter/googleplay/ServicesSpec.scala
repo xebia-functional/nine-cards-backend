@@ -57,7 +57,7 @@ class ServicesSpec
 
     val limit = 20
 
-    val numPerApp = 25
+    val numPerApp = Some(25)
 
     val priceFilter = PriceFilter.FREE
 

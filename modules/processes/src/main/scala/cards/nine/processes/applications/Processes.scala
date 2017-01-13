@@ -57,7 +57,7 @@ class ApplicationProcesses[F[_]](implicit services: GooglePlay.Services[F]) {
   def getRecommendationsForApps(
     packagesName: List[Package],
     excludedPackages: List[Package],
-    limitPerApp: Int,
+    limitPerApp: Option[Int],
     limit: Int,
     marketAuth: MarketCredentials
   ): NineCardsService[F, CardList[FullCard]] =

@@ -30,7 +30,7 @@ object GooglePlay {
   case class RecommendationsForApps(
     packagesName: List[Package],
     excludesPackages: List[Package],
-    limitPerApp: Int,
+    limitPerApp: Option[Int],
     limit: Int,
     auth: MarketCredentials
   ) extends Ops[Result[CardList[FullCard]]]
@@ -78,7 +78,7 @@ object GooglePlay {
     def recommendationsForApps(
       packagesName: List[Package],
       excludesPackages: List[Package],
-      limitPerApp: Int,
+      limitPerApp: Option[Int],
       limit: Int,
       auth: MarketCredentials
     ): NineCardsService[F, CardList[FullCard]] =

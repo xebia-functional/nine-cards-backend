@@ -1,6 +1,5 @@
 package cards.nine.api.applications
 
-import cards.nine.api.messages.GooglePlayMessages._
 import cards.nine.domain.analytics.{ RankedAppsByCategory, RankedWidgetsByMoment }
 import cards.nine.domain.application.{ CardList, FullCard, Package }
 import org.joda.time.DateTime
@@ -17,7 +16,7 @@ private[applications] object TestData {
 
   val limit = 20
 
-  val limitPerApp = 25
+  val limitPerApp = Some(25)
 
   val location = Option("US")
 
@@ -59,7 +58,7 @@ private[applications] object TestData {
     packages        = packagesName,
     excludePackages = excludePackages,
     limit           = limit,
-    limitPerApp     = Option(limitPerApp)
+    limitPerApp     = limitPerApp
   )
 
   val apiRankAppsRequest = ApiRankAppsRequest(
@@ -93,6 +92,12 @@ private[applications] object TestData {
     val rankApps = "/applications/rank"
 
     val rankAppsByMoments = "/applications/rank-by-moments"
+
+    val recommendationsByCategory = "/recommendations/SOCIAL"
+
+    val recommendationsForApps = "/recommendations"
+
+    val rankWidgets = "/widgets/rank"
 
   }
 

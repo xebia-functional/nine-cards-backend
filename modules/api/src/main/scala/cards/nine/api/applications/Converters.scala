@@ -1,9 +1,9 @@
 package cards.nine.api.applications
 
-import cards.nine.api.converters.{ Converters ⇒ BaseConverters }
 import cards.nine.commons.NineCardsService.Result
+import cards.nine.domain.analytics.{ RankedAppsByCategory, RankedWidgetsByMoment }
 import cards.nine.domain.application._
-import cards.nine.domain.analytics.RankedAppsByCategory
+import cards.nine.processes.rankings.messages.GetRankedDeviceApps._
 import cats.syntax.either._
 
 private[applications] object Converters {
@@ -56,7 +56,7 @@ private[applications] object Converters {
     ApiSetAppInfoResponse()
 
   def toApiSearchAppsResponse(response: CardList[BasicCard]): ApiSearchAppsResponse =
-    ApiSearchAppsResponse(response.cards map BaseConverters.toApiRecommendation)
+    ApiSearchAppsResponse(response.cards map toApiRecommendation)
 
   def toApiRankedAppsByCategory(ranking: RankedAppsByCategory) =
     ApiRankedAppsByCategory(ranking.category, ranking.packages map (_.packageName))
@@ -66,5 +66,43 @@ private[applications] object Converters {
       items ⇒
         ApiRankAppsResponse(items map toApiRankedAppsByCategory)
     }
+
+  def toApiRecommendation(card: FullCard): ApiRecommendation =
+    ApiRecommendation(
+      packageName = card.packageName,
+      title       = card.title,
+      free        = card.free,
+      icon        = card.icon,
+      stars       = card.stars,
+      downloads   = card.downloads,
+      screenshots = card.screenshots
+    )
+
+  def toApiRecommendation(card: BasicCard): ApiRecommendation =
+    ApiRecommendation(
+      packageName = card.packageName,
+      title       = card.title,
+      free        = card.free,
+      icon        = card.icon,
+      stars       = card.stars,
+      downloads   = card.downloads,
+      screenshots = Nil
+    )
+
+  def toApiGetRecommendationsResponse(response: CardList[FullCard]): ApiGetRecommendationsResponse =
+    ApiGetRecommendationsResponse(
+      response.cards map toApiRecommendation
+    )
+
+  def toApiRankedWidgetsByMoment(ranking: RankedWidgetsByMoment) =
+    ApiRankedWidgetsByMoment(ranking.moment, ranking.widgets map (_.widget))
+
+  def toApiRankWidgetsResponse(result: Result[List[RankedWidgetsByMoment]]) =
+    result.map {
+      items ⇒
+        ApiRankWidgetsResponse(items map toApiRankedWidgetsByMoment)
+    }
+
+  def toDeviceAppList(items: List[Package]) = items map DeviceApp.apply
 
 }

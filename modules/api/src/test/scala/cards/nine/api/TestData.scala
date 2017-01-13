@@ -1,10 +1,7 @@
 package cards.nine.api
 
 import cards.nine.api.NineCardsHeaders._
-import cards.nine.api.messages.GooglePlayMessages._
 import cards.nine.domain.account._
-import cards.nine.domain.analytics.RankedWidgetsByMoment
-import cards.nine.domain.application.{ CardList, FullCard, Package }
 import org.joda.time.DateTime
 import spray.http.HttpHeaders.RawHeader
 
@@ -30,30 +27,11 @@ object TestData {
 
   val googleAnalyticsToken = "yada-yada-yada"
 
-  val icon = "path-to-icon"
-
-  val limit = 20
-
-  val limitPerApp = 25
-
   val location = Option("US")
 
   val marketLocalization = "en-us"
 
   val now = DateTime.now
-
-  val packagesName = List(
-    "earth.europe.italy",
-    "earth.europe.unitedKingdom",
-    "earth.europe.germany",
-    "earth.europe.france",
-    "earth.europe.portugal",
-    "earth.europe.spain"
-  ) map Package
-
-  val deviceApps = Map("countries" → packagesName)
-
-  val excludePackages = packagesName.filter(_.value.length > 18)
 
   val moments = List("HOME", "NIGHT")
 
@@ -87,46 +65,11 @@ object TestData {
     )
   }
 
-  object Messages {
-
-    val apiGetRecommendationsByCategoryRequest = ApiGetRecommendationsByCategoryRequest(
-      excludePackages = excludePackages,
-      limit           = limit
-    )
-
-    val apiGetRecommendationsForAppsRequest = ApiGetRecommendationsForAppsRequest(
-      packages        = packagesName,
-      excludePackages = excludePackages,
-      limit           = limit,
-      limitPerApp     = Option(limitPerApp)
-    )
-
-    val apiRankByMomentsRequest = ApiRankByMomentsRequest(
-      location = location,
-      items    = packagesName,
-      moments  = moments,
-      limit    = limit
-    )
-
-    val getRankedWidgetsResponse = List.empty[RankedWidgetsByMoment]
-
-    val getRecommendationsByCategoryResponse = CardList[FullCard](Nil, Nil)
-
-    val getAppsInfoResponse = CardList[FullCard](Nil, Nil)
-
-  }
-
   object Paths {
 
     val apiDocs = "/apiDocs/index.html"
 
     val invalid = "/chalkyTown"
-
-    val rankWidgets = "/widgets/rank"
-
-    val recommendationsByCategory = "/recommendations/SOCIAL"
-
-    val recommendationsForApps = "/recommendations"
 
   }
 

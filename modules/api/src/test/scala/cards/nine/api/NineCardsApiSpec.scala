@@ -2,26 +2,20 @@ package cards.nine.api
 
 import akka.actor.ActorSystem
 import akka.testkit._
-import cards.nine.api.NineCardsHeaders._
 import cards.nine.api.TestData._
-import cards.nine.commons.NineCardsErrors.AuthTokenNotValid
-import cards.nine.commons.NineCardsService
 import cards.nine.commons.config.Domain.NineCardsConfiguration
 import cards.nine.commons.config.NineCardsConfig
-import cards.nine.domain.account._
 import cards.nine.processes.NineCardsServices._
 import cards.nine.processes._
 import cards.nine.processes.account.AccountProcesses
 import cards.nine.processes.applications.ApplicationProcesses
 import cards.nine.processes.rankings.RankingProcesses
-import org.mockito.Matchers.{ eq ⇒ mockEq }
 import org.specs2.matcher.Matchers
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
 import org.specs2.specification.Scope
 import scala.concurrent.duration.DurationInt
-import spray.http.HttpHeaders.RawHeader
-import spray.http.{ HttpRequest, MediaTypes, StatusCodes }
+import spray.http.{ MediaTypes, StatusCodes }
 import spray.routing.HttpService
 import spray.testkit.Specs2RouteTest
 
@@ -51,113 +45,12 @@ trait NineCardsApiSpecification
 
     val nineCardsApi = new NineCardsRoutes().nineCardsRoutes
 
-    accountProcesses.checkAuthToken(
-      sessionToken = SessionToken(mockEq(sessionToken.value)),
-      androidId    = AndroidId(mockEq(androidId.value)),
-      authToken    = mockEq(authToken),
-      requestUri   = any[String]
-    ) returns NineCardsService.right(userId)
-  }
-
-  trait SuccessfulScope extends BasicScope {
-
-    applicationProcesses.getRecommendationsByCategory(any, any, any, any, any) returns
-      NineCardsService.right(Messages.getRecommendationsByCategoryResponse)
-
-    applicationProcesses.getRecommendationsForApps(any, any, any, any, any) returns
-      NineCardsService.right(Messages.getRecommendationsByCategoryResponse)
-
-    rankingProcesses.getRankedWidgets(any, any, any, any) returns
-      NineCardsService.right(Messages.getRankedWidgetsResponse).value
-
-  }
-
-  trait UnsuccessfulScope extends BasicScope {
-
-    accountProcesses.checkAuthToken(
-      sessionToken = SessionToken(mockEq(sessionToken.value)),
-      androidId    = AndroidId(mockEq(androidId.value)),
-      authToken    = mockEq(failingAuthToken),
-      requestUri   = any[String]
-    ) returns NineCardsService.left(AuthTokenNotValid("The provided auth token is not valid"))
-
-  }
-
-  trait FailingScope extends BasicScope {
-
-    accountProcesses.checkAuthToken(
-      sessionToken = SessionToken(mockEq(sessionToken.value)),
-      androidId    = AndroidId(mockEq(androidId.value)),
-      authToken    = mockEq(failingAuthToken),
-      requestUri   = any[String]
-    ) returns NineCardsService.right(userId)
-
   }
 
 }
 
 class NineCardsApiSpec
   extends NineCardsApiSpecification {
-
-  private[this] def unauthorizedNoHeaders(request: HttpRequest) = {
-
-    "return a 401 Unauthorized status code if no headers are provided" in new BasicScope {
-      request ~> sealRoute(nineCardsApi) ~> check {
-        status.intValue shouldEqual StatusCodes.Unauthorized.intValue
-      }
-    }
-
-    "return a 401 Unauthorized status code if some of the headers aren't provided" in new BasicScope {
-      request ~> addHeader(RawHeader(headerAndroidId, androidId.value)) ~> sealRoute(nineCardsApi) ~> check {
-        status.intValue shouldEqual StatusCodes.Unauthorized.intValue
-      }
-    }
-
-    "return a 401 Unauthorized status code if a wrong credential is provided" in new UnsuccessfulScope {
-      request ~> addHeaders(Headers.failingUserInfoHeaders) ~> sealRoute(nineCardsApi) ~> check {
-        status.intValue shouldEqual StatusCodes.Unauthorized.intValue
-      }
-    }
-
-    "return a 401 Unauthorized status code if a persistence error happens" in new FailingScope {
-      request ~> addHeaders(Headers.failingUserInfoHeaders) ~> sealRoute(nineCardsApi) ~> check {
-        status.intValue shouldEqual StatusCodes.Unauthorized.intValue
-      }
-    }.pendingUntilFixed("Pending using EitherT")
-
-  }
-
-  private[this] def internalServerError(request: HttpRequest) = {
-    "return 500 Internal Server Error status code if a persistence error happens" in new FailingScope {
-      request ~> addHeaders(Headers.userInfoHeaders) ~> sealRoute(nineCardsApi) ~> check {
-        status.intValue shouldEqual StatusCodes.InternalServerError.intValue
-      }
-    }.pendingUntilFixed("Pending using EitherT")
-  }
-
-  private[this] def badRequestEmptyBody(request: HttpRequest) = {
-    "return a 400 BadRequest if no body is provided" in new BasicScope {
-      request ~> sealRoute(nineCardsApi) ~> check {
-        status.intValue shouldEqual StatusCodes.BadRequest.intValue
-      }
-    }
-  }
-
-  private[this] def authenticatedBadRequestEmptyBody(request: HttpRequest) = {
-    "return a 400 BadRequest if no body is provided" in new BasicScope {
-      request ~> addHeaders(Headers.userInfoHeaders) ~> sealRoute(nineCardsApi) ~> check {
-        status.intValue shouldEqual StatusCodes.BadRequest.intValue
-      }
-    }
-  }
-
-  private[this] def successOk(request: HttpRequest) = {
-    "return a 200 OK Status code if the operation was carried out" in new SuccessfulScope {
-      request ~> addHeaders(Headers.userInfoHeaders) ~> sealRoute(nineCardsApi) ~> check {
-        status.intValue shouldEqual StatusCodes.OK.intValue
-      }
-    }
-  }
 
   "nineCardsApi" should {
     "grant access to Swagger documentation" in new BasicScope {
@@ -176,48 +69,6 @@ class NineCardsApiSpec
       }
     }
 
-  }
-
-  "POST /widgets/rank" should {
-
-    val request = Post(
-      uri     = Paths.rankWidgets,
-      content = Messages.apiRankByMomentsRequest
-    )
-
-    authenticatedBadRequestEmptyBody(Post(Paths.rankWidgets))
-
-    unauthorizedNoHeaders(request)
-
-    successOk(request)
-  }
-
-  "POST /recommendations" should {
-
-    val request = Post(
-      uri     = Paths.recommendationsForApps,
-      content = Messages.apiGetRecommendationsForAppsRequest
-    ) ~> addHeaders(Headers.googlePlayHeaders)
-
-    authenticatedBadRequestEmptyBody(Post(Paths.recommendationsForApps))
-
-    unauthorizedNoHeaders(request)
-
-    successOk(request)
-  }
-
-  "POST /recommendations/category" should {
-
-    val request = Post(
-      uri     = Paths.recommendationsByCategory,
-      content = Messages.apiGetRecommendationsByCategoryRequest
-    ) ~> addHeaders(Headers.googlePlayHeaders)
-
-    authenticatedBadRequestEmptyBody(Post(Paths.recommendationsByCategory))
-
-    unauthorizedNoHeaders(request)
-
-    successOk(request)
   }
 
 }

@@ -20,10 +20,6 @@ private[collections] object TestData {
 
   val installations = 1
 
-  val limit = 20
-
-  val limitPerApp = 25
-
   val location = Option("US")
 
   val marketLocalization = "en-us"

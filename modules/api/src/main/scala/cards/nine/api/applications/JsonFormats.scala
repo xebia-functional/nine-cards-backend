@@ -1,7 +1,6 @@
 package cards.nine.api.applications
 
-import cards.nine.api.messages.GooglePlayMessages.{ ApiRankByMomentsRequest, ApiRecommendation }
-import cards.nine.domain.application.Package
+import cards.nine.domain.application.{ Package, Widget }
 import spray.httpx.SprayJsonSupport
 import spray.json._
 
@@ -42,6 +41,18 @@ private[applications] trait JsonFormats
   implicit val googlePlayRecommendationFormat = jsonFormat7(ApiRecommendation)
 
   implicit val apiSearchAppsResponse = jsonFormat1(ApiSearchAppsResponse)
+
+  implicit val apiGetRecommendationsByCategoryRequestFormat = jsonFormat2(ApiGetRecommendationsByCategoryRequest)
+
+  implicit val apiGetRecommendationsForAppsRequestFormat = jsonFormat4(ApiGetRecommendationsForAppsRequest)
+
+  implicit val apiGetRecommendationsResponseFormat = jsonFormat1(ApiGetRecommendationsResponse)
+
+  implicit val widgetFormat = jsonFormat2(Widget.apply)
+
+  implicit val apiRankedWidgetsByMomentFormat = jsonFormat2(ApiRankedWidgetsByMoment)
+
+  implicit val apiRankWidgetsResponseFormat = jsonFormat1(ApiRankWidgetsResponse)
 }
 
 private[applications] object JsonFormats extends JsonFormats

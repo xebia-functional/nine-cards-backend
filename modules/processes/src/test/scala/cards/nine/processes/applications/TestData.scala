@@ -54,7 +54,7 @@ object RecommendationsTestData {
 
   val limit = 20
 
-  val limitPerApp = 100
+  val limitPerApp = Some(100)
 
   val smallLimit = 1
 
