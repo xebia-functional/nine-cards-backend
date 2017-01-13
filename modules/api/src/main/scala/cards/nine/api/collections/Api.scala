@@ -9,6 +9,7 @@ import cards.nine.api.utils.SprayMatchers._
 import cards.nine.commons.NineCardsService.NineCardsService
 import cards.nine.commons.config.Domain.NineCardsConfiguration
 import cards.nine.domain.application.Category
+import cards.nine.domain.market.MarketCredentials
 import cards.nine.domain.pagination.Page
 import cards.nine.processes._
 import cards.nine.processes.account.AccountProcesses
@@ -43,35 +44,35 @@ class CollectionsApi(
             }
           } ~
             get {
-              nineCardsDirectives.googlePlayInfo { googlePlayContext ⇒
-                complete(getPublishedCollections(googlePlayContext, userContext))
+              nineCardsDirectives.marketAuthHeaders { marketAuth ⇒
+                complete(getPublishedCollections(marketAuth, userContext))
               }
             }
         } ~
           (path("latest" / CategorySegment / TypedIntSegment[PageNumber] / TypedIntSegment[PageSize]) & get) {
             (category: Category, pageNumber: PageNumber, pageSize: PageSize) ⇒
-              nineCardsDirectives.googlePlayInfo { googlePlayContext ⇒
+              nineCardsDirectives.marketAuthHeaders { marketAuth ⇒
                 complete {
                   getLatestCollectionsByCategory(
-                    category          = category,
-                    googlePlayContext = googlePlayContext,
-                    userContext       = userContext,
-                    pageNumber        = pageNumber,
-                    pageSize          = pageSize
+                    category    = category,
+                    marketAuth  = marketAuth,
+                    userContext = userContext,
+                    pageNumber  = pageNumber,
+                    pageSize    = pageSize
                   )
                 }
               }
           } ~
           (path("top" / CategorySegment / TypedIntSegment[PageNumber] / TypedIntSegment[PageSize]) & get) {
             (category: Category, pageNumber: PageNumber, pageSize: PageSize) ⇒
-              nineCardsDirectives.googlePlayInfo { googlePlayContext ⇒
+              nineCardsDirectives.marketAuthHeaders { marketAuth ⇒
                 complete {
                   getTopCollectionsByCategory(
-                    category          = category,
-                    googlePlayContext = googlePlayContext,
-                    userContext       = userContext,
-                    pageNumber        = pageNumber,
-                    pageSize          = pageSize
+                    category    = category,
+                    marketAuth  = marketAuth,
+                    userContext = userContext,
+                    pageNumber  = pageNumber,
+                    pageSize    = pageSize
                   )
                 }
               }
@@ -90,8 +91,8 @@ class CollectionsApi(
           pathPrefix(TypedSegment[PublicIdentifier]) { publicIdentifier ⇒
             pathEndOrSingleSlash {
               get {
-                nineCardsDirectives.googlePlayInfo { googlePlayContext ⇒
-                  complete(getCollection(publicIdentifier, googlePlayContext, userContext))
+                nineCardsDirectives.marketAuthHeaders { marketAuth ⇒
+                  complete(getCollection(publicIdentifier, marketAuth, userContext))
                 }
               } ~
                 put {
@@ -112,14 +113,14 @@ class CollectionsApi(
 
   private[this] def getCollection(
     publicId: PublicIdentifier,
-    googlePlayContext: GooglePlayContext,
+    marketAuth: MarketCredentials,
     userContext: UserContext
   ): NineCardsService[NineCardsServices, ApiSharedCollection] =
     sharedCollectionProcesses
       .getCollectionByPublicIdentifier(
         userId           = userContext.userId.value,
         publicIdentifier = publicId.value,
-        marketAuth       = toMarketAuth(googlePlayContext, userContext)
+        marketAuth       = marketAuth
       )
       .map(r ⇒ toApiSharedCollection(r.data)(toApiCollectionApp))
 
@@ -165,7 +166,7 @@ class CollectionsApi(
 
   private[this] def getLatestCollectionsByCategory(
     category: Category,
-    googlePlayContext: GooglePlayContext,
+    marketAuth: MarketCredentials,
     userContext: UserContext,
     pageNumber: PageNumber,
     pageSize: PageSize
@@ -174,17 +175,17 @@ class CollectionsApi(
       .getLatestCollectionsByCategory(
         userId     = userContext.userId.value,
         category   = category.entryName,
-        marketAuth = toMarketAuth(googlePlayContext, userContext),
+        marketAuth = marketAuth,
         pageParams = Page(pageNumber.value, pageSize.value)
       )
       .map(toApiSharedCollectionList)
 
   private[this] def getPublishedCollections(
-    googlePlayContext: GooglePlayContext,
+    marketAuth: MarketCredentials,
     userContext: UserContext
   ): NineCardsService[NineCardsServices, ApiSharedCollectionList] =
     sharedCollectionProcesses
-      .getPublishedCollections(userContext.userId.value, toMarketAuth(googlePlayContext, userContext))
+      .getPublishedCollections(userContext.userId.value, marketAuth)
       .map(toApiSharedCollectionList)
 
   private[this] def getSubscriptionsByUser(
@@ -196,7 +197,7 @@ class CollectionsApi(
 
   private[this] def getTopCollectionsByCategory(
     category: Category,
-    googlePlayContext: GooglePlayContext,
+    marketAuth: MarketCredentials,
     userContext: UserContext,
     pageNumber: PageNumber,
     pageSize: PageSize
@@ -205,7 +206,7 @@ class CollectionsApi(
       .getTopCollectionsByCategory(
         userId     = userContext.userId.value,
         category   = category.entryName,
-        marketAuth = toMarketAuth(googlePlayContext, userContext),
+        marketAuth = marketAuth,
         pageParams = Page(pageNumber.value, pageSize.value)
       )
       .map(toApiSharedCollectionList)

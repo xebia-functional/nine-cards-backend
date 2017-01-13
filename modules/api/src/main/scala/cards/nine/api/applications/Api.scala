@@ -1,13 +1,12 @@
 package cards.nine.api.applications
 
 import cards.nine.api.NineCardsDirectives._
-import cards.nine.api.NineCardsHeaders.Domain._
-import cards.nine.api.converters.Converters._
 import cards.nine.api.utils.SprayMarshallers._
 import cards.nine.api.utils.SprayMatchers._
 import cards.nine.commons.NineCardsService.{ NineCardsService, Result }
 import cards.nine.commons.config.Domain.NineCardsConfiguration
 import cards.nine.domain.application.{ BasicCard, Category, FullCard, Package, PriceFilter }
+import cards.nine.domain.market.MarketCredentials
 import cards.nine.processes._
 import cards.nine.processes.account.AccountProcesses
 import cards.nine.processes.applications.ApplicationProcesses
@@ -42,13 +41,13 @@ class ApplicationsApi(
         post {
           entity(as[ApiAppsInfoRequest]) { request ⇒
             nineCardsDirectives.authenticateUser { userContext ⇒
-              nineCardsDirectives.googlePlayInfo { googlePlayContext ⇒
+              nineCardsDirectives.marketAuthHeaders { marketAuth ⇒
                 parameter("slice".?) { sliceOpt ⇒
                   sliceOpt match {
                     case Some("icon") ⇒
-                      complete(getAppsBasicInfo(request, googlePlayContext, userContext)(toApiIconApp))
+                      complete(getAppsBasicInfo(request, marketAuth)(toApiIconApp))
                     case _ ⇒
-                      complete(getAppsInfo(request, googlePlayContext, userContext)(toApiDetailsApp))
+                      complete(getAppsInfo(request, marketAuth)(toApiDetailsApp))
                   }
                 }
               }
@@ -72,8 +71,8 @@ class ApplicationsApi(
       path("categorize") {
         post {
           entity(as[ApiAppsInfoRequest]) { request ⇒
-            nineCardsDirectives.googlePlayInfo { googlePlayContext ⇒
-              complete(getAppsInfo(request, googlePlayContext, userContext)(toApiCategorizedApp))
+            nineCardsDirectives.marketAuthHeaders { marketAuth ⇒
+              complete(getAppsInfo(request, marketAuth)(toApiCategorizedApp))
             }
           }
         }
@@ -85,14 +84,14 @@ class ApplicationsApi(
       path("rank") {
         post {
           entity(as[ApiRankAppsRequest]) { request ⇒
-            complete(rankApps(request, userContext))
+            complete(rankApps(request))
           }
         }
       } ~
         path("rank-by-moments") {
           post {
             entity(as[ApiRankByMomentsRequest]) { request ⇒
-              complete(rankAppsByMoments(request, userContext))
+              complete(rankAppsByMoments(request))
             }
           }
         }
@@ -103,8 +102,8 @@ class ApplicationsApi(
       post {
         entity(as[ApiSearchAppsRequest]) { request ⇒
           nineCardsDirectives.authenticateUser { userContext ⇒
-            nineCardsDirectives.googlePlayInfo { googlePlayContext ⇒
-              complete(searchApps(request, googlePlayContext, userContext))
+            nineCardsDirectives.marketAuthHeaders { marketAuth ⇒
+              complete(searchApps(request, marketAuth))
             }
           }
         }
@@ -116,8 +115,8 @@ class ApplicationsApi(
       pathEndOrSingleSlash {
         post {
           entity(as[ApiGetRecommendationsForAppsRequest]) { request ⇒
-            nineCardsDirectives.googlePlayInfo { googlePlayContext ⇒
-              complete(getRecommendationsForApps(request, googlePlayContext, userContext))
+            nineCardsDirectives.marketAuthHeaders { marketAuth ⇒
+              complete(getRecommendationsForApps(request, marketAuth))
             }
           }
         }
@@ -126,8 +125,8 @@ class ApplicationsApi(
           nineCardsDirectives.priceFilterPath { priceFilter ⇒
             post {
               entity(as[ApiGetRecommendationsByCategoryRequest]) { request ⇒
-                nineCardsDirectives.googlePlayInfo { googlePlayContext ⇒
-                  complete(getRecommendationsByCategory(request, category, priceFilter, googlePlayContext, userContext))
+                nineCardsDirectives.marketAuthHeaders { marketAuth ⇒
+                  complete(getRecommendationsByCategory(request, category, priceFilter, marketAuth))
                 }
               }
             }
@@ -140,7 +139,7 @@ class ApplicationsApi(
       path("rank") {
         post {
           entity(as[ApiRankByMomentsRequest]) { request ⇒
-            complete(rankWidgets(request, userContext))
+            complete(rankWidgets(request))
           }
         }
       }
@@ -148,20 +147,18 @@ class ApplicationsApi(
 
   private[this] def getAppsInfo[T](
     request: ApiAppsInfoRequest,
-    googlePlayContext: GooglePlayContext,
-    userContext: UserContext
+    marketAuth: MarketCredentials
   )(converter: FullCard ⇒ T): NineCardsService[NineCardsServices, ApiAppsInfoResponse[T]] =
     applicationProcesses
-      .getAppsInfo(request.items, toMarketAuth(googlePlayContext, userContext))
+      .getAppsInfo(request.items, marketAuth)
       .map(toApiAppsInfoResponse(converter))
 
   private[this] def getAppsBasicInfo[T](
     request: ApiAppsInfoRequest,
-    googlePlayContext: GooglePlayContext,
-    userContext: UserContext
+    marketAuth: MarketCredentials
   )(converter: BasicCard ⇒ T): NineCardsService[NineCardsServices, ApiAppsInfoResponse[T]] =
     applicationProcesses
-      .getAppsBasicInfo(request.items, toMarketAuth(googlePlayContext, userContext))
+      .getAppsBasicInfo(request.items, marketAuth)
       .map(toApiAppsInfoResponse[BasicCard, T](converter))
 
   private[this] def setAppInfo(
@@ -174,29 +171,26 @@ class ApplicationsApi(
 
   private[this] def searchApps(
     request: ApiSearchAppsRequest,
-    googlePlayContext: GooglePlayContext,
-    userContext: UserContext
+    marketAuth: MarketCredentials
   ): NineCardsService[NineCardsServices, ApiSearchAppsResponse] =
     applicationProcesses
       .searchApps(
         request.query,
         request.excludePackages,
         request.limit,
-        toMarketAuth(googlePlayContext, userContext)
+        marketAuth
       )
       .map(toApiSearchAppsResponse)
 
   private[this] def rankApps(
-    request: ApiRankAppsRequest,
-    userContext: UserContext
-  ): cats.free.Free[NineCardsServices, Result[ApiRankAppsResponse]] =
+    request: ApiRankAppsRequest
+  ): Free[NineCardsServices, Result[ApiRankAppsResponse]] =
     rankingProcesses.getRankedDeviceApps(request.location, request.items)
       .map(toApiRankAppsResponse)
 
   private[this] def rankAppsByMoments(
-    request: ApiRankByMomentsRequest,
-    userContext: UserContext
-  ): cats.free.Free[NineCardsServices, Result[ApiRankAppsResponse]] =
+    request: ApiRankByMomentsRequest
+  ): Free[NineCardsServices, Result[ApiRankAppsResponse]] =
     rankingProcesses.getRankedAppsByMoment(request.location, request.items, request.moments, request.limit)
       .map(toApiRankAppsResponse)
 
@@ -204,8 +198,7 @@ class ApplicationsApi(
     request: ApiGetRecommendationsByCategoryRequest,
     category: Category,
     priceFilter: PriceFilter,
-    googlePlayContext: GooglePlayContext,
-    userContext: UserContext
+    marketAuth: MarketCredentials
   ): NineCardsService[NineCardsServices, ApiGetRecommendationsResponse] =
     applicationProcesses
       .getRecommendationsByCategory(
@@ -213,14 +206,13 @@ class ApplicationsApi(
         priceFilter,
         request.excludePackages,
         request.limit,
-        toMarketAuth(googlePlayContext, userContext)
+        marketAuth
       )
       .map(toApiGetRecommendationsResponse)
 
   private[this] def getRecommendationsForApps(
     request: ApiGetRecommendationsForAppsRequest,
-    googlePlayContext: GooglePlayContext,
-    userContext: UserContext
+    marketAuth: MarketCredentials
   ): NineCardsService[NineCardsServices, ApiGetRecommendationsResponse] =
     applicationProcesses
       .getRecommendationsForApps(
@@ -228,13 +220,12 @@ class ApplicationsApi(
         request.excludePackages,
         request.limitPerApp,
         request.limit,
-        toMarketAuth(googlePlayContext, userContext)
+        marketAuth
       )
       .map(toApiGetRecommendationsResponse)
 
   private[this] def rankWidgets(
-    request: ApiRankByMomentsRequest,
-    userContext: UserContext
+    request: ApiRankByMomentsRequest
   ): Free[NineCardsServices, Result[ApiRankWidgetsResponse]] =
     rankingProcesses.getRankedWidgets(request.location, request.items, request.moments, request.limit)
       .map(toApiRankWidgetsResponse)

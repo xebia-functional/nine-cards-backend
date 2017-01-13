@@ -3,7 +3,6 @@ package cards.nine.api.collections
 import cards.nine.api.NineCardsHeaders.Domain._
 import cards.nine.api.collections.messages._
 import cards.nine.domain.application._
-import cards.nine.domain.market.MarketCredentials
 import cards.nine.processes.collections.messages._
 
 private[collections] object Converters {
@@ -89,13 +88,6 @@ private[collections] object Converters {
 
   def toApiUnsubscribeResponse(response: UnsubscribeResponse): ApiUnsubscribeResponse =
     ApiUnsubscribeResponse()
-
-  def toMarketAuth(googlePlayContext: GooglePlayContext, userContext: UserContext): MarketCredentials =
-    MarketCredentials(
-      androidId    = userContext.androidId,
-      localization = googlePlayContext.marketLocalization,
-      token        = googlePlayContext.googlePlayToken
-    )
 
   def toApiGetSubscriptionsByUser(response: GetSubscriptionsByUserResponse): ApiGetSubscriptionsByUser =
     ApiGetSubscriptionsByUser(
