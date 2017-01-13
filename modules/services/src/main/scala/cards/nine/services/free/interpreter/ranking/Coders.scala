@@ -11,11 +11,11 @@ object Coders {
   import io.circe.generic.auto._
   import io.circe.generic.semiauto._
 
-  val packageD: Decoder[Package] = Decoder.decodeString map Package
-  val packageE: Encoder[Package] = Encoder.encodeString.contramap(_.value)
+  implicit val packageD: Decoder[Package] = Decoder.decodeString map Package
+  implicit val packageE: Encoder[Package] = Encoder.encodeString.contramap(_.value)
 
-  val rankingD: Decoder[GoogleAnalyticsRanking] = deriveDecoder[GoogleAnalyticsRanking]
-  val rankingE: Encoder[GoogleAnalyticsRanking] = deriveEncoder[GoogleAnalyticsRanking]
+  implicit val rankingD: Decoder[GoogleAnalyticsRanking] = deriveDecoder[GoogleAnalyticsRanking]
+  implicit val rankingE: Encoder[GoogleAnalyticsRanking] = deriveEncoder[GoogleAnalyticsRanking]
 
   implicit val cacheValReader: Reader[Option[CacheVal]] = Readers.decoder(implicitly[Decoder[CacheVal]])
 
