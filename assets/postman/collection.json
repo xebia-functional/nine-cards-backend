@@ -295,6 +295,46 @@
 						"description": ""
 					},
 					"response": []
+				},
+				{
+					"name": "Rank a list of Widgets",
+					"request": {
+						"url": "{{scheme}}://{{authority}}{{root_path}}/widgets/rank",
+						"method": "POST",
+						"header": [
+							{
+								"key": "X-Session-Token",
+								"value": "{{user_sessionToken}}",
+								"description": ""
+							},
+							{
+								"key": "X-Android-ID",
+								"value": "{{user_androidId}}",
+								"description": ""
+							},
+							{
+								"key": "X-Auth-Token",
+								"value": "{{COMPUTE_AUTH_TOKEN}}",
+								"description": ""
+							},
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"description": ""
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"description": ""
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"location\" : \"ES\",\n\t\"items\" : [\n\t\t\"flipboard.app\", \"com.twitter.android\",\n\t\t\"com.google.android.videos\", \"com.google.android.youtube\"\n\t],\n\t\"moments\": [],\n\t\"limit\" : 10 \n}"
+						},
+						"description": ""
+					},
+					"response": []
 				}
 			]
 		},
@@ -334,10 +374,7 @@
 								"description": ""
 							}
 						],
-						"body": {
-							"mode": "formdata",
-							"formdata": []
-						},
+						"body": {},
 						"description": "Gets the list of collections that a user (the sender) has published. "
 					},
 					"response": []
@@ -414,10 +451,7 @@
 								"description": ""
 							}
 						],
-						"body": {
-							"mode": "formdata",
-							"formdata": []
-						},
+						"body": {},
 						"description": "Read the details of an existing Collection,"
 					},
 					"response": []
@@ -472,26 +506,6 @@
 					"name": "Get Rankings of Country",
 					"request": {
 						"url": "{{scheme}}://{{authority}}{{root_path}}/rankings/countries/Spain",
-						"method": "GET",
-						"header": [
-							{
-								"key": "Accept",
-								"value": "application/json",
-								"description": ""
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \t\"packages\" : [ \n\t\t\"com.google.android.youtube\",\n\t\t\"com.google.android.gm\",\n\t\t\"com.facebook.katana\"\n  \t],\n  \t\"excludePackages\" : [\n\t\t\"com.twitter.android\",\n\t\t\"flipboard.app\"\n  \t],\n  \t\"limitPerApp\" : 4,\n  \t\"limit\" : 10\n}"
-						},
-						"description": ""
-					},
-					"response": []
-				},
-				{
-					"name": "Get Rankings of Continent",
-					"request": {
-						"url": "{{scheme}}://{{authority}}{{root_path}}/rankings/continents/Africa",
 						"method": "GET",
 						"header": [
 							{
