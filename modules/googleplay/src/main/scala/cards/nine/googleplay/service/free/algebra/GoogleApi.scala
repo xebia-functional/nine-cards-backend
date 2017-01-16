@@ -16,6 +16,9 @@ object GoogleApi {
   case class GetDetails(packageName: Package, marketAuth: MarketCredentials)
     extends Ops[Failure Either FullCard]
 
+  case class GetDetailsList(packages: List[Package], marketAuth: MarketCredentials)
+    extends Ops[List[Failure Either FullCard]]
+
   case class RecommendationsByApps(request: RecommendByAppsRequest, auth: MarketCredentials)
     extends Ops[List[Package]]
 
@@ -35,6 +38,9 @@ object GoogleApi {
 
     def getDetails(packageName: Package, auth: MarketCredentials): Free[F, Failure Either FullCard] =
       Free.inject[Ops, F](GetDetails(packageName, auth))
+
+    def getDetailsList(packages: List[Package], auth: MarketCredentials): Free[F, List[Failure Either FullCard]] =
+      Free.inject[Ops, F](GetDetailsList(packages, auth))
 
     def recommendationsByApps(request: RecommendByAppsRequest, auth: MarketCredentials): Free[F, List[Package]] =
       Free.inject[Ops, F](RecommendationsByApps(request, auth))

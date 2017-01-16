@@ -227,6 +227,7 @@ object Domain {
     protocol: String,
     host: String,
     port: Int,
+    detailsBatchSize: Int,
     paths: GooglePlayApiPaths
   )
 
@@ -238,6 +239,7 @@ object Domain {
         config.getString(s"$prefix.protocol"),
         config.getString(s"$prefix.host"),
         config.getInt(s"$prefix.port"),
+        config.getInt(s"$prefix.detailsBatchSize"),
         GooglePlayApiPaths(config, prefix)
       )
     }

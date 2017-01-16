@@ -64,6 +64,7 @@ trait DummyConfig {
         val recommendations = "/fdfe/rec"
       }
 
+      val detailsBatchSize = 5
     }
 
     object web {
@@ -164,6 +165,7 @@ trait DummyConfig {
        |        protocol = "${common.protocol}"
        |        host = "${common.host}"
        |        port = ${common.port}
+       |        detailsBatchSize = ${googleplay.api.detailsBatchSize}
        |        paths {
        |          bulkDetails = "${googleplay.api.paths.bulkDetails}"
        |          details = "${googleplay.api.paths.details}"

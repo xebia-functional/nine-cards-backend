@@ -30,6 +30,7 @@ class Interpreter(config: GooglePlayApiConfiguration) extends (Ops ~> WithHttpCl
   def apply[A](ops: Ops[A]): WithHttpClient[A] = ops match {
     case GetBulkDetails(packs, auth) ⇒ new BulkDetailsWithClient(packs, auth)
     case GetDetails(pack, auth) ⇒ new DetailsWithClient(pack, auth)
+    case GetDetailsList(packs, auth) ⇒ new DetailsListWithClient(packs, auth)
     case RecommendationsByApps(request, auth) ⇒ new RecommendationsByAppsWithClient(request, auth)
     case RecommendationsByCategory(request, auth) ⇒ new RecommendationsByCategoryWithClient(request, auth)
     case SearchApps(request, auth) ⇒ new SearchAppsWithClient(request, auth)
@@ -102,6 +103,47 @@ class Interpreter(config: GooglePlayApiConfiguration) extends (Ops ~> WithHttpCl
       }.handle {
         case e: UnexpectedStatus ⇒ Either.left(handleUnexpected(e))
       }
+  }
+
+  class DetailsListWithClient(packages: List[Package], auth: MarketCredentials)
+    extends (Client ⇒ Task[List[Failure Either FullCard]]) {
+
+    private[this] def isServerError(failure: Failure) = failure match {
+      case PackageNotFound(_) ⇒ false
+      case WrongAuthParams(_) ⇒ true
+      case QuotaExceeded(_) ⇒ true
+      case GoogleApiServerError ⇒ true
+    }
+
+    private[this] def findFailure(responses: List[Failure Either FullCard]): Boolean =
+      responses.collectFirst({ case Left(f) if isServerError(f) ⇒ f }).isDefined
+
+    val batchSize = 10 // TODO: Get from the Config
+
+    override def apply(client: Client): Task[List[Failure Either FullCard]] = {
+      def fetchParallel(batch: List[Package]): Task[List[Failure Either FullCard]] =
+        Task.gatherUnordered(
+          packages.map(pack ⇒ new DetailsWithClient(pack, auth).apply(client)),
+          exceptionCancels = true // handleUnexpected captures exceptions
+        )
+
+      def processBatched(packages: List[Package]): Task[List[Failure Either FullCard]] =
+        if (packages.isEmpty)
+          Task.now(Nil)
+        else {
+          val (batch, rest) = packages.splitAt(batchSize)
+          for {
+            batchResponses ← fetchParallel(batch)
+            error = findFailure(batchResponses)
+            rest ← {
+              if (error) Task.now(rest.map(_ ⇒ Left(GoogleApiServerError)))
+              else processBatched(rest)
+            }
+          } yield batchResponses ++ rest
+        }
+
+      processBatched(packages)
+    }
   }
 
   class RecommendationsByAppsWithClient(request: RecommendByAppsRequest, auth: MarketCredentials)
