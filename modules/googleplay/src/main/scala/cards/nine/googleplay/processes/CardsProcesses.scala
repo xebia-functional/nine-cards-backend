@@ -132,12 +132,9 @@ class CardsProcesses[F[_]](
           case _ ⇒ Left(pack)
         }
 
-      def tupleLeft[A, B, C](a: A, either: Either[B, C]): Either[(A, B), C] =
-        either.leftMap((b: B) ⇒ (a, b))
-
       val (labelFailures, cards): (List[(Package, ApiFailure)], List[FullCard]) =
         packages.zip(results)
-          .map(Function.tupled(tupleLeft[Package, ApiFailure, FullCard]))
+          .map(pair ⇒ pair._2.leftMap(apif ⇒ (pair._1, apif)))
           .separate
 
       val (unknown, notFound) = labelFailures.map(Function.tupled(classifyFailure)).separate
@@ -145,14 +142,6 @@ class CardsProcesses[F[_]](
       (cards, notFound, unknown)
     }
 
-    /*
-     * Here are two issues to challenge:
-     *   1 - We must detect if there are and abort the rest.
-     *   2 - we must make operations in parallel.
-     * 
-     * Now, all of these operations are made in a same monadic type 'F[_]', so we can
-     * not use Task-specific or Task.Parallel specific operations, or conversions. 
-     */
     for {
       cachedPackages ← cacheService.getValidMany(packages)
       uncachedPackages = packages diff cachedPackages.map(_.packageName)
@@ -161,6 +150,7 @@ class CardsProcesses[F[_]](
       _ ← cacheService.putResolvedMany(cards)
       _ ← cacheService.addErrorMany(notFound)
       _ ← cacheService.setToPendingMany(error)
+
     } yield ResolvePackagesResult(cachedPackages, cards, notFound, error)
   }
 
@@ -172,8 +162,10 @@ class CardsProcesses[F[_]](
     def handleFailedResponse(failed: ApiFailure): Free[F, FailedResponse] =
       // Does package exists in Google Play?
       webScrapper.existsApp(pack) flatMap {
-        case true ⇒ cacheService.setToPending(pack).map(_ ⇒ PendingResolution(pack))
-        case false ⇒ cacheService.addError(pack).map(_ ⇒ UnknownPackage(pack))
+        case true ⇒
+          cacheService.setToPending(pack).map(_ ⇒ PendingResolution(pack))
+        case false ⇒
+          cacheService.addError(pack).map(_ ⇒ UnknownPackage(pack))
       }
 
     // "Resolved or permanent Item in Redis Cache?"

@@ -116,9 +116,12 @@ class Interpreter(config: GooglePlayApiConfiguration) extends (Ops ~> WithHttpCl
     }
 
     private[this] def findFailure(responses: List[Failure Either FullCard]): Boolean =
-      responses.collectFirst({ case Left(f) if isServerError(f) ⇒ f }).isDefined
+      responses.exists {
+        case Left(f) ⇒ isServerError(f)
+        case _ ⇒ false
+      }
 
-    val batchSize = 10 // TODO: Get from the Config
+    val batchSize = config.detailsBatchSize
 
     override def apply(client: Client): Task[List[Failure Either FullCard]] = {
       def fetchParallel(batch: List[Package]): Task[List[Failure Either FullCard]] =
@@ -131,15 +134,15 @@ class Interpreter(config: GooglePlayApiConfiguration) extends (Ops ~> WithHttpCl
         if (packages.isEmpty)
           Task.now(Nil)
         else {
-          val (batch, rest) = packages.splitAt(batchSize)
+          val (preff, suff) = packages.splitAt(batchSize)
           for {
-            batchResponses ← fetchParallel(batch)
-            error = findFailure(batchResponses)
-            rest ← {
-              if (error) Task.now(rest.map(_ ⇒ Left(GoogleApiServerError)))
-              else processBatched(rest)
+            preffResponse ← fetchParallel(preff)
+            error = findFailure(preffResponse)
+            suffResponse ← {
+              if (error) Task.now(suff.map(_ ⇒ Left(GoogleApiServerError)))
+              else processBatched(suff)
             }
-          } yield batchResponses ++ rest
+          } yield preffResponse ++ suffResponse
         }
 
       processBatched(packages)
