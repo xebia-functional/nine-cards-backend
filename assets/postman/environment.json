@@ -59,10 +59,22 @@
       "value": "anncol",
       "type": "text",
       "enabled": true
+    },
+    {
+      "key": "subscriber_sessionToken",
+      "value": "bobtok",
+      "type": "text",
+      "enabled": true
+    },
+    {
+      "key": "subscriber_androidId",
+      "value": "bobdroidid",
+      "type": "text",
+      "enabled": true
     }
   ],
-  "timestamp": 1475829563081,
+  "timestamp": 1484669407358,
   "_postman_variable_scope": "environment",
-  "_postman_exported_at": "2016-10-07T08:40:14.390Z",
-  "_postman_exported_using": "Postman/4.7.2"
+  "_postman_exported_at": "2017-01-17T16:10:18.773Z",
+  "_postman_exported_using": "Postman/4.9.3"
 }
