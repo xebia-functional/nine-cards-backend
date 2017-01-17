@@ -10,15 +10,10 @@ trait InterpreterServer[F[_]] {
   def putResolved(card: FullCard): F[Unit]
   def putResolvedMany(cards: List[FullCard]): F[Unit]
   def putPermanent(card: FullCard): F[Unit]
-  def markPending(pack: Package): F[Unit]
-  def markPendingMany(packages: List[Package]): F[Unit]
-  def unmarkPending(pack: Package): F[Unit]
-  def unmarkPendingMany(packages: List[Package]): F[Unit]
-  def markError(pack: Package): F[Unit]
-  def markErrorMany(packages: List[Package]): F[Unit]
-  def clearInvalid(pack: Package): F[Unit]
-  def clearInvalidMany(packages: List[Package]): F[Unit]
-  def isPending(pack: Package): F[Boolean]
+  def setToPending(pack: Package): F[Unit]
+  def setToPendingMany(packages: List[Package]): F[Unit]
+  def addError(pack: Package): F[Unit]
+  def addErrorMany(packages: List[Package]): F[Unit]
   def listPending(num: Int): F[List[Package]]
 }
 
@@ -30,15 +25,10 @@ case class MockInterpreter[F[_]](server: InterpreterServer[F]) extends (Ops ~> F
     case PutResolved(card) ⇒ server.putResolved(card)
     case PutResolvedMany(packages) ⇒ server.putResolvedMany(packages)
     case PutPermanent(card) ⇒ server.putPermanent(card)
-    case MarkPending(pack) ⇒ server.markPending(pack)
-    case MarkPendingMany(packages) ⇒ server.markPendingMany(packages)
-    case UnmarkPending(pack) ⇒ server.unmarkPending(pack)
-    case UnmarkPendingMany(packages) ⇒ server.unmarkPendingMany(packages)
-    case MarkError(pack) ⇒ server.markError(pack)
-    case MarkErrorMany(packages) ⇒ server.markErrorMany(packages)
-    case ClearInvalid(pack) ⇒ server.clearInvalid(pack)
-    case ClearInvalidMany(packages) ⇒ server.clearInvalidMany(packages)
-    case IsPending(pack) ⇒ server.isPending(pack)
+    case SetToPending(pack) ⇒ server.setToPending(pack)
+    case SetToPendingMany(packages) ⇒ server.setToPendingMany(packages)
+    case AddError(pack) ⇒ server.addError(pack)
+    case AddErrorMany(packages) ⇒ server.addErrorMany(packages)
     case ListPending(num) ⇒ server.listPending(num)
   }
 

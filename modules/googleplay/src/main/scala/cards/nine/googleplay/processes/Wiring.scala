@@ -1,43 +1,43 @@
 package cards.nine.googleplay.processes
 
+import akka.actor.ActorSystem
 import cards.nine.commons.config.NineCardsConfig._
+import cards.nine.commons.redis.RedisOpsToTask
 import cards.nine.googleplay.processes.GooglePlayApp.{ GooglePlayApp, Interpreters }
 import cards.nine.googleplay.service.free.algebra.{ Cache, GoogleApi, WebScraper }
 import cards.nine.googleplay.service.free.interpreter._
 import cards.nine.googleplay.service.free.interpreter.cache.CacheInterpreter
 import cats._
-import com.redis.{ RedisClient, RedisClientPool }
 import org.http4s.client.blaze.PooledHttp1Client
 import org.http4s.client.{ Client ⇒ HttpClient }
-
 import scalaz.concurrent.Task
+import scredis.{ Client ⇒ RedisClient }
 
 object Wiring {
 
+  import scala.concurrent.ExecutionContext.Implicits.global
+
   type WithHttpClient[+A] = HttpClient ⇒ Task[A]
-  type WithRedisClient[+A] = RedisClient ⇒ Task[A]
 
   class HttpToTask(httpClient: HttpClient)
     extends (WithHttpClient ~> Task) {
     override def apply[A](fa: WithHttpClient[A]): Task[A] = fa(httpClient)
   }
 
-  class RedisToTask(redisPool: RedisClientPool)
-    extends (WithRedisClient ~> Task) {
-    override def apply[A](fa: WithRedisClient[A]): Task[A] = redisPool.withClient(fa)
-  }
-
   private[this] val apiHttpClient = PooledHttp1Client()
   private[this] val webHttpClient = PooledHttp1Client()
-  private[this] val redisClientPool: RedisClientPool = new RedisClientPool(
-    host   = nineCardsConfiguration.redis.host,
-    port   = nineCardsConfiguration.redis.port,
-    secret = nineCardsConfiguration.redis.secret
+
+  implicit val system: ActorSystem = ActorSystem("cards-nine-googleplay-processes-Wiring")
+
+  val redisClient: RedisClient = RedisClient(
+    host        = nineCardsConfiguration.redis.host,
+    port        = nineCardsConfiguration.redis.port,
+    passwordOpt = nineCardsConfiguration.redis.secret
   )
 
   val cacheInt: Cache.Ops ~> Task = {
-    val toTask = new RedisToTask(redisClientPool)
-    CacheInterpreter andThen toTask
+    val toTask = new RedisOpsToTask(redisClient)
+    new CacheInterpreter() andThen toTask
   }
 
   val googleApiInt: GoogleApi.Ops ~> Task = {
@@ -57,7 +57,6 @@ object Wiring {
   def shutdown(): Unit = {
     apiHttpClient.shutdownNow
     webHttpClient.shutdownNow
-    redisClientPool.close
   }
 
 }

@@ -1,6 +1,6 @@
 package cards.nine.googleplay.service.free.interpreter.googleapi
 
-import cards.nine.commons.TaskInstances._
+import cards.nine.commons.catscalaz.TaskInstances._
 import cards.nine.domain.application.{ FullCard, Package, PriceFilter, BasicCard }
 import cards.nine.domain.market.MarketCredentials
 import cards.nine.googleplay.domain._

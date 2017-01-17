@@ -2,7 +2,7 @@ package cards.nine.services.free.interpreter.collection
 
 import java.sql.Timestamp
 
-import cards.nine.commons.ScalazInstances
+import cards.nine.commons.catscalaz.ScalazInstances
 import cards.nine.commons.NineCardsErrors.SharedCollectionNotFound
 import cards.nine.domain.application.Package
 import cards.nine.domain.pagination.Page

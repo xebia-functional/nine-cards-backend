@@ -1,4 +1,4 @@
-package cards.nine.commons
+package cards.nine.commons.catscalaz
 
 import cats.{ Applicative, ApplicativeError, Monad }
 
