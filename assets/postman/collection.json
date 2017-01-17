@@ -70,7 +70,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": " { \n     \"deviceToken\": \"1111a-2222b-33c-4444d\" \n }"
+							"raw": " { \n     \"deviceToken\": \"anndevtok\" \n }"
 						},
 						"description": ""
 					},
@@ -206,7 +206,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"location\" : \"ES\",\n\t\"items\" : {\n\t\t\"NEWS_AND_MAGAZINES\" : [ \"flipboard.app\", \"com.twitter.android\" ],\n\t\t\"VIDEO_PLAYER\" : [ \"com.google.android.videos\", \"com.google.android.youtube\"]\n\t}\n}"
+							"raw": "{\n\t\"location\" : \"ES\",\n\t\"items\" : {\n\t\t\"NEWS_AND_MAGAZINES\" : [ \"flipboard.app\", \"com.twitter.android\" ],\n\t\t\"VIDEO_PLAYERS\" : [ \"com.google.android.videos\", \"com.google.android.youtube\"]\n\t}\n}"
 						},
 						"description": ""
 					},
@@ -330,7 +330,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"location\" : \"ES\",\n\t\"items\" : [\n\t\t\"flipboard.app\", \"com.twitter.android\",\n\t\t\"com.google.android.videos\", \"com.google.android.youtube\"\n\t],\n\t\"moments\": [],\n\t\"limit\" : 10 \n}"
+							"raw": "{\n\t\"location\" : \"ES\",\n\t\"items\" : [ \n\t\t\"com.buzzpia.aqua.appwidget.clock\",\n\t\t\"com.google.android.apps.genie.geniewidget\", \n\t\t\"com.google.android.deskclock\"\n\t],\n\t\"moments\": [\"NIGHT\"],\n\t\"limit\" : 10 \n}"
 						},
 						"description": ""
 					},
@@ -374,7 +374,10 @@
 								"description": ""
 							}
 						],
-						"body": {},
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
 						"description": "Gets the list of collections that a user (the sender) has published. "
 					},
 					"response": []
@@ -413,7 +416,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"author\": \"John Doe\",\n    \"name\": \"Social World\",\n    \"category\": \"SOCIAL\",\n    \"community\": true,\n    \"icon\": \"social\",\n    \"installations\" : 11,\n    \"views\" : 12,\n    \"packages\": [\n        \"com.whatsapp\",\n        \"org.telegram.messenger\",\n        \"com.snapchat.android\",\n        \"com.facebook.katana\"\n    ],\n}"
+							"raw": "{\n    \"author\": \"John Doe\",\n    \"name\": \"Social World\",\n    \"category\": \"SOCIAL\",\n    \"community\": true,\n    \"icon\": \"social\",\n    \"installations\" : 11,\n    \"views\" : 12,\n    \"packages\": [\n        \"com.whatsapp\",\n        \"org.telegram.messenger\",\n        \"com.snapchat.android\",\n        \"com.facebook.katana\"\n    ]\n}"
 						},
 						"description": "This endpoint allows a user, the sender, to publish a shared collection as the author of it."
 					},
@@ -451,7 +454,10 @@
 								"description": ""
 							}
 						],
-						"body": {},
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
 						"description": "Read the details of an existing Collection,"
 					},
 					"response": []
@@ -490,7 +496,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"collectionInfo\" : {\n\t\t\"title\" : \"Social Plus, the greatest collection of Social apps!\"\n\t}\n    \"packages\": [\n        \"com.whatsapp\",\n        \"com.snapchat.android\",\n        \"com.facebook.katana\",\n        \"com.google.android.apps.plus\"\n    ],\n}"
+							"raw": "{\n\t\"collectionInfo\" : {\n\t\t\"title\" : \"Social Plus, the greatest collection of Social apps!\"\n\t},\n    \"packages\": [\n        \"com.whatsapp\",\n        \"com.snapchat.android\",\n        \"com.facebook.katana\",\n        \"com.google.android.apps.plus\"\n    ]\n}"
 						},
 						"description": "Edit a collection that was publish by the user. "
 					},
@@ -505,7 +511,7 @@
 				{
 					"name": "Get Rankings of Country",
 					"request": {
-						"url": "{{scheme}}://{{authority}}{{root_path}}/rankings/countries/Spain",
+						"url": "{{scheme}}://{{authority}}{{root_path}}/rankings/countries/ES",
 						"method": "GET",
 						"header": [
 							{
@@ -545,37 +551,7 @@
 				{
 					"name": "Reload Rankings of Country",
 					"request": {
-						"url": "{{scheme}}://{{authority}}{{root_path}}/rankings/countries/Spain",
-						"method": "POST",
-						"header": [
-							{
-								"key": "Accept",
-								"value": "application/json",
-								"description": ""
-							},
-							{
-								"key": "Content-Type",
-								"value": "application/json",
-								"description": ""
-							},
-							{
-								"key": "X-Google-Analytics-Token",
-								"value": "{{google_analytics_token}}",
-								"description": ""
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"startDate\": \"2016-01-01\",\n  \"endDate\": \"2016-03-31\",\n  \"rankingLength\": 10\n}\n"
-						},
-						"description": ""
-					},
-					"response": []
-				},
-				{
-					"name": "Reload Rankings of Continent",
-					"request": {
-						"url": "{{scheme}}://{{authority}}{{root_path}}/rankings/continents/Africa",
+						"url": "{{scheme}}://{{authority}}{{root_path}}/rankings/countries/ES",
 						"method": "POST",
 						"header": [
 							{
@@ -782,17 +758,17 @@
 				{
 					"name": "List of Subscribed Collections",
 					"request": {
-						"url": "{{scheme}}://{{authority}}{{root_path}}/collections/subscriptions/{{subscribedCollection}}",
+						"url": "{{scheme}}://{{authority}}{{root_path}}/collections/subscriptions",
 						"method": "GET",
 						"header": [
 							{
 								"key": "X-Session-Token",
-								"value": "{{user_sessionToken}}",
+								"value": "{{subscriber_sessionToken}}",
 								"description": ""
 							},
 							{
 								"key": "X-Android-ID",
-								"value": "{{user_androidId}}",
+								"value": "{{subscriber_androidId}}",
 								"description": ""
 							},
 							{
@@ -817,17 +793,17 @@
 				{
 					"name": "Subscribe Shared Collection",
 					"request": {
-						"url": "{{scheme}}://{{authority}}{{root_path}}/collections/subscriptions/{{subscribed_collection}}",
+						"url": "{{scheme}}://{{authority}}{{root_path}}/collections/subscriptions/{{collection_id}}",
 						"method": "PUT",
 						"header": [
 							{
 								"key": "X-Session-Token",
-								"value": "{{user_sessionToken}}",
+								"value": "{{subscriber_sessionToken}}",
 								"description": ""
 							},
 							{
 								"key": "X-Android-ID",
-								"value": "{{user_androidId}}",
+								"value": "{{subscriber_androidId}}",
 								"description": ""
 							},
 							{
@@ -857,17 +833,17 @@
 				{
 					"name": "Unsubscribe Shared Collection",
 					"request": {
-						"url": "{{scheme}}://{{authority}}{{root_path}}/collections/subscriptions/{{subscribed_collection}}",
+						"url": "{{scheme}}://{{authority}}{{root_path}}/collections/subscriptions/{{collection_id}}",
 						"method": "DELETE",
 						"header": [
 							{
 								"key": "X-Session-Token",
-								"value": "{{user_sessionToken}}",
+								"value": "{{subscriber_sessionToken}}",
 								"description": ""
 							},
 							{
 								"key": "X-Android-ID",
-								"value": "{{user_androidId}}",
+								"value": "{{subscriber_androidId}}",
 								"description": ""
 							},
 							{
