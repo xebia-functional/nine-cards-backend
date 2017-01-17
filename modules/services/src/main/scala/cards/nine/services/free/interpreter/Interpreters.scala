@@ -1,8 +1,9 @@
 package cards.nine.services.free.interpreter
 
+import akka.actor.ActorSystem
+import cards.nine.commons.catscalaz.TaskInstances
 import cards.nine.commons.config.NineCardsConfig._
-import cards.nine.commons.TaskInstances
-import cards.nine.googleplay.processes.Wiring.WithRedisClient
+import cards.nine.commons.redis.{ RedisClient, RedisOps }
 import cards.nine.services.free.algebra._
 import cards.nine.services.free.interpreter.analytics.{ Services ⇒ AnalyticsServices }
 import cards.nine.services.free.interpreter.collection.{ Services ⇒ CollectionServices }
@@ -12,27 +13,29 @@ import cards.nine.services.free.interpreter.googleapi.{ Services ⇒ GoogleApiSe
 import cards.nine.services.free.interpreter.googleoauth.{ Services ⇒ GoogleOAuthServices }
 import cards.nine.services.free.interpreter.googleplay.{ Services ⇒ GooglePlayServices }
 import cards.nine.services.free.interpreter.ranking.{ Services ⇒ RankingServices }
-import cards.nine.services.free.interpreter.ranking.Services._
 import cards.nine.services.free.interpreter.subscription.{ Services ⇒ SubscriptionServices }
 import cards.nine.services.free.interpreter.user.{ Services ⇒ UserServices }
 import cards.nine.services.persistence.DatabaseTransactor._
 import cats.{ ApplicativeError, ~> }
-import com.redis.RedisClientPool
 import doobie.contrib.postgresql.pgtypes._
 import doobie.imports._
-
 import scalaz.concurrent.Task
+import scredis.{ Client ⇒ ScredisClient }
 
 class Interpreters(implicit A: ApplicativeError[Task, Throwable], T: Transactor[Task]) {
 
-  val redisClientPool: RedisClientPool = new RedisClientPool(
-    host   = nineCardsConfiguration.redis.host,
-    port   = nineCardsConfiguration.redis.port,
-    secret = nineCardsConfiguration.redis.secret
+  implicit val system: ActorSystem = ActorSystem("cards-nine-services-redis")
+  import scala.concurrent.ExecutionContext.Implicits.global
+
+  val redisClient: RedisClient = ScredisClient(
+    host        = nineCardsConfiguration.redis.host,
+    port        = nineCardsConfiguration.redis.port,
+    passwordOpt = nineCardsConfiguration.redis.secret
   )
 
-  val toTask = new (WithRedisClient ~> Task) {
-    override def apply[A](fa: WithRedisClient[A]): Task[A] = redisClientPool.withClient(fa)
+  val toTask = new (RedisOps ~> Task) {
+
+    override def apply[A](fa: RedisOps[A]): Task[A] = fa(redisClient)
   }
 
   val connectionIO2Task = new (ConnectionIO ~> Task) {

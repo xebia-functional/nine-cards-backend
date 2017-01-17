@@ -7,9 +7,9 @@ import io.circe.{ Decoder, Encoder }
 import io.circe.parser._
 import io.circe.syntax._
 
-class CirceCodersSpec extends Specification {
+class FormatsSpec extends Specification {
 
-  import CirceCoders._
+  import Formats._
 
   val date: DateTime = new DateTime(2016, 7, 23, 12, 0, 14, DateTimeZone.UTC)
   val dateStr: String = "160723120014000"
@@ -21,8 +21,8 @@ class CirceCodersSpec extends Specification {
     val keyType = key.keyType.entryName
 
     s"The Coders for a CacheKey of type $keyType" should {
-      "format a $keyType key into a full string " in (KeyFormat.format(key) must_=== keyStr)
-      "parse a string into a $keyType Key" in (KeyFormat.parse(keyStr) must_=== Some(key))
+      "format a $keyType key into a full string " in (keyFormat(key) must_=== keyStr)
+      "parse a string into a $keyType Key" in (parseKey(keyStr) must_=== Some(key))
     }
   }
 

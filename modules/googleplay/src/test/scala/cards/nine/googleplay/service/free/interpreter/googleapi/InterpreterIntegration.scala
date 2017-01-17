@@ -1,6 +1,6 @@
 package cards.nine.googleplay.service.free.interpreter.googleapi
 
-import cards.nine.commons.TaskInstances._
+import cards.nine.commons.catscalaz.TaskInstances._
 import cards.nine.domain.application.FullCard
 import cards.nine.googleplay.config.TestConfig._
 import cards.nine.googleplay.domain._

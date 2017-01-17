@@ -5,7 +5,7 @@ import akka.event.LoggingAdapter
 import cards.nine.app.RankingActor.RankingByCategory
 import cards.nine.commons.NineCardsErrors._
 import cards.nine.commons.NineCardsService.Result
-import cards.nine.commons.TaskInstances._
+import cards.nine.commons.catscalaz.TaskInstances._
 import cards.nine.commons.config.NineCardsConfig._
 import cards.nine.commons.config.Domain.RankingsOAuthConfiguration
 import cards.nine.domain.analytics._

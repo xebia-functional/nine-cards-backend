@@ -1,41 +1,60 @@
 package cards.nine.commons.redis
 
-import com.redis.RedisClient
-import com.redis.serialization.{ Format, Parse }
+import cards.nine.commons.catscalaz.ScalaFuture2Task
+import scala.concurrent.ExecutionContext
+import scredis.serialization.{ Reader, Writer }
+import scalaz.concurrent.Task
 
-class CacheWrapper[Key, Val](client: RedisClient)(implicit f: Format, pk: Parse[Option[Key]], pv: Parse[Option[Val]]) {
+class CacheWrapper[Key, Val](
+  implicit
+  format: Format[Key],
+  writer: Writer[Val],
+  reader: Reader[Option[Val]],
+  ec: ExecutionContext
+) {
 
-  def get(key: Key): Option[Val] = client.get[Option[Val]](key).flatten
+  def get(key: Key): RedisOps[Option[Val]] =
+    client ⇒ ScalaFuture2Task {
+      client.get[Option[Val]](format(key)).map(_.flatten)
+    }
 
-  def mget(keys: List[Key]): List[Val] = keys match {
-    case head :: tail ⇒ client.mget[Option[Val]](head, tail: _*).getOrElse(Nil).flatMap(_.flatten.toList)
-    case _ ⇒ Nil
-  }
+  def mget(keys: List[Key]): RedisOps[List[Val]] =
+    client ⇒ {
+      if (keys.isEmpty)
+        Task(Nil)
+      else
+        ScalaFuture2Task {
+          client.mGet[Option[Val]](keys.map(format): _*).map(_.flatten.flatten)
+        }
+    }
 
-  def put(entry: (Key, Val)): Unit = client.set(entry._1, entry._2)
+  def put(entry: (Key, Val)): RedisOps[Unit] =
+    client ⇒ ScalaFuture2Task {
+      val (key, value) = entry
+      client.set[Val](format(key), value).map(x ⇒ Unit)
+    }
 
-  def mput(entries: List[(Key, Val)]): Unit = entries match {
-    case Nil ⇒ Unit
-    case _ ⇒ client.mset(entries: _*)
-  }
+  def mput(entries: List[(Key, Val)]): RedisOps[Unit] =
+    client ⇒ {
+      if (entries.isEmpty)
+        Task(Unit)
+      else ScalaFuture2Task {
+        client.mSet[Val](entries.map({ case (k, v) ⇒ format(k) → v }).toMap)
+      }
+    }
 
-  def findFirst(keys: List[Key]): Option[Val] = keys.toStream.map(get).find(_.isDefined).flatten
+  def delete(key: Key): RedisOps[Unit] =
+    client ⇒ ScalaFuture2Task {
+      client.del(key).map(x ⇒ Unit)
+    }
 
-  def delete(key: Key): Unit = client.del(key)
+  def delete(keys: List[Key]): RedisOps[Unit] =
+    client ⇒ {
+      if (keys.isEmpty)
+        Task(Unit)
+      else ScalaFuture2Task {
+        client.del(keys map format: _*).map(x ⇒ Unit)
+      }
+    }
 
-  def delete(keys: List[Key]): Unit = keys match {
-    case head :: tail ⇒ client.del(head, tail: _*)
-    case _ ⇒ Nil
-  }
-}
-
-object CacheWrapper {
-
-  def apply[Key, Val](client: RedisClient)(
-    implicit
-    format: Format,
-    keyParse: Parse[Option[Key]],
-    valParse: Parse[Option[Val]]
-  ): CacheWrapper[Key, Val] =
-    new CacheWrapper[Key, Val](client)
 }

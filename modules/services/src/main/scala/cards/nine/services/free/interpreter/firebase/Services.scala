@@ -3,7 +3,7 @@ package cards.nine.services.free.interpreter.firebase
 import cards.nine.commons.config.Domain.GoogleFirebaseConfiguration
 import cards.nine.commons.NineCardsErrors._
 import cards.nine.commons.NineCardsService.Result
-import cards.nine.commons.TaskInstances._
+import cards.nine.commons.catscalaz.TaskInstances._
 import cards.nine.services.free.algebra.Firebase._
 import cards.nine.services.free.domain.Firebase._
 import cards.nine.services.free.interpreter.firebase.Decoders._

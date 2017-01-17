@@ -1,6 +1,6 @@
 package cards.nine.services.common
 
-import cards.nine.commons.ScalazInstances
+import cards.nine.commons.catscalaz.ScalazInstances
 import cards.nine.commons.NineCardsErrors.NineCardsError
 import cats.data.EitherT
 import cats.syntax.either._
