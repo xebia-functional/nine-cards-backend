@@ -134,7 +134,7 @@ class CardsProcesses[F[_]](
 
       val (labelFailures, cards): (List[(Package, ApiFailure)], List[FullCard]) =
         packages.zip(results)
-          .map(pair ⇒ pair._2.leftMap(apif ⇒ (pair._1, apif)))
+          .map({ case (pack, eith) ⇒ eith.leftMap(apif ⇒ (pack, apif)) })
           .separate
 
       val (unknown, notFound) = labelFailures.map(Function.tupled(classifyFailure)).separate
@@ -150,7 +150,6 @@ class CardsProcesses[F[_]](
       _ ← cacheService.putResolvedMany(cards)
       _ ← cacheService.addErrorMany(notFound)
       _ ← cacheService.setToPendingMany(error)
-
     } yield ResolvePackagesResult(cachedPackages, cards, notFound, error)
   }
 
