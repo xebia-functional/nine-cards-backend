@@ -124,9 +124,10 @@ class Interpreter(config: GooglePlayApiConfiguration) extends (Ops ~> WithHttpCl
     val batchSize = config.detailsBatchSize
 
     override def apply(client: Client): Task[List[Failure Either FullCard]] = {
+
       def fetchParallel(batch: List[Package]): Task[List[Failure Either FullCard]] =
         Task.gatherUnordered(
-          packages.map(pack ⇒ new DetailsWithClient(pack, auth).apply(client)),
+          batch.map(pack ⇒ new DetailsWithClient(pack, auth).apply(client)),
           exceptionCancels = true // handleUnexpected captures exceptions
         )
 
