@@ -26,11 +26,12 @@ class InterpreterSpec extends Specification with Matchers with MockServer with W
   val auth = MarketCredentials(AndroidId("androidId"), MarketToken("token"), None)
 
   val configuration = GooglePlayApiConfiguration(
-    protocol         = "http",
-    host             = "localhost",
-    port             = mockServerPort,
-    detailsBatchSize = 5,
-    paths            = GooglePlayApiPaths(
+    protocol            = "http",
+    host                = "localhost",
+    port                = mockServerPort,
+    detailsBatchSize    = 5,
+    maxTotalConnections = 15,
+    paths               = GooglePlayApiPaths(
       bulkDetails     = "/my/bulkdetails/path",
       details         = "/my/details/path",
       list            = "/path/to/list",

@@ -57,10 +57,13 @@ trait DummyConfig {
         val recommendations = "/fdfe/rec"
       }
 
+      val maxTotalConnections = 10
       val detailsBatchSize = 5
     }
 
     object web {
+
+      val maxTotalConnections = 3
 
       object paths {
         val details = "/store/apps/details"
@@ -158,6 +161,7 @@ trait DummyConfig {
        |        protocol = "${common.protocol}"
        |        host = "${common.host}"
        |        port = ${common.port}
+       |        maxTotalConnections = ${googleplay.api.maxTotalConnections}
        |        detailsBatchSize = ${googleplay.api.detailsBatchSize}
        |        paths {
        |          bulkDetails = "${googleplay.api.paths.bulkDetails}"
@@ -168,6 +172,7 @@ trait DummyConfig {
        |        }
        |      }
        |      web {
+       |        maxTotalConnections = ${googleplay.web.maxTotalConnections}
        |        protocol = "${common.protocol}"
        |        host = "${common.host}"
        |        port = ${common.port}
