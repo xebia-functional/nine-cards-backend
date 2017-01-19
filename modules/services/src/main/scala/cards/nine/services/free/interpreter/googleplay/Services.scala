@@ -54,7 +54,7 @@ class Services(implicit googlePlayProcesses: CardsProcesses[GooglePlayApp]) exte
   def recommendationsForApps(
     packageNames: List[Package],
     excludedPackages: List[Package],
-    limitByApp: Int,
+    limitByApp: Option[Int],
     limit: Int,
     auth: MarketCredentials
   ): Task[Result[CardList[FullCard]]] =

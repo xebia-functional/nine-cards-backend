@@ -14,7 +14,7 @@ case class InfoError(message: String) extends AnyVal
 
 case class RecommendByAppsRequest(
   searchByApps: List[Package],
-  numPerApp: Int,
+  numPerApp: Option[Int],
   excludedApps: List[Package],
   maxTotal: Int
 )

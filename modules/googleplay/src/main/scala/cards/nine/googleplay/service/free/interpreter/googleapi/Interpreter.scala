@@ -133,7 +133,10 @@ class Interpreter(config: GooglePlayApiConfiguration) extends (Ops ~> WithHttpCl
       }.map {
         _.bimap(
           _ ⇒ InfoError(s"Recommendations for package ${pack.value}"),
-          list ⇒ Converters.listResponseToPackages(list).take(request.numPerApp)
+          list ⇒ {
+            val packs = Converters.listResponseToPackages(list)
+            request.numPerApp.fold(packs)(packs.take)
+          }
         )
       }
     }

@@ -11,8 +11,8 @@ import cards.nine.commons.config.Domain.RankingsOAuthConfiguration
 import cards.nine.domain.analytics._
 import cards.nine.domain.oauth.ServiceAccount
 import cards.nine.domain.pagination.Page
-import cards.nine.processes.RankingProcesses
-import cards.nine.processes.messages.rankings.Reload._
+import cards.nine.processes.rankings.RankingProcesses
+import cards.nine.processes.rankings.messages.Reload._
 import cats.~>
 import cats.free.Free
 import org.joda.time.{ DateTime, DateTimeZone }
