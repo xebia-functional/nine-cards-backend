@@ -8,7 +8,9 @@ services:
   - redis-server
   - postgresql
 before_script:
-  - psql -c 'create database ninecards_travis_ci_test;' -U postgres
+  - psql -c 'create database ninecards_test;' -U postgres
+  - psql -c 'create user ninecards_tester ;' -U postgres
+  - psql -c 'grant all on database ninecards_test to ninecards_tester ;' -U postgres
 script:
   - sbt -Dconfig.file="modules/api/src/test/resources/test.conf" ++$TRAVIS_SCALA_VERSION "project tests" clean coverage test
 after_success:
@@ -16,7 +18,8 @@ after_success:
   - sbt -Dconfig.file="modules/api/src/test/resources/test.conf" ++$TRAVIS_SCALA_VERSION "project tests" coverageAggregate
   - sbt -Dconfig.file="modules/api/src/test/resources/test.conf" ++$TRAVIS_SCALA_VERSION "project tests" codacyCoverage
 after_script:
-  - psql -c 'drop database ninecards_travis_ci_test;' -U postgres
+  - psql -c 'drop database ninecards_test;' -U postgres
+  - psql -c 'drop user ninecards_tester;' -U postgres
 addons:
   apt:
     packages:

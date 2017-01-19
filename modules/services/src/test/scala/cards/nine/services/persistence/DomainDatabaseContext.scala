@@ -49,10 +49,10 @@ trait BasicDatabaseContext extends DummyConfig {
 
   implicit val transactor: Transactor[Task] =
     DriverManagerTransactor[Task](
-      driver = db.domain.driver,
-      url    = db.domain.url,
-      user   = db.domain.user,
-      pass   = db.domain.password
+      driver = db.default.driver,
+      url    = db.default.url,
+      user   = db.default.user,
+      pass   = db.default.password
     )
 }
 
