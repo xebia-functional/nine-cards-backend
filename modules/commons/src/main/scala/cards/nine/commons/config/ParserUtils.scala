@@ -5,32 +5,36 @@ import cats.implicits._
 
 object ParserUtils {
 
+  object uriregex {
+    val schemeR = """[^:/]+"""
+    val userR = """[^:]+"""
+    val passwordR = "[^@]+"
+    val hostR = """[^/:]+"""
+    val portR = """\d+"""
+    val pathR = """/.*"""
+  }
+
   object database {
-    val protocol = "([^:\\/]+:\\/\\/)"
+    import uriregex._
 
-    val userInfo = "([^:]+)?(:([^@]+))?@"
+    val userInfo = s"($userR)?(?::($passwordR))?"
 
-    val serverInstanceInfo = s"([^\\/:]+)(:\\d+)?(\\/.+)?"
+    val serverInstanceInfo = s"""(?:$hostR)(?::$portR)?(?:$pathR)?"""
 
-    val DatabaseUrl = s"$protocol($userInfo)?($serverInstanceInfo)?".r
+    val DatabaseUrl = s"""$schemeR://(?:$userInfo@)?($serverInstanceInfo)?""".r
 
     case class PersistenceConnectionInfo(user: String, password: String, url: String)
 
     def parseConnectionString(raw: String): ValidatedNel[ConfigError, PersistenceConnectionInfo] =
       raw match {
-        case DatabaseUrl(_, _, u, _, p, ur, _, _, _) ⇒
+        case DatabaseUrl(u, p, ur) ⇒
 
           val user = Option(u).toValidNel[ConfigError](MissingConfigValue("PostgreSQL user missing"))
           val password: ValidatedNel[ConfigError, String] = Validated.valid(Option(p).getOrElse(""))
           val url = Option(ur).toValidNel[ConfigError](MissingConfigValue("PostgreSQL URL missing"))
 
-          (user |@| password |@| url) map { (userValue, passwordValue, urlValue) ⇒
-            PersistenceConnectionInfo(
-              user     = userValue,
-              password = passwordValue,
-              url      = urlValue
-            )
-          }
+          (user |@| password |@| url) map (PersistenceConnectionInfo.apply _)
+
         case _ ⇒
           Validated.invalidNel(
             UnexpectedConnectionURL("Unexpected database connection URL: protocol://user[:password]@server/database")
@@ -39,19 +43,20 @@ object ParserUtils {
   }
 
   object cache {
-    val protocol = "([^:\\/]+:\\/\\/)"
 
-    val userInfo = "(([^:]+):)?([^@]+)?@"
+    import uriregex._
 
-    val serverInstanceInfo = "([^\\/:]+):(\\d+)(\\/(.+))?"
+    val userInfo = s"""(?:$userR:)?($passwordR)?@"""
 
-    val CacheUrl = s"$protocol($userInfo)?($serverInstanceInfo)?".r
+    val serverInstanceInfo = s"""($hostR):($portR)(?:$pathR)?"""
+
+    val CacheUrl = s"""$schemeR://(?:$userInfo)?(?:$serverInstanceInfo)?""".r
 
     case class CacheConnectionInfo(secret: Option[String], host: String, port: Int)
 
     def parseConnectionString(raw: String): ValidatedNel[ConfigError, CacheConnectionInfo] =
       raw match {
-        case CacheUrl(_, _, _, _, s, _, h, p, _, _) ⇒
+        case CacheUrl(s, h, p) ⇒
 
           val secret: ValidatedNel[ConfigError, Option[String]] = Validated.valid(Option(s))
           val host = Option(h).toValidNel[ConfigError](MissingConfigValue("Cache host missing"))
@@ -60,14 +65,7 @@ object ParserUtils {
               .toValidNel[ConfigError](MissingConfigValue("Cache port missing"))
               .andThen(validatedString2Int)
 
-          (secret |@| host |@| port) map { (secretValue, hostValue, portValue) ⇒
-            CacheConnectionInfo(
-              secret = secretValue,
-              host   = hostValue,
-              port   = portValue
-            )
-
-          }
+          (secret |@| host |@| port) map (CacheConnectionInfo.apply _)
 
         case _ ⇒
           Validated.invalidNel(
