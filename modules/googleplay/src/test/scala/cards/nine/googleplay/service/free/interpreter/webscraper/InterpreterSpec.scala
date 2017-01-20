@@ -20,10 +20,11 @@ class InterpreterSpec extends Specification with Matchers with MockServer with W
   override val mockServerPort = 9994
 
   implicit val configuration = GooglePlayWebConfiguration(
-    protocol = "http",
-    host     = "localhost",
-    port     = mockServerPort,
-    paths    = GooglePlayWebPaths(detailsPath)
+    maxTotalConnections = 3,
+    protocol            = "http",
+    host                = "localhost",
+    port                = mockServerPort,
+    paths               = GooglePlayWebPaths(detailsPath)
   )
 
   override def afterAll = {

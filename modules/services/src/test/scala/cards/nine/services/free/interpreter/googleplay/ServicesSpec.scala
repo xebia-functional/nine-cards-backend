@@ -1,19 +1,25 @@
 package cards.nine.services.free.interpreter.googleplay
 
+import akka.actor.ActorSystem
 import cards.nine.commons.NineCardsErrors.{ NineCardsError, PackageNotResolved }
 import cards.nine.commons.NineCardsService.Result
+import cards.nine.commons.catscalaz.TaskInstances.taskMonad
+import cards.nine.commons.config.NineCardsConfig.nineCardsConfiguration
 import cards.nine.domain.account.AndroidId
 import cards.nine.domain.application.{ CardList, Category, FullCard, Package, PriceFilter }
 import cards.nine.domain.market.{ Localization, MarketCredentials, MarketToken }
 import cards.nine.googleplay.domain._
 import cards.nine.googleplay.processes.GooglePlayApp.GooglePlayApp
 import cards.nine.googleplay.processes.getcard.UnknownPackage
-import cards.nine.googleplay.processes.{ CardsProcesses, ResolveMany }
+import cards.nine.googleplay.processes.{ CardsProcesses, ResolveMany, Wiring }
+import cats.{ ~> }
 import cats.free.Free
 import org.specs2.matcher.{ DisjunctionMatchers, Matcher, Matchers }
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
 import org.specs2.specification.Scope
+import scalaz.{ \/ }
+import scalaz.concurrent.Task
 
 class ServicesSpec
   extends Specification
@@ -25,6 +31,18 @@ class ServicesSpec
 
   def recommendationIsFreeMatcher(isFree: Boolean): Matcher[FullCard] = { rec: FullCard ⇒
     rec.free must_== isFree
+  }
+
+  implicit val actorSystem: ActorSystem = ActorSystem("cards-nine-services-googleplay-tests")
+  import scala.concurrent.ExecutionContext.Implicits.global
+
+  private[this] implicit val interpreters: GooglePlayApp ~> Task = new Wiring(nineCardsConfiguration)
+  private[this] def run[A](fa: Free[GooglePlayApp, A]): Throwable \/ A =
+    fa.foldMap(interpreters).unsafePerformSyncAttempt
+
+  trait BasicScope extends Scope {
+    implicit val googlePlayProcesses = mock[CardsProcesses[GooglePlayApp]]
+    val services = Services.services[GooglePlayApp]
   }
 
   object TestData {
@@ -109,11 +127,6 @@ class ServicesSpec
 
   }
 
-  trait BasicScope extends Scope {
-    implicit val googlePlayProcesses = mock[CardsProcesses[GooglePlayApp]]
-    val services = Services.services
-  }
-
   "resolveOne" should {
     "return the App object when a valid package name is provided" in new BasicScope {
 
@@ -121,8 +134,7 @@ class ServicesSpec
         Free.pure(Right(GooglePlayResponses.fullCard))
 
       val response = services.resolveOne(onePackage, AuthData.marketAuth)
-
-      response.unsafePerformSyncAttempt must be_\/-[Result[FullCard]].which {
+      run(response) must be_\/-[Result[FullCard]].which {
         content ⇒ content must beRight[FullCard](GooglePlayResponses.fullCard)
       }
     }
@@ -134,7 +146,7 @@ class ServicesSpec
 
       val response = services.resolveOne(onePackage, AuthData.marketAuth)
 
-      response.unsafePerformSyncAttempt must be_\/-[Result[FullCard]].which {
+      run(response) must be_\/-[Result[FullCard]].which {
         content ⇒ content must beLeft(PackageNotResolved(onePackageName))
       }
     }
@@ -148,7 +160,7 @@ class ServicesSpec
 
       val response = services.resolveManyDetailed(packages, AuthData.marketAuth)
 
-      response.unsafePerformSyncAttempt must be_\/-[Result[CardList[FullCard]]].which { response ⇒
+      run(response) must be_\/-[Result[CardList[FullCard]]].which { response ⇒
         response must beRight[CardList[FullCard]].which { appsInfo ⇒
           appsInfo.missing must containTheSameElementsAs(wrongPackages)
           appsInfo.cards must containTheSameElementsAs(fullCards)
@@ -173,7 +185,7 @@ class ServicesSpec
         auth             = AuthData.marketAuth
       )
 
-      response.unsafePerformSyncAttempt must be_\/-[Result[CardList[FullCard]]].which { response ⇒
+      run(response) must be_\/-[Result[CardList[FullCard]]].which { response ⇒
         response must beRight[CardList[FullCard]].which { rec ⇒
           rec.cards must containTheSameElementsAs(fullCards)
         }
@@ -195,7 +207,7 @@ class ServicesSpec
         auth             = AuthData.marketAuth
       )
 
-      response.unsafePerformSyncAttempt must be_\/-[Result[CardList[FullCard]]].which { response ⇒
+      run(response) must be_\/-[Result[CardList[FullCard]]].which { response ⇒
         response must beLeft[NineCardsError]
       }
     }
@@ -216,7 +228,7 @@ class ServicesSpec
         auth             = AuthData.marketAuth
       )
 
-      response.unsafePerformSyncAttempt must be_\/-[Result[CardList[FullCard]]].which { response ⇒
+      run(response) must be_\/-[Result[CardList[FullCard]]].which { response ⇒
         response must beRight[CardList[FullCard]].which { rec ⇒
           rec.cards must containTheSameElementsAs(fullCards)
         }

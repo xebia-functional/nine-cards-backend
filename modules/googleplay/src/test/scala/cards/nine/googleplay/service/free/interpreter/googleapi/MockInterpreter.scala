@@ -9,6 +9,7 @@ import cats.~>
 
 trait InterpreterServer[F[_]] {
   def getDetails(pack: Package, auth: MarketCredentials): F[Failure Either FullCard]
+  def getDetailsList(packageNames: List[Package], marketAuth: MarketCredentials): F[List[Failure Either FullCard]]
   def getBulkDetails(packageNames: List[Package], marketAuth: MarketCredentials): F[Failure Either List[BasicCard]]
   def recommendationsByApps(request: RecommendByAppsRequest, auth: MarketCredentials): F[List[Package]]
   def recommendationsByCategory(request: RecommendByCategoryRequest, auth: MarketCredentials): F[InfoError Either List[Package]]
@@ -19,6 +20,7 @@ case class MockInterpreter[F[_]](server: InterpreterServer[F]) extends (Ops ~> F
 
   override def apply[A](ops: Ops[A]) = ops match {
     case GetDetails(pack, auth) ⇒ server.getDetails(pack, auth)
+    case GetDetailsList(packs, auth) ⇒ server.getDetailsList(packs, auth)
     case GetBulkDetails(packs, auth) ⇒ server.getBulkDetails(packs, auth)
     case RecommendationsByApps(request, auth) ⇒ server.recommendationsByApps(request, auth)
     case RecommendationsByCategory(request, auth) ⇒ server.recommendationsByCategory(request, auth)

@@ -13,16 +13,9 @@ trait DummyConfig {
   object db {
 
     object default {
-      val driver = "org.h2.Driver"
-      val url = "jdbc:h2:mem:"
-      val user = "sa"
-      val password = ""
-    }
-
-    object domain {
       val driver = "org.postgresql.Driver"
-      val url = "jdbc:postgresql://localhost/ninecards_travis_ci_test"
-      val user = "postgres"
+      val url = "jdbc:postgresql://localhost/ninecards_test"
+      val user = "ninecards_tester"
       val password = ""
     }
 
@@ -64,9 +57,13 @@ trait DummyConfig {
         val recommendations = "/fdfe/rec"
       }
 
+      val maxTotalConnections = 10
+      val detailsBatchSize = 5
     }
 
     object web {
+
+      val maxTotalConnections = 3
 
       object paths {
         val details = "/store/apps/details"
@@ -164,6 +161,8 @@ trait DummyConfig {
        |        protocol = "${common.protocol}"
        |        host = "${common.host}"
        |        port = ${common.port}
+       |        maxTotalConnections = ${googleplay.api.maxTotalConnections}
+       |        detailsBatchSize = ${googleplay.api.detailsBatchSize}
        |        paths {
        |          bulkDetails = "${googleplay.api.paths.bulkDetails}"
        |          details = "${googleplay.api.paths.details}"
@@ -173,6 +172,7 @@ trait DummyConfig {
        |        }
        |      }
        |      web {
+       |        maxTotalConnections = ${googleplay.web.maxTotalConnections}
        |        protocol = "${common.protocol}"
        |        host = "${common.host}"
        |        port = ${common.port}

@@ -121,23 +121,35 @@ class CardsProcesses[F[_]](
     auth: MarketCredentials
   ): Free[F, ResolvePackagesResult] = {
 
-    def findNotFound(packages: List[Package], failures: List[ApiFailure]) = {
-      val notFoundList = failures.collect { case notFound: ApiNotFound ⇒ notFound.pack }
-      val errorList = packages diff notFoundList
-      (notFoundList, errorList)
+    def splitResults(
+      packages: List[Package],
+      results: List[ApiFailure Either FullCard]
+    ): (List[FullCard], List[Package], List[Package]) = {
+
+      def classifyFailure(pack: Package, failure: ApiFailure): Either[Package, Package] =
+        failure match {
+          case ApiNotFound(_) ⇒ Right(pack)
+          case _ ⇒ Left(pack)
+        }
+
+      val (labelFailures, cards): (List[(Package, ApiFailure)], List[FullCard]) =
+        packages.zip(results)
+          .map({ case (pack, eith) ⇒ eith.leftMap(apif ⇒ (pack, apif)) })
+          .separate
+
+      val (unknown, notFound) = labelFailures.map(Function.tupled(classifyFailure)).separate
+
+      (cards, notFound, unknown)
     }
 
     for {
       cachedPackages ← cacheService.getValidMany(packages)
       uncachedPackages = packages diff cachedPackages.map(_.packageName)
-      detailedPackages ← uncachedPackages.traverse[Free[F, ?], ApiFailure Either FullCard](p ⇒ googleApi.getDetails(p, auth))
-      (failures, cards) = detailedPackages.separate
-      (notFound, error) = findNotFound(uncachedPackages.diff(cards.map(_.packageName)), failures)
-
+      detailsResp ← googleApi.getDetailsList(uncachedPackages, auth)
+      (cards, notFound, error) = splitResults(packages, detailsResp)
       _ ← cacheService.putResolvedMany(cards)
       _ ← cacheService.addErrorMany(notFound)
       _ ← cacheService.setToPendingMany(error)
-
     } yield ResolvePackagesResult(cachedPackages, cards, notFound, error)
   }
 

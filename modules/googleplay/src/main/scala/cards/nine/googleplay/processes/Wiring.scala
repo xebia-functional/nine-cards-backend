@@ -1,7 +1,7 @@
 package cards.nine.googleplay.processes
 
 import akka.actor.ActorSystem
-import cards.nine.commons.config.NineCardsConfig._
+import cards.nine.commons.config.Domain.NineCardsConfiguration
 import cards.nine.commons.redis.RedisOpsToTask
 import cards.nine.googleplay.processes.GooglePlayApp.{ GooglePlayApp, Interpreters }
 import cards.nine.googleplay.service.free.algebra.{ Cache, GoogleApi, WebScraper }
@@ -11,11 +11,14 @@ import cats._
 import org.http4s.client.blaze.PooledHttp1Client
 import org.http4s.client.{ Client ⇒ HttpClient }
 import scalaz.concurrent.Task
-import scredis.{ Client ⇒ RedisClient }
+import scala.concurrent.ExecutionContext
 
-object Wiring {
-
-  import scala.concurrent.ExecutionContext.Implicits.global
+class Wiring(
+  config: NineCardsConfiguration
+)(
+  implicit
+  actorSystem: ActorSystem, ec: ExecutionContext
+) extends (GooglePlayApp ~> Task) {
 
   type WithHttpClient[+A] = HttpClient ⇒ Task[A]
 
@@ -24,35 +27,32 @@ object Wiring {
     override def apply[A](fa: WithHttpClient[A]): Task[A] = fa(httpClient)
   }
 
-  private[this] val apiHttpClient = PooledHttp1Client()
-  private[this] val webHttpClient = PooledHttp1Client()
-
-  implicit val system: ActorSystem = ActorSystem("cards-nine-googleplay-processes-Wiring")
-
-  val redisClient: RedisClient = RedisClient(
-    host        = nineCardsConfiguration.redis.host,
-    port        = nineCardsConfiguration.redis.port,
-    passwordOpt = nineCardsConfiguration.redis.secret
+  private[this] val apiHttpClient = PooledHttp1Client(
+    maxTotalConnections = config.google.play.api.detailsBatchSize
   )
 
-  val cacheInt: Cache.Ops ~> Task = {
-    val toTask = new RedisOpsToTask(redisClient)
-    new CacheInterpreter() andThen toTask
-  }
-
   val googleApiInt: GoogleApi.Ops ~> Task = {
-    val interp = new googleapi.Interpreter(nineCardsConfiguration.google.play.api)
+    val interp = new googleapi.Interpreter(config.google.play.api)
     val toTask = new HttpToTask(apiHttpClient)
     interp andThen toTask
   }
 
+  private[this] val webHttpClient = PooledHttp1Client()
+
   val webScrapperInt: WebScraper.Ops ~> Task = {
-    val interp = new webscrapper.Interpreter(nineCardsConfiguration.google.play.web)
+    val interp = new webscrapper.Interpreter(config.google.play.web)
     val toTask = new HttpToTask(webHttpClient)
     interp andThen toTask
   }
 
-  val interpreters: GooglePlayApp ~> Task = Interpreters(googleApiInt, cacheInt, webScrapperInt)
+  val cacheInt: Cache.Ops ~> Task = {
+    val toTask = RedisOpsToTask(config.redis)
+    new CacheInterpreter() andThen toTask
+  }
+
+  private[this] val interpreters: GooglePlayApp ~> Task = Interpreters(googleApiInt, cacheInt, webScrapperInt)
+
+  def apply[A](ops: GooglePlayApp[A]): Task[A] = interpreters(ops)
 
   def shutdown(): Unit = {
     apiHttpClient.shutdownNow

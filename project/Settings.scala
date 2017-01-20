@@ -42,8 +42,8 @@ trait Settings {
   lazy val flywayTestSettings9C = {
     flywayBaseSettings(Test) ++ Seq(
       flywayDriver := "org.postgresql.Driver",
-      flywayUrl := "jdbc:postgresql://localhost/ninecards_travis_ci_test",
-      flywayUser := "postgres",
+      flywayUrl := "jdbc:postgresql://localhost/ninecards_test",
+      flywayUser := "ninecards_tester",
       flywayPassword := "",
       flywayLocations := Seq("filesystem:" + apiResourcesFolder.value.getPath + "/db/migration")
     )
