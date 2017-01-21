@@ -1,6 +1,6 @@
 package cards.nine.googleplay.service.free.interpreter.googleapi
 
-import cards.nine.commons.TaskInstances._
+import cards.nine.commons.catscalaz.TaskInstances._
 import cards.nine.domain.application.{ FullCard, Package, PriceFilter, BasicCard }
 import cards.nine.domain.market.MarketCredentials
 import cards.nine.googleplay.domain._
@@ -30,6 +30,7 @@ class Interpreter(config: GooglePlayApiConfiguration) extends (Ops ~> WithHttpCl
   def apply[A](ops: Ops[A]): WithHttpClient[A] = ops match {
     case GetBulkDetails(packs, auth) ⇒ new BulkDetailsWithClient(packs, auth)
     case GetDetails(pack, auth) ⇒ new DetailsWithClient(pack, auth)
+    case GetDetailsList(packs, auth) ⇒ new DetailsListWithClient(packs, auth)
     case RecommendationsByApps(request, auth) ⇒ new RecommendationsByAppsWithClient(request, auth)
     case RecommendationsByCategory(request, auth) ⇒ new RecommendationsByCategoryWithClient(request, auth)
     case SearchApps(request, auth) ⇒ new SearchAppsWithClient(request, auth)
@@ -104,6 +105,51 @@ class Interpreter(config: GooglePlayApiConfiguration) extends (Ops ~> WithHttpCl
       }
   }
 
+  class DetailsListWithClient(packages: List[Package], auth: MarketCredentials)
+    extends (Client ⇒ Task[List[Failure Either FullCard]]) {
+
+    private[this] def isServerError(failure: Failure) = failure match {
+      case PackageNotFound(_) ⇒ false
+      case WrongAuthParams(_) ⇒ true
+      case QuotaExceeded(_) ⇒ true
+      case GoogleApiServerError ⇒ true
+    }
+
+    private[this] def findFailure(responses: List[Failure Either FullCard]): Boolean =
+      responses.exists {
+        case Left(f) ⇒ isServerError(f)
+        case _ ⇒ false
+      }
+
+    val batchSize = config.detailsBatchSize
+
+    override def apply(client: Client): Task[List[Failure Either FullCard]] = {
+
+      def fetchParallel(batch: List[Package]): Task[List[Failure Either FullCard]] =
+        Task.gatherUnordered(
+          batch.map(pack ⇒ new DetailsWithClient(pack, auth).apply(client)),
+          exceptionCancels = true // handleUnexpected captures exceptions
+        )
+
+      def processBatched(packages: List[Package]): Task[List[Failure Either FullCard]] =
+        if (packages.isEmpty)
+          Task.now(Nil)
+        else {
+          val (preff, suff) = packages.splitAt(batchSize)
+          for {
+            preffResponse ← fetchParallel(preff)
+            error = findFailure(preffResponse)
+            suffResponse ← {
+              if (error) Task.now(suff.map(_ ⇒ Left(GoogleApiServerError)))
+              else processBatched(suff)
+            }
+          } yield preffResponse ++ suffResponse
+        }
+
+      processBatched(packages)
+    }
+  }
+
   class RecommendationsByAppsWithClient(request: RecommendByAppsRequest, auth: MarketCredentials)
     extends (Client ⇒ Task[List[Package]]) {
 
@@ -133,7 +179,10 @@ class Interpreter(config: GooglePlayApiConfiguration) extends (Ops ~> WithHttpCl
       }.map {
         _.bimap(
           _ ⇒ InfoError(s"Recommendations for package ${pack.value}"),
-          list ⇒ Converters.listResponseToPackages(list).take(request.numPerApp)
+          list ⇒ {
+            val packs = Converters.listResponseToPackages(list)
+            request.numPerApp.fold(packs)(packs.take)
+          }
         )
       }
     }

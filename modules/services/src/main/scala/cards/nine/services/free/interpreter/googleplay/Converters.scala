@@ -19,7 +19,7 @@ object Converters {
 
   def toRecommendByAppsRequest(
     packages: List[Package],
-    limitByApp: Int,
+    limitByApp: Option[Int],
     excludedPackages: List[Package],
     limit: Int
   ): RecommendByAppsRequest =

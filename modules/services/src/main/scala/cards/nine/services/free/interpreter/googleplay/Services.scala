@@ -2,36 +2,34 @@ package cards.nine.services.free.interpreter.googleplay
 
 import cards.nine.commons.NineCardsErrors.{ PackageNotResolved, RecommendationsServerError }
 import cards.nine.commons.NineCardsService.Result
-import cards.nine.commons.TaskInstances._
+import cards.nine.commons.catscalaz.TaskInstances._
 import cards.nine.domain.application._
 import cards.nine.domain.market.MarketCredentials
-import cards.nine.googleplay.processes.GooglePlayApp.GooglePlayApp
-import cards.nine.googleplay.processes.{ CardsProcesses, Wiring }
+import cards.nine.googleplay.processes.CardsProcesses
 import cards.nine.services.free.algebra.GooglePlay._
 import cats.syntax.either._
 import cats.~>
+import cats.free.Free
 
 import scalaz.concurrent.Task
 
-class Services(implicit googlePlayProcesses: CardsProcesses[GooglePlayApp]) extends (Ops ~> Task) {
+class Services[F[_]](
+  implicit
+  googlePlayProcesses: CardsProcesses[F],
+  interpreter: F ~> Task
+) extends (Ops ~> Task) {
 
-  def resolveOne(packageName: Package, auth: MarketCredentials): Task[Result[FullCard]] = {
+  def resolveOne(packageName: Package, auth: MarketCredentials): Free[F, Result[FullCard]] =
     googlePlayProcesses.getCard(packageName, auth)
-      .foldMap(Wiring.interpreters).map { result ⇒
-        result
-          .leftMap(e ⇒ PackageNotResolved(e.packageName.value))
-      }
-  }
+      .map(result ⇒ result.leftMap(e ⇒ PackageNotResolved(e.packageName.value)))
 
-  def resolveManyBasic(packages: List[Package], auth: MarketCredentials): Task[Result[CardList[BasicCard]]] =
+  def resolveManyBasic(packages: List[Package], auth: MarketCredentials): Free[F, Result[CardList[BasicCard]]] =
     googlePlayProcesses.getBasicCards(packages, auth)
       .map(r ⇒ Either.right(Converters.toCardList(r)))
-      .foldMap(Wiring.interpreters)
 
-  def resolveManyDetailed(packages: List[Package], auth: MarketCredentials): Task[Result[CardList[FullCard]]] =
+  def resolveManyDetailed(packages: List[Package], auth: MarketCredentials): Free[F, Result[CardList[FullCard]]] =
     googlePlayProcesses.getCards(packages, auth)
       .map(r ⇒ Either.right(Converters.toCardList(r)))
-      .foldMap(Wiring.interpreters)
 
   def recommendByCategory(
     category: String,
@@ -39,56 +37,50 @@ class Services(implicit googlePlayProcesses: CardsProcesses[GooglePlayApp]) exte
     excludedPackages: List[Package],
     limit: Int,
     auth: MarketCredentials
-  ): Task[Result[CardList[FullCard]]] =
-    googlePlayProcesses.recommendationsByCategory(
-      Converters.toRecommendByCategoryRequest(category, filter, excludedPackages, limit),
-      auth
-    ).foldMap(Wiring.interpreters)
+  ): Free[F, Result[CardList[FullCard]]] = {
+    val request = Converters.toRecommendByCategoryRequest(category, filter, excludedPackages, limit)
+    googlePlayProcesses.recommendationsByCategory(request, auth)
       .map(
         _.bimap(
           e ⇒ RecommendationsServerError(e.message),
           r ⇒ Converters.omitMissing(r)
         )
       )
+  }
 
   def recommendationsForApps(
     packageNames: List[Package],
     excludedPackages: List[Package],
-    limitByApp: Int,
+    limitByApp: Option[Int],
     limit: Int,
     auth: MarketCredentials
-  ): Task[Result[CardList[FullCard]]] =
-    googlePlayProcesses.recommendationsByApps(
-      Converters.toRecommendByAppsRequest(packageNames, limitByApp, excludedPackages, limit),
-      auth
-    ).map(r ⇒ Either.right(Converters.omitMissing(r)))
-      .foldMap(Wiring.interpreters)
+  ): Free[F, Result[CardList[FullCard]]] = {
+    val request = Converters.toRecommendByAppsRequest(packageNames, limitByApp, excludedPackages, limit)
+    googlePlayProcesses.recommendationsByApps(request, auth)
+      .map(r ⇒ Either.right(Converters.omitMissing(r)))
+  }
 
   def searchApps(
     query: String,
     excludePackages: List[Package],
     limit: Int,
     auth: MarketCredentials
-  ): Task[Result[CardList[BasicCard]]] =
-    googlePlayProcesses.searchApps(
-      Converters.toSearchAppsRequest(query, excludePackages, limit),
-      auth
-    )
+  ): Free[F, Result[CardList[BasicCard]]] = {
+    val request = Converters.toSearchAppsRequest(query, excludePackages, limit)
+    googlePlayProcesses.searchApps(request, auth)
       .map(r ⇒ Either.right(Converters.omitMissing(r)))
-      .foldMap(Wiring.interpreters)
+  }
 
-  def resolvePendingApps(numPackages: Int): Task[Result[ResolvePendingStats]] =
+  def resolvePendingApps(numPackages: Int): Free[F, Result[ResolvePendingStats]] =
     googlePlayProcesses
       .resolvePendingApps(numPackages)
       .map(r ⇒ Either.right(Converters.toResolvePendingStats(r)))
-      .foldMap(Wiring.interpreters)
 
-  def storeCard(card: FullCard): Task[Result[Unit]] =
+  def storeCard(card: FullCard): Free[F, Result[Unit]] =
     googlePlayProcesses.storeCard(card)
       .map(Either.right)
-      .foldMap(Wiring.interpreters)
 
-  def apply[A](fa: Ops[A]): Task[A] = fa match {
+  private[this] def applyFree[A](fa: Ops[A]): Free[F, A] = fa match {
     case ResolveManyBasic(packageNames, auth) ⇒
       resolveManyBasic(packageNames, auth)
     case ResolveManyDetailed(packageNames, auth) ⇒
@@ -107,9 +99,12 @@ class Services(implicit googlePlayProcesses: CardsProcesses[GooglePlayApp]) exte
       storeCard(card)
 
   }
+
+  def apply[A](fa: Ops[A]): Task[A] = applyFree[A](fa).foldMap(interpreter)
+
 }
 
 object Services {
 
-  def services(implicit googlePlayProcesses: CardsProcesses[GooglePlayApp]) = new Services
+  def services[F[_]](implicit googlePlayProcesses: CardsProcesses[F], interpret: F ~> Task) = new Services
 }

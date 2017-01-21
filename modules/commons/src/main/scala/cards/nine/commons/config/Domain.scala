@@ -235,6 +235,8 @@ object Domain {
     protocol: String,
     host: String,
     port: Int,
+    detailsBatchSize: Int,
+    maxTotalConnections: Int,
     paths: GooglePlayApiPaths
   )
 
@@ -246,6 +248,8 @@ object Domain {
         config.getString(s"$prefix.protocol"),
         config.getString(s"$prefix.host"),
         config.getInt(s"$prefix.port"),
+        config.getInt(s"$prefix.detailsBatchSize"),
+        config.getInt(s"$prefix.maxTotalConnections"),
         GooglePlayApiPaths(config, prefix)
       )
     }
@@ -274,6 +278,7 @@ object Domain {
   }
 
   case class GooglePlayWebConfiguration(
+    maxTotalConnections: Int,
     protocol: String,
     host: String,
     port: Int,
@@ -285,6 +290,7 @@ object Domain {
       val prefix = s"$parentPrefix.web"
 
       GooglePlayWebConfiguration(
+        config.getInt(s"$prefix.maxTotalConnections"),
         config.getString(s"$prefix.protocol"),
         config.getString(s"$prefix.host"),
         config.getInt(s"$prefix.port"),

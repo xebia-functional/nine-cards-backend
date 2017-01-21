@@ -1,21 +1,19 @@
 package cards.nine.googleplay.service.free.interpreter.cache
 
+import cards.nine.commons.redis.TestUtils
 import cards.nine.domain.application.{ FullCard, Package }
 import cards.nine.domain.ScalaCheck._
 import cards.nine.googleplay.service.free.algebra.Cache._
 import cards.nine.googleplay.util.{ ScalaCheck ⇒ CustomArbitrary }
-import cats.syntax.either._
-import com.redis.RedisClient
-import io.circe.parser._
 import org.joda.time.{ DateTime, DateTimeZone }
 import org.scalacheck.{ Arbitrary, Gen }
 import org.specs2.ScalaCheck
 import org.specs2.mutable.Specification
 import org.specs2.specification.{ AfterAll, BeforeAll, BeforeEach }
 import redis.embedded.RedisServer
-
-import scala.concurrent.Await // FIXME
+import scala.concurrent.{ Await, Future } // FIXME
 import scala.concurrent.duration._
+import scredis.{ Client ⇒ ScredisClient, TransactionBuilder }
 
 class InterpreterSpec
   extends Specification
@@ -24,17 +22,23 @@ class InterpreterSpec
   with BeforeEach
   with AfterAll {
 
-  import CirceCoders._
+  import Formats._
   import CustomArbitrary._
   import KeyType._
 
+  import TestUtils.redisTestActorSystem
+
+  import scala.concurrent.ExecutionContext.Implicits.global
+
   private[this] object setup {
     lazy val redisServer: RedisServer = new RedisServer()
-    lazy val redisClient: RedisClient = new RedisClient(host = "localhost", port = redisServer.getPort)
+    lazy val redisClient: ScredisClient = ScredisClient(host = "localhost", port = redisServer.getPort)
 
-    def flush = redisClient.flushall
+    def flush = redisClient.flushAll
 
-    val interpreter = CacheInterpreter
+    import scala.concurrent.ExecutionContext.Implicits.global
+
+    val interpreter = new CacheInterpreter()
 
     def eval[A](op: Ops[A]) = interpreter(op)(redisClient).unsafePerformSync
 
@@ -64,48 +68,57 @@ class InterpreterSpec
 
   sequential
 
-  private def getCacheValue(key: String) =
-    redisClient.get(key).flatMap(e ⇒ decode[CacheVal](e).toOption)
+  def await[A](fut: Future[A]) = Await.result(fut, Duration.Inf)
 
-  private def getCacheValues(keys: List[String]) = keys match {
-    case head :: tail ⇒
-      redisClient.mget(head, tail: _*)
-        .getOrElse(Nil)
-        .flatMap(_.toList)
-        .map(e ⇒ decode[CacheVal](e).toOption)
-    case _ ⇒ Nil
-  }
-  private def getEntry(key: String) = redisClient.get(key)
-  private def getEntries(keys: List[String]) = keys match {
-    case head :: tail ⇒ redisClient.mget(head, tail: _*).getOrElse(Nil).flatMap(_.toList)
-    case _ ⇒ Nil
-  }
-  private def getKeys(pattern: String) =
-    redisClient.keys(pattern).getOrElse(Nil)
+  private def getCacheValue(key: String): Option[CacheVal] =
+    await(redisClient.get[Option[CacheVal]](key).map(_.flatten))
 
-  private def putEntry(e: (CacheKey, CacheVal)) =
-    redisClient.set(KeyFormat.format(e._1), cacheValE(e._2).noSpaces)
+  private def getCacheValues(keys: List[String]): List[Option[CacheVal]] =
+    if (keys.isEmpty)
+      Nil
+    else
+      await(redisClient.mGet[Option[CacheVal]](keys: _*).map(_.map(_.flatten)))
 
-  private def putError(p: Package, d: DateTime) =
-    redisClient.rpush(KeyFormat.format(CacheKey.error(p)), d)
+  private def existsEntry(key: String): Boolean =
+    await(redisClient.get[String](key).map(_.isDefined))
 
-  private def putPendings(ps: List[Package]) = ps.map(_.value) match {
-    case head :: tail ⇒ redisClient.rpush("pending_packages", head, tail: _*)
-    case _ ⇒ Nil
+  private def getKeys(pattern: String): List[CacheKey] =
+    await(redisClient.keys(pattern)).toList.flatMap(parseKey)
+
+  private def putEntry(e: (CacheKey, CacheVal)): Unit =
+    await(redisClient.set(formatKey(e._1), cacheValE(e._2).noSpaces))
+
+  private def putError(p: Package, d: DateTime): Unit = {
+    await(redisClient.rPush[DateTime](formatKey(CacheKey.error(p)), d))
+    Unit
   }
 
-  private def putErrors(ps: List[Package], d: DateTime) = {
-    def command(p: Package) = (() ⇒ putError(p, d))
-    redisClient.pipelineNoMulti(ps map command)
-      .map(a ⇒ Await.result(a.future, Duration.Inf))
+  private def getPending(): List[Package] =
+    await(redisClient.sMembers[Option[Package]]("pending_packages").map(_.toList.flatten))
+
+  private def putPendings(ps: List[Package]): Unit =
+    if (!ps.isEmpty) {
+      await(redisClient.sAdd("pending_packages", ps.map(_.value): _*))
+    }
+
+  private def putPending(p: Package): Unit =
+    await(redisClient.sAdd("pending_packages", p))
+
+  private def dumpQueue(): List[Package] =
+    await(redisClient.lRange[Option[Package]]("pending_packages", 0, -1)).flatten
+
+  private def putErrors(ps: List[Package], d: DateTime): Unit = await {
+    redisClient.inTransaction { tb: TransactionBuilder ⇒
+      ps.foreach(p ⇒ tb.rPush[DateTime](formatKey(CacheKey.error(p)), d))
+    }.map(_ ⇒ Unit)
   }
 
-  private def putEntries(entries: List[(CacheKey, CacheVal)]) = entries match {
-    case Nil ⇒ Unit
-    case _ ⇒ redisClient.mset(entries map formatEntry: _*)
+  private def putEntries(entries: List[(CacheKey, CacheVal)]): Unit = {
+    def formatEntry(e: (CacheKey, CacheVal)): (String, String) =
+      (formatKey(e._1), cacheValE(e._2).noSpaces)
+    await { redisClient.mSet(entries.map(formatEntry).toMap) }
+    Unit
   }
-  private def formatEntry(e: (CacheKey, CacheVal)): (String, String) =
-    (KeyFormat.format(e._1), cacheValE(e._2).noSpaces)
 
   "getValidCard" should {
 
@@ -119,7 +132,7 @@ class InterpreterSpec
     "return None if the cache only contains Error or Pending entries for the package" >>
       prop { pack: Package ⇒
         flush
-        putEntry(CacheEntry.pending(pack))
+        putPending(pack)
         putError(pack, date)
 
         eval(GetValid(pack)) must beNone
@@ -151,11 +164,18 @@ class InterpreterSpec
         eval(GetValidMany(packages)) must beEmpty
       }
 
-    "return an empty list if the cache only contains Error or Pending entries for the packages" >>
+    "return an empty list if the cache only contains the packages as Errors" >>
       prop { packages: List[Package] ⇒
         flush
-        putEntries(packages map CacheEntry.pending)
         packages foreach { p ⇒ putError(p, date) }
+
+        eval(GetValidMany(packages)) must beEmpty
+      }
+
+    "return an empty list if the cache only contains the packages as Pending" >>
+      prop { packages: List[Package] ⇒
+        flush
+        putPendings(packages)
 
         eval(GetValidMany(packages)) must beEmpty
       }
@@ -184,7 +204,7 @@ class InterpreterSpec
         flush
         eval(PutResolved(card))
 
-        getEntry(resolvedKey(card.packageName)) must beSome
+        existsEntry(resolvedKey(card.packageName)) must beTrue
       }
 
     "add no other key as resolved" >>
@@ -192,7 +212,7 @@ class InterpreterSpec
         flush
         eval(PutResolved(card))
 
-        getEntry(resolvedKey(pack)) must beNone
+        existsEntry(resolvedKey(pack)) must beFalse
       }
 
     "add no key as pending or error" >>
@@ -200,8 +220,19 @@ class InterpreterSpec
         flush
         eval(PutResolved(card))
 
-        getKeys(allByType(Pending)) must beEmpty
+        getPending() must beEmpty
         getKeys(allByType(Error)) must beEmpty
+      }
+
+    "remove any previous pending or error keys for the package" >>
+      prop { card: FullCard ⇒
+        flush
+        putPending(card.packageName)
+        putError(card.packageName, date)
+        eval(PutResolved(card))
+        getPending() must beEmpty
+        getKeys(allByType(Error)) must beEmpty
+        dumpQueue() must beEmpty
       }
 
     "overwrite any previous value" >>
@@ -222,8 +253,8 @@ class InterpreterSpec
       prop { cards: List[FullCard] ⇒
         flush
         eval(PutResolvedMany(cards))
-
-        getEntries(cards map (c ⇒ resolvedKey(c.packageName))) must haveSize(cards.size)
+        cards.map(c ⇒ resolvedKey(c.packageName))
+          .filter(existsEntry _) must haveSize(cards.size)
       }
 
     "add no other key as resolved" >>
@@ -231,7 +262,7 @@ class InterpreterSpec
         flush
         eval(PutResolvedMany(cards))
 
-        getEntry(resolvedKey(pack)) must beNone
+        existsEntry(resolvedKey(pack)) must beFalse
       }
 
     "add no key as pending or error" >>
@@ -239,7 +270,7 @@ class InterpreterSpec
         flush
         eval(PutResolvedMany(cards))
 
-        getKeys(allByType(Pending)) must beEmpty
+        getPending() must beEmpty
         getKeys(allByType(Error)) must beEmpty
       }
 
@@ -248,7 +279,7 @@ class InterpreterSpec
         flush
         val newCards = cards map (c ⇒ c.copy(title = c.title.reverse, free = !c.free))
         eval(PutResolvedMany(cards))
-        eval(PutResolvedMany(newCards))
+        evalWithDelay(PutResolvedMany(newCards), 1.millis)
 
         val values = getCacheValues(cards map (c ⇒ resolvedKey(c.packageName)))
 
@@ -263,7 +294,7 @@ class InterpreterSpec
         flush
         eval(PutPermanent(card))
 
-        getEntry(permanentKey(card.packageName)) must beSome
+        existsEntry(permanentKey(card.packageName)) must beTrue
       }
 
     "add no other key as permanent" >>
@@ -271,16 +302,26 @@ class InterpreterSpec
         flush
         eval(PutPermanent(card))
 
-        getEntry(permanentKey(pack)) must beNone
+        existsEntry(permanentKey(pack)) must beFalse
       }
 
     "add no key as pending or error" >>
       prop { card: FullCard ⇒
         flush
         eval(PutPermanent(card))
-
-        getKeys(allByType(Pending)) must beEmpty
+        getPending() must beEmpty
         getKeys(allByType(Error)) must beEmpty
+      }
+
+    "remove any previous pending or error keys for the package" >>
+      prop { card: FullCard ⇒
+        flush
+        putPending(card.packageName)
+        putError(card.packageName, date)
+        eval(PutPermanent(card))
+        getPending() must beEmpty
+        getKeys(allByType(Error)) must beEmpty
+        dumpQueue() must beEmpty
       }
 
     "overwrite any previous value" >>
@@ -295,71 +336,11 @@ class InterpreterSpec
       }
   }
 
-  "markPending" should {
-    "add a package as Pending" >>
-      prop { pack: Package ⇒
-        flush
-        eval(MarkPending(pack))
-
-        getEntry(pendingKey(pack)) must beSome
-      }
-
-    "add no key as resolved or error" >>
-      prop { pack: Package ⇒
-        flush
-        eval(MarkPending(pack))
-
-        getKeys(allByType(Error)) must beEmpty
-        getKeys(allByType(Resolved)) must beEmpty
-      }
-  }
-
-  "markPendingMany" should {
-    "add a list of packages as Pending" >>
-      prop { packages: List[Package] ⇒
-        flush
-        eval(MarkPendingMany(packages))
-
-        getEntries(packages map pendingKey) must haveSize(packages.size)
-      }
-
-    "add no key as resolved or error" >>
-      prop { packages: List[Package] ⇒
-        flush
-        eval(MarkPendingMany(packages))
-
-        getKeys(allByType(Error)) must beEmpty
-        getKeys(allByType(Resolved)) must beEmpty
-      }
-  }
-
-  "unmarkPending" should {
-    "remove a previously pending package" >>
-      prop { pack: Package ⇒
-        flush
-        putEntry(CacheEntry.pending(pack))
-        eval(UnmarkPending(pack))
-
-        getEntry(pendingKey(pack)) must beNone
-      }
-  }
-
-  "unmarkPendingMany" should {
-    "remove a previously list of pending packages" >>
-      prop { packages: List[Package] ⇒
-        flush
-        putEntries(packages map CacheEntry.pending)
-        eval(UnmarkPendingMany(packages))
-
-        getEntries(packages map pendingKey) must beEmpty
-      }
-  }
-
-  "markError" should {
+  "addError" should {
     "add a package as error" >>
       prop { pack: Package ⇒
         flush
-        eval(MarkError(pack))
+        eval(AddError(pack))
 
         getKeys(allByPackageAndType(pack, Error)) must not be empty
       }
@@ -367,26 +348,35 @@ class InterpreterSpec
     "add no key as resolved or pending" >>
       prop { pack: Package ⇒
         flush
-        eval(MarkError(pack))
+        eval(AddError(pack))
 
         getKeys(allByType(Resolved)) must beEmpty
-        getKeys(allByType(Pending)) must beEmpty
+        getPending() must beEmpty
+      }
+
+    "remove any previous pending keys for the package" >>
+      prop { pack: Package ⇒
+        flush
+        putPending(pack)
+        eval(AddError(pack))
+        getPending() must beEmpty
+        dumpQueue() must beEmpty
       }
 
     "allow adding several error entries for package with different dates" >>
       prop { pack: Package ⇒
         flush
-        eval(MarkError(pack))
-        evalWithDelay(MarkError(pack), 1.millis)
+        eval(AddError(pack))
+        evalWithDelay(AddError(pack), 1.millis)
         getKeys(allByType(Error)) must haveSize(1)
       }
   }
 
-  "markErrorMany" should {
+  "addErrorMany" should {
     "add a list of packages as error" >>
       prop { packages: List[Package] ⇒
         flush
-        eval(MarkErrorMany(packages))
+        eval(AddErrorMany(packages))
 
         getKeys(allByType(Error)) must haveSize(packages.size)
       }
@@ -394,97 +384,27 @@ class InterpreterSpec
     "add no key as resolved or pending" >>
       prop { packages: List[Package] ⇒
         flush
-        eval(MarkErrorMany(packages))
+        eval(AddErrorMany(packages))
 
-        getKeys(allByType(Pending)) must beEmpty
+        getPending() must beEmpty
         getKeys(allByType(Resolved)) must beEmpty
+      }
+
+    "remove any previous pending keys for the packages" >>
+      prop { packages: List[Package] ⇒
+        flush
+        putPendings(packages)
+        eval(AddErrorMany(packages))
+        getPending() must beEmpty
+        dumpQueue() must beEmpty
       }
 
     "allow adding several errors with different dates" >>
       prop { packages: List[Package] ⇒
         flush
-        eval(MarkErrorMany(packages))
-        evalWithDelay(MarkErrorMany(packages), 2.millis)
+        eval(AddErrorMany(packages))
+        evalWithDelay(AddErrorMany(packages), 2.millis)
         getKeys(allByType(Error)) must haveSize(packages.size)
-      }
-  }
-
-  "ClearInvalid" should {
-
-    "remove existing error entries" >>
-      prop { pack: Package ⇒
-        flush
-        putError(pack, date)
-        eval(ClearInvalid(pack))
-
-        getKeys(allByPackage(pack)) must beEmpty
-      }
-
-    "remove existing pending entries" >>
-      prop { pack: Package ⇒
-        flush
-        putEntry(CacheEntry.pending(pack))
-        eval(ClearInvalid(pack))
-
-        getKeys(allByPackage(pack)) must beEmpty
-      }
-
-    "leave resolved entries" >>
-      prop { card: FullCard ⇒
-        flush
-        putEntry(CacheEntry.resolved(card))
-        eval(ClearInvalid(card.packageName))
-
-        getEntry(resolvedKey(card.packageName)) must beSome
-      }
-
-    "leave error entries for any other package" >>
-      prop { pack: Package ⇒
-        val other = Package(s"${pack.value}_not")
-        flush
-        putError(pack, date)
-        eval(ClearInvalid(other))
-
-        getKeys(allByPackage(pack)) must not be empty
-      }
-  }
-
-  "ClearInvalidMany" should {
-
-    "remove existing error entries" >>
-      prop { packages: List[Package] ⇒
-        flush
-        putErrors(packages, date)
-        eval(ClearInvalidMany(packages))
-        getKeys(allErrors) must beEmpty
-      }
-
-    "remove existing pending entries" >>
-      prop { packages: List[Package] ⇒
-        flush
-        putEntries(packages map CacheEntry.pending)
-        eval(ClearInvalidMany(packages))
-
-        getKeys(allByType(Pending)) must beEmpty
-      }
-
-    "leave resolved entries" >>
-      prop { cards: List[FullCard] ⇒
-        flush
-        putEntries(cards map CacheEntry.resolved)
-        eval(ClearInvalidMany(cards map (_.packageName)))
-
-        getKeys(allByType(Resolved)) must haveSize(cards.size)
-      }
-
-    "leave error entries for any other package" >>
-      prop { packages: List[Package] ⇒
-        flush
-        val otherPackages = List(Package("other.package"))
-        putErrors(packages ++ otherPackages, date)
-        eval(ClearInvalidMany(otherPackages))
-
-        getKeys(allErrors) must haveSize(packages.size)
       }
   }
 
@@ -502,7 +422,6 @@ class InterpreterSpec
     "get all the pending elements for a package" >>
       prop { testData: ListPendingTestData ⇒
         flush
-        putEntries(testData.pendingPackages map CacheEntry.pending)
         putPendings(testData.pendingPackages)
         val list = eval(ListPending(testData.limit))
         list must contain(atMost(testData.pendingPackages: _*))

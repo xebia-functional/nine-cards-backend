@@ -20,6 +20,7 @@ object Versions {
   val redisClient = "3.2"
   val scala = "2.11.8"
   val scalaz = "7.2.4"
+  val scredis = "2.0.6"
   val spray = "1.3.3"
   val sprayJson = "1.3.2"
   val tagSoup = "1.2.1"

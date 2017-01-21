@@ -3,10 +3,10 @@ package cards.nine.app
 import akka.actor.Actor
 import akka.event.LoggingAdapter
 import cards.nine.commons.NineCardsService._
-import cards.nine.commons.TaskInstances._
+import cards.nine.commons.catscalaz.TaskInstances._
 import cards.nine.commons.config.NineCardsConfig._
 import cards.nine.domain.application.ResolvePendingStats
-import cards.nine.processes.ApplicationProcesses
+import cards.nine.processes.applications.ApplicationProcesses
 import cats.~>
 import scalaz.{ -\/, \/, \/- }
 import scalaz.concurrent.Task

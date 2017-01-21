@@ -4,14 +4,15 @@ import java.util.UUID
 
 import cards.nine.api.NineCardsHeaders.Domain._
 import cards.nine.api.NineCardsHeaders._
-import cards.nine.api.messages.UserMessages.ApiLoginRequest
+import cards.nine.api.accounts.messages.ApiLoginRequest
 import cards.nine.api.utils.SprayMatchers.PriceFilterSegment
 import cards.nine.api.utils.TaskDirectives._
 import cards.nine.commons.NineCardsService._
 import cards.nine.commons.config.Domain.NineCardsConfiguration
 import cards.nine.domain.account._
 import cards.nine.domain.application.PriceFilter
-import cards.nine.domain.market.{ Localization, MarketToken }
+import cards.nine.domain.market.{ Localization, MarketCredentials, MarketToken }
+import cards.nine.processes.account.AccountProcesses
 import cards.nine.processes.NineCardsServices._
 import cards.nine.processes._
 import cats.syntax.either._
@@ -27,8 +28,7 @@ import spray.routing.directives._
 
 class NineCardsDirectives(
   implicit
-  userProcesses: UserProcesses[NineCardsServices],
-  googleApiProcesses: GoogleApiProcesses[NineCardsServices],
+  accountProcesses: AccountProcesses[NineCardsServices],
   config: NineCardsConfiguration,
   ec: ExecutionContext
 )
@@ -41,6 +41,8 @@ class NineCardsDirectives(
   with SecurityDirectives
   with JsonFormats {
 
+  import cards.nine.api.accounts.JsonFormats._
+
   implicit def fromTaskAuth[T](auth: ⇒ Task[Authentication[T]]): AuthMagnet[T] =
     new AuthMagnet(onSuccess(auth))
 
@@ -49,7 +51,7 @@ class NineCardsDirectives(
     challengeHeaders = Nil
   )
 
-  def authenticateLoginRequest: Directive1[SessionToken] = for {
+  val authenticateLoginRequest: Directive1[SessionToken] = for {
     request ← entity(as[ApiLoginRequest])
     _ ← authenticate(validateLoginRequest(request.email, request.tokenId))
     sessionToken ← generateSessionToken
@@ -59,7 +61,7 @@ class NineCardsDirectives(
     if (email.value.isEmpty || tokenId.value.isEmpty)
       Task.now(Left(rejectionByCredentialsRejected))
     else
-      googleApiProcesses
+      accountProcesses
         .checkGoogleTokenId(email, tokenId)
         .leftMap(_ ⇒ rejectionByCredentialsRejected)
         .value
@@ -68,7 +70,7 @@ class NineCardsDirectives(
           case _ ⇒ Left(rejectionByCredentialsRejected)
         }
 
-  def authenticateUser: Directive1[UserContext] = for {
+  val authenticateUser: Directive1[UserContext] = for {
     uri ← requestUri
     herokuForwardedProtocol ← optionalHeaderValueByName(headerHerokuForwardedProto)
     herokuUri = herokuForwardedProtocol.filterNot(_.isEmpty).fold(uri)(uri.withScheme)
@@ -78,13 +80,12 @@ class NineCardsDirectives(
     userId ← authenticate(validateUser(sessionToken, androidId, authToken, herokuUri))
   } yield UserContext(UserId(userId), androidId) :: HNil
 
-  val googlePlayInfo: Directive1[GooglePlayContext] = for {
-    googlePlayToken ← headerValueByName(headerGooglePlayToken)
-    marketLocalization ← optionalHeaderValueByName(headerMarketLocalization)
-  } yield GooglePlayContext(
-    googlePlayToken    = MarketToken(googlePlayToken),
-    marketLocalization = marketLocalization map Localization.apply
-  )
+  val marketAuthHeaders: Directive1[MarketCredentials] =
+    for {
+      androidId ← headerValueByName(headerAndroidId).map(AndroidId)
+      marketToken ← headerValueByName(headerGooglePlayToken).map(MarketToken)
+      localization ← optionalHeaderValueByName(headerMarketLocalization).map(_.map(Localization))
+    } yield MarketCredentials(androidId, marketToken, localization)
 
   def validateUser(
     sessionToken: SessionToken,
@@ -92,7 +93,7 @@ class NineCardsDirectives(
     authToken: String,
     requestUri: Uri
   ): Task[Authentication[Long]] =
-    userProcesses.checkAuthToken(
+    accountProcesses.checkAuthToken(
       sessionToken = sessionToken,
       androidId    = androidId,
       authToken    = authToken,
@@ -120,12 +121,12 @@ class NineCardsDirectives(
 
   }
 
-  def generateNewCollectionInfo: Directive1[NewSharedCollectionInfo] = for {
+  val generateNewCollectionInfo: Directive1[NewSharedCollectionInfo] = for {
     currentDateTime ← provide(CurrentDateTime(DateTime.now))
     publicIdentifier ← provide(PublicIdentifier(UUID.randomUUID.toString))
   } yield NewSharedCollectionInfo(currentDateTime, publicIdentifier) :: HNil
 
-  def generateSessionToken: Directive1[SessionToken] = provide(SessionToken(UUID.randomUUID.toString))
+  val generateSessionToken: Directive1[SessionToken] = provide(SessionToken(UUID.randomUUID.toString))
 
   val priceFilterPath: Directive[PriceFilter :: HNil] =
     path(PriceFilterSegment) | (pathEndOrSingleSlash & provide(PriceFilter.ALL: PriceFilter))
@@ -136,8 +137,7 @@ object NineCardsDirectives {
 
   implicit def nineCardsDirectives(
     implicit
-    userProcesses: UserProcesses[NineCardsServices],
-    googleApiProcesses: GoogleApiProcesses[NineCardsServices],
+    accountProcesses: AccountProcesses[NineCardsServices],
     config: NineCardsConfiguration,
     ec: ExecutionContext
   ) = new NineCardsDirectives

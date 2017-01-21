@@ -1,6 +1,8 @@
 package cards.nine.googleplay.service.free.interpreter.googleapi
 
-import cards.nine.commons.TaskInstances._
+import akka.actor.ActorSystem
+import cards.nine.commons.catscalaz.TaskInstances._
+import cards.nine.commons.config.NineCardsConfig.nineCardsConfiguration
 import cards.nine.domain.application.FullCard
 import cards.nine.googleplay.config.TestConfig._
 import cards.nine.googleplay.domain._
@@ -18,7 +20,12 @@ class InterpreterIntegration extends Specification with AfterAll {
 
   val process: CardsProcesses[GooglePlayApp] = CardsProcesses.processes[GooglePlayApp]
 
-  override def afterAll: Unit = Wiring.shutdown()
+  implicit val actorSystem: ActorSystem = ActorSystem("cards-nine-googleplay-tests")
+  import scala.concurrent.ExecutionContext.Implicits.global
+
+  val interpreter: Wiring = new Wiring(nineCardsConfiguration)
+
+  override def afterAll: Unit = interpreter.shutdown()
 
   sequential
 
@@ -35,7 +42,7 @@ class InterpreterIntegration extends Specification with AfterAll {
         )
         val response = process
           .getCard(fisherPrice.packageObj, marketAuth)
-          .foldMap(Wiring.interpreters)
+          .foldMap(interpreter)
           .map(_.leftMap(_ ⇒ InfoError(fisherPrice.packageName)))
 
         val fields = response.map(_.map(eraseDetails))
@@ -46,7 +53,7 @@ class InterpreterIntegration extends Specification with AfterAll {
       "result in an error state for packages that do not exist" in {
         val response = process
           .getCard(nonexisting.packageObj, marketAuth)
-          .foldMap(Wiring.interpreters)
+          .foldMap(interpreter)
           .map(_.leftMap(_ ⇒ InfoError(nonexisting.packageName)))
 
         response must returnValue(Left(nonexisting.infoError))
