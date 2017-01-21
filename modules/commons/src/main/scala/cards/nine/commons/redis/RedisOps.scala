@@ -2,6 +2,7 @@ package cards.nine.commons.redis
 
 import akka.actor.ActorSystem
 import cards.nine.commons.catscalaz.ScalaFuture2Task
+import cards.nine.commons.catscalaz.TaskInstances
 import cards.nine.commons.config.Domain.RedisConfiguration
 import cats.{ Applicative, ~> }
 import cats.data.Kleisli
@@ -12,7 +13,7 @@ import scredis.{ Client ⇒ ScredisClient }
 object RedisOps {
 
   implicit val applicative: Applicative[RedisOps] =
-    Applicative[Kleisli[Task, RedisClient, ?]]
+    Kleisli.catsDataApplicativeForKleisli[Task, RedisClient](TaskInstances.taskApplicative)
 
   def withRedisClient[A](f: RedisClient ⇒ Future[A])(implicit ec: ExecutionContext): RedisOps[A] =
     Kleisli(client ⇒ ScalaFuture2Task(f(client)))
