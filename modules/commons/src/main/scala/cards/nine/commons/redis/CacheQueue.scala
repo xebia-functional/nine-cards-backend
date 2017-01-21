@@ -1,8 +1,8 @@
 package cards.nine.commons.redis
 
-import cards.nine.commons.catscalaz.ScalaFuture2Task
-import scala.concurrent.ExecutionContext
-import scalaz.concurrent.Task
+import cats.instances.future._
+import cats.syntax.functor._
+import scala.concurrent.{ ExecutionContext, Future }
 import scredis.protocol.Decoder
 import scredis.serialization.{ Reader, Writer }
 
@@ -22,21 +22,20 @@ class CacheQueue[Key, Val](implicit
   // Thus, retrieving goes through positive indexes.
 
   def enqueue(key: Key, value: Val): RedisOps[Unit] =
-    client ⇒ ScalaFuture2Task {
-      client.rPush(keyFormat(key), value).map(_x ⇒ Unit)
+    RedisOps.withRedisClient { client ⇒
+      client.rPush(keyFormat(key), value).void
     }
 
   def enqueueMany(key: Key, values: List[Val]): RedisOps[Unit] =
-    client ⇒ {
+    RedisOps.withRedisClient { client ⇒
       if (values.isEmpty)
-        Task(Unit)
-      else ScalaFuture2Task {
-        client.rPush[Val](key, values: _*).map(x ⇒ Unit)
-      }
+        Future.successful(())
+      else
+        client.rPush[Val](key, values: _*).void
     }
 
   def dequeue(key: Key): RedisOps[Option[Val]] =
-    client ⇒ ScalaFuture2Task {
+    RedisOps.withRedisClient { client ⇒
       client.lPop(key).map(_.flatten)
     }
 
@@ -47,45 +46,41 @@ class CacheQueue[Key, Val](implicit
    *  - so "lindex A -1" gives last element,
    */
   def takeMany(key: Key, num: Int): RedisOps[List[Val]] =
-    client ⇒ {
+    RedisOps.withRedisClient { client ⇒
       if (num <= 0)
-        Task(Nil)
-      else ScalaFuture2Task {
+        Future.successful(Nil)
+      else
         client.lRange[Option[Val]](key, 0, num - 1).map(_.flatten)
-      }
     }
 
   def dequeueMany(key: Key, num: Int): RedisOps[Unit] =
-    client ⇒ {
+    RedisOps.withRedisClient { client ⇒
       if (num > 0)
-        ScalaFuture2Task {
-          client.lTrim(key, num, -1) // end Index is -1
-        }
-      else Task(Unit)
+        client.lTrim(key, num, -1) // end Index is -1
+      else Future.successful(())
     }
 
   def length(key: Key): RedisOps[Long] =
-    client ⇒ ScalaFuture2Task {
+    RedisOps.withRedisClient { client ⇒
       client.lLen(key)
     }
 
   def delete(key: Key): RedisOps[Unit] =
-    client ⇒ ScalaFuture2Task {
-      client.del(key).map(x ⇒ Unit)
+    RedisOps.withRedisClient { client ⇒
+      client.del(key).void
     }
 
   def delete(keys: List[Key]): RedisOps[Unit] =
-    client ⇒ {
+    RedisOps.withRedisClient { client ⇒
       if (keys.isEmpty)
-        Task(Unit)
-      else ScalaFuture2Task {
-        client.del(keys map keyFormat: _*).map(x ⇒ Unit)
-      }
+        Future.successful(())
+      else
+        client.del(keys map keyFormat: _*).void
     }
 
   def purge(key: Key, value: Val): RedisOps[Unit] =
-    client ⇒ ScalaFuture2Task {
-      client.lRem[Val](key, value, 0).map(x ⇒ Unit)
+    RedisOps.withRedisClient { client ⇒
+      client.lRem[Val](key, value, 0).void
     }
 
   def enqueueIfNotExists[Guard](queueKey: Key, guardKey: Guard, value: Val)(implicit guardFormat: Format[Guard]): RedisOps[Unit] = {
@@ -99,7 +94,7 @@ class CacheQueue[Key, Val](implicit
     implicit val unitDecoder: Decoder[Unit] = { case x ⇒ Unit }
     val keys = Seq(keyFormat(queueKey), guardFormat(guardKey))
 
-    client ⇒ ScalaFuture2Task {
+    RedisOps.withRedisClient { client ⇒
       client.eval[Unit, String, Val](ifExistsScript, keys, Seq(value))
     }
   }

@@ -1,12 +1,12 @@
 package cards.nine.googleplay.service.free.interpreter.cache
 
+import cards.nine.commons.catscalaz.TaskInstances._
 import cards.nine.commons.redis._
 import cards.nine.domain.application.Package
 import cards.nine.googleplay.service.free.algebra.Cache._
 import cats.~>
 import cats.instances.list._
 import cats.syntax.cartesian._
-import cats.syntax.functor._
 import cats.syntax.traverse._
 import org.joda.time.{ DateTime, DateTimeZone }
 import scala.concurrent.ExecutionContext

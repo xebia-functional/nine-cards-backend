@@ -1,9 +1,9 @@
 package cards.nine.commons.redis
 
-import cards.nine.commons.catscalaz.ScalaFuture2Task
-import scala.concurrent.ExecutionContext
+import cats.instances.future._
+import cats.syntax.functor._
+import scala.concurrent.{ ExecutionContext, Future }
 import scredis.serialization.{ Reader, Writer }
-import scalaz.concurrent.Task
 
 class CacheWrapper[Key, Val](
   implicit
@@ -14,47 +14,41 @@ class CacheWrapper[Key, Val](
 ) {
 
   def get(key: Key): RedisOps[Option[Val]] =
-    client ⇒ ScalaFuture2Task {
+    RedisOps.withRedisClient { client ⇒
       client.get[Option[Val]](format(key)).map(_.flatten)
     }
 
   def mget(keys: List[Key]): RedisOps[List[Val]] =
-    client ⇒ {
+    RedisOps.withRedisClient { client ⇒
       if (keys.isEmpty)
-        Task(Nil)
+        Future.successful(Nil)
       else
-        ScalaFuture2Task {
-          client.mGet[Option[Val]](keys.map(format): _*).map(_.flatten.flatten)
-        }
+        client.mGet[Option[Val]](keys.map(format): _*).map(_.flatten.flatten)
     }
 
   def put(entry: (Key, Val)): RedisOps[Unit] =
-    client ⇒ ScalaFuture2Task {
+    RedisOps.withRedisClient { client ⇒
       val (key, value) = entry
-      client.set[Val](format(key), value).map(x ⇒ Unit)
+      client.set[Val](format(key), value).void
     }
 
   def mput(entries: List[(Key, Val)]): RedisOps[Unit] =
-    client ⇒ {
+    RedisOps.withRedisClient { client ⇒
       if (entries.isEmpty)
-        Task(Unit)
-      else ScalaFuture2Task {
+        Future.successful(())
+      else
         client.mSet[Val](entries.map({ case (k, v) ⇒ format(k) → v }).toMap)
-      }
     }
 
   def delete(key: Key): RedisOps[Unit] =
-    client ⇒ ScalaFuture2Task {
-      client.del(key).map(x ⇒ Unit)
+    RedisOps.withRedisClient { client ⇒
+      client.del(key).void
     }
 
   def delete(keys: List[Key]): RedisOps[Unit] =
-    client ⇒ {
-      if (keys.isEmpty)
-        Task(Unit)
-      else ScalaFuture2Task {
-        client.del(keys map format: _*).map(x ⇒ Unit)
-      }
+    RedisOps.withRedisClient { client ⇒
+      if (keys.isEmpty) Future.successful(())
+      else client.del(keys map format: _*).void
     }
 
 }

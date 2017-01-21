@@ -7,7 +7,7 @@ import scalaz.{ \/-, -\/ }
 
 object ScalaFuture2Task {
 
-  def apply[T](fut: Future[T])(implicit ec: ExecutionContext): Task[T] =
+  def apply[T](fut: ⇒ Future[T])(implicit ec: ExecutionContext): Task[T] =
     Task.async {
       register ⇒
         fut.onComplete {

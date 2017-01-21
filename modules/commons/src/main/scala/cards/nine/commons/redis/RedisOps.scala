@@ -1,31 +1,21 @@
 package cards.nine.commons.redis
 
 import akka.actor.ActorSystem
-import cards.nine.commons.catscalaz.TaskInstances
+import cards.nine.commons.catscalaz.ScalaFuture2Task
 import cards.nine.commons.config.Domain.RedisConfiguration
 import cats.{ Applicative, ~> }
+import cats.data.Kleisli
+import scala.concurrent.{ ExecutionContext, Future }
 import scalaz.concurrent.Task
 import scredis.{ Client ⇒ ScredisClient }
 
 object RedisOps {
 
-  import TaskInstances.taskMonad
+  implicit val applicative: Applicative[RedisOps] =
+    Applicative[Kleisli[Task, RedisClient, ?]]
 
-  object RedisOpInstances extends Applicative[RedisOps] {
-
-    override def pure[A](x: A): RedisOps[A] =
-      _client ⇒ taskMonad.pure(x)
-
-    override def ap[A, B](ff: RedisOps[A ⇒ B])(fa: RedisOps[A]): RedisOps[B] =
-      client ⇒ {
-        val lhs = ff(client)
-        val rhs = fa(client)
-        taskMonad.ap(lhs)(rhs)
-      }
-
-  }
-
-  implicit val applicative: Applicative[RedisOps] = RedisOpInstances
+  def withRedisClient[A](f: RedisClient ⇒ Future[A])(implicit ec: ExecutionContext): RedisOps[A] =
+    Kleisli(client ⇒ ScalaFuture2Task(f(client)))
 
 }
 

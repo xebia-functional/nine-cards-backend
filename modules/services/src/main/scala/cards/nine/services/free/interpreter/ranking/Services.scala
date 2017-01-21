@@ -1,5 +1,6 @@
 package cards.nine.services.free.interpreter.ranking
 
+import cards.nine.commons.catscalaz.TaskInstances._
 import cards.nine.commons.NineCardsErrors.RankingNotFound
 import cards.nine.commons.NineCardsService.Result
 import cards.nine.commons.redis._
@@ -11,7 +12,6 @@ import cats.instances.list._
 import cats.instances.map._
 import cats.syntax.cartesian._
 import cats.syntax.either._
-import cats.syntax.functor._
 import cats.syntax.semigroup._
 import cats.~>
 import scala.concurrent.ExecutionContext
