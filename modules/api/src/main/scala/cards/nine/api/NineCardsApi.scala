@@ -31,6 +31,7 @@ class NineCardsRoutes(
 
   lazy val nineCardsRoutes: Route =
     pathPrefix("apiDocs")(swaggerRoute) ~
+      pathPrefix("web")(webRoute) ~
       pathPrefix("tos")(tosRoute) ~
       pathPrefix("shared-collection" / TypedSegment[PublicIdentifier]) {
         _ ⇒ sharedCollectionRoute
@@ -53,6 +54,8 @@ class NineCardsRoutes(
     pathEnd {
       getFromResource("web/tos.html")
     }
+
+  private[this] lazy val webRoute: Route = getFromResourceDirectory("web")
 
   private[this] lazy val sharedCollectionRoute: Route =
     getFromResource("web/collection.html")
