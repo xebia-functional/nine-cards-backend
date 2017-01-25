@@ -58,7 +58,8 @@ class CardsProcesses[F[_]](
         for {
           result ← resolvePackageList(packages, auth)
         } yield Either.right(CardList(
-          missing = result.notFoundPackages ++ result.pendingPackages,
+          missing = result.notFoundPackages,
+          pending = result.pendingPackages,
           cards   = result.cachedPackages ++ result.resolvedPackages
         ))
     }
@@ -72,17 +73,19 @@ class CardsProcesses[F[_]](
       packages = recommendations.diff(request.excludedApps).take(request.maxTotal)
       result ← resolvePackageList(packages, auth)
     } yield CardList(
-      missing = result.notFoundPackages ++ result.pendingPackages,
+      missing = result.notFoundPackages,
+      pending = result.pendingPackages,
       cards   = result.cachedPackages ++ result.resolvedPackages
     )
 
   def searchApps(request: SearchAppsRequest, auth: MarketCredentials): Free[F, CardList[BasicCard]] =
     googleApi.searchApps(request, auth) flatMap {
-      case Left(_) ⇒ Free.pure(CardList(Nil, Nil))
+      case Left(_) ⇒ Free.pure(CardList(Nil, Nil, Nil))
       case Right(packs) ⇒
         getBasicCards(packs, auth) map { r ⇒
           CardList(
-            missing = r.notFound ++ r.pending,
+            missing = r.notFound,
+            pending = r.pending,
             cards   = r.apps
           )
         }

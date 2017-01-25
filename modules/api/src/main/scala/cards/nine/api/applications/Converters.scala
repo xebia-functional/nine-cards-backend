@@ -105,4 +105,11 @@ private[applications] object Converters {
 
   def toDeviceAppList(items: List[Package]) = items map DeviceApp.apply
 
+  def toApiCategorizedApps(response: CardList[FullCard]): ApiCategorizedApps =
+    ApiCategorizedApps(
+      errors  = response.missing,
+      pending = response.pending,
+      items   = response.cards.map(toApiCategorizedApp)
+    )
+
 }

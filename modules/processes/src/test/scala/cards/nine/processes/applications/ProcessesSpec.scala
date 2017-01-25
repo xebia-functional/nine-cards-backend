@@ -58,7 +58,7 @@ class ApplicationProcessesSpec extends ApplicationProcessesSpecification {
     "return empty items and errors lists if an empty list of apps is provided" in new BasicScope {
 
       googlePlayServices.resolveManyDetailed(Nil, marketAuth) returns
-        NineCardsService.right(CardList(Nil, Nil))
+        NineCardsService.right(CardList(Nil, Nil, Nil))
 
       applicationProcesses
         .getAppsInfo(Nil, marketAuth)
@@ -72,7 +72,7 @@ class ApplicationProcessesSpec extends ApplicationProcessesSpecification {
     "return items and errors lists for a non empty list of apps" in new BasicScope {
 
       googlePlayServices.resolveManyDetailed(packagesName, marketAuth) returns
-        NineCardsService.right(CardList(missing, apps))
+        NineCardsService.right(CardList(missing, Nil, apps))
 
       applicationProcesses
         .getAppsInfo(packagesName, marketAuth)

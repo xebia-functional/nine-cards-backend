@@ -17,7 +17,7 @@ class ApplicationProcesses[F[_]](implicit services: GooglePlay.Services[F]) {
     marketAuth: MarketCredentials
   ): NineCardsService[F, CardList[FullCard]] =
     if (packagesName.isEmpty)
-      NineCardsService.right(CardList(Nil, Nil))
+      NineCardsService.right(CardList(Nil, Nil, Nil))
     else
       services.resolveManyDetailed(
         packageNames = packagesName,
@@ -29,7 +29,7 @@ class ApplicationProcesses[F[_]](implicit services: GooglePlay.Services[F]) {
     marketAuth: MarketCredentials
   ): NineCardsService[F, CardList[BasicCard]] =
     if (packagesName.isEmpty)
-      NineCardsService.right(CardList(Nil, Nil))
+      NineCardsService.right(CardList(Nil, Nil, Nil))
     else
       services.resolveManyBasic(packagesName, marketAuth)
 
@@ -62,7 +62,7 @@ class ApplicationProcesses[F[_]](implicit services: GooglePlay.Services[F]) {
     marketAuth: MarketCredentials
   ): NineCardsService[F, CardList[FullCard]] =
     if (packagesName.isEmpty)
-      NineCardsService.right(CardList(Nil, Nil))
+      NineCardsService.right(CardList(Nil, Nil, Nil))
     else
       services.recommendationsForApps(
         packagesName     = packagesName,

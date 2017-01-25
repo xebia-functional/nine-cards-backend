@@ -45,7 +45,8 @@ object Converters {
 
   def toCardList[A](response: ResolveMany.Response[A]): CardList[A] =
     CardList(
-      response.pending ++ response.notFound,
+      response.notFound,
+      response.pending,
       response.apps
     )
 
@@ -53,6 +54,7 @@ object Converters {
     val (errors, resolved) = response.separate
     CardList(
       errors map (_.packageName),
+      Nil,
       resolved
     )
   }
