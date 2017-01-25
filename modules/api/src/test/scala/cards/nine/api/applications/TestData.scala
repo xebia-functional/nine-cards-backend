@@ -83,7 +83,7 @@ private[applications] object TestData {
 
   object Paths {
 
-    val apiDocs = "/apiDocs/index.html"
+    val healthcheck = "/healthcheck"
 
     val categorize = "/applications/categorize"
 
