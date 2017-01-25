@@ -273,8 +273,7 @@ From a command line, within the root directory of the project, run the following
     > project api
     > run
 
-To check that the application has started correctly, you can try accessing the Swagger apidocs in the
-`http://localhost:8080/apiDocs` URL.
+To check that the application has started correctly, you can check the healthcheck endpoint at the `http://localhost:8080/healthcheck` URL.
 
 ### Database Connection Configuration
 
