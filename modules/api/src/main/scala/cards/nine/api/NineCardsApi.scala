@@ -31,6 +31,7 @@ class NineCardsRoutes(
 
   lazy val nineCardsRoutes: Route =
     healthcheckRoute ~
+      loaderIoRoute ~
       pathPrefix("web")(webRoute) ~
       pathPrefix("tos")(tosRoute) ~
       pathPrefix("shared-collection" / TypedSegment[PublicIdentifier]) {
@@ -40,6 +41,13 @@ class NineCardsRoutes(
       (new ApplicationsApi().route) ~
       (new CollectionsApi().route) ~
       (new RankingsApi().route)
+
+  private[this] lazy val loaderIoRoute = {
+    val loaderIoToken = config.loaderIO.verificationToken
+    val loaderIoFile = s"loaderio-${loaderIoToken}.txt"
+
+    pathPrefix(loaderIoFile)(complete(s"loaderio-${loaderIoToken}"))
+  }
 
   private[this] lazy val healthcheckRoute: Route =
     path("healthcheck")(complete("Nine Cards Backend Server Health Check"))

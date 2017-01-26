@@ -105,6 +105,8 @@ trait DummyConfig {
     "gave" → "no"
   )
 
+  val loaderIOToken = "loaderio-localtest"
+
   object test {
     val androidId = "65H9fv28456fj939"
     val token = "kfh4343JGi39034LS98fi34"
@@ -209,6 +211,9 @@ trait DummyConfig {
        |  }
        |  salt = "${ninecards.salt}"
        |  secretKey = "${ninecards.secretKey}"
+       |  loaderio {
+       |    verificationToken= "${loaderIOToken}"
+       |  }
        |  test {
        |    androidId = "${test.androidId}"
        |    token = "${test.token}"

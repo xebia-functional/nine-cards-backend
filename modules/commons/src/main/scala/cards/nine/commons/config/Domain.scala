@@ -20,6 +20,7 @@ object Domain {
     redis: RedisConfiguration,
     secretKey: String,
     salt: Option[String],
+    loaderIO: LoaderIoConfiguration,
     test: TestConfiguration
   )
 
@@ -37,6 +38,7 @@ object Domain {
         RedisConfiguration(config, prefix),
         config.getString(s"$prefix.secretKey"),
         config.getOptionalString(s"$prefix.salt"),
+        LoaderIoConfiguration(config, prefix),
         TestConfiguration(config, prefix)
       )
     }
@@ -422,6 +424,19 @@ object Domain {
   private[this] def convertToFiniteDuration(value: String) = {
     val duration = Duration(value)
     FiniteDuration(duration._1, duration._2)
+  }
+
+  case class LoaderIoConfiguration(
+    verificationToken: String
+  )
+
+  object LoaderIoConfiguration {
+
+    def apply(config: NineCardsConfig, parentPrefix: String): LoaderIoConfiguration =
+      LoaderIoConfiguration(
+        verificationToken = config.getString(s"$parentPrefix.loaderio.verificationToken")
+      )
+
   }
 
 }
