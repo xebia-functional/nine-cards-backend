@@ -65,12 +65,4 @@ object TestData {
     )
   }
 
-  object Paths {
-
-    val apiDocs = "/apiDocs/index.html"
-
-    val invalid = "/chalkyTown"
-
-  }
-
 }

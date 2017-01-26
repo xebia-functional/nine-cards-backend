@@ -5,7 +5,7 @@ import cards.nine.api.utils.SprayMarshallers._
 import cards.nine.api.utils.SprayMatchers._
 import cards.nine.commons.NineCardsService.{ NineCardsService, Result }
 import cards.nine.commons.config.Domain.NineCardsConfiguration
-import cards.nine.domain.application.{ BasicCard, Category, FullCard, Package, PriceFilter }
+import cards.nine.domain.application.{ BasicCard, Category, Package, PriceFilter }
 import cards.nine.domain.market.MarketCredentials
 import cards.nine.processes._
 import cards.nine.processes.account.AccountProcesses
@@ -45,9 +45,9 @@ class ApplicationsApi(
                 parameter("slice".?) { sliceOpt ⇒
                   sliceOpt match {
                     case Some("icon") ⇒
-                      complete(getAppsBasicInfo(request, marketAuth)(toApiIconApp))
+                      complete(getAppsIconName(request, marketAuth))
                     case _ ⇒
-                      complete(getAppsInfo(request, marketAuth)(toApiDetailsApp))
+                      complete(getAppsDetails(request, marketAuth))
                   }
                 }
               }
@@ -72,7 +72,7 @@ class ApplicationsApi(
         post {
           entity(as[ApiAppsInfoRequest]) { request ⇒
             nineCardsDirectives.marketAuthHeaders { marketAuth ⇒
-              complete(getAppsInfo(request, marketAuth)(toApiCategorizedApp))
+              complete(categorizeApps(request, marketAuth))
             }
           }
         }
@@ -145,21 +145,29 @@ class ApplicationsApi(
       }
     }
 
-  private[this] def getAppsInfo[T](
+  private[this] def getAppsDetails(
     request: ApiAppsInfoRequest,
     marketAuth: MarketCredentials
-  )(converter: FullCard ⇒ T): NineCardsService[NineCardsServices, ApiAppsInfoResponse[T]] =
+  ): NineCardsService[NineCardsServices, ApiAppsInfoResponse[ApiDetailsApp]] =
     applicationProcesses
       .getAppsInfo(request.items, marketAuth)
-      .map(toApiAppsInfoResponse(converter))
+      .map(toApiAppsInfoResponse(toApiDetailsApp))
 
-  private[this] def getAppsBasicInfo[T](
+  private[this] def getAppsIconName(
     request: ApiAppsInfoRequest,
     marketAuth: MarketCredentials
-  )(converter: BasicCard ⇒ T): NineCardsService[NineCardsServices, ApiAppsInfoResponse[T]] =
+  ): NineCardsService[NineCardsServices, ApiAppsInfoResponse[ApiIconApp]] =
     applicationProcesses
       .getAppsBasicInfo(request.items, marketAuth)
-      .map(toApiAppsInfoResponse[BasicCard, T](converter))
+      .map(toApiAppsInfoResponse[BasicCard, ApiIconApp](toApiIconApp))
+
+  private[this] def categorizeApps(
+    request: ApiAppsInfoRequest,
+    marketAuth: MarketCredentials
+  ): NineCardsService[NineCardsServices, ApiCategorizedApps] =
+    applicationProcesses
+      .getAppsInfo(request.items, marketAuth)
+      .map(toApiCategorizedApps)
 
   private[this] def setAppInfo(
     packageId: Package,

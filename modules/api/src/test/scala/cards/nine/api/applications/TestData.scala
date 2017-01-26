@@ -77,13 +77,13 @@ private[applications] object TestData {
 
   val getRankedWidgetsResponse = List.empty[RankedWidgetsByMoment]
 
-  val getRecommendationsByCategoryResponse = CardList[FullCard](Nil, Nil)
+  val getRecommendationsByCategoryResponse = CardList[FullCard](Nil, Nil, Nil)
 
-  val getAppsInfoResponse = CardList[FullCard](Nil, Nil)
+  val getAppsInfoResponse = CardList[FullCard](Nil, Nil, Nil)
 
   object Paths {
 
-    val apiDocs = "/apiDocs/index.html"
+    val healthcheck = "/healthcheck"
 
     val categorize = "/applications/categorize"
 

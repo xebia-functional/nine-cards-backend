@@ -71,11 +71,13 @@ case class BasicCard(
   */
 case class CardList[A](
   missing: List[Package],
+  pending: List[Package],
   cards: List[A]
 )
 
 object FullCardList {
-  def apply(missing: List[Package], cards: List[FullCard]) = CardList(missing, cards)
+  def apply(missing: List[Package], pending: List[Package], cards: List[FullCard]) =
+    CardList(missing, pending, cards)
 }
 
 sealed trait PriceFilter extends EnumEntry

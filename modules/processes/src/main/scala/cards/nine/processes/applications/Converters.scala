@@ -9,6 +9,7 @@ private[applications] object Converters {
     val (appsWithoutCategories, apps) = info.cards.partition(app ⇒ app.categories.isEmpty)
     CardList(
       missing = info.missing ++ appsWithoutCategories.map(_.packageName),
+      pending = info.pending,
       cards   = apps
     )
   }

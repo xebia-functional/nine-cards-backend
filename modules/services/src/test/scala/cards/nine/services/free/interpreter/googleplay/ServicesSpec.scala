@@ -119,6 +119,7 @@ class ServicesSpec
 
       val fullCardList = CardList[FullCard](
         missing = wrongPackages,
+        pending = Nil,
         cards   = fullCards
       )
 

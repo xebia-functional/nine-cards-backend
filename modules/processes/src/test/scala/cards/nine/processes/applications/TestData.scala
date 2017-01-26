@@ -38,9 +38,9 @@ private[applications] object TestData {
     MarketCredentials(AndroidId(androidId), MarketToken(token), Some(Localization(localization)))
   }
 
-  val emptyGetAppsInfoResponse = CardList(Nil, Nil)
+  val emptyGetAppsInfoResponse = CardList(Nil, Nil, Nil)
 
-  val appsInfo = CardList(missing, apps)
+  val appsInfo = CardList(missing, Nil, apps)
 }
 
 object RecommendationsTestData {
@@ -60,7 +60,7 @@ object RecommendationsTestData {
 
   val recommendationFilter = PriceFilter.ALL
 
-  val recommendations = CardList(Nil, recommendedApps)
+  val recommendations = CardList(Nil, Nil, recommendedApps)
 }
 
 object GooglePlayTestData {

@@ -77,7 +77,7 @@ object Converters {
       if (!wr.docid.isEmpty)
       // If a DocV2 corresponds to no app, it is a DefaultInstance and as such has an empty docId
     } yield wr.toFullCard
-    CardList(List(), apps)
+    CardList(Nil, Nil, apps)
   }
 
 }
