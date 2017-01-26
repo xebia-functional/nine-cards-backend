@@ -53,6 +53,8 @@ private[applications] trait JsonFormats
   implicit val apiRankedWidgetsByMomentFormat = jsonFormat2(ApiRankedWidgetsByMoment)
 
   implicit val apiRankWidgetsResponseFormat = jsonFormat1(ApiRankWidgetsResponse)
+
+  implicit val apiCategorizedAppsFormat = jsonFormat3(ApiCategorizedApps)
 }
 
 private[applications] object JsonFormats extends JsonFormats

@@ -84,5 +84,11 @@ private[this] object messages {
 
   case class ApiRankWidgetsResponse(items: List[ApiRankedWidgetsByMoment])
 
+  case class ApiCategorizedApps(
+    errors: List[Package],
+    pending: List[Package],
+    items: List[ApiCategorizedApp]
+  )
+
 }
 

@@ -136,8 +136,8 @@ private[collections] object TestData {
       )
     }
 
-    val appsInfo = CardList(missing, apps)
-    val appsInfoBasic = CardList(missing, apps.map(_.toBasic))
+    val appsInfo = CardList(missing, Nil, apps)
+    val appsInfoBasic = CardList(missing, Nil, apps.map(_.toBasic))
 
     val marketAuth = MarketCredentials(
       androidId    = androidId,
