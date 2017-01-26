@@ -30,7 +30,7 @@ class NineCardsRoutes(
   import Directives._
 
   lazy val nineCardsRoutes: Route =
-    pathPrefix("apiDocs")(swaggerRoute) ~
+    healthcheckRoute ~
       pathPrefix("web")(webRoute) ~
       pathPrefix("tos")(tosRoute) ~
       pathPrefix("shared-collection" / TypedSegment[PublicIdentifier]) {
@@ -41,14 +41,8 @@ class NineCardsRoutes(
       (new CollectionsApi().route) ~
       (new RankingsApi().route)
 
-  private[this] lazy val swaggerRoute: Route =
-    // This path prefix grants access to the Swagger documentation.
-    // Both /apiDocs/ and /apiDocs/index.html are valid paths to load Swagger-UI.
-    pathEndOrSingleSlash {
-      getFromResource("apiDocs/index.html")
-    } ~ {
-      getFromResourceDirectory("apiDocs")
-    }
+  private[this] lazy val healthcheckRoute: Route =
+    path("healthcheck")(complete("Nine Cards Backend Server Health Check"))
 
   private[this] lazy val tosRoute: Route =
     pathEnd {

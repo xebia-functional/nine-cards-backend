@@ -4,7 +4,7 @@ import akka.actor.ActorSystem
 import akka.testkit._
 import cards.nine.api.{ AuthHeadersRejectionHandler, NineCardsExceptionHandler }
 import cards.nine.api.NineCardsHeaders._
-import cards.nine.api.TestData.{ Paths ⇒ _, _ }
+import cards.nine.api.TestData._
 import cards.nine.api.collections.TestData._
 import cards.nine.commons.NineCardsErrors.AuthTokenNotValid
 import cards.nine.commons.NineCardsService
