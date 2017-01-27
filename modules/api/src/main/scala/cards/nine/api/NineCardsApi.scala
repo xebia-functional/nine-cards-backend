@@ -13,8 +13,8 @@ import cards.nine.processes.account.AccountProcesses
 import cards.nine.processes.applications.ApplicationProcesses
 import cards.nine.processes.rankings.RankingProcesses
 import cards.nine.processes.NineCardsServices._
-
 import scala.concurrent.ExecutionContext
+import spray.http.StatusCodes.SeeOther
 import spray.routing._
 
 class NineCardsRoutes(
@@ -32,11 +32,7 @@ class NineCardsRoutes(
   lazy val nineCardsRoutes: Route =
     healthcheckRoute ~
       loaderIoRoute ~
-      pathPrefix("web")(webRoute) ~
-      pathPrefix("tos")(tosRoute) ~
-      pathPrefix("shared-collection" / TypedSegment[PublicIdentifier]) {
-        _ ⇒ sharedCollectionRoute
-      } ~
+      websiteRoutes ~
       (new AccountsApi().route) ~
       (new ApplicationsApi().route) ~
       (new CollectionsApi().route) ~
@@ -52,14 +48,19 @@ class NineCardsRoutes(
   private[this] lazy val healthcheckRoute: Route =
     path("healthcheck")(complete("Nine Cards Backend Server Health Check"))
 
-  private[this] lazy val tosRoute: Route =
-    pathEnd {
-      getFromResource("web/tos.html")
-    }
-
-  private[this] lazy val webRoute: Route = getFromResourceDirectory("web")
-
-  private[this] lazy val sharedCollectionRoute: Route =
-    getFromResource("web/collection.html")
+  private[this] lazy val websiteRoutes: Route =
+    pathEndOrSingleSlash {
+      redirect(config.webmainpage, SeeOther)
+    } ~
+      pathPrefix("shared-collection" / TypedSegment[PublicIdentifier]) { _publicId ⇒
+        getFromResource("web/collection.html")
+      } ~
+      path("tos") {
+        getFromResource("web/tos.html")
+      } ~
+      pathPrefix("web") {
+        getFromResourceDirectory("web")
+      }
 
 }
+
