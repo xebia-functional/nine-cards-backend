@@ -99,6 +99,8 @@ trait DummyConfig {
     val url = "redis://localhost:6379"
   }
 
+  val webmainpage: String = ""
+
   val editors: Map[String, String] = Map(
     "karl" → "microsoft",
     "marx" → "made",
@@ -212,8 +214,9 @@ trait DummyConfig {
        |  salt = "${ninecards.salt}"
        |  secretKey = "${ninecards.secretKey}"
        |  loaderio {
-       |    verificationToken= "${loaderIOToken}"
+       |    verificationToken= "$loaderIOToken"
        |  }
+       |  webmainpage = "{$webmainpage}"
        |  test {
        |    androidId = "${test.androidId}"
        |    token = "${test.token}"

@@ -21,6 +21,7 @@ object Domain {
     secretKey: String,
     salt: Option[String],
     loaderIO: LoaderIoConfiguration,
+    webmainpage: String,
     test: TestConfiguration
   )
 
@@ -39,6 +40,7 @@ object Domain {
         config.getString(s"$prefix.secretKey"),
         config.getOptionalString(s"$prefix.salt"),
         LoaderIoConfiguration(config, prefix),
+        config.getString(s"$prefix.webmainpage"),
         TestConfiguration(config, prefix)
       )
     }
