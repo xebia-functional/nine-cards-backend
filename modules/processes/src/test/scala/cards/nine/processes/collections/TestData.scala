@@ -33,7 +33,7 @@ private[collections] object TestData {
 
   val addedPackagesCount = 2
 
-  val androidId = AndroidId("50a4dbf7-85a2-4875-8c75-7232c237808c")
+  val androidId = AndroidId("aaaaaaaaaaaaaaaa")
 
   val appCategory = "COUNTRY"
 
@@ -55,7 +55,7 @@ private[collections] object TestData {
 
   val countryName = "United States"
 
-  val deviceToken = DeviceToken("5d56922c-5257-4392-817e-503166cd7afd")
+  val deviceToken = DeviceToken("77777777-7777-7777-7777-777777777777")
 
   val failure = 0
 
@@ -65,7 +65,7 @@ private[collections] object TestData {
 
   val localization = Localization("en-EN")
 
-  val messageId = "a000dcbd-5419-446f-b2c6-6eaefd88480c"
+  val messageId = "55555555-5555"
 
   val millis = 1453226400000l
 
@@ -79,7 +79,7 @@ private[collections] object TestData {
 
   val pageParams = Page(pageNumber, pageSize)
 
-  val publicIdentifier = "40daf308-fecf-4228-9262-a712d783cf49"
+  val publicIdentifier = "77777777-7777"
 
   val publishedOnDatetime = new DateTime(millis)
 
@@ -97,7 +97,7 @@ private[collections] object TestData {
 
   val success = 1
 
-  val token = "6d54dfed-bbcf-47a5-b8f2-d86cf3320631"
+  val token = "99999999-9999"
 
   val updatedCollectionsCount = 1
 

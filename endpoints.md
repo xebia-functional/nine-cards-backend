@@ -305,7 +305,7 @@ For example, a valid request body would be the following one:
 {
   "email"     : "jon.doe@gmail.com",
   "androidId" : "1CAFE80C",
-  "tokenId"   : "k23.k1Li4iliMa_"
+  "tokenId"   : "k10.qwertyuiop_"
 }
 ```
 

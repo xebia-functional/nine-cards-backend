@@ -105,7 +105,7 @@ trait PersistenceDatabaseContext extends BasicDatabaseContext {
 
 trait DomainDatabaseContext extends BasicDatabaseContext {
 
-  val deviceToken: Option[String] = Option("d9f48907-0374-4b3a-89ec-433bd64de2e5")
+  val deviceToken: Option[String] = Option("dddddddd-dddd-bbbb-bbbb-bbbbbbbbbbbb")
   val emptyDeviceToken: Option[String] = None
 
   val deleteAllRows: ConnectionIO[Unit] = for {
