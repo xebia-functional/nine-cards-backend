@@ -344,7 +344,7 @@ This task should be done manually in this way:
 
 ## License
 
-Copyright (C) 2012 47 Degrees, LLC Reactive. http://47deg.com hello@47deg.com
+Copyright (C) 2017 47 Degrees, LLC Reactive. http://47deg.com hello@47deg.com
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at
 
