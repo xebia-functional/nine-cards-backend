@@ -60,7 +60,7 @@ private[collections] object TestData {
 
   val moments = List("HOME", "NIGHT")
 
-  val publicIdentifier = "40daf308-fecf-4228-9262-a712d783cf49"
+  val publicIdentifier = "33333333-3333-3333"
 
   val removedPackages = None
 
@@ -141,13 +141,13 @@ private[collections] object TestData {
 
     val collections = "/collections"
 
-    val collectionById = "/collections/40daf308-fecf-4228-9262-a712d783cf49"
+    val collectionById = s"/collections/${publicIdentifier}"
 
-    val increaseViews = "/collections/40daf308-fecf-4228-9262-a712d783cf49/views"
+    val increaseViews = s"/collections/${publicIdentifier}/views"
 
     val latestCollections = "/collections/latest/SOCIAL/0/25"
 
-    val subscriptionByCollectionId = "/collections/subscriptions/40daf308-fecf-4228-9262-a712d783cf49"
+    val subscriptionByCollectionId = s"/collections/subscriptions/${publicIdentifier}"
 
     val subscriptionsByUser = "/collections/subscriptions"
 

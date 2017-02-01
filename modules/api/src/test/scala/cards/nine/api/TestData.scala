@@ -22,25 +22,23 @@ import spray.http.HttpHeaders.RawHeader
 
 object TestData {
 
-  val androidId = AndroidId("f07a13984f6d116a")
+  val androidId = AndroidId("aaaaaaaaaaaaaaaa")
 
-  val apiToken = ApiKey("a7db875d-f11e-4b0c-8d7a-db210fd93e1b")
+  val apiToken = ApiKey("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee")
 
   val author = "John Doe"
 
-  val authToken = "c8abd539-d912-4eff-8d3c-679307defc71"
+  val authToken = "dddddddd-dddd-dddd-dddd-dddddddddddd"
 
   val category = "SOCIAL"
 
-  val deviceToken = Option(DeviceToken("d897b6f1-c6a9-42bd-bf42-c787883c7d3e"))
+  val deviceToken = Option(DeviceToken("77777777-7777-7777-7777-777777777777"))
 
   val email = Email("valid.email@test.com")
 
-  val failingAuthToken = "a439c00e"
+  val failingAuthToken = "abcdefg"
 
-  val googlePlayToken = "8d8f9814"
-
-  val googleAnalyticsToken = "yada-yada-yada"
+  val googlePlayToken = "111111111"
 
   val location = Option("US")
 
@@ -50,9 +48,7 @@ object TestData {
 
   val moments = List("HOME", "NIGHT")
 
-  val sessionToken = SessionToken("1d1afeea-c7ec-45d8-a6f8-825b836f2785")
-
-  val tokenId = GoogleIdToken("6c7b303e-585e-4fe8-8b6f-586547317331-7f9b12dd-8946-4285-a72a-746e482834dd")
+  val sessionToken = SessionToken("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb")
 
   val userId = 1l
 
@@ -75,9 +71,6 @@ object TestData {
       RawHeader(headerAuthToken, failingAuthToken)
     )
 
-    val googleAnalyticsHeaders = List(
-      RawHeader(headerGoogleAnalyticsToken, googleAnalyticsToken)
-    )
   }
 
 }

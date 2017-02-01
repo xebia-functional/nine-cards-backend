@@ -125,8 +125,8 @@ trait DummyConfig {
   val loaderIOToken = "loaderio-localtest"
 
   object test {
-    val androidId = "65H9fv28456fj939"
-    val token = "kfh4343JGi39034LS98fi34"
+    val androidId = "androidId"
+    val token = "token"
     val localization = "en-US"
     val googlePlayDetailsAppUrl = "https://play.google.com/store/apps/details"
   }

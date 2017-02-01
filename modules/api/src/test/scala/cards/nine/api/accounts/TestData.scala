@@ -24,25 +24,25 @@ import spray.http.HttpHeaders.RawHeader
 
 private[accounts] object TestData {
 
-  val androidId = AndroidId("f07a13984f6d116a")
+  val androidId = AndroidId("aaaaaaaaaaaaaaaa")
 
-  val apiToken = ApiKey("a7db875d-f11e-4b0c-8d7a-db210fd93e1b")
+  val apiToken = ApiKey("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee")
 
-  val authToken = "c8abd539-d912-4eff-8d3c-679307defc71"
+  val authToken = "aaaaaaaa-bbbb-bbbb-bbbb-cccccccccccc"
 
-  val deviceToken = Option(DeviceToken("d897b6f1-c6a9-42bd-bf42-c787883c7d3e"))
+  val deviceToken = Option(DeviceToken("77777777-7777-7777-7777-777777777777"))
 
   val email = Email("valid.email@test.com")
 
-  val failingAuthToken = "a439c00e"
+  val failingAuthToken = "abcdef012"
 
   val location = Option("US")
 
   val now = DateTime.now
 
-  val sessionToken = SessionToken("1d1afeea-c7ec-45d8-a6f8-825b836f2785")
+  val sessionToken = SessionToken("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb")
 
-  val tokenId = GoogleIdToken("6c7b303e-585e-4fe8-8b6f-586547317331-7f9b12dd-8946-4285-a72a-746e482834dd")
+  val tokenId = GoogleIdToken("66666666-6666-6666-6666-666666666666")
 
   val userId = 1l
 

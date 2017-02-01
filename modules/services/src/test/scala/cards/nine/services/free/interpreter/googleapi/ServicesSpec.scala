@@ -82,10 +82,10 @@ trait MockGoogleApiServer extends MockServerService {
   val getTokenInfoPath = "/oauth2/v3/tokeninfo"
   val tokenIdParameterName = "id_token"
 
-  val validTokenId = "eyJhbGciOiJSUzI1NiIsImtpZCI6ImVlY2U0NzZiYzdlMDdmYjFlZmVjOTYxZTFhYjI3N2ViYWN"
-  val otherTokenId = "eyJhbGciOiJSUzI1NiIsImtpZCI6IjZkNjQzY2Y5MGI1NTgyOTg0YjRlZTY3MjI4NGMzMzI0ZTg"
-  val wrongTokenId = "eyJpc3MiOiJhY2NvdW50cy5nb29nbGUuY29tIiwiYXRfaGFzaCI6Im1pS1FDOGpGajhGRkF4RG9"
-  val failingTokenId = "1c2VyY29udGVudC5jb20iLCJzdWIiOiIxMDYyMjI2OTM3MTk4NjQ5NzA3MzciLCJlbWFpbF92ZX"
+  val validTokenId = "validTokenId"
+  val otherTokenId = "otherTokenId"
+  val wrongTokenId = "wrongTokenId"
+  val failingTokenId = "failingTokenId"
 
   mockServer.when(
     request

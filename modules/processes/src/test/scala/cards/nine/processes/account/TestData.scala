@@ -28,7 +28,7 @@ private[account] trait AccountTestData {
 
   val wrongEmail = Email("wrong.email@test.com")
 
-  val tokenId = GoogleIdToken("eyJhbGciOiJSUzI1NiIsImtpZCI6IjcxMjI3MjFlZWQwYjQ1YmUxNWUzMGI2YThhOThjOTM3ZTJlNmQxN")
+  val tokenId = GoogleIdToken("JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK")
 
   val tokenInfo = TokenInfo("true", email.value)
 
@@ -38,11 +38,11 @@ private[account] trait AccountTestData {
 
   val userId = 1l
 
-  val apiKey = "60b32e59-0d87-4705-a454-2e5b38bec13b"
+  val apiKey = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
 
-  val wrongApiKey = "f93cff07-32c9-4995-8e80-a8adfafbf296"
+  val wrongApiKey = "cccccccc-cccc-cccc-cccc-cccccccccccc"
 
-  val sessionToken = "1d1afeea-c7ec-45d8-a6f8-825b836f2785"
+  val sessionToken = "dddddddd-dddd-dddd-dddd-dddddddddddd"
 
   val banned = false
 
@@ -50,9 +50,9 @@ private[account] trait AccountTestData {
 
   val userNotFoundError = UserNotFound("The user doesn't exist")
 
-  val androidId = "f07a13984f6d116a"
+  val androidId = "aaaaaaaaaaaaaaaa"
 
-  val googleTokenId = "hd-w2tmEe7SZ_8vXhw_3f1iNnsrAqkpEvbPkFIo9oZeAq26u"
+  val googleTokenId = "eg-googleTokenId"
 
   val deviceToken = "abc"
 

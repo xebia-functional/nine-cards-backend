@@ -30,7 +30,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"email\": \"user@example.com\",\n    \"androidId\":\"111a-bbb2-cc3-4444f\",\n    \"tokenId\":\"Y29udGVudC5jb20iLCJzdWIiOiIxMDYyMjI2OTM3MTk4N\"\n}"
+							"raw": "{\n    \"email\": \"user@example.com\",\n    \"androidId\":\"111a-bbb2-cc3-4444f\",\n    \"tokenId\":\"{{OBTAIN_TOKEN_ID}}\"\n}"
 						},
 						"description": "Signs up a client (user and device) within the Nine Cards Backend.\n\nIts response should include the new client's session token and its api key."
 					},
