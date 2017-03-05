@@ -16,8 +16,8 @@
 package cards.nine.api.applications
 
 import cards.nine.api.NineCardsDirectives._
-import cards.nine.api.utils.SprayMarshallers._
-import cards.nine.api.utils.SprayMatchers._
+import cards.nine.api.utils.AkkaHttpMarshallers._
+import cards.nine.api.utils.AkkaHttpMatchers._
 import cards.nine.commons.NineCardsService.{ NineCardsService, Result }
 import cards.nine.commons.config.Domain.NineCardsConfiguration
 import cards.nine.domain.application.{ BasicCard, Category, Package, PriceFilter }
@@ -29,7 +29,7 @@ import cards.nine.processes.rankings.RankingProcesses
 import cards.nine.processes.NineCardsServices._
 import cats.free.Free
 import scala.concurrent.ExecutionContext
-import spray.routing._
+import akka.http.scaladsl.server._
 
 class ApplicationsApi(
   implicit
@@ -72,7 +72,7 @@ class ApplicationsApi(
       } ~
         path(PackageSegment) { packageId ⇒
           put {
-            authenticate(nineCardsDirectives.editorAuth) { userName ⇒
+            authenticateBasicAsync("App Cards Editors", nineCardsDirectives.editorAuth) { userName ⇒
               entity(as[ApiSetAppInfoRequest]) { details ⇒
                 complete(setAppInfo(packageId, details))
               }

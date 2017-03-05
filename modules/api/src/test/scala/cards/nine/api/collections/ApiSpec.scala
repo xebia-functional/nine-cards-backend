@@ -17,7 +17,7 @@ package cards.nine.api.collections
 
 import akka.actor.ActorSystem
 import akka.testkit._
-import cards.nine.api.{ AuthHeadersRejectionHandler, NineCardsExceptionHandler }
+import cards.nine.api.{AuthHeadersRejectionHandler, NineCardsExceptionHandler}
 import cards.nine.api.NineCardsHeaders._
 import cards.nine.api.TestData._
 import cards.nine.api.collections.TestData._
@@ -30,22 +30,20 @@ import cards.nine.processes.NineCardsServices._
 import cards.nine.processes._
 import cards.nine.processes.account.AccountProcesses
 import cards.nine.processes.collections.SharedCollectionProcesses
-import org.mockito.Matchers.{ eq ⇒ mockEq }
+import org.mockito.Matchers.{eq => mockEq}
 import org.specs2.matcher.Matchers
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
 import org.specs2.specification.Scope
-import spray.http.HttpHeaders.RawHeader
-import spray.http.{ HttpRequest, StatusCodes }
-import spray.routing.HttpService
-import spray.testkit.Specs2RouteTest
+import akka.http.scaladsl.model.headers.RawHeader
+import akka.http.scaladsl.model.{HttpRequest, StatusCodes}
+import akka.http.scaladsl.testkit.Specs2RouteTest
 
 import scala.concurrent.duration.DurationInt
 
 trait CollectionsApiSpecification
   extends Specification
   with AuthHeadersRejectionHandler
-  with HttpService
   with JsonFormats
   with Matchers
   with Mockito

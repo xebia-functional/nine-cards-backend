@@ -20,7 +20,7 @@ import cards.nine.api.accounts.messages.{ ApiLoginRequest, ApiUpdateInstallation
 import cards.nine.domain.account._
 import cards.nine.processes.account.messages._
 import org.joda.time.DateTime
-import spray.http.HttpHeaders.RawHeader
+import akka.http.scaladsl.model.headers.RawHeader
 
 private[accounts] object TestData {
 

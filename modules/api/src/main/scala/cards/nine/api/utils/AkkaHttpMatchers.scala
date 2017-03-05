@@ -18,17 +18,17 @@ package cards.nine.api.utils
 import cards.nine.domain.application.{ Category, Package, PackageRegex, PriceFilter }
 import enumeratum.{ Enum, EnumEntry }
 import shapeless._
-import spray.http.Uri.Path
-import spray.routing.PathMatcher.{ Matched, Unmatched }
-import spray.routing.PathMatchers.{ IntNumber, Segment }
-import spray.routing._
+import akka.http.scaladsl.model.Uri.Path
+import akka.http.scaladsl.server.PathMatcher.{ Matched, Unmatched }
+import akka.http.scaladsl.server.PathMatchers.{ IntNumber, Segment }
+import akka.http.scaladsl.server._
 
-object SprayMatchers {
+object AkkaHttpMatchers {
 
   class EnumSegment[E <: EnumEntry](implicit En: Enum[E]) extends PathMatcher1[E] {
     def apply(path: Path) = path match {
       case Path.Segment(segment, tail) ⇒ En.withNameOption(segment) match {
-        case Some(e) ⇒ Matched(tail, e :: HNil)
+        case Some(e) ⇒ Matched(tail, Tuple1(e))
         case None ⇒ Unmatched
       }
       case _ ⇒ Unmatched
@@ -40,7 +40,7 @@ object SprayMatchers {
 
   class TypedSegment[T](implicit gen: Generic.Aux[T, String :: HNil]) extends PathMatcher1[T] {
     def apply(path: Path) = path match {
-      case Path.Segment(segment, tail) ⇒ Matched(tail, gen.from(segment :: HNil) :: HNil)
+      case Path.Segment(segment, tail) ⇒ Matched(tail, Tuple1(gen.from(segment :: HNil)))
       case _ ⇒ Unmatched
     }
   }
@@ -50,7 +50,7 @@ object SprayMatchers {
   }
 
   class TypedIntSegment[T](implicit gen: Generic.Aux[T, Int :: HNil]) extends PathMatcher1[T] {
-    def apply(path: Path) = IntNumber.apply(path) map (segment ⇒ gen.from(segment) :: HNil)
+    def apply(path: Path) = IntNumber.apply(path) map (segment ⇒ Tuple1(gen.from(segment._1 :: HNil)))
   }
 
   object TypedIntSegment {

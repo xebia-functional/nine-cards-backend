@@ -16,7 +16,7 @@
 package cards.nine.api.applications
 
 import cards.nine.domain.application.{ Package, Widget }
-import spray.httpx.SprayJsonSupport
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import spray.json._
 
 private[applications] trait JsonFormats

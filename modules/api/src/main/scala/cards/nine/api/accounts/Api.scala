@@ -18,15 +18,16 @@ package cards.nine.api.accounts
 import cards.nine.api.NineCardsDirectives._
 import cards.nine.api.NineCardsHeaders.Domain._
 import cards.nine.api.accounts.messages._
-import cards.nine.api.utils.SprayMarshallers._
+import cards.nine.api.utils.AkkaHttpMarshallers._
 import cards.nine.commons.config.Domain.NineCardsConfiguration
 import cards.nine.domain.account.SessionToken
 import cards.nine.processes._
 import cards.nine.processes.account.AccountProcesses
 import cards.nine.processes.NineCardsServices._
+
 import scala.concurrent.ExecutionContext
-import spray.httpx.SprayJsonSupport
-import spray.routing._
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
+import akka.http.scaladsl.server._
 
 class AccountsApi(
   implicit

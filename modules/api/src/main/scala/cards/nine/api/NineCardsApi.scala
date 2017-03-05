@@ -21,7 +21,7 @@ import cards.nine.api.applications.ApplicationsApi
 import cards.nine.api.collections.CollectionsApi
 import cards.nine.api.rankings.RankingsApi
 import cards.nine.api.accounts.AccountsApi
-import cards.nine.api.utils.SprayMatchers.TypedSegment
+import cards.nine.api.utils.AkkaHttpMatchers.TypedSegment
 import cards.nine.commons.config.Domain.NineCardsConfiguration
 import cards.nine.processes._
 import cards.nine.processes.account.AccountProcesses
@@ -29,8 +29,8 @@ import cards.nine.processes.applications.ApplicationProcesses
 import cards.nine.processes.rankings.RankingProcesses
 import cards.nine.processes.NineCardsServices._
 import scala.concurrent.ExecutionContext
-import spray.http.StatusCodes.SeeOther
-import spray.routing._
+import akka.http.scaladsl.model.StatusCodes.SeeOther
+import akka.http.scaladsl.server._
 
 class NineCardsRoutes(
   implicit

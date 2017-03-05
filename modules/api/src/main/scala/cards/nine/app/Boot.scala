@@ -17,15 +17,15 @@ package cards.nine.app
 
 import akka.actor.{ ActorSystem, Props }
 import akka.event.Logging
-import akka.io.IO
-import akka.pattern.ask
 import akka.util.Timeout
 import cards.nine.app.RankingActor.RankingByCategory
 import cards.nine.commons.config.NineCardsConfig._
 import cards.nine.processes.NineCardsServices
 import cards.nine.processes.NineCardsServices.NineCardsServices
 import cats.~>
-import spray.can.Http
+import akka.http.scaladsl.Http
+import akka.stream.{ ActorMaterializer, Materializer }
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scalaz.concurrent.Task
@@ -33,7 +33,9 @@ import scalaz.concurrent.Task
 object Boot extends App {
 
   // we need an ActorSystem to host our application in
-  implicit val system = ActorSystem("on-spray-can")
+  implicit val system = ActorSystem("on-akka-http")
+  implicit val materializer: Materializer = ActorMaterializer()
+
   // the background processes will log on same output
   val log = Logging(system, getClass)
 
@@ -51,7 +53,7 @@ object Boot extends App {
     name  = "ninecards-server-apps-resolver"
   )
 
-  val apiActor = system.actorOf(Props[NineCardsApiActor], "ninecards-server")
+  val apiActor = new NineCardsApiActor()
 
   val cancellable =
     system.scheduler.schedule(
@@ -69,8 +71,8 @@ object Boot extends App {
       AppResolverMessages.ResolveApps
     )
 
-  IO(Http) ? Http.Bind(
-    listener  = apiActor,
+  Http().bindAndHandle(
+    handler   = apiActor.routes,
     interface = nineCardsConfiguration.http.host,
     port      = nineCardsConfiguration.http.port
   )

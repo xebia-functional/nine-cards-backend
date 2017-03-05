@@ -15,13 +15,14 @@
  */
 package cards.nine.api.utils
 
-import shapeless.{ ::, HList, HNil }
-import spray.httpx.marshalling.ToResponseMarshaller
-import spray.routing.{ Directive, HListable, _ }
+import akka.http.scaladsl.marshalling.ToResponseMarshaller
+import akka.http.scaladsl.server.util.Tupler
+import akka.http.scaladsl.server.{ Directive, Directive1 }
 
-import scala.util.control.NonFatal
 import scalaz.concurrent.Task
 import scalaz.{ -\/, \/, \/- }
+
+import ScalazTaskUtils._
 
 trait TaskDirectives {
 
@@ -29,7 +30,11 @@ trait TaskDirectives {
     * "Unwraps" a ``Task[T]`` and runs its inner route after future
     * completion with the task's value as an extraction of type ``Throwable \/ T``.
     */
-  def onComplete[T](magnet: OnCompleteTaskMagnet[T]): Directive1[Throwable \/ T] = magnet
+  def onComplete[T](task: ⇒ Task[T]): Directive1[Throwable \/ T] =
+    Directive { inner ⇒ ctx ⇒
+      import ctx.executionContext
+      task.unsafePerformAsyncFutureDisjunction().flatMap(t ⇒ inner(Tuple1(t))(ctx))
+    }
 
   /**
     * "Unwraps" a ``Task[T]`` and runs its inner route after future
@@ -48,62 +53,41 @@ trait TaskDirectives {
     * (This directive therefore requires a marshaller for the task type to be
     * implicitly available.)
     */
-  def onFailure(magnet: OnFailureTaskMagnet): Directive1[Throwable] = magnet
+  def completeOrRecoverWith(magnet: CompleteOrRecoverWithTaskMagnet): Directive1[Throwable] = magnet.directive
 }
 
 object TaskDirectives extends TaskDirectives
 
-trait OnCompleteTaskMagnet[T] extends Directive1[Throwable \/ T]
-
-object OnCompleteTaskMagnet {
-  implicit def apply[T](task: ⇒ Task[T]): OnCompleteTaskMagnet[T] =
-    new OnCompleteTaskMagnet[T] {
-      def happly(f: ((Throwable \/ T) :: HNil) ⇒ Route): Route = ctx ⇒
-        task.unsafePerformAsync { t ⇒
-          try f(t :: HNil)(ctx)
-          catch { case NonFatal(error) ⇒ ctx.failWith(error) }
-        }
-    }
-}
-
 trait OnSuccessTaskMagnet {
-  type Out <: HList
-
+  type Out
   def directive: Directive[Out]
 }
 
 object OnSuccessTaskMagnet {
-  import scala.language.existentials
-  implicit def apply[T](task: ⇒ Task[T])(implicit hl: HListable[T]) =
-    new Directive[hl.Out] with OnSuccessTaskMagnet {
-      type Out = hl.Out
+  implicit def apply[T](task: ⇒ Task[T])(implicit tupler: Tupler[T]) =
+    new OnSuccessTaskMagnet {
+      type Out = tupler.Out
 
-      def directive = this
-
-      def happly(f: Out ⇒ Route) = ctx ⇒ task.unsafePerformAsync {
-
-        case \/-(t) ⇒
-          try f(hl(t))(ctx)
-          catch {
-            case NonFatal(error) ⇒ ctx.failWith(error)
-          }
-        case -\/(error) ⇒ ctx.failWith(error)
-      }
+      val directive = Directive[tupler.Out] { inner ⇒ ctx ⇒
+        import ctx.executionContext
+        task.unsafePerformAsyncFuture().flatMap(t ⇒ inner(tupler(t))(ctx))
+      }(tupler.OutIsTuple)
     }
 }
 
-trait OnFailureTaskMagnet extends Directive1[Throwable]
+trait CompleteOrRecoverWithTaskMagnet {
+  def directive: Directive1[Throwable]
+}
 
-object OnFailureTaskMagnet {
-  implicit def apply[T](task: ⇒ Task[T])(implicit m: ToResponseMarshaller[T]) =
-    new OnFailureTaskMagnet {
-      def happly(f: (Throwable :: HNil) ⇒ Route) = ctx ⇒ task.unsafePerformAsync {
-        case \/-(t) ⇒ ctx.complete(t)
-        case -\/(error) ⇒
-          try f(error :: HNil)(ctx)
-          catch {
-            case NonFatal(err) ⇒ ctx.failWith(err)
-          }
+object CompleteOrRecoverWithTaskMagnet {
+  implicit def apply[T](task: ⇒ Task[T])(implicit m: ToResponseMarshaller[T]): CompleteOrRecoverWithTaskMagnet =
+    new CompleteOrRecoverWithTaskMagnet {
+      val directive = Directive[Tuple1[Throwable]] { inner ⇒ ctx ⇒
+        import ctx.executionContext
+        task.unsafePerformAsyncFutureDisjunction().flatMap {
+          case \/-(t) ⇒ ctx.complete(t)
+          case -\/(error) ⇒ inner(Tuple1(error))(ctx)
+        }
       }
     }
 }
