@@ -15,7 +15,7 @@
  */
 package cards.nine.api.rankings
 
-import cards.nine.api.utils.SprayMatchers._
+import cards.nine.api.utils.AkkaHttpMatchers._
 import cards.nine.api.NineCardsHeaders
 import cards.nine.commons.NineCardsService.Result
 import cards.nine.commons.config.Domain.NineCardsConfiguration
@@ -25,7 +25,7 @@ import cards.nine.processes.account.AccountProcesses
 import cards.nine.processes.rankings.RankingProcesses
 import cards.nine.processes.NineCardsServices._
 import scala.concurrent.ExecutionContext
-import spray.routing._
+import akka.http.scaladsl.server._
 
 class RankingsApi(
   implicit

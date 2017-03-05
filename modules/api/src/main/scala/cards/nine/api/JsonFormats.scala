@@ -16,7 +16,7 @@
 package cards.nine.api
 
 import cards.nine.domain.application.Package
-import spray.httpx.SprayJsonSupport
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import spray.json._
 
 trait JsonFormats

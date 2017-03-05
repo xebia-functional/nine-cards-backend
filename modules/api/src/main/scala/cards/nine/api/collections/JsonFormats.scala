@@ -21,7 +21,7 @@ import cats.syntax.either._
 import io.circe.{ Decoder, Encoder, Json }
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
-import spray.httpx.SprayJsonSupport
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import spray.json._
 
 private[collections] trait JsonFormats

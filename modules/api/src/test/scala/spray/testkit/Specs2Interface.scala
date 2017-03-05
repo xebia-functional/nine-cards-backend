@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package spray.testkit
+package akka.http.scaladsl.testkit
 
 import org.specs2.execute.{ Failure, FailureException }
 import org.specs2.specification.core.{ Fragments, SpecificationStructure }

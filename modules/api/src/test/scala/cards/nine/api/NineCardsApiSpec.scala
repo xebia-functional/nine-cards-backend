@@ -27,15 +27,15 @@ import cards.nine.processes.rankings.RankingProcesses
 import org.specs2.matcher.Matchers
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
+
 import scala.concurrent.duration.DurationInt
-import spray.http.StatusCodes.{ OK, NotFound }
-import spray.routing.HttpService
-import spray.testkit.Specs2RouteTest
+import akka.http.scaladsl.model.StatusCodes.{NotFound, OK}
+import akka.http.scaladsl.server.Route
+import akka.http.scaladsl.testkit.{RouteTestTimeout, Specs2RouteTest}
 
 class NineCardsApiSpec
   extends Specification
   with AuthHeadersRejectionHandler
-  with HttpService
   with JsonFormats
   with Matchers
   with Mockito
@@ -54,7 +54,7 @@ class NineCardsApiSpec
 
   implicit val config: NineCardsConfiguration = NineCardsConfig.nineCardsConfiguration
 
-  val route = sealRoute(new NineCardsRoutes().nineCardsRoutes)
+  val route = Route.seal(new NineCardsRoutes().nineCardsRoutes)
 
   "nineCardsApi" should {
     "grant access to HealthCheck" in {

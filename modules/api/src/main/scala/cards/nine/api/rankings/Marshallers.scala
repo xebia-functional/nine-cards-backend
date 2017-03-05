@@ -15,13 +15,14 @@
  */
 package cards.nine.api.rankings
 
-import cards.nine.api.utils.SprayMarshallers._
+import akka.http.scaladsl.marshalling.{ ToEntityMarshaller, ToResponseMarshaller }
+import akka.http.scaladsl.unmarshalling.FromEntityUnmarshaller
+import cards.nine.api.utils.AkkaHttpMarshallers._
 import cards.nine.commons.NineCardsService.Result
 import cards.nine.processes.NineCardsServices._
-import io.circe.spray.{ JsonSupport, RootDecoder }
+import de.heikoseeberger.akkahttpcirce.CirceSupport
+
 import scalaz.concurrent.Task
-import spray.httpx.marshalling.{ Marshaller, ToResponseMarshaller }
-import spray.httpx.unmarshalling.Unmarshaller
 
 object NineCardsMarshallers {
   import messages.{ Ranking, Reload }
@@ -29,25 +30,25 @@ object NineCardsMarshallers {
   private type NineCardsServed[A] = cats.free.Free[NineCardsServices, A]
 
   implicit lazy val ranking: ToResponseMarshaller[NineCardsServed[Result[Ranking]]] = {
-    implicit val resM: ToResponseMarshaller[Ranking] = JsonSupport.circeJsonMarshaller(Encoders.ranking)
+    implicit val resM: ToResponseMarshaller[Ranking] = CirceSupport.circeToEntityMarshaller(Encoders.ranking)
     val resultM: ToResponseMarshaller[Result[Ranking]] = ninecardsResultMarshaller[Ranking]
     val taskM: ToResponseMarshaller[Task[Result[Ranking]]] = tasksMarshaller(resultM)
     freeTaskMarshaller[Result[Ranking]](taskM)
   }
 
   implicit lazy val reloadResponse: ToResponseMarshaller[NineCardsServed[Result[Reload.Response]]] = {
-    implicit val resM: ToResponseMarshaller[Reload.Response] = JsonSupport.circeJsonMarshaller(Encoders.reloadRankingResponse)
+    implicit val resM: ToResponseMarshaller[Reload.Response] = CirceSupport.circeToEntityMarshaller(Encoders.reloadRankingResponse)
     val resultM: ToResponseMarshaller[Result[Reload.Response]] = ninecardsResultMarshaller[Reload.Response]
     val taskM: ToResponseMarshaller[Task[Result[Reload.Response]]] = tasksMarshaller(resultM)
     freeTaskMarshaller[Result[Reload.Response]](taskM)
   }
 
-  implicit lazy val reloadRequestU: Unmarshaller[Reload.Request] =
-    JsonSupport.circeJsonUnmarshaller[Reload.Request](
-      RootDecoder(Decoders.reloadRankingRequest)
+  implicit lazy val reloadRequestU: FromEntityUnmarshaller[Reload.Request] =
+    CirceSupport.circeUnmarshaller[Reload.Request](
+      Decoders.reloadRankingRequest
     )
 
-  implicit lazy val reloadRequesM: Marshaller[Reload.Request] =
-    JsonSupport.circeJsonMarshaller(Encoders.reloadRankingRequest)
+  implicit lazy val reloadRequesM: ToEntityMarshaller[Reload.Request] =
+    CirceSupport.circeToEntityMarshaller(Encoders.reloadRankingRequest)
 
 }

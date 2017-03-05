@@ -15,39 +15,39 @@
  */
 package cards.nine.api
 
+import akka.event.LoggingAdapter
 import org.http4s.client.UnexpectedStatus
-import spray.http.StatusCodes._
-import spray.routing.{ ExceptionHandler, HttpService }
-import spray.util.LoggingContext
+import akka.http.scaladsl.model.StatusCodes._
+import akka.http.scaladsl.server.{ Directives, ExceptionHandler }
 
-trait NineCardsExceptionHandler extends HttpService {
-  implicit def exceptionHandler(implicit log: LoggingContext) =
+trait NineCardsExceptionHandler extends Directives {
+  implicit def exceptionHandler(implicit log: LoggingAdapter) =
     ExceptionHandler {
       case e: java.net.ConnectException ⇒
-        requestUri {
+        extractUri {
           uri ⇒
             log.warning("Request to {} could not be handled normally", uri)
             complete(ServiceUnavailable, Option(e.getMessage).getOrElse("Net connection error"))
         }
       case e: rankings.messages.Reload.InvalidDate ⇒
-        requestUri { uri ⇒
+        extractUri { uri ⇒
           log.warning("Request to {} could not be handled normally", uri)
           complete(BadRequest, e.getMessage())
         }
       case e: rankings.messages.Reload.Error ⇒
-        requestUri { uri ⇒
+        extractUri { uri ⇒
           log.warning("Request to {} could not be handled normally", uri)
           val status = if (e.code == 401) Unauthorized else InternalServerError
           complete(status, e.message)
         }
       case e: UnexpectedStatus ⇒
-        requestUri {
+        extractUri {
           uri ⇒
             log.warning("Request to {} could not be handled normally: {}", uri, e.status.toString)
             complete(InternalServerError, e.status.toString)
         }
       case e: Throwable ⇒
-        requestUri {
+        extractUri {
           uri ⇒
             val exceptionMessage = Option(e.getMessage).getOrElse("Unexpected error")
             log.warning("Request to {} could not be handled normally: {}", uri, exceptionMessage)

@@ -15,24 +15,24 @@
  */
 package cards.nine.api.utils
 
+import akka.http.scaladsl.marshalling.{ Marshaller, ToResponseMarshaller }
 import cards.nine.api.NineCardsErrorHandler
 import cards.nine.commons.NineCardsService.{ NineCardsService, Result }
 import cards.nine.processes.NineCardsServices._
 import cats.free.Free
 import shapeless.Lazy
-import spray.httpx.marshalling.ToResponseMarshaller
 
 import scalaz.concurrent.Task
+import ScalazTaskUtils._
 
-object SprayMarshallers {
+object AkkaHttpMarshallers {
 
   implicit def nineCardsServiceMarshaller[A](
     implicit
     m: ToResponseMarshaller[Free[NineCardsServices, Result[A]]]
   ): ToResponseMarshaller[NineCardsService[NineCardsServices, A]] =
-    ToResponseMarshaller[NineCardsService[NineCardsServices, A]] {
-      (result, ctx) ⇒
-        m(result.value, ctx)
+    Marshaller { implicit ctx ⇒ result ⇒
+      m(result.value)
     }
 
   implicit def ninecardsResultMarshaller[A](
@@ -40,34 +40,26 @@ object SprayMarshallers {
     m: ToResponseMarshaller[A],
     handler: NineCardsErrorHandler
   ): ToResponseMarshaller[Result[A]] =
-    ToResponseMarshaller[Result[A]] {
-      (result, ctx) ⇒
-        result.fold(
-          left ⇒ handler.handleNineCardsErrors(left, ctx),
-          right ⇒ m(right, ctx)
-        )
+    Marshaller { implicit ctx ⇒ result ⇒
+      result.fold(
+        left ⇒ handler.handleNineCardsErrors(left),
+        right ⇒ m(right)
+      )
     }
 
   implicit def tasksMarshaller[A](
     implicit
     m: ToResponseMarshaller[A]
   ): ToResponseMarshaller[Task[A]] =
-    ToResponseMarshaller[Task[A]] {
-      (task, ctx) ⇒
-        task.unsafePerformAsync {
-          _.fold(
-            left ⇒ ctx.handleError(left),
-            right ⇒ m(right, ctx)
-          )
-        }
+    Marshaller { implicit ctx ⇒ task ⇒
+      task.unsafePerformAsyncFuture().flatMap(m(_))
     }
 
   implicit def freeTaskMarshaller[A](
     implicit
     taskMarshaller: Lazy[ToResponseMarshaller[Task[A]]]
   ): ToResponseMarshaller[Free[NineCardsServices, A]] =
-    ToResponseMarshaller[Free[NineCardsServices, A]] {
-      (free, ctx) ⇒
-        taskMarshaller.value(free.foldMap(prodInterpreters), ctx)
+    Marshaller { implicit ctx ⇒ free ⇒
+      taskMarshaller.value(free.foldMap(prodInterpreters))
     }
 }

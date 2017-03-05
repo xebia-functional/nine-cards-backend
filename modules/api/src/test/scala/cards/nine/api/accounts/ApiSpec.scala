@@ -17,10 +17,10 @@ package cards.nine.api.accounts
 
 import akka.actor.ActorSystem
 import akka.testkit._
-import cards.nine.api.{ AuthHeadersRejectionHandler, NineCardsExceptionHandler }
+import cards.nine.api.{AuthHeadersRejectionHandler, NineCardsExceptionHandler}
 import cards.nine.api.NineCardsHeaders._
 import cards.nine.api.accounts.TestData._
-import cards.nine.commons.NineCardsErrors.{ AuthTokenNotValid, WrongEmailAccount }
+import cards.nine.commons.NineCardsErrors.{AuthTokenNotValid, WrongEmailAccount}
 import cards.nine.commons.NineCardsService
 import cards.nine.commons.config.Domain.NineCardsConfiguration
 import cards.nine.commons.config.NineCardsConfig
@@ -29,23 +29,22 @@ import cards.nine.processes.NineCardsServices._
 import cards.nine.processes._
 import cards.nine.processes.account.AccountProcesses
 import cards.nine.processes.account.messages._
-import org.mockito.Matchers.{ eq ⇒ mockEq }
+import org.mockito.Matchers.{eq => mockEq}
 import org.specs2.matcher.Matchers
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
 import org.specs2.specification.Scope
-import spray.http.HttpHeaders.RawHeader
-import spray.http.{ HttpRequest, StatusCodes }
-import spray.httpx.SprayJsonSupport
-import spray.routing.HttpService
-import spray.testkit.Specs2RouteTest
+import akka.http.scaladsl.model.headers.RawHeader
+import akka.http.scaladsl.model.{HttpRequest, StatusCodes}
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
+import akka.http.scaladsl.server.Route
+import akka.http.scaladsl.testkit.{RouteTestTimeout, Specs2RouteTest}
 
 import scala.concurrent.duration.DurationInt
 
 trait AccountsApiSpecification
   extends Specification
   with AuthHeadersRejectionHandler
-  with HttpService
   with JsonFormats
   with SprayJsonSupport
   with Matchers
@@ -63,7 +62,7 @@ trait AccountsApiSpecification
 
     implicit val config: NineCardsConfiguration = NineCardsConfig.nineCardsConfiguration
 
-    val routes = sealRoute(new AccountsApi().route)
+    val routes = Route.seal(new AccountsApi().route)
 
     accountProcesses.checkAuthToken(
       sessionToken = SessionToken(mockEq(sessionToken.value)),

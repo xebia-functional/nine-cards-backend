@@ -31,16 +31,14 @@ import org.specs2.matcher.Matchers
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
 import org.specs2.specification.Scope
-import spray.http.{ HttpRequest, StatusCodes }
-import spray.routing.HttpService
-import spray.testkit.Specs2RouteTest
+import akka.http.scaladsl.model.{HttpRequest, StatusCodes}
+import akka.http.scaladsl.testkit.Specs2RouteTest
 
 import scala.concurrent.duration.DurationInt
 
 trait RankingsApiSpecification
   extends Specification
   with AuthHeadersRejectionHandler
-  with HttpService
   with Matchers
   with Mockito
   with NineCardsExceptionHandler

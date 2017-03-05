@@ -19,9 +19,11 @@ object Versions {
   val buildVersion = "1.0.0-SNAPSHOT"
 
   // Core Libs
-  val akka = "2.4.8"
-  val cats = "0.8.1"
-  val circe = "0.6.0"
+  val akka = "2.4.17"
+  val akkaHttp = "10.0.4"
+  val akkaHttpJson = "1.12.0"
+  val cats = "0.9.0"
+  val circe = "0.7.0"
   val doobie = "0.3.0"
   val enumeratum = "1.5.1"
   val flywaydb = "3.2.1"
@@ -36,7 +38,6 @@ object Versions {
   val scala = "2.11.8"
   val scalaz = "7.2.4"
   val scredis = "2.0.6"
-  val spray = "1.3.3"
   val sprayJson = "1.3.2"
   val tagSoup = "1.2.1"
   val typesafeConfig = "1.3.0"

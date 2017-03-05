@@ -18,7 +18,7 @@ package cards.nine.api
 import cards.nine.api.NineCardsHeaders._
 import cards.nine.domain.account._
 import org.joda.time.DateTime
-import spray.http.HttpHeaders.RawHeader
+import akka.http.scaladsl.model.headers.RawHeader
 
 object TestData {
 

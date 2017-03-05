@@ -19,16 +19,18 @@ object Dependencies {
   import sbt.Keys.libraryDependencies
 
   private def akka(suff: String) = "com.typesafe.akka" %% s"akka$suff" % Versions.akka
+  private def akkaHttp(suff: String) = "com.typesafe.akka" %% s"akka-http$suff" % Versions.akkaHttp
   private def circe(suff: String) = "io.circe" %% s"circe$suff" % Versions.circe
   private def doobie(suff: String) = "org.tpolecat" %% s"doobie$suff" % Versions.doobie exclude("org.scalaz", "*")
   private def enumeratum(suff: String) = "com.beachape" %% s"enumeratum$suff" % Versions.enumeratum
   private def http4s(suff: String) = "org.http4s" %% s"http4s$suff" % Versions.http4s
   private def scalaz(suff: String) = "org.scalaz" %% s"scalaz$suff" % Versions.scalaz
   private def specs2(suff: String) = "org.specs2" %% s"specs2$suff" % Versions.specs2 % "test"
-  private def spray(suff: String) = "io.spray" %% s"spray$suff" % Versions.spray
 
   private val akkaActor = akka("-actor")
   private val akkaTestKit = akka("-testkit") % "test"
+  private val akkaHttpCirce = "de.heikoseeberger" %% "akka-http-circe" % Versions.akkaHttpJson
+  private val akkaHttpTestKit = akkaHttp("-testkit") % "test"
   private val cats = "org.typelevel" %% "cats" % Versions.cats
   private val embeddedRedis = "com.orange.redis-embedded" % "embedded-redis" % Versions.embeddedRedis % "test"
   private val flywaydbCore = "org.flywaydb" % "flyway-core" % Versions.flywaydb
@@ -44,7 +46,6 @@ object Dependencies {
   private val scredis = "com.livestream" %% "scredis" % Versions.scredis
   private val specs2Core = specs2("-core") exclude("org.scalaz", "*")
   private val sprayJson = "io.spray" %% "spray-json" % Versions.sprayJson
-  private val sprayTestKit = spray("-testkit") % "test" exclude("org.specs2", "specs2_2.11")
   private val tagSoup = "org.ccil.cowan.tagsoup" % "tagsoup" % Versions.tagSoup
   private val typesafeConfig = "com.typesafe" % "config" % Versions.typesafeConfig
 
@@ -62,14 +63,14 @@ object Dependencies {
   val apiDeps = Seq(libraryDependencies ++= baseDeps ++ Seq(
     akkaActor,
     akkaTestKit,
+    akkaHttp(""),
+    akkaHttp("-spray-json"),
+    akkaHttpCirce,
+    akkaHttpTestKit,
     cats % "test",
     circe("-core"),
-    circe("-spray"),
     newRelic,
-    spray("-can"),
-    spray("-routing-shapeless2"),
-    sprayJson,
-    sprayTestKit
+    sprayJson
   ))
 
   val commonsDeps = Seq(libraryDependencies ++= Seq(

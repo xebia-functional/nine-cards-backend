@@ -19,8 +19,8 @@ import akka.actor.ActorRefFactory
 import cards.nine.api.NineCardsDirectives._
 import cards.nine.api.NineCardsHeaders.Domain._
 import cards.nine.api.collections.messages._
-import cards.nine.api.utils.SprayMarshallers._
-import cards.nine.api.utils.SprayMatchers._
+import cards.nine.api.utils.AkkaHttpMarshallers._
+import cards.nine.api.utils.AkkaHttpMatchers._
 import cards.nine.commons.NineCardsService.NineCardsService
 import cards.nine.commons.config.Domain.NineCardsConfiguration
 import cards.nine.domain.application.Category
@@ -32,7 +32,7 @@ import cards.nine.processes.collections.SharedCollectionProcesses
 import cards.nine.processes.NineCardsServices._
 
 import scala.concurrent.ExecutionContext
-import spray.routing._
+import akka.http.scaladsl.server._
 
 class CollectionsApi(
   implicit

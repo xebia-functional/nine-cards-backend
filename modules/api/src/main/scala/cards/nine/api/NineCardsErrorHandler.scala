@@ -15,14 +15,16 @@
  */
 package cards.nine.api
 
+import akka.http.scaladsl.marshalling.{ Marshaller, Marshalling }
+import akka.http.scaladsl.model.{ HttpEntity, HttpResponse }
 import cards.nine.commons.NineCardsErrors._
-import spray.http.StatusCodes._
-import spray.http.{ HttpEntity, HttpResponse }
-import spray.httpx.marshalling.ToResponseMarshallingContext
+import akka.http.scaladsl.model.StatusCodes._
+
+import scala.concurrent.{ ExecutionContext, Future }
 
 class NineCardsErrorHandler {
 
-  def handleNineCardsErrors(e: NineCardsError, ctx: ToResponseMarshallingContext): Unit = {
+  def handleNineCardsErrors(e: NineCardsError)(implicit ctx: ExecutionContext): Future[List[Marshalling[HttpResponse]]] = {
     val (statusCode, errorMessage) = e match {
       case AuthTokenNotValid(message) ⇒
         (Unauthorized, message)
@@ -60,7 +62,9 @@ class NineCardsErrorHandler {
         (Unauthorized, message)
     }
 
-    ctx.marshalTo(HttpResponse(status = statusCode, entity = HttpEntity(errorMessage)))
+    Marshaller.fromResponse(
+      HttpResponse(status = statusCode, entity = HttpEntity(errorMessage))
+    )
   }
 }
 

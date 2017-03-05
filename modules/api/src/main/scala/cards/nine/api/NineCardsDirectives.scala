@@ -20,8 +20,9 @@ import java.util.UUID
 import cards.nine.api.NineCardsHeaders.Domain._
 import cards.nine.api.NineCardsHeaders._
 import cards.nine.api.accounts.messages.ApiLoginRequest
-import cards.nine.api.utils.SprayMatchers.PriceFilterSegment
+import cards.nine.api.utils.AkkaHttpMatchers.PriceFilterSegment
 import cards.nine.api.utils.TaskDirectives._
+import cards.nine.api.utils.ScalazTaskUtils._
 import cards.nine.commons.NineCardsService._
 import cards.nine.commons.config.Domain.NineCardsConfiguration
 import cards.nine.domain.account._
@@ -36,10 +37,9 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scalaz.concurrent.Task
 import shapeless._
-import spray.http.Uri
-import spray.routing._
-import spray.routing.authentication._
-import spray.routing.directives._
+import akka.http.scaladsl.model.Uri
+import akka.http.scaladsl.server._
+import akka.http.scaladsl.server.directives._
 
 class NineCardsDirectives(
   implicit
@@ -58,8 +58,8 @@ class NineCardsDirectives(
 
   import cards.nine.api.accounts.JsonFormats._
 
-  implicit def fromTaskAuth[T](auth: ⇒ Task[Authentication[T]]): AuthMagnet[T] =
-    new AuthMagnet(onSuccess(auth))
+  implicit def fromTaskAuth[T](auth: ⇒ Task[AuthenticationResult[T]]): Future[AuthenticationResult[T]] =
+    auth.unsafePerformAsyncFuture()
 
   val rejectionByCredentialsRejected = AuthenticationFailedRejection(
     cause            = AuthenticationFailedRejection.CredentialsRejected,
@@ -72,7 +72,7 @@ class NineCardsDirectives(
     sessionToken ← generateSessionToken
   } yield sessionToken
 
-  def validateLoginRequest(email: Email, tokenId: GoogleIdToken): Task[Authentication[Unit]] =
+  def validateLoginRequest(email: Email, tokenId: GoogleIdToken): Task[AuthenticationResult[Unit]] =
     if (email.value.isEmpty || tokenId.value.isEmpty)
       Task.now(Left(rejectionByCredentialsRejected))
     else
@@ -86,7 +86,7 @@ class NineCardsDirectives(
         }
 
   val authenticateUser: Directive1[UserContext] = for {
-    uri ← requestUri
+    uri ← extractUri
     herokuForwardedProtocol ← optionalHeaderValueByName(headerHerokuForwardedProto)
     herokuUri = herokuForwardedProtocol.filterNot(_.isEmpty).fold(uri)(uri.withScheme)
     sessionToken ← headerValueByName(headerSessionToken).map(SessionToken)
@@ -107,7 +107,7 @@ class NineCardsDirectives(
     androidId: AndroidId,
     authToken: String,
     requestUri: Uri
-  ): Task[Authentication[Long]] =
+  ): Task[AuthenticationResult[Long]] =
     accountProcesses.checkAuthToken(
       sessionToken = sessionToken,
       androidId    = androidId,
@@ -120,30 +120,24 @@ class NineCardsDirectives(
       case _ ⇒ Left(rejectionByCredentialsRejected)
     }
 
-  val editorAuth: BasicHttpAuthenticator[String] = BasicAuth(
-    authenticator = new AppCuratorAuthenticator(config.editors),
-    realm         = "App Cards Editors"
-  )
+  val editorAuth: AsyncAuthenticator[String] = { credentials: Credentials ⇒
+    def isEditor(cred: Credentials.Provided): Boolean =
+      config.editors.get(cred.identifier).exists(cred.verify)
 
-  class AppCuratorAuthenticator(editors: Map[String, String]) extends UserPassAuthenticator[String] {
-
-    override def apply(userPassOption: Option[UserPass]): Future[Option[String]] = {
-      def isEditor(userPass: UserPass): Boolean =
-        editors.get(userPass.user) == Some(userPass.pass)
-
-      Future(userPassOption.filter(isEditor).map(_.user))
+    credentials match {
+      case c: Credentials.Provided if isEditor(c) ⇒ Future.successful(Some(c.identifier))
+      case _ ⇒ Future.successful(None)
     }
-
   }
 
   val generateNewCollectionInfo: Directive1[NewSharedCollectionInfo] = for {
     currentDateTime ← provide(CurrentDateTime(DateTime.now))
     publicIdentifier ← provide(PublicIdentifier(UUID.randomUUID.toString))
-  } yield NewSharedCollectionInfo(currentDateTime, publicIdentifier) :: HNil
+  } yield NewSharedCollectionInfo(currentDateTime, publicIdentifier)
 
   val generateSessionToken: Directive1[SessionToken] = provide(SessionToken(UUID.randomUUID.toString))
 
-  val priceFilterPath: Directive[PriceFilter :: HNil] =
+  val priceFilterPath: Directive1[PriceFilter] =
     path(PriceFilterSegment) | (pathEndOrSingleSlash & provide(PriceFilter.ALL: PriceFilter))
 
 }

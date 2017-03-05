@@ -15,14 +15,18 @@
  */
 package cards.nine.api
 
-import spray.http.StatusCodes.Unauthorized
-import spray.routing.{ Directives, MissingHeaderRejection, RejectionHandler }
+import akka.http.scaladsl.model.StatusCodes.Unauthorized
+import akka.http.scaladsl.server.{ Directives, MissingHeaderRejection, RejectionHandler }
 
 trait AuthHeadersRejectionHandler {
 
-  implicit val authHeadersRejectionHandler = RejectionHandler {
-    case MissingHeaderRejection(headerName: String) :: _ ⇒
-      Directives.complete(Unauthorized, "Missing authorization headers needed for this request")
-  }
+  implicit val authHeadersRejectionHandler = RejectionHandler
+    .newBuilder()
+    .handle {
+      case MissingHeaderRejection(headerName: String) ⇒
+        Directives.complete(Unauthorized, "Missing authorization headers needed for this request")
+    }
+    .result()
+    .withFallback(RejectionHandler.default)
 
 }

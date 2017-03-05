@@ -17,9 +17,9 @@ package cards.nine.api.applications
 
 import akka.actor.ActorSystem
 import akka.testkit._
-import cards.nine.api.{ AuthHeadersRejectionHandler, NineCardsExceptionHandler }
+import cards.nine.api.{AuthHeadersRejectionHandler, NineCardsExceptionHandler}
 import cards.nine.api.NineCardsHeaders._
-import cards.nine.api.TestData.{ Headers, androidId, authToken, failingAuthToken, sessionToken, userId }
+import cards.nine.api.TestData.{Headers, androidId, authToken, failingAuthToken, sessionToken, userId}
 import cards.nine.api.applications.TestData._
 import cards.nine.commons.NineCardsErrors.AuthTokenNotValid
 import cards.nine.commons.NineCardsService
@@ -31,22 +31,21 @@ import cards.nine.processes._
 import cards.nine.processes.account.AccountProcesses
 import cards.nine.processes.applications.ApplicationProcesses
 import cards.nine.processes.rankings.RankingProcesses
-import org.mockito.Matchers.{ eq ⇒ mockEq }
+import org.mockito.Matchers.{eq => mockEq}
 import org.specs2.matcher.Matchers
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
 import org.specs2.specification.Scope
-import spray.http.HttpHeaders.RawHeader
-import spray.http.{ BasicHttpCredentials, HttpRequest, StatusCodes, Uri }
-import spray.routing.HttpService
-import spray.testkit.Specs2RouteTest
+import akka.http.scaladsl.model.headers.RawHeader
+import akka.http.scaladsl.model.Uri
+import akka.http.scaladsl.server.Route
+import akka.http.scaladsl.testkit.{RouteTestTimeout, Specs2RouteTest}
 
 import scala.concurrent.duration.DurationInt
 
 trait ApplicationsApiSpecification
   extends Specification
   with AuthHeadersRejectionHandler
-  with HttpService
   with JsonFormats
   with Matchers
   with Mockito
@@ -67,7 +66,7 @@ trait ApplicationsApiSpecification
 
     implicit val config: NineCardsConfiguration = NineCardsConfig.nineCardsConfiguration
 
-    val routes = sealRoute(new ApplicationsApi().route)
+    val routes = Route.seal(new ApplicationsApi().route)
 
     accountProcesses.checkAuthToken(
       sessionToken = SessionToken(mockEq(sessionToken.value)),
