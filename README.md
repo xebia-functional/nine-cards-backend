@@ -62,7 +62,7 @@ The Back End is concerned with those features that involve information shared be
 The NCBE is organized within three modules, called `api`, `processes`, and `services`:
 
 * The **api** module implements the HTTP server application that provides the endpoints for the application.
-  The routes are built with the [spray](http://spray.io/) library, with [spray-json](http://github.com/spray/spray-json) serialization.
+  The routes are built with the [akka-http](http://doc.akka.io/docs/akka-http/current/scala/http/) library, with [spray-json](http://github.com/spray/spray-json) serialization.
 
 * The **processes** module implements the _business logic_ behind each endpoint. This business logic is implemented in a style from functional programming,
   based on the use of monadic operations.
