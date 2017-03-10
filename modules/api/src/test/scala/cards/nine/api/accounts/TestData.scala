@@ -21,6 +21,7 @@ import cards.nine.domain.account._
 import cards.nine.processes.account.messages._
 import org.joda.time.DateTime
 import akka.http.scaladsl.model.headers.RawHeader
+import cats.data.NonEmptyList
 
 private[accounts] object TestData {
 
@@ -48,13 +49,13 @@ private[accounts] object TestData {
 
   object Headers {
 
-    val userInfoHeaders = List(
+    val userInfoHeaders = NonEmptyList.of(
       RawHeader(headerAndroidId, androidId.value),
       RawHeader(headerSessionToken, sessionToken.value),
       RawHeader(headerAuthToken, authToken)
     )
 
-    val failingUserInfoHeaders = List(
+    val failingUserInfoHeaders = NonEmptyList.of(
       RawHeader(headerAndroidId, androidId.value),
       RawHeader(headerSessionToken, sessionToken.value),
       RawHeader(headerAuthToken, failingAuthToken)

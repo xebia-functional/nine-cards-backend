@@ -29,9 +29,9 @@ import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
 
 import scala.concurrent.duration.DurationInt
-import akka.http.scaladsl.model.StatusCodes.{NotFound, OK}
+import akka.http.scaladsl.model.StatusCodes.{ NotFound, OK }
 import akka.http.scaladsl.server.Route
-import akka.http.scaladsl.testkit.{RouteTestTimeout, Specs2RouteTest}
+import akka.http.scaladsl.testkit.{ RouteTestTimeout, Specs2RouteTest }
 
 class NineCardsApiSpec
   extends Specification

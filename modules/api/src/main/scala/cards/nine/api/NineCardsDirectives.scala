@@ -21,7 +21,6 @@ import cards.nine.api.NineCardsHeaders.Domain._
 import cards.nine.api.NineCardsHeaders._
 import cards.nine.api.accounts.messages.ApiLoginRequest
 import cards.nine.api.utils.AkkaHttpMatchers.PriceFilterSegment
-import cards.nine.api.utils.TaskDirectives._
 import cards.nine.api.utils.ScalazTaskUtils._
 import cards.nine.commons.NineCardsService._
 import cards.nine.commons.config.Domain.NineCardsConfiguration
@@ -36,8 +35,8 @@ import org.joda.time.DateTime
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scalaz.concurrent.Task
-import shapeless._
 import akka.http.scaladsl.model.Uri
+import akka.http.scaladsl.model.headers.HttpChallenge
 import akka.http.scaladsl.server._
 import akka.http.scaladsl.server.directives._
 
@@ -54,6 +53,7 @@ class NineCardsDirectives(
   with PathDirectives
   with RouteDirectives
   with SecurityDirectives
+  with FutureDirectives
   with JsonFormats {
 
   import cards.nine.api.accounts.JsonFormats._
@@ -61,10 +61,18 @@ class NineCardsDirectives(
   implicit def fromTaskAuth[T](auth: ⇒ Task[AuthenticationResult[T]]): Future[AuthenticationResult[T]] =
     auth.unsafePerformAsyncFuture()
 
+  val nineCardChallenge = HttpChallenge("NineCard", None)
+
   val rejectionByCredentialsRejected = AuthenticationFailedRejection(
-    cause            = AuthenticationFailedRejection.CredentialsRejected,
-    challengeHeaders = Nil
+    cause     = AuthenticationFailedRejection.CredentialsRejected,
+    challenge = nineCardChallenge
   )
+
+  def authenticate[A](result: Future[AuthenticationResult[A]]): Directive1[A] =
+    onSuccess(result).flatMap {
+      case Right(a) ⇒ provide(a)
+      case Left(b) ⇒ reject(rejectionByCredentialsRejected)
+    }
 
   val authenticateLoginRequest: Directive1[SessionToken] = for {
     request ← entity(as[ApiLoginRequest])
@@ -74,26 +82,30 @@ class NineCardsDirectives(
 
   def validateLoginRequest(email: Email, tokenId: GoogleIdToken): Task[AuthenticationResult[Unit]] =
     if (email.value.isEmpty || tokenId.value.isEmpty)
-      Task.now(Left(rejectionByCredentialsRejected))
+      Task.now(Left(nineCardChallenge))
     else
       accountProcesses
         .checkGoogleTokenId(email, tokenId)
-        .leftMap(_ ⇒ rejectionByCredentialsRejected)
+        .leftMap(_ ⇒ nineCardChallenge)
         .value
         .foldMap(prodInterpreters)
         .handle {
-          case _ ⇒ Left(rejectionByCredentialsRejected)
+          case _ ⇒ Left(nineCardChallenge)
         }
 
-  val authenticateUser: Directive1[UserContext] = for {
-    uri ← extractUri
-    herokuForwardedProtocol ← optionalHeaderValueByName(headerHerokuForwardedProto)
-    herokuUri = herokuForwardedProtocol.filterNot(_.isEmpty).fold(uri)(uri.withScheme)
-    sessionToken ← headerValueByName(headerSessionToken).map(SessionToken)
-    androidId ← headerValueByName(headerAndroidId).map(AndroidId)
-    authToken ← headerValueByName(headerAuthToken)
-    userId ← authenticate(validateUser(sessionToken, androidId, authToken, herokuUri))
-  } yield UserContext(UserId(userId), androidId) :: HNil
+  // TODO get back to the single for comprehension
+  val authenticateUser: Directive1[UserContext] =
+    extractUri.flatMap { uri ⇒
+      optionalHeaderValueByName(headerHerokuForwardedProto).flatMap { herokuForwardedProtocol ⇒
+        val herokuUri = herokuForwardedProtocol.filterNot(_.isEmpty).fold(uri)(uri.withScheme)
+        for {
+          sessionToken ← headerValueByName(headerSessionToken).map(SessionToken)
+          androidId ← headerValueByName(headerAndroidId).map(AndroidId)
+          authToken ← headerValueByName(headerAuthToken)
+          userId ← authenticate(validateUser(sessionToken, androidId, authToken, herokuUri))
+        } yield Tuple1(UserContext(UserId(userId), androidId))
+      }
+    }
 
   val marketAuthHeaders: Directive1[MarketCredentials] =
     for {
@@ -115,9 +127,9 @@ class NineCardsDirectives(
       requestUri   = requestUri.toString
     ).foldMap(prodInterpreters) map { result ⇒
       //TODO: Provide more details about the cause of the rejection with a custom rejection handler
-      result.leftMap(_ ⇒ rejectionByCredentialsRejected)
+      result.leftMap(_ ⇒ nineCardChallenge)
     } handle {
-      case _ ⇒ Left(rejectionByCredentialsRejected)
+      case _ ⇒ Left(nineCardChallenge)
     }
 
   val editorAuth: AsyncAuthenticator[String] = { credentials: Credentials ⇒

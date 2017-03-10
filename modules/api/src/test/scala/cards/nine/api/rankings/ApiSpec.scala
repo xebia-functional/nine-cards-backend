@@ -31,8 +31,10 @@ import org.specs2.matcher.Matchers
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
 import org.specs2.specification.Scope
-import akka.http.scaladsl.model.{HttpRequest, StatusCodes}
-import akka.http.scaladsl.testkit.Specs2RouteTest
+import akka.http.scaladsl.model.{ HttpRequest, StatusCodes }
+import akka.http.scaladsl.server.Route
+import akka.http.scaladsl.testkit.{ RouteTestTimeout, Specs2RouteTest }
+import cards.nine.api.utils.RequestBuildingUtils
 
 import scala.concurrent.duration.DurationInt
 
@@ -42,7 +44,8 @@ trait RankingsApiSpecification
   with Matchers
   with Mockito
   with NineCardsExceptionHandler
-  with Specs2RouteTest {
+  with Specs2RouteTest
+  with RequestBuildingUtils {
 
   implicit def default(implicit system: ActorSystem) = RouteTestTimeout(20.second dilated system)
 
@@ -56,7 +59,7 @@ trait RankingsApiSpecification
 
     implicit val config: NineCardsConfiguration = NineCardsConfig.nineCardsConfiguration
 
-    val routes = sealRoute(new RankingsApi().route)
+    val routes = Route.seal(new RankingsApi().route)
 
   }
 

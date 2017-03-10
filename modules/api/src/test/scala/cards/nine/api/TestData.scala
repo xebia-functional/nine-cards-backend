@@ -19,6 +19,7 @@ import cards.nine.api.NineCardsHeaders._
 import cards.nine.domain.account._
 import org.joda.time.DateTime
 import akka.http.scaladsl.model.headers.RawHeader
+import cats.data.NonEmptyList
 
 object TestData {
 
@@ -54,18 +55,18 @@ object TestData {
 
   object Headers {
 
-    val userInfoHeaders = List(
+    val userInfoHeaders = NonEmptyList.of(
       RawHeader(headerAndroidId, androidId.value),
       RawHeader(headerSessionToken, sessionToken.value),
       RawHeader(headerAuthToken, authToken)
     )
 
-    val googlePlayHeaders = List(
+    val googlePlayHeaders = NonEmptyList.of(
       RawHeader(headerGooglePlayToken, googlePlayToken),
       RawHeader(headerMarketLocalization, marketLocalization)
     )
 
-    val failingUserInfoHeaders = List(
+    val failingUserInfoHeaders = NonEmptyList.of(
       RawHeader(headerAndroidId, androidId.value),
       RawHeader(headerSessionToken, sessionToken.value),
       RawHeader(headerAuthToken, failingAuthToken)

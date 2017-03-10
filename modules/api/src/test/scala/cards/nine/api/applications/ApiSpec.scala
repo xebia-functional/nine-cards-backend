@@ -17,9 +17,9 @@ package cards.nine.api.applications
 
 import akka.actor.ActorSystem
 import akka.testkit._
-import cards.nine.api.{AuthHeadersRejectionHandler, NineCardsExceptionHandler}
+import cards.nine.api.{ AuthHeadersRejectionHandler, NineCardsExceptionHandler }
 import cards.nine.api.NineCardsHeaders._
-import cards.nine.api.TestData.{Headers, androidId, authToken, failingAuthToken, sessionToken, userId}
+import cards.nine.api.TestData.{ Headers, androidId, authToken, failingAuthToken, sessionToken, userId }
 import cards.nine.api.applications.TestData._
 import cards.nine.commons.NineCardsErrors.AuthTokenNotValid
 import cards.nine.commons.NineCardsService
@@ -31,15 +31,16 @@ import cards.nine.processes._
 import cards.nine.processes.account.AccountProcesses
 import cards.nine.processes.applications.ApplicationProcesses
 import cards.nine.processes.rankings.RankingProcesses
-import org.mockito.Matchers.{eq => mockEq}
+import org.mockito.Matchers.{ eq ⇒ mockEq }
 import org.specs2.matcher.Matchers
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
 import org.specs2.specification.Scope
-import akka.http.scaladsl.model.headers.RawHeader
-import akka.http.scaladsl.model.Uri
+import akka.http.scaladsl.model.headers.{ BasicHttpCredentials, RawHeader }
+import akka.http.scaladsl.model.{ HttpRequest, StatusCodes, Uri }
 import akka.http.scaladsl.server.Route
-import akka.http.scaladsl.testkit.{RouteTestTimeout, Specs2RouteTest}
+import akka.http.scaladsl.testkit.{ RouteTestTimeout, Specs2RouteTest }
+import cards.nine.api.utils.RequestBuildingUtils
 
 import scala.concurrent.duration.DurationInt
 
@@ -50,7 +51,8 @@ trait ApplicationsApiSpecification
   with Matchers
   with Mockito
   with NineCardsExceptionHandler
-  with Specs2RouteTest {
+  with Specs2RouteTest
+  with RequestBuildingUtils {
 
   implicit def default(implicit system: ActorSystem) = RouteTestTimeout(20.second dilated system)
 
@@ -217,10 +219,7 @@ class ApplicationsApiSpec
   """POST /applications/details?slice=icon, the variant to get only title and icon""" should {
 
     val request = Post(
-      uri     = Uri(
-        path  = Uri.Path(Paths.details),
-        query = Uri.Query("?slice=icon")
-      ),
+      uri     = Uri(Paths.details).withQuery(Uri.Query("?slice=icon")),
       content = apiGetAppsInfoRequest
     ) ~> addHeaders(Headers.googlePlayHeaders)
 

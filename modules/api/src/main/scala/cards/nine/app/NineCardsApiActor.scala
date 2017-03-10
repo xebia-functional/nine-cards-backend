@@ -16,18 +16,24 @@
 package cards.nine.app
 
 import akka.actor.ActorRefFactory
+import akka.event.LoggingAdapter
 import cards.nine.api.{ AuthHeadersRejectionHandler, NineCardsExceptionHandler, NineCardsRoutes }
 import cards.nine.commons.config.NineCardsConfig
 
 import scala.concurrent.ExecutionContext
 
-class NineCardsApiActor(implicit actorRefFactory: ActorRefFactory)
-  extends AuthHeadersRejectionHandler
+// TODO rename or merge into `NineCardsRoutes`
+class NineCardsApiActor(
+  implicit
+  actorRefFactory: ActorRefFactory,
+  log: LoggingAdapter
+) extends AuthHeadersRejectionHandler
   with NineCardsExceptionHandler {
 
   implicit val executionContext: ExecutionContext = actorRefFactory.dispatcher
   implicit val config = NineCardsConfig.nineCardsConfiguration
 
+  // TODO check if it's safe to remove
   //  implicit val editorBasicAuth: BasicHttpAuthenticator[String] =
   //    BasicAuth(
   //      realm      = "App Card Curators",
@@ -35,5 +41,10 @@ class NineCardsApiActor(implicit actorRefFactory: ActorRefFactory)
   //      createUser = (up: UserPass) ⇒ up.user
   //    )
 
-  val routes = (new NineCardsRoutes().nineCardsRoutes)
+  val routes =
+    handleExceptions(exceptionHandler) {
+      handleRejections(authHeadersRejectionHandler) {
+        new NineCardsRoutes().nineCardsRoutes
+      }
+    }
 }
