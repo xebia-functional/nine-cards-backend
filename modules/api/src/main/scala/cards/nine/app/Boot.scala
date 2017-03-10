@@ -37,7 +37,7 @@ object Boot extends App {
   implicit val materializer: Materializer = ActorMaterializer()
 
   // the background processes will log on same output
-  val log = Logging(system, getClass)
+  implicit val log = Logging(system, getClass)
 
   implicit val timeout = Timeout(5.seconds)
 

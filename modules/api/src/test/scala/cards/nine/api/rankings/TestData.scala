@@ -16,14 +16,15 @@
 package cards.nine.api.rankings
 
 import cards.nine.api.NineCardsHeaders._
-import cards.nine.api.rankings.{messages => Api}
+import cards.nine.api.rankings.{ messages ⇒ Api }
 import cards.nine.domain.analytics.RankedWidgetsByMoment
-import cards.nine.domain.application.{Category, Package}
-import cards.nine.processes.rankings.messages.{Get, Reload}
+import cards.nine.domain.application.{ Category, Package }
+import cards.nine.processes.rankings.messages.{ Get, Reload }
 import cards.nine.services.free.domain.Ranking.GoogleAnalyticsRanking
-import org.joda.time.{DateTime, DateTimeZone}
+import org.joda.time.{ DateTime, DateTimeZone }
 import akka.http.scaladsl.model.headers.RawHeader
 import akka.http.scaladsl.model.headers.RawHeader
+import cats.data.NonEmptyList
 
 private[rankings] object TestData {
 
@@ -35,7 +36,7 @@ private[rankings] object TestData {
 
   object Headers {
 
-    val googleAnalyticsHeaders = List(
+    val googleAnalyticsHeaders = NonEmptyList.of(
       RawHeader(headerGoogleAnalyticsToken, googleAnalyticsToken)
     )
   }

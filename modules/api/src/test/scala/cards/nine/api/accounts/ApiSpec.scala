@@ -17,10 +17,10 @@ package cards.nine.api.accounts
 
 import akka.actor.ActorSystem
 import akka.testkit._
-import cards.nine.api.{AuthHeadersRejectionHandler, NineCardsExceptionHandler}
+import cards.nine.api.{ AuthHeadersRejectionHandler, NineCardsExceptionHandler }
 import cards.nine.api.NineCardsHeaders._
 import cards.nine.api.accounts.TestData._
-import cards.nine.commons.NineCardsErrors.{AuthTokenNotValid, WrongEmailAccount}
+import cards.nine.commons.NineCardsErrors.{ AuthTokenNotValid, WrongEmailAccount }
 import cards.nine.commons.NineCardsService
 import cards.nine.commons.config.Domain.NineCardsConfiguration
 import cards.nine.commons.config.NineCardsConfig
@@ -29,16 +29,17 @@ import cards.nine.processes.NineCardsServices._
 import cards.nine.processes._
 import cards.nine.processes.account.AccountProcesses
 import cards.nine.processes.account.messages._
-import org.mockito.Matchers.{eq => mockEq}
+import org.mockito.Matchers.{ eq ⇒ mockEq }
 import org.specs2.matcher.Matchers
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
 import org.specs2.specification.Scope
 import akka.http.scaladsl.model.headers.RawHeader
-import akka.http.scaladsl.model.{HttpRequest, StatusCodes}
+import akka.http.scaladsl.model.{ HttpRequest, StatusCodes }
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.server.Route
-import akka.http.scaladsl.testkit.{RouteTestTimeout, Specs2RouteTest}
+import akka.http.scaladsl.testkit.{ RouteTestTimeout, Specs2RouteTest }
+import cards.nine.api.utils.RequestBuildingUtils
 
 import scala.concurrent.duration.DurationInt
 
@@ -50,7 +51,8 @@ trait AccountsApiSpecification
   with Matchers
   with Mockito
   with NineCardsExceptionHandler
-  with Specs2RouteTest {
+  with Specs2RouteTest
+  with RequestBuildingUtils {
 
   implicit def default(implicit system: ActorSystem) = RouteTestTimeout(20.second dilated system)
 
