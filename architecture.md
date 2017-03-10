@@ -70,11 +70,11 @@ The main libraries and frameworks used in the backend are the following ones:
   [natural transformations]([`cats.arrow.FunctionK`](http://github.com/typelevel/cats/blob/master/core/src/main/scala/cats/arrow/FunctionK.scala),
   and, in a few cases, [monad transformers](http://github.com/typelevel/cats/blob/master/core/src/main/scala/cats/data/EitherT.scala).
 
-* [Spray](http://spray.io/) is used to build the `HTTP-REST` API, that serves as the external
+* [Akka-http](http://doc.akka.io/docs/akka-http/current/scala/http/) is used to build the `HTTP-REST` API, that serves as the external
   interface for the backend application. This `api` is used by each Nine Cards client to access
   the functionality of the backend. The entities transmitted through this API are all encoded in
   [Json](http://en.wikipedia.org/wiki/JSON), for which we use `spray-json`.
-* [Akka](http://akka.io/) is used, but just enough to support the `spray` api.
+* [Akka](http://akka.io/) is used, but just enough to support the `akka-http` api.
 * [Circe](http://travisbrown.github.io/circe/), a library for implementing JSON encoding and decoding for
   data classes. Circe is used for a few classes in implementing the `api`, but it is mostly used for the
   communication with the external HTTP-REST services.
@@ -97,7 +97,7 @@ The backend source code is organised into four modules, or `sbt` projects, calle
   and some utility method for common libraries, such as `cats` or `scalaz`.
   It also handles the environment configuration variables needed for each service interpreter.
 * The [`api`](/modules/api) module implements the `REST-HTTP` application's Api, and the application's
-  main method. It uses the libraries `spray`, `spray-json` (with a bit of `circe`).
+  main method. It uses the libraries `akka-http`, `spray-json` (with a bit of `circe`).
 * The [`processes`](/modules/processes) module contains the application's process methods. Each process methods implements
   the functionality of one endpoint, using one or more services.
   The implementation follows a functional programming style, based on the use of monadic operations.
