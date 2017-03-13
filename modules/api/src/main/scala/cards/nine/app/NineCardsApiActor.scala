@@ -33,14 +33,6 @@ class NineCardsApiActor(
   implicit val executionContext: ExecutionContext = actorRefFactory.dispatcher
   implicit val config = NineCardsConfig.nineCardsConfiguration
 
-  // TODO check if it's safe to remove
-  //  implicit val editorBasicAuth: BasicHttpAuthenticator[String] =
-  //    BasicAuth(
-  //      realm      = "App Card Curators",
-  //      config     = NineCardsConfig.defaultConfig.config,
-  //      createUser = (up: UserPass) ⇒ up.user
-  //    )
-
   val routes =
     handleExceptions(exceptionHandler) {
       handleRejections(authHeadersRejectionHandler) {
