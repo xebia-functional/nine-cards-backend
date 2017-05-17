@@ -60,7 +60,7 @@ class Wiring(
     interp andThen toTask
   }
 
-  val cacheInt: Cache.Ops ~> Task = {
+  val cacheInt: Cache.Op ~> Task = {
     val toTask = RedisOpsToTask(config.redis)
     new CacheInterpreter() andThen toTask
   }
