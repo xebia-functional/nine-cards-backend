@@ -19,6 +19,7 @@ import cats.free.Free
 import cats.instances.either._
 import cats.instances.list._
 import cats.syntax.monadCombine._
+import cats.syntax.functor._
 import cats.syntax.traverse._
 import cats.syntax.either._
 import cards.nine.domain.application.{ BasicCard, CardList, FullCard, Package }
@@ -181,9 +182,9 @@ class CardsProcesses[F[_]](
       // Does package exists in Google Play?
       webScrapper.existsApp(pack) flatMap {
         case true ⇒
-          toFree(cacheService.setToPending(pack).map(_ ⇒ PendingResolution(pack)))
+          toFree(cacheService.setToPending(pack).as(PendingResolution(pack)))
         case false ⇒
-          toFree(cacheService.addError(pack).map(_ ⇒ UnknownPackage(pack)))
+          toFree(cacheService.addError(pack).as(UnknownPackage(pack)))
       }
 
     // "Resolved or permanent Item in Redis Cache?"
@@ -196,7 +197,7 @@ class CardsProcesses[F[_]](
         googleApi.getDetails(pack, auth) flatMap {
           case Right(card) ⇒
             // Yes -> Create key/value in Redis as Resolved, Return package info
-            toFree(cacheService.putResolved(card).map(x ⇒ Either.right(card)))
+            toFree(cacheService.putResolved(card).as(Either.right(card)))
           case Left(apiFailure) ⇒
             handleFailedResponse(apiFailure).map(Either.left)
         }
@@ -208,23 +209,17 @@ class CardsProcesses[F[_]](
 
     webScrapper.getDetails(pack) flatMap {
       case Right(card) ⇒
-        toFree(cacheService.putResolved(card).map(x ⇒ Resolved))
+        toFree(cacheService.putResolved(card).as(Resolved))
       case Left(PageParseFailed(_)) ⇒
-        toFree(cacheService.setToPending(pack).map(x ⇒ Pending))
+        toFree(cacheService.setToPending(pack).as(Pending))
       case Left(PackageNotFound(_)) ⇒
-        toFree(cacheService.addError(pack).map(x ⇒ Unknown))
+        toFree(cacheService.addError(pack).as(Unknown))
       case Left(WebPageServerError) ⇒
-        toFree(cacheService.setToPending(pack).map(x ⇒ Pending))
+        toFree(cacheService.setToPending(pack).as(Pending))
     }
   }
 
-  def toFree[A](fs: FreeS.Par[F, A]): Free[F, A] = {
-    val monadF = cats.free.Free.catsFreeMonadForFree[F]
-    val handler = new FSHandler[F, Free[F, ?]] {
-      def apply[X](fa: F[X]): Free[F, X] = Free.liftF(fa)
-    }
-    fs.interpret[Free[F, ?]](monadF, handler)
-  }
+  def toFree[A](fs: FreeS.Par[F, A]): Free[F, A] = fs.monad
 
 }
 

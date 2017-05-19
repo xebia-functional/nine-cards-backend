@@ -17,7 +17,6 @@ package cards.nine.googleplay.service.free.interpreter.cache
 
 import cards.nine.domain.application.{ FullCard, Package }
 import cards.nine.googleplay.service.free.algebra.Cache._
-import cats.~>
 
 trait InterpreterServer[F[_]] {
   def getValid(pack: Package): F[Option[FullCard]]
@@ -33,7 +32,6 @@ trait InterpreterServer[F[_]] {
 }
 
 case class MockInterpreter[F[_]](server: InterpreterServer[F]) extends Handler[F] {
-
   def getValid(pack: Package) = server.getValid(pack)
   def getValidMany(packages: List[Package]) = server.getValidMany(packages)
   def putResolved(card: FullCard) = server.putResolved(card)
@@ -44,5 +42,4 @@ case class MockInterpreter[F[_]](server: InterpreterServer[F]) extends Handler[F
   def addError(pack: Package) = server.addError(pack)
   def addErrorMany(packs: List[Package]) = server.addErrorMany(packs)
   def listPending(limit: Int) = server.listPending(limit)
-
 }

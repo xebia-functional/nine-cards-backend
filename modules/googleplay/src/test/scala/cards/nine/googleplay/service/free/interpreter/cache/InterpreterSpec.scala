@@ -18,8 +18,6 @@ package cards.nine.googleplay.service.free.interpreter.cache
 import cards.nine.commons.redis.{ RedisOps, TestUtils }
 import cards.nine.domain.application.{ FullCard, Package }
 import cards.nine.domain.ScalaCheck._
-import cards.nine.googleplay.service.free.algebra.Cache
-import cards.nine.googleplay.service.free.algebra.Cache._
 import cards.nine.googleplay.util.{ ScalaCheck ⇒ CustomArbitrary }
 import org.joda.time.{ DateTime, DateTimeZone }
 import org.scalacheck.{ Arbitrary, Gen }
@@ -56,9 +54,9 @@ class InterpreterSpec
 
     val cc = new CacheInterpreter()
 
-    def eval[A](op: RedisOps[A]) = op(redisClient).unsafePerformSync
+    def eval[A](op: RedisOps[A]): A = op(redisClient).unsafePerformSync
 
-    def evalWithDelay[A](op: RedisOps[A], delay: Duration) = op(redisClient).after(delay).unsafePerformSync
+    def evalWithDelay[A](op: RedisOps[A], delay: Duration): A = op(redisClient).after(delay).unsafePerformSync
 
     def pendingKey(pack: Package): String = s"${pack.value}:Pending"
     def resolvedKey(pack: Package): String = s"${pack.value}:Resolved"
