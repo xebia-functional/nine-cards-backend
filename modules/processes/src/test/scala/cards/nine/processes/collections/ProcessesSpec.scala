@@ -23,8 +23,8 @@ import cards.nine.processes.collections.TestData.Messages._
 import cards.nine.processes.collections.TestData.Values._
 import cards.nine.processes.collections.TestData._
 import cards.nine.processes.collections.messages._
-import cards.nine.services.free.algebra
 import cards.nine.services.free.algebra._
+import cats.free.FreeApplicative
 import org.specs2.ScalaCheck
 import org.specs2.matcher.Matchers
 import org.specs2.mock.Mockito
@@ -39,8 +39,8 @@ trait SharedCollectionProcessesSpecification
 
   trait BasicScope extends Scope {
 
-    implicit val collectionServices: algebra.SharedCollection.Services[NineCardsServices] =
-      mock[algebra.SharedCollection.Services[NineCardsServices]]
+    implicit val collectionServices: Collection[NineCardsServices] =
+      mock[Collection[NineCardsServices]]
     implicit val subscriptionServices: Subscription.Services[NineCardsServices] =
       mock[Subscription.Services[NineCardsServices]]
     implicit val userServices: User.Services[NineCardsServices] =
@@ -63,7 +63,7 @@ class SharedCollectionProcessesSpec
     "return a valid response info when the shared collection is created" in new BasicScope {
 
       collectionServices.add(collection = sharedCollectionDataServices) returns
-        NineCardsService.right(collection)
+        FreeApplicative.pure(Right(collection))
 
       sharedCollectionProcesses
         .createCollection(createCollectionRequest)
@@ -74,7 +74,7 @@ class SharedCollectionProcessesSpec
   "getCollectionByPublicIdentifier" should {
     "return a valid shared collection info when the shared collection exists" in new BasicScope {
 
-      collectionServices.getByPublicId(publicIdentifier) returns NineCardsService.right(collection)
+      collectionServices.getByPublicId(publicIdentifier) returns FreeApplicative.pure(Right(collection))
       googlePlayServices.resolveManyDetailed(any, any) returns NineCardsService.right(appsInfo)
 
       sharedCollectionProcesses.getCollectionByPublicIdentifier(
@@ -88,7 +88,7 @@ class SharedCollectionProcessesSpec
       new BasicScope {
 
         collectionServices.getByPublicId(publicId = publicIdentifier) returns
-          NineCardsService.left(sharedCollectionNotFoundError)
+          FreeApplicative.pure(Left(sharedCollectionNotFoundError))
 
         val collectionInfo = sharedCollectionProcesses.getCollectionByPublicIdentifier(
           userId           = publisherId,
@@ -104,7 +104,7 @@ class SharedCollectionProcessesSpec
 
     "return a list of Shared collections of the given category" in new BasicScope {
 
-      collectionServices.getLatestByCategory(category, pageParams) returns NineCardsService.right(List(collection))
+      collectionServices.getLatestByCategory(category, pageParams) returns FreeApplicative.pure(Right(List(collection)))
       googlePlayServices.resolveManyBasic(any, any) returns NineCardsService.right(appsInfoBasic)
 
       sharedCollectionProcesses
@@ -123,7 +123,7 @@ class SharedCollectionProcessesSpec
 
     "return a list of shared collections of an user" in new BasicScope {
 
-      collectionServices.getByUser(publisherId) returns NineCardsService.right(List(collectionWithSubscriptions))
+      collectionServices.getByUser(publisherId) returns FreeApplicative.pure(Right(List(collectionWithSubscriptions)))
       googlePlayServices.resolveManyBasic(any, any) returns NineCardsService.right(appsInfoBasic)
 
       sharedCollectionProcesses
@@ -148,7 +148,7 @@ class SharedCollectionProcessesSpec
   "getTopCollectionsByCategory" should {
 
     "return a list of Shared collections of the given category" in new BasicScope {
-      collectionServices.getTopByCategory(category, pageParams) returns NineCardsService.right(List(collection))
+      collectionServices.getTopByCategory(category, pageParams) returns FreeApplicative.pure(Right(List(collection)))
       googlePlayServices.resolveManyBasic(any, any) returns NineCardsService.right(appsInfoBasic)
 
       val response = GetCollectionsResponse(List(sharedCollectionWithAppsInfoBasic))
@@ -169,7 +169,7 @@ class SharedCollectionProcessesSpec
     "return a SharedCollectionNotFound error when the shared collection does not exist" in new BasicScope {
 
       collectionServices.getByPublicId(publicId = publicIdentifier) returns
-        NineCardsService.left(sharedCollectionNotFoundError)
+        FreeApplicative.pure(Left(sharedCollectionNotFoundError))
 
       sharedCollectionProcesses
         .subscribe(publicIdentifier, subscriberId)
@@ -178,7 +178,7 @@ class SharedCollectionProcessesSpec
 
     "return a valid response if the subscription already exists  " in new BasicScope {
 
-      collectionServices.getByPublicId(publicIdentifier) returns NineCardsService.right(collection)
+      collectionServices.getByPublicId(publicIdentifier) returns FreeApplicative.pure(Right(collection))
       subscriptionServices.getByCollectionAndUser(any, any) returns NineCardsService.right(Option(subscription))
 
       sharedCollectionProcesses
@@ -188,7 +188,7 @@ class SharedCollectionProcessesSpec
 
     "return a valid response if it has created a subscription " in new BasicScope {
 
-      collectionServices.getByPublicId(publicIdentifier) returns NineCardsService.right(collection)
+      collectionServices.getByPublicId(publicIdentifier) returns FreeApplicative.pure(Right(collection))
       subscriptionServices.add(any, any, any) returns NineCardsService.right(updatedSubscriptionsCount)
       subscriptionServices.getByCollectionAndUser(any, any) returns NineCardsService.right(None)
 
@@ -203,7 +203,7 @@ class SharedCollectionProcessesSpec
 
     "return a SharedCollectionNotFound error when the shared collection does not exist" in new BasicScope {
       collectionServices.getByPublicId(publicId = publicIdentifier) returns
-        NineCardsService.left(sharedCollectionNotFoundError)
+        FreeApplicative.pure(Left(sharedCollectionNotFoundError))
 
       val subscriptionInfo = sharedCollectionProcesses.unsubscribe(publicIdentifier, subscriberId)
       subscriptionInfo.foldMap(testInterpreters) must beLeft(sharedCollectionNotFoundError)
@@ -211,7 +211,7 @@ class SharedCollectionProcessesSpec
 
     "return a valid response if the subscription existed" in new BasicScope {
 
-      collectionServices.getByPublicId(publicIdentifier) returns NineCardsService.right(collection)
+      collectionServices.getByPublicId(publicIdentifier) returns FreeApplicative.pure(Right(collection))
       subscriptionServices.removeByCollectionAndUser(any, any) returns NineCardsService.right(1)
 
       val subscriptionInfo = sharedCollectionProcesses.unsubscribe(publicIdentifier, subscriberId)
@@ -220,7 +220,7 @@ class SharedCollectionProcessesSpec
 
     "return a valid response if the subscription did not existed " in new BasicScope {
 
-      collectionServices.getByPublicId(publicIdentifier) returns NineCardsService.right(collection)
+      collectionServices.getByPublicId(publicIdentifier) returns FreeApplicative.pure(Right(collection))
       subscriptionServices.removeByCollectionAndUser(any, any) returns NineCardsService.right(0)
 
       val subscriptionInfo = sharedCollectionProcesses.unsubscribe(publicIdentifier, subscriberId)
@@ -233,8 +233,8 @@ class SharedCollectionProcessesSpec
     "increase the number of views by 1 if the shared collection exists" in
       new BasicScope {
 
-        collectionServices.getByPublicId(publicIdentifier) returns NineCardsService.right(collection)
-        collectionServices.increaseViewsByOne(id = collectionId) returns NineCardsService.right(updatedCollectionsCount)
+        collectionServices.getByPublicId(publicIdentifier) returns FreeApplicative.pure(Right(collection))
+        collectionServices.increaseViewsByOne(id = collectionId) returns FreeApplicative.pure(Right(updatedCollectionsCount))
 
         val collectionInfo = sharedCollectionProcesses.increaseViewsCountByOne(publicIdentifier)
 
@@ -247,7 +247,7 @@ class SharedCollectionProcessesSpec
       new BasicScope {
 
         collectionServices.getByPublicId(publicId = publicIdentifier) returns
-          NineCardsService.left(sharedCollectionNotFoundError)
+          FreeApplicative.pure(Left(sharedCollectionNotFoundError))
 
         val collectionInfo = sharedCollectionProcesses.increaseViewsCountByOne(publicIdentifier)
 
@@ -259,9 +259,9 @@ class SharedCollectionProcessesSpec
     "return the public identifier and the added and removed packages if the shared collection exists" in
       new BasicScope {
 
-        collectionServices.getByPublicId(publicIdentifier) returns NineCardsService.right(collection)
-        collectionServices.update(collectionId, name) returns NineCardsService.right(updatedCollectionsCount)
-        collectionServices.updatePackages(collectionId, updatePackagesName) returns NineCardsService.right(updatedPackages)
+        collectionServices.getByPublicId(publicIdentifier) returns FreeApplicative.pure(Right(collection))
+        collectionServices.update(collectionId, name) returns FreeApplicative.pure(Right(updatedCollectionsCount))
+        collectionServices.updatePackages(collectionId, updatePackagesName) returns FreeApplicative.pure(Right(updatedPackages))
         firebaseServices.sendUpdatedCollectionNotification(any) returns NineCardsService.right(sendNotificationResponse)
         userServices.getSubscribedInstallationByCollection(any) returns NineCardsService.right(List(installation))
 
@@ -280,8 +280,8 @@ class SharedCollectionProcessesSpec
     "return added and removed packages counts equal to 0 if the package list is not given" in
       new BasicScope {
 
-        collectionServices.getByPublicId(publicIdentifier) returns NineCardsService.right(collection)
-        collectionServices.update(collectionId, name) returns NineCardsService.right(updatedCollectionsCount)
+        collectionServices.getByPublicId(publicIdentifier) returns FreeApplicative.pure(Right(collection))
+        collectionServices.update(collectionId, name) returns FreeApplicative.pure(Right(updatedCollectionsCount))
 
         sharedCollectionProcesses.updateCollection(
           publicIdentifier = publicIdentifier,
@@ -299,7 +299,7 @@ class SharedCollectionProcessesSpec
       new BasicScope {
 
         collectionServices.getByPublicId(publicId = publicIdentifier) returns
-          NineCardsService.left(sharedCollectionNotFoundError)
+          FreeApplicative.pure(Left(sharedCollectionNotFoundError))
 
         sharedCollectionProcesses.updateCollection(
           publicIdentifier = publicIdentifier,

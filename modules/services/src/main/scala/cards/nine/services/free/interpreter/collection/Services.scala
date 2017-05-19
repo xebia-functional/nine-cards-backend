@@ -23,22 +23,22 @@ import cards.nine.domain.application.Package
 import cards.nine.domain.pagination.Page
 import cards.nine.services.common.PersistenceService
 import cards.nine.services.common.PersistenceService._
-import cards.nine.services.free.algebra.SharedCollection._
+import cards.nine.services.free.algebra.Collection._
 import cards.nine.services.free.domain.SharedCollection.Queries
 import cards.nine.services.free.domain._
 import cards.nine.services.free.interpreter.collection.Services.SharedCollectionData
 import cards.nine.services.persistence.Persistence
 import cats.syntax.either._
-import cats.{ Monad, ~> }
+import cats.Monad
 import doobie.contrib.postgresql.pgtypes._
 import doobie.imports.ConnectionIO
 import shapeless.syntax.std.product._
 
 class Services(
   collectionPersistence: Persistence[SharedCollection]
-)(implicit connectionIOMonad: Monad[ConnectionIO]) extends (Ops ~> ConnectionIO) {
+)(implicit connectionIOMonad: Monad[ConnectionIO]) extends Handler[ConnectionIO] {
 
-  def add(data: SharedCollectionData): PersistenceService[SharedCollection] =
+  override def add(data: SharedCollectionData): PersistenceService[SharedCollection] =
     PersistenceService {
       collectionPersistence.updateWithGeneratedKeys(
         sql    = Queries.insert,
@@ -47,12 +47,12 @@ class Services(
       )
     }
 
-  def getById(id: Long): PersistenceService[SharedCollection] =
+  override def getById(id: Long): PersistenceService[SharedCollection] =
     collectionPersistence.fetchOption(Queries.getById, id) map (
       Either.fromOption(_, SharedCollectionNotFound("Shared collection not found"))
     )
 
-  def getByPublicIdentifier(publicIdentifier: String): PersistenceService[SharedCollection] =
+  override def getByPublicId(publicIdentifier: String): PersistenceService[SharedCollection] =
     collectionPersistence.fetchOption(
       sql    = Queries.getByPublicIdentifier,
       values = publicIdentifier
@@ -60,7 +60,7 @@ class Services(
       Either.fromOption(_, SharedCollectionNotFound(s"Shared collection with public identifier $publicIdentifier doesn't exist"))
     )
 
-  def getByUser(user: Long): PersistenceService[List[SharedCollectionWithAggregatedInfo]] =
+  override def getByUser(user: Long): PersistenceService[List[SharedCollectionWithAggregatedInfo]] =
     PersistenceService {
       collectionPersistence.fetchListAs[SharedCollectionWithAggregatedInfo](
         sql    = Queries.getByUser,
@@ -68,7 +68,7 @@ class Services(
       )
     }
 
-  def getLatestByCategory(category: String, pageParams: Page): PersistenceService[List[SharedCollection]] =
+  override def getLatestByCategory(category: String, pageParams: Page): PersistenceService[List[SharedCollection]] =
     PersistenceService {
       collectionPersistence.fetchList(
         sql    = Queries.getLatestByCategory,
@@ -76,7 +76,7 @@ class Services(
       )
     }
 
-  def getTopByCategory(category: String, pageParams: Page): PersistenceService[List[SharedCollection]] =
+  override def getTopByCategory(category: String, pageParams: Page): PersistenceService[List[SharedCollection]] =
     PersistenceService {
       collectionPersistence.fetchList(
         sql    = Queries.getTopByCategory,
@@ -84,9 +84,7 @@ class Services(
       )
     }
 
-  def increaseViewsByOne(
-    id: Long
-  ): PersistenceService[Int] =
+  override def increaseViewsByOne(id: Long): PersistenceService[Int] =
     PersistenceService {
       collectionPersistence.update(
         sql    = Queries.increaseViewsByOne,
@@ -94,7 +92,7 @@ class Services(
       )
     }
 
-  def updateCollectionInfo(id: Long, title: String): PersistenceService[Int] =
+  override def update(id: Long, title: String): PersistenceService[Int] =
     PersistenceService {
       collectionPersistence.update(
         sql    = Queries.update,
@@ -102,7 +100,7 @@ class Services(
       )
     }
 
-  def updatePackages(collectionId: Long, packages: List[Package]): PersistenceService[(List[Package], List[Package])] = {
+  override def updatePackages(collectionId: Long, packages: List[Package]): PersistenceService[(List[Package], List[Package])] = {
 
     def updatePackagesInfo(newPackages: List[Package], removedPackages: List[Package]) =
       if (newPackages.nonEmpty || removedPackages.nonEmpty)
@@ -120,26 +118,6 @@ class Services(
     } yield (newPackages, removedPackages)
   }.value
 
-  def apply[A](fa: Ops[A]): ConnectionIO[A] = fa match {
-    case Add(collection) ⇒
-      add(collection)
-    case GetById(id) ⇒
-      getById(id)
-    case GetByPublicId(publicId) ⇒
-      getByPublicIdentifier(publicId)
-    case GetByUser(user) ⇒
-      getByUser(user)
-    case GetLatestByCategory(category, paginationParams) ⇒
-      getLatestByCategory(category, paginationParams)
-    case GetTopByCategory(category, pageParams) ⇒
-      getTopByCategory(category, pageParams)
-    case IncreaseViewsByOne(id) ⇒
-      increaseViewsByOne(id)
-    case Update(id, title) ⇒
-      updateCollectionInfo(id, title)
-    case UpdatePackages(collection, packages) ⇒
-      updatePackages(collection, packages)
-  }
 }
 
 object Services {

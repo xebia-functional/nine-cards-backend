@@ -20,11 +20,12 @@ object Versions {
 
   // Core Libs
   val akka = "2.4.8"
-  val cats = "0.8.1"
-  val circe = "0.6.0"
+  val cats = "0.9.0"
+  val circe = "0.8.0"
   val doobie = "0.3.0"
   val enumeratum = "1.5.1"
   val flywaydb = "3.2.1"
+  val freestyle = "0.1.1"
   val googleApiClient = "1.20.0"
   val hasher = "1.2.0"
   val http4s = "0.15.0a"
