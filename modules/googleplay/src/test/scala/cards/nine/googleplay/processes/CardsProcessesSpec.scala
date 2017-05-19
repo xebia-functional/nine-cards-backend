@@ -41,7 +41,7 @@ class CardsProcessesSpec
   val apiGoogleInt: ApiAlg.Ops ~> Id = ApiInt.MockInterpreter(apiGoogleIntServer)
 
   val cacheIntServer: CacheInt.InterpreterServer[Id] = mock[CacheInt.InterpreterServer[Id]]
-  val cacheInt: CacheAlg.Ops ~> Id = CacheInt.MockInterpreter(cacheIntServer)
+  val cacheInt: CacheAlg.Handler[Id] = CacheInt.MockInterpreter(cacheIntServer)
 
   val webScrapperIntServer: WebInt.InterpreterServer[Id] = mock[WebInt.InterpreterServer[Id]]
   val webScrapperInt: WebAlg.Ops ~> Id = WebInt.MockInterpreter(webScrapperIntServer)

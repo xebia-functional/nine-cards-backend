@@ -47,6 +47,7 @@ object Dependencies {
   private val sprayTestKit = spray("-testkit") % "test" exclude("org.specs2", "specs2_2.11")
   private val tagSoup = "org.ccil.cowan.tagsoup" % "tagsoup" % Versions.tagSoup
   private val typesafeConfig = "com.typesafe" % "config" % Versions.typesafeConfig
+  private val freestyle = "io.frees" %% "freestyle"              % Versions.freestyle
 
   val baseDeps = Seq(
     hasher,
@@ -127,6 +128,7 @@ object Dependencies {
     newRelic,
     scredis,
     scalacheckShapeless,
+    freestyle,
     specs2Core,
     specs2("-matcher-extra"),
     specs2("-mock"),

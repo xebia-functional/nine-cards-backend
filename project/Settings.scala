@@ -23,13 +23,14 @@ trait Settings {
 
   lazy val projectSettings: Seq[Def.Setting[_]] = Seq(
     addCompilerPlugin("org.spire-math" %% "kind-projector" % Versions.kindProjector),
+    addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full),
     scalaVersion := Versions.scala,
     organization := "com.fortysevendeg",
     organizationName := "47 Degrees",
     organizationHomepage := Some(new URL("http://47deg.com")),
     version := Versions.buildVersion,
     conflictWarning := ConflictWarning.disable,
-    scalacOptions ++= Seq("-deprecation", "-unchecked", "-feature", "-language:higherKinds", "-language:implicitConversions", "-Ywarn-unused-import", "-Xfatal-warnings"),
+    scalacOptions ++= Seq("-deprecation", "-unchecked", "-feature", "-language:higherKinds", "-language:implicitConversions", "-Ywarn-unused-import"),
     javaOptions in Test ++= Seq("-XX:MaxPermSize=128m", "-Xms512m", "-Xmx512m"),
     sbt.Keys.fork in Test := false,
     publishMavenStyle := true,
