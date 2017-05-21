@@ -28,7 +28,7 @@ import cards.nine.googleplay.processes.GooglePlayApp.GooglePlayApp
 import cards.nine.googleplay.processes.getcard.UnknownPackage
 import cards.nine.googleplay.processes.{ CardsProcesses, ResolveMany, Wiring }
 import cats.{ ~> }
-import cats.free.Free
+import freestyle._
 import org.specs2.matcher.{ DisjunctionMatchers, Matcher, Matchers }
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
@@ -52,8 +52,9 @@ class ServicesSpec
   import scala.concurrent.ExecutionContext.Implicits.global
 
   private[this] implicit val interpreters: GooglePlayApp ~> Task = new Wiring(nineCardsConfiguration)
-  private[this] def run[A](fa: Free[GooglePlayApp, A]): Throwable \/ A =
-    fa.foldMap(interpreters).unsafePerformSyncAttempt
+
+  private[this] def run[A](fa: FreeS[GooglePlayApp, A]): Throwable \/ A =
+    fa.interpret[Task].unsafePerformSyncAttempt
 
   trait BasicScope extends Scope {
     implicit val googlePlayProcesses = mock[CardsProcesses[GooglePlayApp]]
@@ -147,7 +148,7 @@ class ServicesSpec
     "return the App object when a valid package name is provided" in new BasicScope {
 
       googlePlayProcesses.getCard(onePackage, AuthData.marketAuth) returns
-        Free.pure(Right(GooglePlayResponses.fullCard))
+        FreeS.pure(Right(GooglePlayResponses.fullCard))
 
       val response = services.resolveOne(onePackage, AuthData.marketAuth)
       run(response) must be_\/-[Result[FullCard]].which {
@@ -158,7 +159,7 @@ class ServicesSpec
     "return an error message when a wrong package name is provided" in new BasicScope {
 
       googlePlayProcesses.getCard(onePackage, AuthData.marketAuth) returns
-        Free.pure(Left(GooglePlayResponses.unknwonPackageError))
+        FreeS.pure(Left(GooglePlayResponses.unknwonPackageError))
 
       val response = services.resolveOne(onePackage, AuthData.marketAuth)
 
@@ -172,7 +173,7 @@ class ServicesSpec
     "return the list of apps that are valid and those that are wrong" in new BasicScope {
 
       googlePlayProcesses.getCards(packages, AuthData.marketAuth) returns
-        Free.pure(GooglePlayResponses.resolveManyResponse)
+        FreeS.pure(GooglePlayResponses.resolveManyResponse)
 
       val response = services.resolveManyDetailed(packages, AuthData.marketAuth)
 
@@ -191,7 +192,7 @@ class ServicesSpec
       googlePlayProcesses.recommendationsByCategory(
         Requests.recommendByCategoryRequest,
         AuthData.marketAuth
-      ) returns Free.pure(Right(GooglePlayResponses.fullCardList))
+      ) returns FreeS.pure(Right(GooglePlayResponses.fullCardList))
 
       val response = services.recommendByCategory(
         category         = category,
@@ -213,7 +214,7 @@ class ServicesSpec
       googlePlayProcesses.recommendationsByCategory(
         Requests.recommendByCategoryRequest,
         AuthData.marketAuth
-      ) returns Free.pure(Left(GooglePlayResponses.recommendationsInfoError))
+      ) returns FreeS.pure(Left(GooglePlayResponses.recommendationsInfoError))
 
       val response = services.recommendByCategory(
         category         = category,
@@ -234,7 +235,7 @@ class ServicesSpec
       googlePlayProcesses.recommendationsByApps(
         Requests.recommendByAppsRequest,
         AuthData.marketAuth
-      ) returns Free.pure(GooglePlayResponses.fullCardList)
+      ) returns FreeS.pure(GooglePlayResponses.fullCardList)
 
       val response = services.recommendationsForApps(
         packageNames     = packages,

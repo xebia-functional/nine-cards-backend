@@ -24,6 +24,7 @@ import cards.nine.googleplay.service.free.algebra.{ Cache ⇒ CacheAlg, GoogleAp
 import cards.nine.googleplay.service.free.interpreter.{ cache ⇒ CacheInt, googleapi ⇒ ApiInt, webscrapper ⇒ WebInt }
 import cards.nine.googleplay.util.ScalaCheck._
 import cats.{ Id, ~> }
+import freestyle._
 import org.joda.time.{ DateTime, DateTimeZone }
 import org.mockito.Mockito.reset
 import org.specs2.ScalaCheck
@@ -38,15 +39,15 @@ class CardsProcessesSpec
   with Mockito {
 
   val apiGoogleIntServer: ApiInt.InterpreterServer[Id] = mock[ApiInt.InterpreterServer[Id]]
-  val apiGoogleInt: ApiAlg.Ops ~> Id = ApiInt.MockInterpreter(apiGoogleIntServer)
+  val apiGoogleInt: ApiAlg.Handler[Id] = ApiInt.MockInterpreter(apiGoogleIntServer)
 
   val cacheIntServer: CacheInt.InterpreterServer[Id] = mock[CacheInt.InterpreterServer[Id]]
   val cacheInt: CacheAlg.Handler[Id] = CacheInt.MockInterpreter(cacheIntServer)
 
   val webScrapperIntServer: WebInt.InterpreterServer[Id] = mock[WebInt.InterpreterServer[Id]]
-  val webScrapperInt: WebAlg.Ops ~> Id = WebInt.MockInterpreter(webScrapperIntServer)
+  val webScrapperInt: WebAlg.Handler[Id] = WebInt.MockInterpreter(webScrapperIntServer)
 
-  val interpreter: GooglePlayApp ~> Id = Interpreters(apiGoogleInt, cacheInt, webScrapperInt)
+  implicit val interpreter: GooglePlayApp ~> Id = Interpreters(apiGoogleInt, cacheInt, webScrapperInt)
 
   val processes = CardsProcesses.processes[GooglePlayApp]
 
@@ -63,7 +64,7 @@ class CardsProcessesSpec
   "getCard" >> {
 
     def runGetCard(pack: Package, auth: MarketCredentials): getcard.Response =
-      processes.getCard(pack, auth).foldMap(interpreter)
+      processes.getCard(pack, auth).interpret[Id]
 
     "if the Package is already resolved" >> {
 
@@ -168,7 +169,7 @@ class CardsProcessesSpec
   "resolvePendingPackage" should {
 
     def runResolvePending(pack: Package): ResolvePending.PackageStatus =
-      processes.resolvePendingPackage(pack).foldMap(interpreter)
+      processes.resolvePendingPackage(pack).interpret[Id]
 
     "when the WebScrapper gives back a full card" >> {
 

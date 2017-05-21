@@ -24,7 +24,7 @@ import cards.nine.googleplay.processes.CardsProcesses
 import cards.nine.services.free.algebra.GooglePlay._
 import cats.syntax.either._
 import cats.~>
-import cats.free.Free
+import freestyle._
 
 import scalaz.concurrent.Task
 
@@ -34,15 +34,15 @@ class Services[F[_]](
   interpreter: F ~> Task
 ) extends (Ops ~> Task) {
 
-  def resolveOne(packageName: Package, auth: MarketCredentials): Free[F, Result[FullCard]] =
+  def resolveOne(packageName: Package, auth: MarketCredentials): FreeS[F, Result[FullCard]] =
     googlePlayProcesses.getCard(packageName, auth)
-      .map(result ⇒ result.leftMap(e ⇒ PackageNotResolved(e.packageName.value)))
+      .map(r ⇒ r.leftMap(e ⇒ PackageNotResolved(e.packageName.value)))
 
-  def resolveManyBasic(packages: List[Package], auth: MarketCredentials): Free[F, Result[CardList[BasicCard]]] =
+  def resolveManyBasic(packages: List[Package], auth: MarketCredentials): FreeS[F, Result[CardList[BasicCard]]] =
     googlePlayProcesses.getBasicCards(packages, auth)
       .map(r ⇒ Either.right(Converters.toCardList(r)))
 
-  def resolveManyDetailed(packages: List[Package], auth: MarketCredentials): Free[F, Result[CardList[FullCard]]] =
+  def resolveManyDetailed(packages: List[Package], auth: MarketCredentials): FreeS[F, Result[CardList[FullCard]]] =
     googlePlayProcesses.getCards(packages, auth)
       .map(r ⇒ Either.right(Converters.toCardList(r)))
 
@@ -52,7 +52,7 @@ class Services[F[_]](
     excludedPackages: List[Package],
     limit: Int,
     auth: MarketCredentials
-  ): Free[F, Result[CardList[FullCard]]] = {
+  ): FreeS[F, Result[CardList[FullCard]]] = {
     val request = Converters.toRecommendByCategoryRequest(category, filter, excludedPackages, limit)
     googlePlayProcesses.recommendationsByCategory(request, auth)
       .map(
@@ -69,7 +69,7 @@ class Services[F[_]](
     limitByApp: Option[Int],
     limit: Int,
     auth: MarketCredentials
-  ): Free[F, Result[CardList[FullCard]]] = {
+  ): FreeS[F, Result[CardList[FullCard]]] = {
     val request = Converters.toRecommendByAppsRequest(packageNames, limitByApp, excludedPackages, limit)
     googlePlayProcesses.recommendationsByApps(request, auth)
       .map(r ⇒ Either.right(Converters.omitMissing(r)))
@@ -80,22 +80,22 @@ class Services[F[_]](
     excludePackages: List[Package],
     limit: Int,
     auth: MarketCredentials
-  ): Free[F, Result[CardList[BasicCard]]] = {
+  ): FreeS[F, Result[CardList[BasicCard]]] = {
     val request = Converters.toSearchAppsRequest(query, excludePackages, limit)
     googlePlayProcesses.searchApps(request, auth)
       .map(r ⇒ Either.right(Converters.omitMissing(r)))
   }
 
-  def resolvePendingApps(numPackages: Int): Free[F, Result[ResolvePendingStats]] =
+  def resolvePendingApps(numPackages: Int): FreeS[F, Result[ResolvePendingStats]] =
     googlePlayProcesses
       .resolvePendingApps(numPackages)
       .map(r ⇒ Either.right(Converters.toResolvePendingStats(r)))
 
-  def storeCard(card: FullCard): Free[F, Result[Unit]] =
+  def storeCard(card: FullCard): FreeS[F, Result[Unit]] =
     googlePlayProcesses.storeCard(card)
       .map(Either.right)
 
-  private[this] def applyFree[A](fa: Ops[A]): Free[F, A] = fa match {
+  private[this] def applyFree[A](fa: Ops[A]): FreeS[F, A] = fa match {
     case ResolveManyBasic(packageNames, auth) ⇒
       resolveManyBasic(packageNames, auth)
     case ResolveManyDetailed(packageNames, auth) ⇒
@@ -115,7 +115,7 @@ class Services[F[_]](
 
   }
 
-  def apply[A](fa: Ops[A]): Task[A] = applyFree[A](fa).foldMap(interpreter)
+  def apply[A](fa: Ops[A]): Task[A] = applyFree[A](fa).interpret[Task]
 
 }
 

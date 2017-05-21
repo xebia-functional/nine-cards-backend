@@ -24,7 +24,6 @@ import cards.nine.googleplay.proto.GooglePlay.{ BulkDetailsRequest, DocV2, Respo
 import cards.nine.googleplay.service.free.algebra.GoogleApi._
 import cats.instances.either._
 import cats.syntax.either._
-import cats.~>
 import cats.instances.list._
 import cats.syntax.monadCombine._
 import cats.syntax.traverse._
@@ -40,16 +39,36 @@ import collection.JavaConverters._
 import scalaz.concurrent.Task
 import scodec.bits.ByteVector
 
-class Interpreter(config: GooglePlayApiConfiguration) extends (Ops ~> WithHttpClient) {
+class Interpreter(config: GooglePlayApiConfiguration) extends Handler[WithHttpClient] {
 
-  def apply[A](ops: Ops[A]): WithHttpClient[A] = ops match {
-    case GetBulkDetails(packs, auth) ⇒ new BulkDetailsWithClient(packs, auth)
-    case GetDetails(pack, auth) ⇒ new DetailsWithClient(pack, auth)
-    case GetDetailsList(packs, auth) ⇒ new DetailsListWithClient(packs, auth)
-    case RecommendationsByApps(request, auth) ⇒ new RecommendationsByAppsWithClient(request, auth)
-    case RecommendationsByCategory(request, auth) ⇒ new RecommendationsByCategoryWithClient(request, auth)
-    case SearchApps(request, auth) ⇒ new SearchAppsWithClient(request, auth)
-  }
+  override def getBulkDetails(
+    packs: List[Package], auth: MarketCredentials
+  ): WithHttpClient[Failure Either List[BasicCard]] =
+    new BulkDetailsWithClient(packs, auth)
+
+  override def getDetails(pack: Package, auth: MarketCredentials): WithHttpClient[Failure Either FullCard] =
+    new DetailsWithClient(pack, auth)
+
+  override def getDetailsList(
+    packages: List[Package],
+    auth: MarketCredentials
+  ): WithHttpClient[List[Failure Either FullCard]] =
+    new DetailsListWithClient(packages, auth)
+
+  override def recommendationsByApps(
+    request: RecommendByAppsRequest, auth: MarketCredentials
+  ): WithHttpClient[List[Package]] =
+    new RecommendationsByAppsWithClient(request, auth)
+
+  override def recommendationsByCategory(
+    request: RecommendByCategoryRequest, auth: MarketCredentials
+  ): WithHttpClient[InfoError Either List[Package]] =
+    new RecommendationsByCategoryWithClient(request, auth)
+
+  override def searchApps(
+    request: SearchAppsRequest, auth: MarketCredentials
+  ): WithHttpClient[Failure Either List[Package]] =
+    new SearchAppsWithClient(request, auth)
 
   private[this] val baseUri = Uri(
     scheme    = Option(config.protocol.ci),
