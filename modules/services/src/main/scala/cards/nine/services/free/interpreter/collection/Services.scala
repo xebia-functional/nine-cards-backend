@@ -23,7 +23,7 @@ import cards.nine.domain.application.Package
 import cards.nine.domain.pagination.Page
 import cards.nine.services.common.PersistenceService
 import cards.nine.services.common.PersistenceService._
-import cards.nine.services.free.algebra.Collection._
+import cards.nine.services.free.algebra.Collection
 import cards.nine.services.free.domain.SharedCollection.Queries
 import cards.nine.services.free.domain._
 import cards.nine.services.free.interpreter.collection.Services.SharedCollectionData
@@ -36,7 +36,7 @@ import shapeless.syntax.std.product._
 
 class Services(
   collectionPersistence: Persistence[SharedCollection]
-)(implicit connectionIOMonad: Monad[ConnectionIO]) extends Handler[ConnectionIO] {
+)(implicit connectionIOMonad: Monad[ConnectionIO]) extends Collection.Handler[ConnectionIO] {
 
   override def add(data: SharedCollectionData): PersistenceService[SharedCollection] =
     PersistenceService {
