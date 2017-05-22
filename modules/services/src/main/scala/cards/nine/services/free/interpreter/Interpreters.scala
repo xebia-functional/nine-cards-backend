@@ -51,7 +51,7 @@ class Interpreters(implicit A: ApplicativeError[Task, Throwable], T: Transactor[
 
   val analyticsInterpreter: (GoogleAnalytics.Ops ~> Task) = AnalyticsServices.services(nineCardsConfiguration.google.analytics)
 
-  val collectionInterpreter: (SharedCollection.Ops ~> Task) = CollectionServices.services.andThen(connectionIO2Task)
+  val collectionInterpreter: (Collection.Op ~> Task) = CollectionServices.services.andThen(connectionIO2Task)
 
   val countryInterpreter: (Country.Ops ~> Task) = CountryServices.services.andThen(connectionIO2Task)
 

@@ -16,7 +16,7 @@
 package cards.nine.processes.collections
 
 import cards.nine.commons.NineCardsService
-import cards.nine.commons.NineCardsService.NineCardsService
+import cards.nine.commons.NineCardsService.{ NineCardsService, Result }
 import cards.nine.domain.application.{ BasicCard, CardList, Package }
 import cards.nine.domain.market.MarketCredentials
 import cards.nine.domain.pagination.Page
@@ -28,7 +28,7 @@ import cards.nine.services.free.domain.{ BaseSharedCollection, SharedCollectionS
 
 class SharedCollectionProcesses[F[_]](
   implicit
-  collectionServices: algebra.SharedCollection.Services[F],
+  collectionServices: algebra.Collection[F],
   notificationsServices: Firebase.Services[F],
   googlePlayServices: GooglePlay.Services[F],
   subscriptionServices: algebra.Subscription.Services[F],
@@ -37,8 +37,10 @@ class SharedCollectionProcesses[F[_]](
 
   import Converters._
 
+  def toNCS[A](fs: freestyle.FreeS.Par[F, Result[A]]): NineCardsService[F, A] = NineCardsService[F, A](fs.monad)
+
   def createCollection(request: CreateCollectionRequest): NineCardsService[F, CreateOrUpdateCollectionResponse] =
-    collectionServices.add(toSharedCollectionDataServices(request.collection)) map { collection ⇒
+    toNCS(collectionServices.add(toSharedCollectionDataServices(request.collection))) map { collection ⇒
       CreateOrUpdateCollectionResponse(
         publicIdentifier = collection.publicIdentifier,
         packagesStats    = PackagesStats(added = collection.packages.size)
@@ -51,7 +53,7 @@ class SharedCollectionProcesses[F[_]](
     marketAuth: MarketCredentials
   ): NineCardsService[F, GetCollectionByPublicIdentifierResponse] =
     for {
-      sharedCollection ← collectionServices.getByPublicId(publicIdentifier)
+      sharedCollection ← toNCS(collectionServices.getByPublicId(publicIdentifier))
       collection = toSharedCollection(sharedCollection, userId)
       appsInfo ← googlePlayServices.resolveManyDetailed(collection.packages, marketAuth)
     } yield GetCollectionByPublicIdentifierResponse(
@@ -64,13 +66,13 @@ class SharedCollectionProcesses[F[_]](
     marketAuth: MarketCredentials,
     pageParams: Page
   ): NineCardsService[F, GetCollectionsResponse] =
-    getCollections(collectionServices.getLatestByCategory(category, pageParams), userId, marketAuth)
+    getCollections(toNCS(collectionServices.getLatestByCategory(category, pageParams)), userId, marketAuth)
 
   def getPublishedCollections(
     userId: Long,
     marketAuth: MarketCredentials
   ): NineCardsService[F, GetCollectionsResponse] =
-    getCollections(collectionServices.getByUser(userId), userId, marketAuth)
+    getCollections(toNCS(collectionServices.getByUser(userId)), userId, marketAuth)
 
   def getTopCollectionsByCategory(
     userId: Long,
@@ -78,7 +80,7 @@ class SharedCollectionProcesses[F[_]](
     marketAuth: MarketCredentials,
     pageParams: Page
   ): NineCardsService[F, GetCollectionsResponse] =
-    getCollections(collectionServices.getTopByCategory(category, pageParams), userId, marketAuth)
+    getCollections(toNCS(collectionServices.getTopByCategory(category, pageParams)), userId, marketAuth)
 
   def getSubscriptionsByUser(user: Long): NineCardsService[F, GetSubscriptionsByUserResponse] =
     subscriptionServices.getByUser(user) map toGetSubscriptionsByUserResponse
@@ -93,7 +95,7 @@ class SharedCollectionProcesses[F[_]](
     }
 
     for {
-      collection ← collectionServices.getByPublicId(publicIdentifier)
+      collection ← toNCS(collectionServices.getByPublicId(publicIdentifier))
       subscription ← subscriptionServices.getByCollectionAndUser(collection.id, user)
       _ ← addSubscription(subscription, collection.id)
     } yield SubscribeResponse()
@@ -101,7 +103,7 @@ class SharedCollectionProcesses[F[_]](
 
   def unsubscribe(publicIdentifier: String, userId: Long): NineCardsService[F, UnsubscribeResponse] =
     for {
-      collection ← collectionServices.getByPublicId(publicIdentifier)
+      collection ← toNCS(collectionServices.getByPublicId(publicIdentifier))
       _ ← subscriptionServices.removeByCollectionAndUser(collection.id, userId)
     } yield UnsubscribeResponse()
 
@@ -128,8 +130,8 @@ class SharedCollectionProcesses[F[_]](
     publicIdentifier: String
   ): NineCardsService[F, IncreaseViewsCountByOneResponse] =
     for {
-      collection ← collectionServices.getByPublicId(publicIdentifier)
-      _ ← collectionServices.increaseViewsByOne(collection.id)
+      collection ← toNCS(collectionServices.getByPublicId(publicIdentifier))
+      _ ← toNCS(collectionServices.increaseViewsByOne(collection.id))
     } yield IncreaseViewsCountByOneResponse(collection.publicIdentifier)
 
   def updateCollection(
@@ -141,17 +143,17 @@ class SharedCollectionProcesses[F[_]](
     def updateCollectionInfo(collectionId: Long, info: Option[SharedCollectionUpdateInfo]) =
       info
         .fold(NineCardsService.right[F, Int](0))(
-          updateInfo ⇒ collectionServices.update(collectionId, updateInfo.title)
+          updateInfo ⇒ toNCS(collectionServices.update(collectionId, updateInfo.title))
         )
 
     def updatePackages(collectionId: Long, packagesName: Option[List[Package]]) =
       packagesName
         .fold(NineCardsService.right[F, (List[Package], List[Package])]((Nil, Nil)))(
-          packages ⇒ collectionServices.updatePackages(collectionId, packages)
+          packages ⇒ toNCS(collectionServices.updatePackages(collectionId, packages))
         )
 
     for {
-      collection ← collectionServices.getByPublicId(publicIdentifier)
+      collection ← toNCS(collectionServices.getByPublicId(publicIdentifier))
       _ ← updateCollectionInfo(collection.id, collectionInfo)
       packagesStats ← updatePackages(collection.id, packages)
       (addedPackages, removedPackages) = packagesStats
@@ -187,7 +189,7 @@ object SharedCollectionProcesses {
 
   implicit def processes[F[_]](
     implicit
-    collectionServices: algebra.SharedCollection.Services[F],
+    collectionServices: algebra.Collection[F],
     notificationsServices: Firebase.Services[F],
     googlePlayServices: GooglePlay.Services[F],
     subscriptionServices: algebra.Subscription.Services[F],

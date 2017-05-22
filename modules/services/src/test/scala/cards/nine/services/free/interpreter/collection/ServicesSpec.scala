@@ -268,7 +268,7 @@ class ServicesSpec
     "return a SharedCollectionNotFound error if the table is empty" in {
       prop { (publicIdentifier: PublicIdentifier) ⇒
         WithEmptyDatabase {
-          val collection = collectionPersistenceServices.getByPublicIdentifier(
+          val collection = collectionPersistenceServices.getByPublicId(
             publicIdentifier = publicIdentifier.value
           ).transactAndRun
 
@@ -280,7 +280,7 @@ class ServicesSpec
       prop { (userData: UserData, collectionData: SharedCollectionData) ⇒
         WithData(userData, collectionData) { collectionId ⇒
 
-          val collection = collectionPersistenceServices.getByPublicIdentifier(
+          val collection = collectionPersistenceServices.getByPublicId(
             publicIdentifier = collectionData.publicIdentifier
           ).transactAndRun
 
@@ -298,7 +298,7 @@ class ServicesSpec
 
           WithData(userData, collectionData) { _ ⇒
 
-            val collection = collectionPersistenceServices.getByPublicIdentifier(
+            val collection = collectionPersistenceServices.getByPublicId(
               publicIdentifier = collectionData.publicIdentifier.reverse
             ).transactAndRun
 
@@ -473,7 +473,7 @@ class ServicesSpec
     "return 0 updated rows if the table is empty" in {
       prop { (id: Long, title: CollectionTitle) ⇒
         WithEmptyDatabase {
-          val updatedCollectionCount = collectionPersistenceServices.updateCollectionInfo(
+          val updatedCollectionCount = collectionPersistenceServices.update(
             id    = id,
             title = title.value
           ).transactAndRun
@@ -487,7 +487,7 @@ class ServicesSpec
 
         WithData(userData, collectionData) { collectionId ⇒
 
-          collectionPersistenceServices.updateCollectionInfo(
+          collectionPersistenceServices.update(
             id    = collectionId,
             title = newTitle.value
           ).transactAndRun
@@ -506,7 +506,7 @@ class ServicesSpec
 
         WithData(userData, collectionData) { collectionId ⇒
 
-          val updatedCollectionCount = collectionPersistenceServices.updateCollectionInfo(
+          val updatedCollectionCount = collectionPersistenceServices.update(
             id    = collectionId * -1,
             title = newTitle.value
           ).transactAndRun
