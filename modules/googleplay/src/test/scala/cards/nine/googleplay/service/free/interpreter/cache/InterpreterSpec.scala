@@ -15,10 +15,9 @@
  */
 package cards.nine.googleplay.service.free.interpreter.cache
 
-import cards.nine.commons.redis.TestUtils
+import cards.nine.commons.redis.{ RedisOps, TestUtils }
 import cards.nine.domain.application.{ FullCard, Package }
 import cards.nine.domain.ScalaCheck._
-import cards.nine.googleplay.service.free.algebra.Cache._
 import cards.nine.googleplay.util.{ ScalaCheck ⇒ CustomArbitrary }
 import org.joda.time.{ DateTime, DateTimeZone }
 import org.scalacheck.{ Arbitrary, Gen }
@@ -53,11 +52,11 @@ class InterpreterSpec
 
     import scala.concurrent.ExecutionContext.Implicits.global
 
-    val interpreter = new CacheInterpreter()
+    val cc = new CacheInterpreter()
 
-    def eval[A](op: Ops[A]) = interpreter(op)(redisClient).unsafePerformSync
+    def eval[A](op: RedisOps[A]): A = op(redisClient).unsafePerformSync
 
-    def evalWithDelay[A](op: Ops[A], delay: Duration) = interpreter(op)(redisClient).after(delay).unsafePerformSync
+    def evalWithDelay[A](op: RedisOps[A], delay: Duration): A = op(redisClient).after(delay).unsafePerformSync
 
     def pendingKey(pack: Package): String = s"${pack.value}:Pending"
     def resolvedKey(pack: Package): String = s"${pack.value}:Resolved"
@@ -141,7 +140,7 @@ class InterpreterSpec
       prop { pack: Package ⇒
         flush
 
-        eval(GetValid(pack)) must beNone
+        eval(cc.getValid(pack)) must beNone
       }
 
     "return None if the cache only contains Error or Pending entries for the package" >>
@@ -150,7 +149,7 @@ class InterpreterSpec
         putPending(pack)
         putError(pack, date)
 
-        eval(GetValid(pack)) must beNone
+        eval(cc.getValid(pack)) must beNone
       }
 
     "return Some(e) if the cache contains a Resolved entry" >>
@@ -158,7 +157,7 @@ class InterpreterSpec
         flush
         putEntry(CacheEntry.resolved(card))
 
-        eval(GetValid(card.packageName)) must beSome(card)
+        eval(cc.getValid(card.packageName)) must beSome(card)
       }
 
     "return Some(e) if the cache contains a Permanent entry" >>
@@ -166,7 +165,7 @@ class InterpreterSpec
         flush
         putEntry(CacheEntry.permanent(card))
 
-        eval(GetValid(card.packageName)) must beSome(card)
+        eval(cc.getValid(card.packageName)) must beSome(card)
       }
   }
 
@@ -176,7 +175,7 @@ class InterpreterSpec
       prop { packages: List[Package] ⇒
         flush
 
-        eval(GetValidMany(packages)) must beEmpty
+        eval(cc.getValidMany(packages)) must beEmpty
       }
 
     "return an empty list if the cache only contains the packages as Errors" >>
@@ -184,7 +183,7 @@ class InterpreterSpec
         flush
         packages foreach { p ⇒ putError(p, date) }
 
-        eval(GetValidMany(packages)) must beEmpty
+        eval(cc.getValidMany(packages)) must beEmpty
       }
 
     "return an empty list if the cache only contains the packages as Pending" >>
@@ -192,7 +191,7 @@ class InterpreterSpec
         flush
         putPendings(packages)
 
-        eval(GetValidMany(packages)) must beEmpty
+        eval(cc.getValidMany(packages)) must beEmpty
       }
 
     "return a list of cards if the cache contains a Resolved entry" >>
@@ -200,7 +199,7 @@ class InterpreterSpec
         flush
         putEntries(cards map CacheEntry.resolved)
 
-        eval(GetValidMany(cards map (_.packageName))) must containTheSameElementsAs(cards)
+        eval(cc.getValidMany(cards map (_.packageName))) must containTheSameElementsAs(cards)
       }
 
     "return a list of cards if the cache contains a Permanent entry" >>
@@ -208,7 +207,7 @@ class InterpreterSpec
         flush
         putEntries(cards map CacheEntry.permanent)
 
-        eval(GetValidMany(cards map (_.packageName))) must containTheSameElementsAs(cards)
+        eval(cc.getValidMany(cards map (_.packageName))) must containTheSameElementsAs(cards)
       }
   }
 
@@ -217,7 +216,7 @@ class InterpreterSpec
     "add a package as resolved" >>
       prop { card: FullCard ⇒
         flush
-        eval(PutResolved(card))
+        eval(cc.putResolved(card))
 
         existsEntry(resolvedKey(card.packageName)) must beTrue
       }
@@ -225,7 +224,7 @@ class InterpreterSpec
     "add no other key as resolved" >>
       prop { (card: FullCard, pack: Package) ⇒
         flush
-        eval(PutResolved(card))
+        eval(cc.putResolved(card))
 
         existsEntry(resolvedKey(pack)) must beFalse
       }
@@ -233,7 +232,7 @@ class InterpreterSpec
     "add no key as pending or error" >>
       prop { card: FullCard ⇒
         flush
-        eval(PutResolved(card))
+        eval(cc.putResolved(card))
 
         getPending() must beEmpty
         getKeys(allByType(Error)) must beEmpty
@@ -244,7 +243,7 @@ class InterpreterSpec
         flush
         putPending(card.packageName)
         putError(card.packageName, date)
-        eval(PutResolved(card))
+        eval(cc.putResolved(card))
         getPending() must beEmpty
         getKeys(allByType(Error)) must beEmpty
         dumpQueue() must beEmpty
@@ -254,8 +253,8 @@ class InterpreterSpec
       prop { (card: FullCard) ⇒
         flush
         val newCard = card.copy(title = card.title.reverse, free = !card.free)
-        eval(PutResolved(card))
-        eval(PutResolved(newCard))
+        eval(cc.putResolved(card))
+        eval(cc.putResolved(newCard))
 
         getKeys(allByType(Resolved)) must haveSize(1)
         getCacheValue(resolvedKey(card.packageName)) must_=== Option(CacheVal(Option(newCard)))
@@ -267,7 +266,7 @@ class InterpreterSpec
     "add a list of packages as resolved" >>
       prop { cards: List[FullCard] ⇒
         flush
-        eval(PutResolvedMany(cards))
+        eval(cc.putResolvedMany(cards))
         cards.map(c ⇒ resolvedKey(c.packageName))
           .filter(existsEntry _) must haveSize(cards.size)
       }
@@ -275,7 +274,7 @@ class InterpreterSpec
     "add no other key as resolved" >>
       prop { (cards: List[FullCard], pack: Package) ⇒
         flush
-        eval(PutResolvedMany(cards))
+        eval(cc.putResolvedMany(cards))
 
         existsEntry(resolvedKey(pack)) must beFalse
       }
@@ -283,7 +282,7 @@ class InterpreterSpec
     "add no key as pending or error" >>
       prop { cards: List[FullCard] ⇒
         flush
-        eval(PutResolvedMany(cards))
+        eval(cc.putResolvedMany(cards))
 
         getPending() must beEmpty
         getKeys(allByType(Error)) must beEmpty
@@ -293,8 +292,8 @@ class InterpreterSpec
       prop { (cards: List[FullCard]) ⇒
         flush
         val newCards = cards map (c ⇒ c.copy(title = c.title.reverse, free = !c.free))
-        eval(PutResolvedMany(cards))
-        evalWithDelay(PutResolvedMany(newCards), 1.millis)
+        eval(cc.putResolvedMany(cards))
+        evalWithDelay(cc.putResolvedMany(newCards), 1.millis)
 
         val values = getCacheValues(cards map (c ⇒ resolvedKey(c.packageName)))
 
@@ -307,7 +306,7 @@ class InterpreterSpec
     "add a package as permanent" >>
       prop { card: FullCard ⇒
         flush
-        eval(PutPermanent(card))
+        eval(cc.putPermanent(card))
 
         existsEntry(permanentKey(card.packageName)) must beTrue
       }
@@ -315,7 +314,7 @@ class InterpreterSpec
     "add no other key as permanent" >>
       prop { (card: FullCard, pack: Package) ⇒
         flush
-        eval(PutPermanent(card))
+        eval(cc.putPermanent(card))
 
         existsEntry(permanentKey(pack)) must beFalse
       }
@@ -323,7 +322,7 @@ class InterpreterSpec
     "add no key as pending or error" >>
       prop { card: FullCard ⇒
         flush
-        eval(PutPermanent(card))
+        eval(cc.putPermanent(card))
         getPending() must beEmpty
         getKeys(allByType(Error)) must beEmpty
       }
@@ -333,7 +332,7 @@ class InterpreterSpec
         flush
         putPending(card.packageName)
         putError(card.packageName, date)
-        eval(PutPermanent(card))
+        eval(cc.putPermanent(card))
         getPending() must beEmpty
         getKeys(allByType(Error)) must beEmpty
         dumpQueue() must beEmpty
@@ -343,8 +342,8 @@ class InterpreterSpec
       prop { (card: FullCard) ⇒
         flush
         val newCard = card.copy(title = card.title.reverse, free = !card.free)
-        eval(PutPermanent(card))
-        eval(PutPermanent(newCard))
+        eval(cc.putPermanent(card))
+        eval(cc.putPermanent(newCard))
 
         getKeys(allByType(Permanent)) must haveSize(1)
         getCacheValue(permanentKey(card.packageName)) must_=== Option(CacheVal(Option(newCard)))
@@ -355,7 +354,7 @@ class InterpreterSpec
     "add a package as error" >>
       prop { pack: Package ⇒
         flush
-        eval(AddError(pack))
+        eval(cc.addError(pack))
 
         getKeys(allByPackageAndType(pack, Error)) must not be empty
       }
@@ -363,7 +362,7 @@ class InterpreterSpec
     "add no key as resolved or pending" >>
       prop { pack: Package ⇒
         flush
-        eval(AddError(pack))
+        eval(cc.addError(pack))
 
         getKeys(allByType(Resolved)) must beEmpty
         getPending() must beEmpty
@@ -373,7 +372,7 @@ class InterpreterSpec
       prop { pack: Package ⇒
         flush
         putPending(pack)
-        eval(AddError(pack))
+        eval(cc.addError(pack))
         getPending() must beEmpty
         dumpQueue() must beEmpty
       }
@@ -381,8 +380,8 @@ class InterpreterSpec
     "allow adding several error entries for package with different dates" >>
       prop { pack: Package ⇒
         flush
-        eval(AddError(pack))
-        evalWithDelay(AddError(pack), 1.millis)
+        eval(cc.addError(pack))
+        evalWithDelay(cc.addError(pack), 1.millis)
         getKeys(allByType(Error)) must haveSize(1)
       }
   }
@@ -391,7 +390,7 @@ class InterpreterSpec
     "add a list of packages as error" >>
       prop { packages: List[Package] ⇒
         flush
-        eval(AddErrorMany(packages))
+        eval(cc.addErrorMany(packages))
 
         getKeys(allByType(Error)) must haveSize(packages.size)
       }
@@ -399,7 +398,7 @@ class InterpreterSpec
     "add no key as resolved or pending" >>
       prop { packages: List[Package] ⇒
         flush
-        eval(AddErrorMany(packages))
+        eval(cc.addErrorMany(packages))
 
         getPending() must beEmpty
         getKeys(allByType(Resolved)) must beEmpty
@@ -409,7 +408,7 @@ class InterpreterSpec
       prop { packages: List[Package] ⇒
         flush
         putPendings(packages)
-        eval(AddErrorMany(packages))
+        eval(cc.addErrorMany(packages))
         getPending() must beEmpty
         dumpQueue() must beEmpty
       }
@@ -417,8 +416,8 @@ class InterpreterSpec
     "allow adding several errors with different dates" >>
       prop { packages: List[Package] ⇒
         flush
-        eval(AddErrorMany(packages))
-        evalWithDelay(AddErrorMany(packages), 2.millis)
+        eval(cc.addErrorMany(packages))
+        evalWithDelay(cc.addErrorMany(packages), 2.millis)
         getKeys(allByType(Error)) must haveSize(packages.size)
       }
   }
@@ -438,7 +437,7 @@ class InterpreterSpec
       prop { testData: ListPendingTestData ⇒
         flush
         putPendings(testData.pendingPackages)
-        val list = eval(ListPending(testData.limit))
+        val list = eval(cc.listPending(testData.limit))
         list must contain(atMost(testData.pendingPackages: _*))
         list must haveSize(testData.limit)
       }

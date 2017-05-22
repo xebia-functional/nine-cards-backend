@@ -17,7 +17,6 @@ package cards.nine.googleplay.service.free.interpreter.cache
 
 import cards.nine.domain.application.{ FullCard, Package }
 import cards.nine.googleplay.service.free.algebra.Cache._
-import cats.~>
 
 trait InterpreterServer[F[_]] {
   def getValid(pack: Package): F[Option[FullCard]]
@@ -32,19 +31,15 @@ trait InterpreterServer[F[_]] {
   def listPending(num: Int): F[List[Package]]
 }
 
-case class MockInterpreter[F[_]](server: InterpreterServer[F]) extends (Ops ~> F) {
-
-  override def apply[A](ops: Ops[A]) = ops match {
-    case GetValid(pack) ⇒ server.getValid(pack)
-    case GetValidMany(packages) ⇒ server.getValidMany(packages)
-    case PutResolved(card) ⇒ server.putResolved(card)
-    case PutResolvedMany(packages) ⇒ server.putResolvedMany(packages)
-    case PutPermanent(card) ⇒ server.putPermanent(card)
-    case SetToPending(pack) ⇒ server.setToPending(pack)
-    case SetToPendingMany(packages) ⇒ server.setToPendingMany(packages)
-    case AddError(pack) ⇒ server.addError(pack)
-    case AddErrorMany(packages) ⇒ server.addErrorMany(packages)
-    case ListPending(num) ⇒ server.listPending(num)
-  }
-
+case class MockInterpreter[F[_]](server: InterpreterServer[F]) extends Handler[F] {
+  def getValid(pack: Package) = server.getValid(pack)
+  def getValidMany(packages: List[Package]) = server.getValidMany(packages)
+  def putResolved(card: FullCard) = server.putResolved(card)
+  def putResolvedMany(cards: List[FullCard]) = server.putResolvedMany(cards)
+  def putPermanent(card: FullCard) = server.putPermanent(card)
+  def setToPending(pack: Package) = server.setToPending(pack)
+  def setToPendingMany(packs: List[Package]) = server.setToPendingMany(packs)
+  def addError(pack: Package) = server.addError(pack)
+  def addErrorMany(packs: List[Package]) = server.addErrorMany(packs)
+  def listPending(limit: Int) = server.listPending(limit)
 }
