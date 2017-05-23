@@ -15,12 +15,12 @@
  */
 package cards.nine.processes.applications
 
-import cards.nine.commons.NineCardsService
 import cards.nine.commons.NineCardsService._
 import cards.nine.domain.application.{ CardList, FullCard }
 import cards.nine.processes.NineCardsServices._
 import cards.nine.processes.TestInterpreters
-import cards.nine.services.free.algebra.GooglePlay.Services
+import cards.nine.services.free.algebra.GooglePlay
+import cats.free.FreeApplicative
 import org.specs2.matcher.Matchers
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
@@ -34,13 +34,15 @@ trait ApplicationProcessesSpecification
 
   trait BasicScope extends Scope {
 
-    implicit val googlePlayServices: Services[NineCardsServices] = mock[Services[NineCardsServices]]
+    implicit val googlePlayServices: GooglePlay[NineCardsServices] = mock[GooglePlay[NineCardsServices]]
     implicit val applicationProcesses = new ApplicationProcesses[NineCardsServices]
 
   }
 }
 
 class ApplicationProcessesSpec extends ApplicationProcessesSpecification {
+
+  def rightFS[A](x: A): FreeApplicative[NineCardsServices, Result[A]] = FreeApplicative.pure(Right(x))
 
   import TestData.{ category, marketAuth, packagesName }
 
@@ -55,8 +57,7 @@ class ApplicationProcessesSpec extends ApplicationProcessesSpecification {
 
     "return a valid response if a non empty list of packages name is passed" in new BasicScope {
 
-      googlePlayServices.resolveManyDetailed(packagesName, marketAuth) returns
-        NineCardsService.right(appsInfo)
+      googlePlayServices.resolveManyDetailed(packagesName, marketAuth) returns rightFS(appsInfo)
 
       applicationProcesses
         .getAppsInfo(packagesName, marketAuth)
@@ -72,8 +73,7 @@ class ApplicationProcessesSpec extends ApplicationProcessesSpecification {
 
     "return empty items and errors lists if an empty list of apps is provided" in new BasicScope {
 
-      googlePlayServices.resolveManyDetailed(Nil, marketAuth) returns
-        NineCardsService.right(CardList(Nil, Nil, Nil))
+      googlePlayServices.resolveManyDetailed(Nil, marketAuth) returns rightFS(CardList(Nil, Nil, Nil))
 
       applicationProcesses
         .getAppsInfo(Nil, marketAuth)
@@ -86,8 +86,7 @@ class ApplicationProcessesSpec extends ApplicationProcessesSpecification {
 
     "return items and errors lists for a non empty list of apps" in new BasicScope {
 
-      googlePlayServices.resolveManyDetailed(packagesName, marketAuth) returns
-        NineCardsService.right(CardList(missing, Nil, apps))
+      googlePlayServices.resolveManyDetailed(packagesName, marketAuth) returns rightFS(CardList(missing, Nil, apps))
 
       applicationProcesses
         .getAppsInfo(packagesName, marketAuth)
@@ -110,7 +109,7 @@ class ApplicationProcessesSpec extends ApplicationProcessesSpecification {
         excludesPackages = excludePackages,
         limit            = limit,
         auth             = marketAuth
-      ) returns NineCardsService.right(recommendations)
+      ) returns rightFS(recommendations)
 
       applicationProcesses.getRecommendationsByCategory(
         category,
@@ -149,7 +148,7 @@ class ApplicationProcessesSpec extends ApplicationProcessesSpecification {
         limitPerApp      = limitPerApp,
         limit            = limit,
         auth             = marketAuth
-      ) returns NineCardsService.right(recommendations)
+      ) returns rightFS(recommendations)
 
       applicationProcesses.getRecommendationsForApps(
         packagesName,

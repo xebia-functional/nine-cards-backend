@@ -19,9 +19,7 @@ import cards.nine.commons.NineCardsErrors.NineCardsError
 import cards.nine.domain.application.Package
 import cards.nine.domain.ScalaCheck._
 import cards.nine.domain.pagination.Page
-import cards.nine.services.free.domain.{ SharedCollection, SharedCollectionWithAggregatedInfo, User }
-import cards.nine.services.free.interpreter.collection.Services.SharedCollectionData
-import cards.nine.services.free.interpreter.user.Services.UserData
+import cards.nine.services.free.domain.{ SharedCollection, SharedCollectionData, SharedCollectionWithAggregatedInfo, User, UserData }
 import cards.nine.services.persistence.NineCardsGenEntities.{ CollectionTitle, PublicIdentifier }
 import cards.nine.services.persistence.{ DomainDatabaseContext, NineCardsScalacheckGen }
 import doobie.contrib.postgresql.pgtypes._

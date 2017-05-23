@@ -24,10 +24,9 @@ import cards.nine.services.free.interpreter.user.{ Services ⇒ UserServices }
 import doobie.contrib.postgresql.pgtypes._
 import doobie.imports._
 import org.specs2.matcher.MatchResult
-import shapeless.HNil
-
 import scalaz.concurrent.Task
 import scalaz.{ Foldable, \/ }
+import shapeless.HNil
 
 trait BasicDatabaseContext extends DummyConfig {
 
@@ -57,9 +56,9 @@ trait BasicDatabaseContext extends DummyConfig {
   def runDDLQuery(sql: String): ConnectionIO[Int] = Update0(sql, None).run
 
   implicit class Transacting[A](operation: ConnectionIO[A])(implicit transactor: Transactor[Task]) {
-    def transactAndRun: A = operation.transact(transactor).unsafePerformSync
+    def transactAndRun: A = transactor.trans(operation).unsafePerformSync
 
-    def transactAndAttempt: \/[Throwable, A] = operation.transact(transactor).unsafePerformSyncAttempt
+    def transactAndAttempt: \/[Throwable, A] = transactor.trans(operation).unsafePerformSyncAttempt
   }
 
   implicit val transactor: Transactor[Task] =

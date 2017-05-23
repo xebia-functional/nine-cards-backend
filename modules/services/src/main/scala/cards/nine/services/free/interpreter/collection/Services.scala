@@ -15,18 +15,15 @@
  */
 package cards.nine.services.free.interpreter.collection
 
-import java.sql.Timestamp
-
 import cards.nine.commons.catscalaz.ScalazInstances
 import cards.nine.commons.NineCardsErrors.SharedCollectionNotFound
 import cards.nine.domain.application.Package
 import cards.nine.domain.pagination.Page
 import cards.nine.services.common.PersistenceService
 import cards.nine.services.common.PersistenceService._
-import cards.nine.services.free.algebra.Collection
+import cards.nine.services.free.algebra.CollectionR
 import cards.nine.services.free.domain.SharedCollection.Queries
 import cards.nine.services.free.domain._
-import cards.nine.services.free.interpreter.collection.Services.SharedCollectionData
 import cards.nine.services.persistence.Persistence
 import cats.syntax.either._
 import cats.Monad
@@ -36,7 +33,7 @@ import shapeless.syntax.std.product._
 
 class Services(
   collectionPersistence: Persistence[SharedCollection]
-)(implicit connectionIOMonad: Monad[ConnectionIO]) extends Collection.Handler[ConnectionIO] {
+)(implicit connectionIOMonad: Monad[ConnectionIO]) extends CollectionR.Handler[ConnectionIO] {
 
   override def add(data: SharedCollectionData): PersistenceService[SharedCollection] =
     PersistenceService {
@@ -121,19 +118,6 @@ class Services(
 }
 
 object Services {
-
-  case class SharedCollectionData(
-    publicIdentifier: String,
-    userId: Option[Long],
-    publishedOn: Timestamp,
-    author: String,
-    name: String,
-    views: Int,
-    category: String,
-    icon: String,
-    community: Boolean,
-    packages: List[String]
-  )
 
   implicit val connectionIOMonad: Monad[ConnectionIO] = ScalazInstances[ConnectionIO].monadInstance
 

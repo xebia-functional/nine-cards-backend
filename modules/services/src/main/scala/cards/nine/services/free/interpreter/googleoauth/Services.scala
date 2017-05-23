@@ -19,19 +19,13 @@ import cards.nine.commons.NineCardsErrors.GoogleOAuthError
 import cards.nine.commons.NineCardsService.Result
 import cards.nine.domain.oauth._
 import cards.nine.services.free.algebra.GoogleOAuth._
-import cats.~>
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential
 import java.io.IOException
 import scalaz.concurrent.Task
 
-object Services extends (Ops ~> Task) {
+object Services extends Handler[Task] {
 
-  override def apply[A](ops: Ops[A]): Task[A] = ops match {
-    case FetchAccessToken(account: ServiceAccount) ⇒
-      fetchAcessToken(account)
-  }
-
-  private[this] def fetchAcessToken(account: ServiceAccount): Task[Result[AccessToken]] =
+  override def fetchAcessToken(account: ServiceAccount): Task[Result[AccessToken]] =
     Task {
       val credential: GoogleCredential = Converters.toGoogleCredential(account)
       // A GoogleCredential is stateful object that can contain token.

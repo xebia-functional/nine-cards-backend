@@ -20,8 +20,7 @@ import java.time.LocalDateTime
 
 import cards.nine.domain.pagination.Page
 import cards.nine.services.free.domain.SharedCollection.Queries._
-import cards.nine.services.free.domain.SharedCollectionWithAggregatedInfo
-import cards.nine.services.free.interpreter.collection.Services.SharedCollectionData
+import cards.nine.services.free.domain.{ SharedCollectionWithAggregatedInfo, SharedCollectionData }
 import cards.nine.services.persistence.DomainDatabaseContext
 import doobie.contrib.specs2.analysisspec.AnalysisSpec
 import doobie.contrib.postgresql.pgtypes._

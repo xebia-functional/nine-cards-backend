@@ -25,6 +25,7 @@ import cards.nine.services.free.algebra.GooglePlay._
 import cats.syntax.either._
 import cats.~>
 import freestyle._
+import freestyle.implicits._
 
 import scalaz.concurrent.Task
 
@@ -32,19 +33,22 @@ class Services[F[_]](
   implicit
   googlePlayProcesses: CardsProcesses[F],
   interpreter: F ~> Task
-) extends (Ops ~> Task) {
+) extends Handler[Task] {
 
-  def resolveOne(packageName: Package, auth: MarketCredentials): FreeS[F, Result[FullCard]] =
+  override def resolve(packageName: Package, auth: MarketCredentials): Task[Result[FullCard]] =
     googlePlayProcesses.getCard(packageName, auth)
       .map(r ⇒ r.leftMap(e ⇒ PackageNotResolved(e.packageName.value)))
+      .interpret[Task]
 
-  def resolveManyBasic(packages: List[Package], auth: MarketCredentials): FreeS[F, Result[CardList[BasicCard]]] =
+  def resolveManyBasic(packages: List[Package], auth: MarketCredentials): Task[Result[CardList[BasicCard]]] =
     googlePlayProcesses.getBasicCards(packages, auth)
       .map(r ⇒ Either.right(Converters.toCardList(r)))
+      .interpret[Task]
 
-  def resolveManyDetailed(packages: List[Package], auth: MarketCredentials): FreeS[F, Result[CardList[FullCard]]] =
+  def resolveManyDetailed(packages: List[Package], auth: MarketCredentials): Task[Result[CardList[FullCard]]] =
     googlePlayProcesses.getCards(packages, auth)
       .map(r ⇒ Either.right(Converters.toCardList(r)))
+      .interpret[Task]
 
   def recommendByCategory(
     category: String,
@@ -52,7 +56,7 @@ class Services[F[_]](
     excludedPackages: List[Package],
     limit: Int,
     auth: MarketCredentials
-  ): FreeS[F, Result[CardList[FullCard]]] = {
+  ): Task[Result[CardList[FullCard]]] = {
     val request = Converters.toRecommendByCategoryRequest(category, filter, excludedPackages, limit)
     googlePlayProcesses.recommendationsByCategory(request, auth)
       .map(
@@ -61,6 +65,7 @@ class Services[F[_]](
           r ⇒ Converters.omitMissing(r)
         )
       )
+      .interpret[Task]
   }
 
   def recommendationsForApps(
@@ -69,10 +74,11 @@ class Services[F[_]](
     limitByApp: Option[Int],
     limit: Int,
     auth: MarketCredentials
-  ): FreeS[F, Result[CardList[FullCard]]] = {
+  ): Task[Result[CardList[FullCard]]] = {
     val request = Converters.toRecommendByAppsRequest(packageNames, limitByApp, excludedPackages, limit)
     googlePlayProcesses.recommendationsByApps(request, auth)
       .map(r ⇒ Either.right(Converters.omitMissing(r)))
+      .interpret[Task]
   }
 
   def searchApps(
@@ -80,42 +86,23 @@ class Services[F[_]](
     excludePackages: List[Package],
     limit: Int,
     auth: MarketCredentials
-  ): FreeS[F, Result[CardList[BasicCard]]] = {
+  ): Task[Result[CardList[BasicCard]]] = {
     val request = Converters.toSearchAppsRequest(query, excludePackages, limit)
     googlePlayProcesses.searchApps(request, auth)
       .map(r ⇒ Either.right(Converters.omitMissing(r)))
+      .interpret[Task]
   }
 
-  def resolvePendingApps(numPackages: Int): FreeS[F, Result[ResolvePendingStats]] =
+  def resolvePendingApps(numPackages: Int): Task[Result[ResolvePendingStats]] =
     googlePlayProcesses
       .resolvePendingApps(numPackages)
       .map(r ⇒ Either.right(Converters.toResolvePendingStats(r)))
+      .interpret[Task]
 
-  def storeCard(card: FullCard): FreeS[F, Result[Unit]] =
+  def storeCard(card: FullCard): Task[Result[Unit]] =
     googlePlayProcesses.storeCard(card)
       .map(Either.right)
-
-  private[this] def applyFree[A](fa: Ops[A]): FreeS[F, A] = fa match {
-    case ResolveManyBasic(packageNames, auth) ⇒
-      resolveManyBasic(packageNames, auth)
-    case ResolveManyDetailed(packageNames, auth) ⇒
-      resolveManyDetailed(packageNames, auth)
-    case Resolve(packageName, auth) ⇒
-      resolveOne(packageName, auth)
-    case RecommendationsByCategory(category, filter, excludesPackages, limit, auth) ⇒
-      recommendByCategory(category, filter, excludesPackages, limit, auth)
-    case RecommendationsForApps(packagesName, excludesPackages, limitPerApp, limit, auth) ⇒
-      recommendationsForApps(packagesName, excludesPackages, limitPerApp, limit, auth)
-    case SearchApps(query, excludePackages, limit, auth) ⇒
-      searchApps(query, excludePackages, limit, auth)
-    case ResolvePendingApps(numPackages) ⇒
-      resolvePendingApps(numPackages)
-    case StoreCard(card) ⇒
-      storeCard(card)
-
-  }
-
-  def apply[A](fa: Ops[A]): Task[A] = applyFree[A](fa).interpret[Task]
+      .interpret[Task]
 
 }
 

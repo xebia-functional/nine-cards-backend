@@ -18,8 +18,7 @@ package cards.nine.services.persistence
 import cards.nine.domain.account._
 import cards.nine.domain.analytics._
 import cards.nine.domain.ScalaCheck._
-import cards.nine.services.free.interpreter.collection.Services.SharedCollectionData
-import cards.nine.services.free.interpreter.user.Services.UserData
+import cards.nine.services.free.domain.{ SharedCollectionData, UserData }
 import cards.nine.services.persistence.NineCardsGenEntities._
 import cats.Monad
 import java.sql.Timestamp

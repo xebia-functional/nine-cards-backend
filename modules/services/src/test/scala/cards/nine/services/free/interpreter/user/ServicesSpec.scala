@@ -18,9 +18,7 @@ package cards.nine.services.free.interpreter.user
 import cards.nine.commons.NineCardsErrors._
 import cards.nine.domain.account._
 import cards.nine.domain.ScalaCheck._
-import cards.nine.services.free.domain.{ Installation, SharedCollection, SharedCollectionSubscription, User }
-import cards.nine.services.free.interpreter.collection.Services.SharedCollectionData
-import cards.nine.services.free.interpreter.user.Services.UserData
+import cards.nine.services.free.domain.{ Installation, SharedCollection, SharedCollectionData, SharedCollectionSubscription, User, UserData }
 import cards.nine.services.persistence.NineCardsGenEntities.PublicIdentifier
 import cards.nine.services.persistence.{ DomainDatabaseContext, NineCardsScalacheckGen }
 import doobie.contrib.postgresql.pgtypes._
@@ -86,11 +84,11 @@ class ServicesSpec
     }
   }
 
-  "addUser" should {
+  "add" should {
     "new users can be created" in {
       prop { userData: UserData ⇒
         WithEmptyDatabase {
-          val insertedUser = userPersistenceServices.addUser(
+          val insertedUser = userPersistenceServices.add(
             email        = Email(userData.email),
             apiKey       = ApiKey(userData.apiKey),
             sessionToken = SessionToken(userData.sessionToken)
@@ -104,11 +102,11 @@ class ServicesSpec
     }
   }
 
-  "getUserByEmail" should {
+  "getByEmail" should {
     "return an UserNotFound error if the table is empty" in {
       prop { (email: Email) ⇒
         WithEmptyDatabase {
-          val user = userPersistenceServices.getUserByEmail(email).transactAndRun
+          val user = userPersistenceServices.getByEmail(email).transactAndRun
 
           user should beLeft(UserNotFound(s"User with email ${email.value} not found"))
         }
@@ -118,7 +116,7 @@ class ServicesSpec
       prop { userData: UserData ⇒
 
         WithData(userData) { id ⇒
-          val user = userPersistenceServices.getUserByEmail(Email(userData.email)).transactAndRun
+          val user = userPersistenceServices.getByEmail(Email(userData.email)).transactAndRun
 
           user should beRight[User].which {
             user ⇒
@@ -136,7 +134,7 @@ class ServicesSpec
         WithData(userData) { id ⇒
           val wrongEmail = Email(userData.email.reverse)
 
-          val user = userPersistenceServices.getUserByEmail(wrongEmail).transactAndRun
+          val user = userPersistenceServices.getByEmail(wrongEmail).transactAndRun
 
           user should beLeft(UserNotFound(s"User with email ${wrongEmail.value} not found"))
         }
@@ -148,7 +146,7 @@ class ServicesSpec
     "return an UserNotFound error if the table is empty" in {
       prop { (email: Email, sessionToken: SessionToken) ⇒
         WithEmptyDatabase {
-          val user = userPersistenceServices.getUserBySessionToken(
+          val user = userPersistenceServices.getBySessionToken(
             sessionToken = sessionToken
           ).transactAndRun
 
@@ -162,7 +160,7 @@ class ServicesSpec
 
         WithData(userData) { id ⇒
 
-          val user = userPersistenceServices.getUserBySessionToken(
+          val user = userPersistenceServices.getBySessionToken(
             sessionToken = SessionToken(userData.sessionToken)
           ).transactAndRun
 
@@ -183,7 +181,7 @@ class ServicesSpec
         WithData(userData) { id ⇒
           val wrongSessionToken = SessionToken(userData.sessionToken.reverse)
 
-          val user = userPersistenceServices.getUserBySessionToken(wrongSessionToken).transactAndRun
+          val user = userPersistenceServices.getBySessionToken(wrongSessionToken).transactAndRun
 
           user should beLeft(UserNotFound(s"User with sessionToken ${wrongSessionToken.value} not found"))
         }
@@ -196,7 +194,7 @@ class ServicesSpec
       prop { (androidId: AndroidId, userData: UserData) ⇒
 
         WithData(userData) { userId ⇒
-          val insertedInstallation = userPersistenceServices.createInstallation(
+          val insertedInstallation = userPersistenceServices.addInstallation(
             userId      = userId,
             deviceToken = None,
             androidId   = androidId

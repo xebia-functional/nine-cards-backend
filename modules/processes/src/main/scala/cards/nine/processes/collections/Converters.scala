@@ -16,12 +16,17 @@
 package cards.nine.processes.collections
 
 import java.sql.Timestamp
+import org.joda.time.DateTime
 
 import cards.nine.domain.application.Package
 import cards.nine.processes.collections.messages._
-import cards.nine.services.free.domain.{ BaseSharedCollection, SharedCollectionWithAggregatedInfo, SharedCollection ⇒ SharedCollectionServices, SharedCollectionSubscription ⇒ SharedCollectionSubscriptionServices }
-import cards.nine.services.free.interpreter.collection.Services.{ SharedCollectionData ⇒ SharedCollectionDataServices }
-import org.joda.time.DateTime
+import cards.nine.services.free.domain.{
+  BaseSharedCollection,
+  SharedCollectionWithAggregatedInfo,
+  SharedCollection ⇒ SharedCollectionServices,
+  SharedCollectionSubscription ⇒ SharedCollectionSubscriptionServices,
+  SharedCollectionData ⇒ SharedCollectionDataServices
+}
 
 private[collections] object Converters {
 

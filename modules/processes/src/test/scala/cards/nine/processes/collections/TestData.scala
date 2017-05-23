@@ -24,9 +24,12 @@ import cards.nine.domain.application.{ CardList, FullCard, Package }
 import cards.nine.domain.market.{ Localization, MarketCredentials, MarketToken }
 import cards.nine.domain.pagination.Page
 import cards.nine.processes.collections.messages._
-import cards.nine.services.free.domain.{ SharedCollection ⇒ SharedCollectionServices, _ }
+import cards.nine.services.free.domain.{
+  SharedCollectionData ⇒ SharedCollectionDataServices,
+  SharedCollection ⇒ SharedCollectionServices,
+  _
+}
 import cards.nine.services.free.domain.Firebase.{ NotificationIndividualResult, SendNotificationResponse }
-import cards.nine.services.free.interpreter.collection.Services.{ SharedCollectionData ⇒ SharedCollectionDataServices }
 import org.joda.time.DateTime
 
 private[collections] object TestData {

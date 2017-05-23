@@ -23,36 +23,35 @@ import cards.nine.domain.application.{ ResolvePendingStats }
 import cards.nine.domain.market.MarketCredentials
 import cards.nine.services.free.algebra.GooglePlay
 
-class ApplicationProcesses[F[_]](implicit services: GooglePlay.Services[F]) {
+class ApplicationProcesses[F[_]](implicit services: GooglePlay[F]) {
 
   import Converters._
 
+  def toNCS[A](fs: freestyle.FreeS.Par[F, Result[A]]): NineCardsService[F, A] = NineCardsService[F, A](fs.monad)
+
   def getAppsInfo(
-    packagesName: List[Package],
+    packs: List[Package],
     marketAuth: MarketCredentials
   ): NineCardsService[F, CardList[FullCard]] =
-    if (packagesName.isEmpty)
+    if (packs.isEmpty)
       NineCardsService.right(CardList(Nil, Nil, Nil))
     else
-      services.resolveManyDetailed(
-        packageNames = packagesName,
-        auth         = marketAuth
-      ) map filterCategorized
+      toNCS(services.resolveManyDetailed(packs, marketAuth)).map(filterCategorized)
 
   def getAppsBasicInfo(
-    packagesName: List[Package],
+    packs: List[Package],
     marketAuth: MarketCredentials
   ): NineCardsService[F, CardList[BasicCard]] =
-    if (packagesName.isEmpty)
+    if (packs.isEmpty)
       NineCardsService.right(CardList(Nil, Nil, Nil))
     else
-      services.resolveManyBasic(packagesName, marketAuth)
+      toNCS(services.resolveManyBasic(packs, marketAuth))
 
   def resolvePendingApps(numPackages: Int): NineCardsService[F, ResolvePendingStats] =
-    services.resolvePendingApps(numPackages)
+    toNCS(services.resolvePendingApps(numPackages))
 
   def storeCard(card: FullCard): NineCardsService[F, Unit] =
-    services.storeCard(card)
+    toNCS(services.storeCard(card))
 
   def getRecommendationsByCategory(
     category: String,
@@ -61,13 +60,13 @@ class ApplicationProcesses[F[_]](implicit services: GooglePlay.Services[F]) {
     limit: Int,
     marketAuth: MarketCredentials
   ): NineCardsService[F, CardList[FullCard]] =
-    services.recommendByCategory(
+    toNCS(services.recommendByCategory(
       category         = category,
       priceFilter      = filter,
       excludesPackages = excludePackages,
       limit            = limit,
       auth             = marketAuth
-    )
+    ))
 
   def getRecommendationsForApps(
     packagesName: List[Package],
@@ -79,13 +78,13 @@ class ApplicationProcesses[F[_]](implicit services: GooglePlay.Services[F]) {
     if (packagesName.isEmpty)
       NineCardsService.right(CardList(Nil, Nil, Nil))
     else
-      services.recommendationsForApps(
+      toNCS(services.recommendationsForApps(
         packagesName     = packagesName,
         excludesPackages = excludedPackages,
         limitPerApp      = limitPerApp,
         limit            = limit,
         auth             = marketAuth
-      )
+      ))
 
   def searchApps(
     query: String,
@@ -93,17 +92,17 @@ class ApplicationProcesses[F[_]](implicit services: GooglePlay.Services[F]) {
     limit: Int,
     marketAuth: MarketCredentials
   ): NineCardsService[F, CardList[BasicCard]] =
-    services.searchApps(
+    toNCS(services.searchApps(
       query            = query,
       excludesPackages = excludePackages,
       limit            = limit,
       auth             = marketAuth
-    )
+    ))
 }
 
 object ApplicationProcesses {
 
-  implicit def applicationProcesses[F[_]](implicit services: GooglePlay.Services[F]) =
-    new ApplicationProcesses
+  implicit def applicationProcesses[F[_]](implicit services: GooglePlay[F]) = new ApplicationProcesses
 
 }
+

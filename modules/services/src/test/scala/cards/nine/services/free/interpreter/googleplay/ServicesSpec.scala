@@ -18,7 +18,6 @@ package cards.nine.services.free.interpreter.googleplay
 import akka.actor.ActorSystem
 import cards.nine.commons.NineCardsErrors.{ NineCardsError, PackageNotResolved }
 import cards.nine.commons.NineCardsService.Result
-import cards.nine.commons.catscalaz.TaskInstances.taskMonad
 import cards.nine.commons.config.NineCardsConfig.nineCardsConfiguration
 import cards.nine.domain.account.AndroidId
 import cards.nine.domain.application.{ CardList, Category, FullCard, Package, PriceFilter }
@@ -53,11 +52,12 @@ class ServicesSpec
 
   private[this] implicit val interpreters: GooglePlayApp ~> Task = new Wiring(nineCardsConfiguration)
 
-  private[this] def run[A](fa: FreeS[GooglePlayApp, A]): Throwable \/ A =
-    fa.interpret[Task].unsafePerformSyncAttempt
+  private[this] def run[A](fa: Task[A]): Throwable \/ A =
+    fa.unsafePerformSyncAttempt
 
   trait BasicScope extends Scope {
     implicit val googlePlayProcesses = mock[CardsProcesses[GooglePlayApp]]
+
     val services = Services.services[GooglePlayApp]
   }
 
@@ -150,7 +150,7 @@ class ServicesSpec
       googlePlayProcesses.getCard(onePackage, AuthData.marketAuth) returns
         FreeS.pure(Right(GooglePlayResponses.fullCard))
 
-      val response = services.resolveOne(onePackage, AuthData.marketAuth)
+      val response = services.resolve(onePackage, AuthData.marketAuth)
       run(response) must be_\/-[Result[FullCard]].which {
         content ⇒ content must beRight[FullCard](GooglePlayResponses.fullCard)
       }
@@ -161,7 +161,7 @@ class ServicesSpec
       googlePlayProcesses.getCard(onePackage, AuthData.marketAuth) returns
         FreeS.pure(Left(GooglePlayResponses.unknwonPackageError))
 
-      val response = services.resolveOne(onePackage, AuthData.marketAuth)
+      val response = services.resolve(onePackage, AuthData.marketAuth)
 
       run(response) must be_\/-[Result[FullCard]].which {
         content ⇒ content must beLeft(PackageNotResolved(onePackageName))
