@@ -46,7 +46,7 @@ class Wiring(
     maxTotalConnections = config.google.play.api.detailsBatchSize
   )
 
-  val googleApiInt: GoogleApi.Ops ~> Task = {
+  val googleApiInt: GoogleApi.Op ~> Task = {
     val interp = new googleapi.Interpreter(config.google.play.api)
     val toTask = new HttpToTask(apiHttpClient)
     interp andThen toTask
@@ -54,7 +54,7 @@ class Wiring(
 
   private[this] val webHttpClient = PooledHttp1Client()
 
-  val webScrapperInt: WebScraper.Ops ~> Task = {
+  val webScrapperInt: WebScraper.Op ~> Task = {
     val interp = new webscrapper.Interpreter(config.google.play.web)
     val toTask = new HttpToTask(webHttpClient)
     interp andThen toTask

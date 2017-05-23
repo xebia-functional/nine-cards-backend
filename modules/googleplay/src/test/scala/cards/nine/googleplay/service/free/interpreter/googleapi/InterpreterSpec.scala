@@ -23,7 +23,6 @@ import cards.nine.domain.application.{ FullCard, Package }
 import cards.nine.domain.market.{ MarketCredentials, MarketToken }
 import cards.nine.googleplay.domain._
 import cards.nine.googleplay.domain.apigoogle._
-import cards.nine.googleplay.service.free.algebra.GoogleApi._
 import cards.nine.googleplay.service.util.MockServer
 import cards.nine.googleplay.util.WithHttp1Client
 import org.mockserver.model.{ Header, HttpRequest, HttpResponse, HttpStatusCode }
@@ -67,11 +66,11 @@ class InterpreterSpec extends Specification with Matchers with MockServer with W
     mockServer.stop
   }
 
-  val interpreter = new Interpreter(configuration)
+  val cc = new Interpreter(configuration)
 
-  def run[A](ops: Ops[A]) = interpreter(ops)(pooledClient)
+  def run[A](ops: WithHttpClient[A]) = ops(pooledClient)
 
-  def checkTokenErrors[A](request: HttpRequest, ops: Ops[Failure Either A]) = {
+  def checkTokenErrors[A](request: HttpRequest, ops: WithHttpClient[Failure Either A]) = {
 
     "give a Too Many Request failure if the API replies with an TooManyRequests status" in {
       val httpResponse = HttpResponse.response.withStatusCode(429)
@@ -97,7 +96,7 @@ class InterpreterSpec extends Specification with Matchers with MockServer with W
       .withQueryStringParameter("doc", fisherPrice.packageName)
       .withHeaders(msHeaders(auth))
 
-    val ops: Ops[Failure Either FullCard] = GetDetails(fisherPrice.packageObj, auth)
+    val ops: WithHttpClient[Failure Either FullCard] = cc.getDetails(fisherPrice.packageObj, auth)
 
     "return 200 OK and the Full Card for a package if Google's API replies as 200 OK" in {
       val httpResponse: HttpResponse = {
@@ -133,9 +132,9 @@ class InterpreterSpec extends Specification with Matchers with MockServer with W
 
     val numPacks = 7
 
-    val ops: Ops[Failure Either List[Package]] = {
+    val ops: WithHttpClient[Failure Either List[Package]] = {
       val request = SearchAppsRequest(word = "cosmos", excludedApps = Nil, maxTotal = numPacks)
-      SearchApps(request, auth)
+      cc.searchApps(request, auth)
     }
 
     "return 200 OK and a list of packages if Google's API replies as 200 OK" in {

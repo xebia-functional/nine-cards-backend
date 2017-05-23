@@ -15,14 +15,12 @@
  */
 package cards.nine.googleplay.service.free.interpreter.webscrapper
 
+import cards.nine.commons.config.Domain.{ GooglePlayWebConfiguration, GooglePlayWebPaths }
 import cards.nine.domain.application.{ FullCard, Package }
 import cards.nine.googleplay.domain.webscrapper._
-import cards.nine.googleplay.service.free.algebra.WebScraper._
 import cards.nine.googleplay.service.util.MockServer
 import cards.nine.googleplay.util.WithHttp1Client
 import java.nio.file.{ Files, Paths }
-
-import cards.nine.commons.config.Domain.{ GooglePlayWebConfiguration, GooglePlayWebPaths }
 import org.mockserver.model.{ HttpRequest, HttpResponse }
 import org.mockserver.model.HttpStatusCode._
 import org.specs2.matcher.Matchers
@@ -47,9 +45,9 @@ class InterpreterSpec extends Specification with Matchers with MockServer with W
     mockServer.stop
   }
 
-  val interpreter = new Interpreter(configuration)
+  val cc = new Interpreter(configuration)
 
-  def run[A](ops: Ops[A]) = interpreter(ops)(pooledClient)
+  def run[A](ops: WithClient[A]) = ops(pooledClient)
 
   sequential
 
@@ -61,7 +59,7 @@ class InterpreterSpec extends Specification with Matchers with MockServer with W
       .withQueryStringParameter("hl", "en_US")
       .withQueryStringParameter("id", thePackage.value)
 
-    def runOperation = run(ExistsApp(thePackage)).unsafePerformSync
+    def runOperation = run(cc.existsApp(thePackage)).unsafePerformSync
 
     "return true if the server gives a 200 OK Status" in {
       val httpResponse = HttpResponse.response.withStatusCode(OK_200.code)
@@ -84,7 +82,7 @@ class InterpreterSpec extends Specification with Matchers with MockServer with W
       .withQueryStringParameter("hl", "en_US")
       .withQueryStringParameter("id", fisherPrice.packageName)
 
-    def runOperation(pack: Package) = interpreter(GetDetails(pack))(pooledClient).unsafePerformSync
+    def runOperation(pack: Package) = run(cc.getDetails(pack)).unsafePerformSync
 
     "return the card if the server gives a 200 OK Status" in {
       val httpResponse = {

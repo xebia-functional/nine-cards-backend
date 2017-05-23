@@ -17,7 +17,6 @@ package cards.nine.googleplay.service.free.interpreter.webscrapper
 
 import cards.nine.commons.config.Domain.GooglePlayWebConfiguration
 import cats.syntax.either._
-import cats.~>
 import cards.nine.domain.application.{ FullCard, Package }
 import cards.nine.googleplay.domain.webscrapper._
 import cards.nine.googleplay.service.free.algebra.WebScraper._
@@ -28,12 +27,10 @@ import org.http4s.{ Method, Request, Status, Uri }
 import scalaz.concurrent.Task
 import scodec.bits.ByteVector
 
-class Interpreter(config: GooglePlayWebConfiguration) extends (Ops ~> WithClient) {
+class Interpreter(config: GooglePlayWebConfiguration) extends Handler[WithClient] {
 
-  override def apply[A](ops: Ops[A]): WithClient[A] = ops match {
-    case ExistsApp(pack) ⇒ new ExistsAppWP(pack)
-    case GetDetails(pack) ⇒ new GetDetailsWP(pack)
-  }
+  def existsApp(pack: Package) = new ExistsAppWP(pack)
+  def getDetails(pack: Package) = new GetDetailsWP(pack)
 
   private[this] val baseUri = Uri(
     scheme    = Option(config.protocol.ci),
@@ -45,14 +42,14 @@ class Interpreter(config: GooglePlayWebConfiguration) extends (Ops ~> WithClient
     .withQueryParam("id", pack.value)
     .withQueryParam("hl", "en_US")
 
-  private[this] class ExistsAppWP(pack: Package) extends WithClient[Boolean] {
+  class ExistsAppWP(pack: Package) extends WithClient[Boolean] {
     override def apply(client: Client): Task[Boolean] = {
       val request = new Request(method = Method.HEAD, uri = detailsUriOf(pack))
       client.fetch(request)(resp ⇒ Task.now(resp.status.isSuccess))
     }
   }
 
-  private[this] class GetDetailsWP(pack: Package) extends WithClient[Failure Either FullCard] {
+  class GetDetailsWP(pack: Package) extends WithClient[Failure Either FullCard] {
 
     def handleUnexpected(e: UnexpectedStatus): Failure = e.status match {
       case Status.NotFound ⇒ PackageNotFound(pack)

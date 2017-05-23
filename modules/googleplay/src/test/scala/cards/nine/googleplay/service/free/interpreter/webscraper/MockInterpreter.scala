@@ -15,7 +15,6 @@
  */
 package cards.nine.googleplay.service.free.interpreter.webscrapper
 
-import cats.~>
 import cards.nine.domain.application.{ FullCard, Package }
 import cards.nine.googleplay.domain.webscrapper.Failure
 import cards.nine.googleplay.service.free.algebra.WebScraper._
@@ -25,12 +24,8 @@ trait InterpreterServer[F[_]] {
   def getDetails(pack: Package): F[Failure Either FullCard]
 }
 
-case class MockInterpreter[F[_]](server: InterpreterServer[F]) extends (Ops ~> F) {
-
-  override def apply[A](ops: Ops[A]) = ops match {
-    case ExistsApp(pack) ⇒ server.existsApp(pack)
-    case GetDetails(pack) ⇒ server.getDetails(pack)
-  }
-
+case class MockInterpreter[F[_]](server: InterpreterServer[F]) extends Handler[F] {
+  def existsApp(pack: Package): F[Boolean] = server.existsApp(pack)
+  def getDetails(pack: Package): F[Failure Either FullCard] = server.getDetails(pack)
 }
 
