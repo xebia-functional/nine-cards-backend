@@ -26,15 +26,15 @@ object NineCardsServices {
 
   implicit val taskMonadInstance: Monad[Task] with ApplicativeError[Task, Throwable] = taskMonad
 
-  type NineCardsServicesC08[A] = Coproduct[GoogleOAuth.Ops, User.Ops, A]
-  type NineCardsServicesC07[A] = Coproduct[Subscription.Ops, NineCardsServicesC08, A]
-  type NineCardsServicesC06[A] = Coproduct[Collection.Op, NineCardsServicesC07, A]
-  type NineCardsServicesC05[A] = Coproduct[Ranking.Ops, NineCardsServicesC06, A]
-  type NineCardsServicesC04[A] = Coproduct[Country.Ops, NineCardsServicesC05, A]
-  type NineCardsServicesC03[A] = Coproduct[GooglePlay.Ops, NineCardsServicesC04, A]
-  type NineCardsServicesC02[A] = Coproduct[GoogleApi.Ops, NineCardsServicesC03, A]
-  type NineCardsServicesC01[A] = Coproduct[GoogleAnalytics.Ops, NineCardsServicesC02, A]
-  type NineCardsServices[A] = Coproduct[Firebase.Ops, NineCardsServicesC01, A]
+  type NineCardsServicesC08[A] = Coproduct[GoogleOAuth.Op, UserR.Op, A]
+  type NineCardsServicesC07[A] = Coproduct[SubscriptionR.Op, NineCardsServicesC08, A]
+  type NineCardsServicesC06[A] = Coproduct[CollectionR.Op, NineCardsServicesC07, A]
+  type NineCardsServicesC05[A] = Coproduct[RankingS.Op, NineCardsServicesC06, A]
+  type NineCardsServicesC04[A] = Coproduct[CountryR.Op, NineCardsServicesC05, A]
+  type NineCardsServicesC03[A] = Coproduct[GooglePlay.Op, NineCardsServicesC04, A]
+  type NineCardsServicesC02[A] = Coproduct[GoogleApi.Op, NineCardsServicesC03, A]
+  type NineCardsServicesC01[A] = Coproduct[GoogleAnalytics.Op, NineCardsServicesC02, A]
+  type NineCardsServices[A] = Coproduct[Firebase.Op, NineCardsServicesC01, A]
 
   class NineCardsInterpreters {
 

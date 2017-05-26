@@ -16,7 +16,6 @@
 package cards.nine.processes.account
 
 import cards.nine.commons.NineCardsErrors._
-import cards.nine.commons.NineCardsService
 import cards.nine.commons.NineCardsService._
 import cards.nine.commons.config.DummyConfig
 import cards.nine.domain.account._
@@ -24,13 +23,14 @@ import cards.nine.processes.account.messages._
 import cards.nine.processes.NineCardsServices._
 import cards.nine.processes.TestInterpreters
 import cards.nine.processes.utils.HashUtils
-import cards.nine.services.free.algebra.{ GoogleApi, User }
+import cards.nine.services.free.algebra.{ GoogleApi, UserR }
 import org.mockito.Matchers.{ eq ⇒ mockEq }
 import org.specs2.ScalaCheck
 import org.specs2.matcher.Matchers
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
 import org.specs2.specification.Scope
+import cats.free.FreeApplicative
 
 trait AccountProcessesSpecification
   extends Specification
@@ -40,59 +40,62 @@ trait AccountProcessesSpecification
   with DummyConfig
   with TestInterpreters {
 
+  def rightFS[A](x: A): FreeApplicative[NineCardsServices, Result[A]] = FreeApplicative.pure(Right(x))
+  def leftFS[A](x: NineCardsError): FreeApplicative[NineCardsServices, Result[A]] = FreeApplicative.pure(Left(x))
+
   trait BasicScope extends Scope {
 
-    implicit val userServices = mock[User.Services[NineCardsServices]]
+    implicit val userServices = mock[UserR[NineCardsServices]]
 
-    implicit val googleApiServices = mock[GoogleApi.Services[NineCardsServices]]
+    implicit val googleApiServices = mock[GoogleApi[NineCardsServices]]
 
     val accountProcesses = AccountProcesses.processes[NineCardsServices]
   }
 
   trait UserAndInstallationSuccessfulScope extends BasicScope {
 
-    userServices.getByEmail(Email(mockEq(email.value))) returns NineCardsService.right(user)
+    userServices.getByEmail(Email(mockEq(email.value))) returns rightFS(user)
 
     userServices.getInstallationByUserAndAndroidId(mockEq(userId), AndroidId(mockEq(androidId))) returns
-      NineCardsService.right(installation)
+      rightFS(installation)
 
     userServices.updateInstallation(mockEq(userId), mockEq(Option(DeviceToken(deviceToken))), AndroidId(mockEq(androidId))) returns
-      NineCardsService.right(installation)
+      rightFS(installation)
 
     userServices.getBySessionToken(SessionToken(mockEq(sessionToken))) returns
-      NineCardsService.right(user)
+      rightFS(user)
 
     userServices.getInstallationByUserAndAndroidId(mockEq(userId), AndroidId(mockEq(androidId))) returns
-      NineCardsService.right(installation)
+      rightFS(installation)
   }
 
   trait UserSuccessfulAndInstallationFailingScope extends BasicScope {
 
-    userServices.getByEmail(Email(mockEq(email.value))) returns NineCardsService.right(user)
+    userServices.getByEmail(Email(mockEq(email.value))) returns rightFS(user)
 
     userServices.getInstallationByUserAndAndroidId(mockEq(userId), AndroidId(mockEq(androidId))) returns
-      NineCardsService.left(installationNotFoundError)
+      leftFS(installationNotFoundError)
 
     userServices.addInstallation(mockEq(userId), mockEq(None), AndroidId(mockEq(androidId))) returns
-      NineCardsService.right(installation)
+      rightFS(installation)
 
     userServices.getBySessionToken(SessionToken(mockEq(sessionToken))) returns
-      NineCardsService.right(user)
+      rightFS(user)
   }
 
   trait UserAndInstallationFailingScope extends BasicScope {
 
     userServices.getByEmail(Email(mockEq(email.value))) returns
-      NineCardsService.left(userNotFoundError)
+      leftFS(userNotFoundError)
 
     userServices.add(Email(mockEq(email.value)), ApiKey(any[String]), SessionToken(any[String])) returns
-      NineCardsService.right(user)
+      rightFS(user)
 
     userServices.addInstallation(mockEq(userId), mockEq(None), AndroidId(mockEq(androidId))) returns
-      NineCardsService.right(installation)
+      rightFS(installation)
 
     userServices.getBySessionToken(SessionToken(mockEq(sessionToken))) returns
-      NineCardsService.left(userNotFoundError)
+      leftFS(userNotFoundError)
   }
 
 }
@@ -149,10 +152,10 @@ class AccountProcessesSpec
       "if the debug Mode is enabled" in new UserAndInstallationSuccessfulScope {
 
         val debugAccountProcesses = AccountProcesses.processes[NineCardsServices](
-          googleAPIServices = googleApiServices,
-          userServices      = userServices,
-          config            = debugConfig,
-          hashUtils         = HashUtils.hashUtils
+          googleAPI = googleApiServices,
+          userR     = userServices,
+          config    = debugConfig,
+          hashUtils = HashUtils.hashUtils
         )
 
         val checkAuthToken = debugAccountProcesses.checkAuthToken(
@@ -204,7 +207,7 @@ class AccountProcessesSpec
   "checkGoogleTokenId" should {
     "return true if the given tokenId is valid" in new BasicScope {
 
-      googleApiServices.getTokenInfo(GoogleIdToken(any[String])) returns NineCardsService.right(tokenInfo)
+      googleApiServices.getTokenInfo(GoogleIdToken(any[String])) returns rightFS(tokenInfo)
 
       accountProcesses
         .checkGoogleTokenId(email, tokenId)
@@ -213,7 +216,7 @@ class AccountProcessesSpec
 
     "return false if the given tokenId is valid but the given email address is different" in new BasicScope {
 
-      googleApiServices.getTokenInfo(GoogleIdToken(any[String])) returns NineCardsService.right(tokenInfo)
+      googleApiServices.getTokenInfo(GoogleIdToken(any[String])) returns rightFS(tokenInfo)
 
       accountProcesses
         .checkGoogleTokenId(wrongEmail, tokenId)
@@ -222,7 +225,7 @@ class AccountProcessesSpec
 
     "return a WrongGoogleAuthToken error if the given tokenId is not valid" in new BasicScope {
 
-      googleApiServices.getTokenInfo(GoogleIdToken(any[String])) returns NineCardsService.left(wrongAuthTokenError)
+      googleApiServices.getTokenInfo(GoogleIdToken(any[String])) returns leftFS(wrongAuthTokenError)
 
       accountProcesses
         .checkGoogleTokenId(email, tokenId)

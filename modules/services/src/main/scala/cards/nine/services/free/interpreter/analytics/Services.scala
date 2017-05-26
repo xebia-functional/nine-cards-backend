@@ -26,7 +26,6 @@ import cards.nine.services.free.interpreter.analytics.HttpMessagesFactory._
 import cats.instances.all._
 import cats.syntax.either._
 import cats.syntax.traverse._
-import cats.~>
 import org.http4s.Http4s._
 import org.http4s.Uri.{ Authority, RegName }
 import org.http4s._
@@ -34,7 +33,7 @@ import org.http4s.circe.{ jsonEncoderOf, jsonOf }
 
 import scalaz.concurrent.Task
 
-class Services(config: GoogleAnalyticsConfiguration) extends (Ops ~> Task) {
+class Services(config: GoogleAnalyticsConfiguration) extends Handler[Task] {
 
   import Encoders._
   import model.{ RequestBody, ResponseBody }
@@ -53,12 +52,12 @@ class Services(config: GoogleAnalyticsConfiguration) extends (Ops ~> Task) {
   implicit private[this] val responseEntity: EntityDecoder[RankingError Either ResponseBody] =
     jsonOf[RankingError Either ResponseBody](Decoders.responseBodyError)
 
-  def getCountriesWithRanking(params: RankingParams): Task[Result[CountriesWithRanking]] = {
+  override def getCountriesWithRanking(params: RankingParams): Task[Result[CountriesWithRanking]] = {
     val request = CountriesWithRankingReport.buildRequest(params.dateRange, config.viewId)
     doRequest(params, CountriesWithRankingReport.parseResponse)(request).map(_.joinRight)
   }
 
-  def getRanking(
+  override def getRanking(
     code: Option[CountryIsoCode],
     categories: List[String],
     params: RankingParams
@@ -95,10 +94,6 @@ class Services(config: GoogleAnalyticsConfiguration) extends (Ops ~> Task) {
       }
   }
 
-  def apply[A](fa: Ops[A]): Task[A] = fa match {
-    case GetCountriesWithRanking(params) ⇒ getCountriesWithRanking(params)
-    case GetRanking(code, categories, params) ⇒ getRanking(code, categories, params)
-  }
 }
 
 object Services {

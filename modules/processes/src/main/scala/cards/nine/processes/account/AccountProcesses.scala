@@ -17,18 +17,18 @@ package cards.nine.processes.account
 
 import cards.nine.commons.NineCardsErrors.{ AuthTokenNotValid, InstallationNotFound, UserNotFound, WrongEmailAccount }
 import cards.nine.commons.NineCardsService
-import cards.nine.commons.NineCardsService.NineCardsService
+import cards.nine.commons.NineCardsService.{ NineCardsService, Result }
 import cards.nine.commons.config.Domain.NineCardsConfiguration
 import cards.nine.domain.account._
 import cards.nine.processes.utils.HashUtils
-import cards.nine.services.free.algebra
-import cards.nine.services.free.algebra.GoogleApi
+import cards.nine.services.free.algebra.{ GoogleApi, UserR }
 import cards.nine.services.free.domain._
+import freestyle.FreeS
 
 class AccountProcesses[F[_]](
   implicit
-  googleAPIServices: algebra.GoogleApi.Services[F],
-  userServices: algebra.User.Services[F],
+  googleAPI: GoogleApi[F],
+  userR: UserR[F],
   config: NineCardsConfiguration,
   hashUtils: HashUtils
 ) {
@@ -36,9 +36,10 @@ class AccountProcesses[F[_]](
   import messages._
   import Converters._
 
+  def toNCS[A](fs: FreeS.Par[F, Result[A]]): NineCardsService[F, A] = NineCardsService[F, A](fs.monad)
+
   def checkGoogleTokenId(email: Email, tokenId: GoogleIdToken): NineCardsService[F, Unit] =
-    googleAPIServices
-      .getTokenInfo(tokenId)
+    toNCS(googleAPI.getTokenInfo(tokenId))
       .ensure(WrongEmailAccount("The given email account is not valid")) { tokenInfo ⇒
         tokenInfo.email_verified == "true" && tokenInfo.email == email.value
       }
@@ -50,19 +51,19 @@ class AccountProcesses[F[_]](
       val apiKey = ApiKey(hashUtils.hashValue(request.sessionToken.value))
 
       for {
-        user ← userServices.add(request.email, apiKey, request.sessionToken)
-        installation ← userServices.addInstallation(user.id, deviceToken = None, androidId = request.androidId)
+        user ← toNCS(userR.add(request.email, apiKey, request.sessionToken))
+        installation ← toNCS(userR.addInstallation(user.id, deviceToken = None, androidId = request.androidId))
       } yield (user, installation)
     }
 
     def signUpInstallation(androidId: AndroidId, user: User) =
-      userServices.getInstallationByUserAndAndroidId(user.id, androidId)
+      toNCS(userR.getInstallationByUserAndAndroidId(user.id, androidId))
         .recoverWith {
-          case _: InstallationNotFound ⇒ userServices.addInstallation(user.id, None, androidId)
+          case _: InstallationNotFound ⇒ toNCS(userR.addInstallation(user.id, None, androidId))
         }
 
     val userInfo = for {
-      u ← userServices.getByEmail(request.email)
+      u ← toNCS(userR.getByEmail(request.email))
       i ← signUpInstallation(request.androidId, u)
     } yield (u, i)
 
@@ -74,11 +75,11 @@ class AccountProcesses[F[_]](
   }
 
   def updateInstallation(request: UpdateInstallationRequest): NineCardsService[F, UpdateInstallationResponse] =
-    userServices.updateInstallation(
+    toNCS(userR.updateInstallation(
       user        = request.userId,
       androidId   = request.androidId,
       deviceToken = request.deviceToken
-    ).map(toUpdateInstallationResponse)
+    )).map(toUpdateInstallationResponse)
 
   def checkAuthToken(
     sessionToken: SessionToken,
@@ -98,9 +99,9 @@ class AccountProcesses[F[_]](
     }
 
     for {
-      user ← userServices.getBySessionToken(sessionToken)
+      user ← toNCS(userR.getBySessionToken(sessionToken))
       _ ← validateAuthToken(user)
-      installation ← userServices.getInstallationByUserAndAndroidId(user.id, androidId)
+      installation ← toNCS(userR.getInstallationByUserAndAndroidId(user.id, androidId))
     } yield user.id
   }
 
@@ -110,8 +111,8 @@ object AccountProcesses {
 
   implicit def processes[F[_]](
     implicit
-    googleAPIServices: GoogleApi.Services[F],
-    userServices: algebra.User.Services[F],
+    googleAPI: GoogleApi[F],
+    userR: UserR[F],
     config: NineCardsConfiguration,
     hashUtils: HashUtils
   ) = new AccountProcesses

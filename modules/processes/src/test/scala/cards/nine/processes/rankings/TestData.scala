@@ -15,16 +15,20 @@
  */
 package cards.nine.processes.rankings
 
-import cards.nine.commons.NineCardsErrors.{ CountryNotFound, RankingNotFound }
-import cards.nine.commons.NineCardsService
+import cards.nine.commons.NineCardsErrors.{ NineCardsError, CountryNotFound, RankingNotFound }
+import cards.nine.commons.NineCardsService.Result
 import cards.nine.domain.analytics._
 import cards.nine.domain.application.{ Package, Widget }
 import cards.nine.processes.NineCardsServices.NineCardsServices
 import cards.nine.services.free.domain.Ranking.GoogleAnalyticsRanking
 import cards.nine.services.free.domain.Country
 import org.joda.time.{ DateTime, DateTimeZone }
+import cats.free.FreeApplicative
 
 private[rankings] object TestData {
+
+  def rightFS[F[_], A](x: A): FreeApplicative[F, Result[A]] = FreeApplicative.pure(Right(x))
+  def leftFS[F[_], A](x: NineCardsError): FreeApplicative[F, Result[A]] = FreeApplicative.pure(Left(x))
 
   val canonicalId = 0
 
@@ -103,14 +107,12 @@ private[rankings] object TestData {
         RankedApp(packageName, category, Option(rank))
     }
 
-  val rankingForAppsResponse = NineCardsService.right[NineCardsServices, List[RankedApp]] {
+  val rankingForAppsResponse = rightFS[NineCardsServices, List[RankedApp]] {
     appsWithRanking(countriesAMList, countriesAMCategory) ++
       appsWithRanking(countriesNZList, countriesNZCategory)
   }
 
-  val rankingForAppsEmptyResponse = NineCardsService.right[NineCardsServices, List[RankedApp]] {
-    Nil
-  }
+  val rankingForAppsEmptyResponse = rightFS[NineCardsServices, List[RankedApp]](Nil)
 
   def widgetsWithRanking(apps: List[Package], category: String) =
     apps.zipWithIndex.map {
@@ -118,13 +120,11 @@ private[rankings] object TestData {
         RankedWidget(Widget(packageName, "className"), category, Option(rank))
     }
 
-  val rankingForWidgetsResponse = NineCardsService.right[NineCardsServices, List[RankedWidget]] {
+  val rankingForWidgetsResponse = rightFS[NineCardsServices, List[RankedWidget]] {
     widgetsWithRanking(countriesAMList, countriesAMCategory) ++
       widgetsWithRanking(countriesNZList, countriesNZCategory)
   }
 
-  val rankingForWidgetsEmptyResponse = NineCardsService.right[NineCardsServices, List[RankedWidget]] {
-    Nil
-  }
+  val rankingForWidgetsEmptyResponse = rightFS[NineCardsServices, List[RankedWidget]](Nil)
 
 }

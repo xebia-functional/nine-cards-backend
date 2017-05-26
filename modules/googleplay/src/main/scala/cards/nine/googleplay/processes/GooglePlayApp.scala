@@ -21,14 +21,14 @@ import cats.~>
 
 object GooglePlayApp {
 
-  type GooglePlayAppC01[A] = Coproduct[GoogleApi.Ops, WebScraper.Ops, A]
+  type GooglePlayAppC01[A] = Coproduct[GoogleApi.Op, WebScraper.Op, A]
   type GooglePlayApp[A] = Coproduct[Cache.Op, GooglePlayAppC01, A]
 
   object Interpreters {
     def apply[F[_]](
-      googleApiInt: GoogleApi.Ops ~> F,
+      googleApiInt: GoogleApi.Op ~> F,
       cacheInt: Cache.Op ~> F,
-      webScrapperInt: WebScraper.Ops ~> F
+      webScrapperInt: WebScraper.Op ~> F
     ): (GooglePlayApp ~> F) = {
       val interpreters01: (GooglePlayAppC01 ~> F) = googleApiInt or webScrapperInt
       cacheInt or interpreters01

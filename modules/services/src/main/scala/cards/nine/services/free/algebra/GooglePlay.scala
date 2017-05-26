@@ -15,111 +15,35 @@
  */
 package cards.nine.services.free.algebra
 
-import cards.nine.commons.NineCardsService
-import cards.nine.commons.NineCardsService._
-import cards.nine.domain.application._
+import cards.nine.commons.NineCardsService.Result
+import cards.nine.domain.application.{ BasicCard, CardList, FullCard, Package, PriceFilter, ResolvePendingStats }
 import cards.nine.domain.market.MarketCredentials
-import cats.free.:<:
+import freestyle._
 
-object GooglePlay {
-
-  sealed trait Ops[A]
-
-  case class Resolve(packageName: Package, auth: MarketCredentials)
-    extends Ops[Result[FullCard]]
-
-  case class ResolveManyBasic(packageNames: List[Package], auth: MarketCredentials)
-    extends Ops[Result[CardList[BasicCard]]]
-
-  case class ResolveManyDetailed(packageNames: List[Package], auth: MarketCredentials)
-    extends Ops[Result[CardList[FullCard]]]
-
-  case class RecommendationsByCategory(
+@free trait GooglePlay {
+  def resolve(pack: Package, auth: MarketCredentials): FS[Result[FullCard]]
+  def resolveManyBasic(packs: List[Package], auth: MarketCredentials): FS[Result[CardList[BasicCard]]]
+  def resolveManyDetailed(packs: List[Package], auth: MarketCredentials): FS[Result[CardList[FullCard]]]
+  def recommendByCategory(
     category: String,
     priceFilter: PriceFilter,
     excludesPackages: List[Package],
     limit: Int,
     auth: MarketCredentials
-  ) extends Ops[Result[CardList[FullCard]]]
-
-  case class RecommendationsForApps(
+  ): FS[Result[CardList[FullCard]]]
+  def recommendationsForApps(
     packagesName: List[Package],
     excludesPackages: List[Package],
     limitPerApp: Option[Int],
     limit: Int,
     auth: MarketCredentials
-  ) extends Ops[Result[CardList[FullCard]]]
-
-  case class SearchApps(
+  ): FS[Result[CardList[FullCard]]]
+  def searchApps(
     query: String,
-    excludePackages: List[Package],
+    excludesPackages: List[Package],
     limit: Int,
     auth: MarketCredentials
-  ) extends Ops[Result[CardList[BasicCard]]]
-
-  case class ResolvePendingApps(numPackages: Int) extends Ops[Result[ResolvePendingStats]]
-
-  case class StoreCard(card: FullCard) extends Ops[Result[Unit]]
-
-  class Services[F[_]](implicit I: Ops :<: F) {
-
-    def resolve(
-      packageName: Package,
-      auth: MarketCredentials
-    ): NineCardsService[F, FullCard] =
-      NineCardsService(Resolve(packageName, auth))
-
-    def resolveManyBasic(
-      packageNames: List[Package],
-      auth: MarketCredentials
-    ): NineCardsService[F, CardList[BasicCard]] =
-      NineCardsService(ResolveManyBasic(packageNames, auth))
-
-    def resolveManyDetailed(
-      packageNames: List[Package],
-      auth: MarketCredentials
-    ): NineCardsService[F, CardList[FullCard]] =
-      NineCardsService(ResolveManyDetailed(packageNames, auth))
-
-    def recommendByCategory(
-      category: String,
-      priceFilter: PriceFilter,
-      excludesPackages: List[Package],
-      limit: Int,
-      auth: MarketCredentials
-    ): NineCardsService[F, CardList[FullCard]] =
-      NineCardsService(RecommendationsByCategory(category, priceFilter, excludesPackages, limit, auth))
-
-    def recommendationsForApps(
-      packagesName: List[Package],
-      excludesPackages: List[Package],
-      limitPerApp: Option[Int],
-      limit: Int,
-      auth: MarketCredentials
-    ): NineCardsService[F, CardList[FullCard]] =
-      NineCardsService(RecommendationsForApps(packagesName, excludesPackages, limitPerApp, limit, auth))
-
-    def searchApps(
-      query: String,
-      excludesPackages: List[Package],
-      limit: Int,
-      auth: MarketCredentials
-    ): NineCardsService[F, CardList[BasicCard]] =
-      NineCardsService(SearchApps(query, excludesPackages, limit, auth))
-
-    def resolvePendingApps(numPackages: Int): NineCardsService[F, ResolvePendingStats] =
-      NineCardsService(ResolvePendingApps(numPackages))
-
-    def storeCard(card: FullCard): NineCardsService[F, Unit] =
-      NineCardsService(StoreCard(card))
-
-  }
-
-  object Services {
-
-    implicit def services[F[_]](implicit I: Ops :<: F): Services[F] =
-      new Services
-
-  }
+  ): FS[Result[CardList[BasicCard]]]
+  def resolvePendingApps(numPackages: Int): FS[Result[ResolvePendingStats]]
+  def storeCard(card: FullCard): FS[Result[Unit]]
 }
-

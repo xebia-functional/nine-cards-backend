@@ -37,6 +37,19 @@ case class SharedCollection(
   override def sharedCollectionId: Long = id
 }
 
+case class SharedCollectionData(
+  publicIdentifier: String,
+  userId: Option[Long],
+  publishedOn: Timestamp,
+  author: String,
+  name: String,
+  views: Int,
+  category: String,
+  icon: String,
+  community: Boolean,
+  packages: List[String]
+)
+
 case class SharedCollectionWithAggregatedInfo(
   sharedCollectionData: SharedCollection,
   subscriptionsCount: Long

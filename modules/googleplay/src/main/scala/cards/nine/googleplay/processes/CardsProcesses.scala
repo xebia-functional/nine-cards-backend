@@ -15,7 +15,6 @@
  */
 package cards.nine.googleplay.processes
 
-import cats.free.Free
 import cats.instances.either._
 import cats.instances.list._
 import cats.syntax.monadCombine._
@@ -29,30 +28,28 @@ import cards.nine.googleplay.domain.apigoogle.{ ResolvePackagesResult, Failure �
 import cards.nine.googleplay.domain.webscrapper._
 import cards.nine.googleplay.service.free.algebra.{ Cache, GoogleApi, WebScraper }
 import freestyle._
+import freestyle.implicits._
 
 class CardsProcesses[F[_]](
-  googleApi: GoogleApi.Services[F],
-  cacheService: Cache.To[F],
-  webScrapper: WebScraper.Service[F]
+  googleApi: GoogleApi[F],
+  cacheService: Cache[F],
+  webScrapper: WebScraper[F]
 ) {
 
   def getBasicCards(
-    packages: List[Package],
+    packs: List[Package],
     auth: MarketCredentials
-  ): Free[F, ResolveMany.Response[BasicCard]] =
+  ): FreeS[F, ResolveMany.Response[BasicCard]] =
     for {
-      cached ← toFree(cacheService.getValidMany(packages))
-      uncached = packages diff (cached map (_.packageName))
-      response ← getPackagesInfoInGooglePlay(uncached, auth)
+      cached ← cacheService.getValidMany(packs).freeS
+      uncached = packs diff (cached map (_.packageName))
+      response ← getPackagesInfoInGooglePlay(uncached, auth).freeS
     } yield ResolveMany.Response(response.notFound, response.pending, cached.map(_.toBasic) ++ response.apps)
 
-  def getCard(pack: Package, auth: MarketCredentials): Free[F, getcard.Response] =
+  def getCard(pack: Package, auth: MarketCredentials): FreeS[F, getcard.Response] =
     resolveNewPackage(pack, auth)
 
-  def getCards(
-    packages: List[Package],
-    auth: MarketCredentials
-  ): Free[F, ResolveMany.Response[FullCard]] =
+  def getCards(packages: List[Package], auth: MarketCredentials): FreeS[F, ResolveMany.Response[FullCard]] =
     for {
       result ← resolvePackageList(packages, auth)
     } yield ResolveMany.Response(
@@ -61,15 +58,15 @@ class CardsProcesses[F[_]](
       apps     = result.resolvedPackages ++ result.cachedPackages
     )
 
-  def storeCard(card: FullCard): Free[F, Unit] =
-    toFree(cacheService.putPermanent(card))
+  def storeCard(card: FullCard): FreeS[F, Unit] =
+    cacheService.putPermanent(card).freeS
 
   def recommendationsByCategory(
     request: RecommendByCategoryRequest,
     auth: MarketCredentials
-  ): Free[F, InfoError Either CardList[FullCard]] =
-    googleApi.recommendationsByCategory(request, auth) flatMap {
-      case Left(error) ⇒ Free.pure(Either.left(error))
+  ): FreeS[F, InfoError Either CardList[FullCard]] =
+    googleApi.recommendationsByCategory(request, auth).freeS flatMap {
+      case Left(error) ⇒ FreeS.pure(Either.left(error))
       case Right(recommendations) ⇒
         val packages = recommendations.diff(request.excludedApps).take(request.maxTotal)
         for {
@@ -84,7 +81,7 @@ class CardsProcesses[F[_]](
   def recommendationsByApps(
     request: RecommendByAppsRequest,
     auth: MarketCredentials
-  ): Free[F, CardList[FullCard]] =
+  ): FreeS[F, CardList[FullCard]] =
     for {
       recommendations ← googleApi.recommendationsByApps(request, auth)
       packages = recommendations.diff(request.excludedApps).take(request.maxTotal)
@@ -95,9 +92,9 @@ class CardsProcesses[F[_]](
       cards   = result.cachedPackages ++ result.resolvedPackages
     )
 
-  def searchApps(request: SearchAppsRequest, auth: MarketCredentials): Free[F, CardList[BasicCard]] =
+  def searchApps(request: SearchAppsRequest, auth: MarketCredentials): FreeS[F, CardList[BasicCard]] =
     googleApi.searchApps(request, auth) flatMap {
-      case Left(_) ⇒ Free.pure(CardList(Nil, Nil, Nil))
+      case Left(_) ⇒ FreeS.pure(CardList(Nil, Nil, Nil))
       case Right(packs) ⇒
         getBasicCards(packs, auth) map { r ⇒
           CardList(
@@ -117,7 +114,7 @@ class CardsProcesses[F[_]](
         ResolveMany.Response(notFound, Nil, apps)
     }
 
-  def resolvePendingApps(numApps: Int): Free[F, ResolvePending.Response] = {
+  def resolvePendingApps(numApps: Int): FreeS[F, ResolvePending.Response] = {
     import ResolvePending._
 
     def splitStatus(status: List[(Package, PackageStatus)]): Response = {
@@ -128,18 +125,15 @@ class CardsProcesses[F[_]](
     }
 
     for {
-      list ← toFree(cacheService.listPending(numApps))
-      status ← list.traverse[Free[F, ?], (Package, PackageStatus)] { pack ⇒
+      list ← cacheService.listPending(numApps).freeS
+      status ← list.traverse[FreeS[F, ?], (Package, PackageStatus)] { pack ⇒
         for (status ← resolvePendingPackage(pack)) yield (pack, status)
       }
     } yield splitStatus(status)
 
   }
 
-  def resolvePackageList(
-    packages: List[Package],
-    auth: MarketCredentials
-  ): Free[F, ResolvePackagesResult] = {
+  def resolvePackageList(packages: List[Package], auth: MarketCredentials): FreeS[F, ResolvePackagesResult] = {
 
     def splitResults(
       packages: List[Package],
@@ -163,63 +157,61 @@ class CardsProcesses[F[_]](
     }
 
     for {
-      cachedPackages ← toFree(cacheService.getValidMany(packages))
+      cachedPackages ← cacheService.getValidMany(packages).freeS
       uncachedPackages = packages diff cachedPackages.map(_.packageName)
-      detailsResp ← googleApi.getDetailsList(uncachedPackages, auth)
+      detailsResp ← googleApi.getDetailsList(uncachedPackages, auth).freeS
       (cards, notFound, error) = splitResults(packages, detailsResp)
-      _ ← toFree(cacheService.putResolvedMany(cards))
-      _ ← toFree(cacheService.addErrorMany(notFound))
-      _ ← toFree(cacheService.setToPendingMany(error))
+      _ ← cacheService.putResolvedMany(cards).freeS
+      _ ← cacheService.addErrorMany(notFound).freeS
+      _ ← cacheService.setToPendingMany(error).freeS
     } yield ResolvePackagesResult(cachedPackages, cards, notFound, error)
   }
 
-  def resolveNewPackage(pack: Package, auth: MarketCredentials): Free[F, getcard.Response] = {
+  def resolveNewPackage(pack: Package, auth: MarketCredentials): FreeS[F, getcard.Response] = {
 
     import getcard._
 
     // Third step: handle error and ask for package in Google Play
-    def handleFailedResponse(failed: ApiFailure): Free[F, FailedResponse] =
+    def handleFailedResponse(failed: ApiFailure): FreeS[F, FailedResponse] =
       // Does package exists in Google Play?
       webScrapper.existsApp(pack) flatMap {
         case true ⇒
-          toFree(cacheService.setToPending(pack).as(PendingResolution(pack)))
+          cacheService.setToPending(pack).as(PendingResolution(pack): FailedResponse).freeS
         case false ⇒
-          toFree(cacheService.addError(pack).as(UnknownPackage(pack)))
+          cacheService.addError(pack).as(UnknownPackage(pack): FailedResponse).freeS
       }
 
     // "Resolved or permanent Item in Redis Cache?"
-    toFree(cacheService.getValid(pack)) flatMap {
+    cacheService.getValid(pack).freeS flatMap {
       case Some(card) ⇒
         // Yes -> Return the stored content
-        Free.pure(Either.right(card))
+        FreeS.pure(Either.right(card))
       case None ⇒
         // No -> Google Play API Returns valid response?
-        googleApi.getDetails(pack, auth) flatMap {
+        googleApi.getDetails(pack, auth).freeS flatMap {
           case Right(card) ⇒
             // Yes -> Create key/value in Redis as Resolved, Return package info
-            toFree(cacheService.putResolved(card).as(Either.right(card)))
+            cacheService.putResolved(card).as(Either.right(card): getcard.Response).freeS
           case Left(apiFailure) ⇒
             handleFailedResponse(apiFailure).map(Either.left)
         }
     }
   }
 
-  def resolvePendingPackage(pack: Package): Free[F, ResolvePending.PackageStatus] = {
+  def resolvePendingPackage(pack: Package): FreeS[F, ResolvePending.PackageStatus] = {
     import ResolvePending._
 
     webScrapper.getDetails(pack) flatMap {
       case Right(card) ⇒
-        toFree(cacheService.putResolved(card).as(Resolved))
+        cacheService.putResolved(card).as(Resolved: PackageStatus).freeS
       case Left(PageParseFailed(_)) ⇒
-        toFree(cacheService.setToPending(pack).as(Pending))
+        cacheService.setToPending(pack).as(Pending: PackageStatus).freeS
       case Left(PackageNotFound(_)) ⇒
-        toFree(cacheService.addError(pack).as(Unknown))
+        cacheService.addError(pack).as(Unknown: PackageStatus).freeS
       case Left(WebPageServerError) ⇒
-        toFree(cacheService.setToPending(pack).as(Pending))
+        cacheService.setToPending(pack).as(Pending: PackageStatus).freeS
     }
   }
-
-  def toFree[A](fs: FreeS.Par[F, A]): Free[F, A] = fs.monad
 
 }
 
@@ -227,9 +219,9 @@ object CardsProcesses {
 
   implicit def processes[F[_]](
     implicit
-    apiS: GoogleApi.Services[F],
-    cacheS: Cache.To[F],
-    webS: WebScraper.Service[F]
+    apiS: GoogleApi[F],
+    cacheS: Cache[F],
+    webS: WebScraper[F]
   ): CardsProcesses[F] = new CardsProcesses(apiS, cacheS, webS)
 }
 

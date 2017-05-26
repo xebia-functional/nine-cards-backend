@@ -25,6 +25,12 @@ case class User(
   banned: Boolean
 )
 
+case class UserData(
+  email: String,
+  sessionToken: String,
+  apiKey: String
+)
+
 case class Installation(
   id: Long,
   userId: Long,

@@ -49,28 +49,28 @@ class Interpreters(implicit A: ApplicativeError[Task, Throwable], T: Transactor[
     def apply[A](fa: ConnectionIO[A]): Task[A] = fa.transact(T)
   }
 
-  val analyticsInterpreter: (GoogleAnalytics.Ops ~> Task) = AnalyticsServices.services(nineCardsConfiguration.google.analytics)
+  val analyticsInterpreter: (GoogleAnalytics.Op ~> Task) = AnalyticsServices.services(nineCardsConfiguration.google.analytics)
 
-  val collectionInterpreter: (Collection.Op ~> Task) = CollectionServices.services.andThen(connectionIO2Task)
+  val collectionInterpreter: (CollectionR.Op ~> Task) = CollectionServices.services.andThen(connectionIO2Task)
 
-  val countryInterpreter: (Country.Ops ~> Task) = CountryServices.services.andThen(connectionIO2Task)
+  val countryInterpreter: (CountryR.Op ~> Task) = CountryServices.services.andThen(connectionIO2Task)
 
-  val firebaseInterpreter: (Firebase.Ops ~> Task) = FirebaseServices.services(nineCardsConfiguration.google.firebase)
+  val firebaseInterpreter: (Firebase.Op ~> Task) = FirebaseServices.services(nineCardsConfiguration.google.firebase)
 
-  val googleApiInterpreter: (GoogleApi.Ops ~> Task) = GoogleApiServices.services(nineCardsConfiguration.google.api)
+  val googleApiInterpreter: (GoogleApi.Op ~> Task) = GoogleApiServices.services(nineCardsConfiguration.google.api)
 
-  val googleOAuthInterpreter: (GoogleOAuth.Ops ~> Task) = GoogleOAuthServices
+  val googleOAuthInterpreter: (GoogleOAuth.Op ~> Task) = GoogleOAuthServices
 
-  val googlePlayInterpreter: (GooglePlay.Ops ~> Task) = {
+  val googlePlayInterpreter: (GooglePlay.Op ~> Task) = {
     implicit val interpret: (GooglePlayApp ~> Task) = new Wiring(nineCardsConfiguration)
     GooglePlayServices.services[GooglePlayApp]
   }
 
-  val rankingInterpreter: (Ranking.Ops ~> Task) = RankingServices.services.andThen(redisToTask)
+  val rankingInterpreter: (RankingS.Op ~> Task) = RankingServices.services.andThen(redisToTask)
 
-  val subscriptionInterpreter: (Subscription.Ops ~> Task) = SubscriptionServices.services.andThen(connectionIO2Task)
+  val subscriptionInterpreter: (SubscriptionR.Op ~> Task) = SubscriptionServices.services.andThen(connectionIO2Task)
 
-  val userInterpreter: (User.Ops ~> Task) = UserServices.services.andThen(connectionIO2Task)
+  val userInterpreter: (UserR.Op ~> Task) = UserServices.services.andThen(connectionIO2Task)
 }
 
 object Interpreters extends TaskInstances {

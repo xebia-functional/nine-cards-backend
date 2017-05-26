@@ -15,7 +15,11 @@
  */
 package cards.nine.googleplay.service.free.algebra
 
-import cards.nine.domain.application.{ FullCard, Package }
+import cards.nine.domain.application.{ FullCard, Package, BasicCard }
+import cards.nine.domain.market.MarketCredentials
+import cards.nine.googleplay.domain._
+import cards.nine.googleplay.domain.apigoogle.{ Failure ⇒ ApiFailure }
+import cards.nine.googleplay.domain.webscrapper.{ Failure ⇒ WebFailure }
 import freestyle._
 
 @free trait Cache {
@@ -31,3 +35,16 @@ import freestyle._
   def listPending(limit: Int): FS[List[Package]]
 }
 
+@free trait GoogleApi {
+  def getBulkDetails(packagesName: List[Package], auth: MarketCredentials): FS[ApiFailure Either List[BasicCard]]
+  def getDetails(packageName: Package, auth: MarketCredentials): FS[ApiFailure Either FullCard]
+  def getDetailsList(packages: List[Package], auth: MarketCredentials): FS[List[ApiFailure Either FullCard]]
+  def recommendationsByApps(request: RecommendByAppsRequest, auth: MarketCredentials): FS[List[Package]]
+  def recommendationsByCategory(request: RecommendByCategoryRequest, auth: MarketCredentials): FS[InfoError Either List[Package]]
+  def searchApps(request: SearchAppsRequest, auth: MarketCredentials): FS[ApiFailure Either List[Package]]
+}
+
+@free trait WebScraper {
+  def existsApp(pack: Package): FS[Boolean]
+  def getDetails(pack: Package): FS[WebFailure Either FullCard]
+}

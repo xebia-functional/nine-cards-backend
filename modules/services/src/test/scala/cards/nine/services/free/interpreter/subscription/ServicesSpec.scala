@@ -17,9 +17,7 @@ package cards.nine.services.free.interpreter.subscription
 
 import cards.nine.commons.catscalaz.ScalazInstances
 import cards.nine.services.free.domain.SharedCollectionSubscription.Queries.{ insert ⇒ subscriptionInsert }
-import cards.nine.services.free.domain.{ SharedCollection, SharedCollectionSubscription, User }
-import cards.nine.services.free.interpreter.collection.Services.SharedCollectionData
-import cards.nine.services.free.interpreter.user.Services.UserData
+import cards.nine.services.free.domain.{ SharedCollection, SharedCollectionData, SharedCollectionSubscription, User, UserData }
 import cards.nine.services.persistence.{ DomainDatabaseContext, NineCardsScalacheckGen }
 import cats.Applicative
 import doobie.contrib.postgresql.pgtypes._
